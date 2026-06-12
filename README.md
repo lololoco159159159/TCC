@@ -1,84 +1,91 @@
-# EduGraph — Front-end do TCC
+# EduGraph
 
-Implementação em React do front-end do meu TCC (Ciência da Computação — UFES),
-voltado à exploração de um grafo de conhecimento educacional construído a partir
-da BNCC e de estratégias pedagógicas relacionadas ao Pensamento Computacional.
+Interface web para navegação em um grafo de conhecimento sobre **Pensamento Computacional na educação básica**, desenvolvida como Trabalho de Conclusão de Curso em Ciência da Computação na UFES.
+
+## O que é
+
+O Pensamento Computacional foi incorporado à Base Nacional Comum Curricular (BNCC) como um conjunto de habilidades esperadas do ensino fundamental ao médio. Na prática, porém, poucos professores sabem como integrar essas habilidades às disciplinas que já lecionam — Matemática, Ciências, Português — sem precisar criar um componente curricular separado.
+
+O EduGraph responde a isso com um **grafo de conhecimento interativo** que mapeia as relações entre:
+
+- Habilidades da **BNCC Computação** (ex.: EF05MA13, EF06MA23)
+- **Pilares do Pensamento Computacional** (Decomposição, Reconhecimento de Padrões, Abstração, Algoritmos)
+- **Componentes curriculares** já existentes (Matemática, Ciências, Português…)
+- **Abordagens pedagógicas** identificadas na literatura (desplugada, plugada, híbrida)
+- **Artigos e práticas** mapeados em revisão sistemática da literatura
+
+Um professor de Matemática, por exemplo, pode entrar no grafo, selecionar sua disciplina e descobrir quais habilidades computacionais ela já "base para" — e quais práticas de sala de aula foram testadas e publicadas com esse par.
 
 ## Estado atual
 
-O site (**EduGraph**) tem três telas navegáveis:
+Este repositório contém o **front-end React** do projeto. Por enquanto, as telas estão implementadas com dados estáticos; a integração com o servidor de grafos (Apache Jena Fuseki via SPARQL) está prevista para a segunda etapa do TCC.
 
-- **Home** — apresentação do projeto, com botões de acesso
-- **Entrar** — formulário de login com validação
-- **Criar conta** — formulário de cadastro com validação
+**Telas disponíveis:**
 
-A autenticação ainda é apenas visual (sem back-end). A integração com o
-Apache Jena Fuseki (SPARQL) e a visualização do grafo são trabalho futuro (TCC2).
+| Tela | Descrição |
+|---|---|
+| Home | Apresentação do projeto com acesso ao login e cadastro |
+| Entrar | Formulário de autenticação (visual; sem back-end ainda) |
+| Criar conta | Formulário de cadastro (visual; sem back-end ainda) |
 
-## Pré-requisitos
+**Recursos de acessibilidade:**
 
-- **Node.js** 18 ou superior (recomendado: versão LTS) — https://nodejs.org
-- **npm** (já vem junto com o Node.js)
+- **Modo claro / escuro** — toggle sol/lua na barra de navegação; no modo escuro o acento visual muda de verde para roxo. A preferência persiste entre sessões.
+- **Tamanho de fonte** — botões A/A na lateral direita ajustam o zoom do site em 6 níveis (60% a 160%). A preferência persiste entre sessões.
 
-Para conferir se estão instalados:
+## Contexto acadêmico
+
+O mapeamento sistemático da literatura foi conduzido no **Parsifal**, cobrindo publicações de 2012 a 2025 sobre Pensamento Computacional na educação básica brasileira. Os artigos selecionados identificaram quais habilidades da BNCC aparecem em práticas computacionais documentadas, quais pilares do PC cada prática mobiliza e em quais disciplinas essas práticas ocorrem.
+
+Esses dados alimentarão o grafo de conhecimento que esta interface visa exibir e tornar navegável para professores da educação básica.
+
+## Tecnologias
+
+- **React 18** + **Vite** — interface e build
+- **JavaScript / JSX** — sem TypeScript por ora
+- **CSS Variables** — sistema de temas (claro/escuro) sem biblioteca de UI
+- **Google Fonts** — Inter (interface) e IBM Plex Mono (rótulos e labels)
+- Futuro: **Apache Jena Fuseki** (servidor SPARQL) e biblioteca de visualização de grafos (Cytoscape.js, react-force-graph ou D3.js — a definir)
+
+## Como rodar localmente
+
+Pré-requisito: **Node.js 18+** ([nodejs.org](https://nodejs.org))
 
 ```bash
-node --version
-npm --version
+# 1. Instalar dependências (só na primeira vez)
+npm install
+
+# 2. Subir o servidor de desenvolvimento
+npm run dev
 ```
 
-## Como rodar
+Abra http://localhost:5173 no navegador. As alterações em `src/` atualizam a tela automaticamente.
 
-1. Clone o repositório e entre na pasta `site/`:
-
-   ```bash
-   cd site
-   ```
-
-2. Instale as dependências (só precisa na primeira vez):
-
-   ```bash
-   npm install
-   ```
-
-3. Suba o servidor de desenvolvimento:
-
-   ```bash
-   npm run dev
-   ```
-
-4. Abra http://localhost:5173 no navegador. As alterações nos arquivos de
-   `src/` atualizam a tela automaticamente ao salvar.
-
-Para parar o servidor: `Ctrl+C` no terminal.
-
-## Comandos disponíveis
-
-| Comando           | O que faz                                            |
-| ----------------- | ---------------------------------------------------- |
-| `npm run dev`     | Sobe o servidor de desenvolvimento (uso no dia a dia)|
-| `npm run build`   | Gera a versão otimizada para produção em `dist/`     |
-| `npm run preview` | Serve localmente a versão de build para conferência  |
-| `npm run lint`    | Verifica problemas de qualidade no código            |
-
-## Dependências
-
-**Produção:**
-
-- `react` ^18.3 — biblioteca de interface
-- `react-dom` ^18.3 — renderização do React no navegador
-
-**Desenvolvimento:**
-
-- `vite` ^5.4 — build e servidor de desenvolvimento
-- `@vitejs/plugin-react` — suporte a React/JSX no Vite
-- `eslint` + plugins de React — análise de qualidade de código
-
-Tudo é instalado automaticamente com `npm install` (lista completa no
-`package.json`). As fontes Inter e IBM Plex Mono são carregadas do Google
-Fonts pelo `index.html` — é preciso estar online para que apareçam.
+```bash
+npm run build    # gera versão otimizada em dist/
+npm run preview  # serve a versão de build localmente
+npm run lint     # verifica qualidade do código
+```
 
 ## Estrutura do projeto
 
-Explicação detalhada de cada arquivo e pasta em
-[ESTRUTURA_DO_PROJETO.txt](ESTRUTURA_DO_PROJETO.txt).
+```
+src/
+├── context/
+│   └── ThemeContext.jsx     # estado global de tema e tamanho de fonte
+├── components/
+│   ├── Logo.jsx             # logo SVG do EduGraph
+│   ├── ThemeToggle.jsx      # botão sol/lua (modo claro/escuro)
+│   └── FontSizeWidget.jsx   # controles A/A de acessibilidade
+├── pages/
+│   ├── Home.jsx             # tela inicial
+│   ├── Login.jsx            # tela de Entrar
+│   └── Signup.jsx           # tela de Criar conta
+├── App.jsx                  # roteamento por estado
+├── main.jsx                 # ponto de entrada React
+└── index.css                # design system (variáveis de tema, classes .eg-*)
+```
+
+---
+
+TCC — Ciência da Computação · UFES · 2026

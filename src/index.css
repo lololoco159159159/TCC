@@ -1,26 +1,77 @@
 /* Estilos globais do EduGraph — baseados no design system do projeto */
 
+/* ---- Variáveis de tema ----
+   Modo claro: acento verde. Modo escuro: fundo roxo-escuro e acento roxo.
+   O tema é trocado pelo atributo data-theme no <html> (ver ThemeContext). */
+
+:root {
+  --bg: #ffffff;
+  --bg-soft: #f5f5f7;
+  --card: #ffffff;
+  --card-rgb: 255, 255, 255;
+  --ink: #1d1d1f;
+  --body: #515154;
+  --mut: #86868b;
+  --faint: #a6a6ab;
+  --line: #ececef;
+  --line-strong: #d2d2d7;
+  --accent: #1f8a5b;
+  --accent-hover: #1b7a50;
+  --accent-rgb: 31, 138, 91;
+}
+
+:root[data-theme='dark'] {
+  --bg: #15121e;
+  --bg-soft: #1b1727;
+  --card: #211c30;
+  --card-rgb: 33, 28, 48;
+  --ink: #f3f1fa;
+  --body: #bdb6d4;
+  --mut: #938bb0;
+  --faint: #6e6790;
+  --line: #322b48;
+  --line-strong: #463d64;
+  --accent: #8b5cf6;
+  --accent-hover: #9d74f8;
+  --accent-rgb: 139, 92, 246;
+}
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
+html {
+  background: var(--bg);
+  transition: background-color 0.35s ease;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  color: #1d1d1f;
-  background: #ffffff;
+  color: var(--ink);
+  background: var(--bg);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
+/* Cross-fade suave de cores quando o tema troca */
+#eg-root * {
+  transition:
+    background-color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    fill 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    stroke 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 ::selection {
-  background: rgba(31, 138, 91, 0.18);
+  background: rgba(var(--accent-rgb), 0.18);
 }
 
 input::placeholder {
-  color: #b3b3b8;
+  color: var(--faint);
 }
 
 /* ---- Campos de formulário (Login / Criar conta) ---- */
@@ -28,19 +79,19 @@ input::placeholder {
 .eg-input {
   width: 100%;
   height: 48px;
-  border: 1px solid #e3e3e6;
+  border: 1px solid var(--line-strong);
   border-radius: 12px;
   padding: 0 16px;
   font: 400 16px/1 'Inter', sans-serif;
-  color: #1d1d1f;
-  background: #fff;
+  color: var(--ink);
+  background: var(--card);
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .eg-input:focus {
-  border-color: #1f8a5b;
-  box-shadow: 0 0 0 4px rgba(31, 138, 91, 0.12);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.12);
 }
 
 .eg-input.eg-input-erro {
@@ -54,7 +105,7 @@ input::placeholder {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #1f8a5b;
+  background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 999px;
@@ -66,7 +117,7 @@ input::placeholder {
 }
 
 .eg-btn-primario:hover {
-  background: #1b7a50;
+  background: var(--accent-hover);
 }
 
 .eg-btn-primario:active {
@@ -78,8 +129,8 @@ input::placeholder {
   align-items: center;
   gap: 8px;
   background: transparent;
-  color: #1d1d1f;
-  border: 1px solid #d2d2d7;
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
   border-radius: 999px;
   font-family: 'Inter', sans-serif;
   font-weight: 600;
@@ -89,23 +140,32 @@ input::placeholder {
 }
 
 .eg-btn-secundario:hover {
-  border-color: #1f8a5b;
-  color: #1f8a5b;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .eg-btn-secundario:active {
   transform: scale(0.96);
 }
 
+/* Botões A/A do widget de tamanho de fonte */
+.eg-font-btn:hover {
+  transform: scale(1.07);
+}
+
+.eg-font-btn:active {
+  transform: scale(0.93);
+}
+
 /* ---- Links de navegação ---- */
 
 .eg-link-nav {
   font: 400 14px/1 'Inter', sans-serif;
-  color: #515154;
+  color: var(--body);
   cursor: pointer;
   letter-spacing: -0.01em;
 }
 
 .eg-link-nav:hover {
-  color: #1d1d1f;
+  color: var(--ink);
 }

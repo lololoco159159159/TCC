@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Logo from '../components/Logo'
+import ThemeToggle from '../components/ThemeToggle'
 
 // Estilos reutilizados nos rótulos e mensagens do formulário
 const estiloLabel = {
@@ -7,7 +8,7 @@ const estiloLabel = {
   marginBottom: 8,
   font: "500 11px/1 'IBM Plex Mono', monospace",
   letterSpacing: '0.1em',
-  color: '#86868b',
+  color: 'var(--mut)',
   textTransform: 'uppercase',
 }
 
@@ -58,30 +59,31 @@ function Signup({ onHome, onLogin }) {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        background: '#f5f5f7',
+        background: 'var(--bg-soft)',
       }}
     >
-      {/* Barra superior: logo + atalho para entrar */}
+      {/* Barra superior: logo + toggle de tema + atalho para entrar */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '18px 24px',
-          background: '#fff',
-          borderBottom: '1px solid #eef0f1',
+          background: 'var(--card)',
+          borderBottom: '1px solid var(--line)',
         }}
       >
         <Logo onClick={onHome} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ font: "400 14px/1 'Inter', sans-serif", color: '#86868b' }}>
+          <ThemeToggle style={{ marginRight: 10 }} />
+          <span style={{ font: "400 14px/1 'Inter', sans-serif", color: 'var(--mut)' }}>
             Já tem conta?
           </span>
           <span
             onClick={onLogin}
             style={{
               font: "600 14px/1 'Inter', sans-serif",
-              color: '#1f8a5b',
+              color: 'var(--accent)',
               cursor: 'pointer',
             }}
           >
@@ -104,8 +106,8 @@ function Signup({ onHome, onLogin }) {
           style={{
             width: '100%',
             maxWidth: 430,
-            background: '#fff',
-            border: '1px solid #ececef',
+            background: 'var(--card)',
+            border: '1px solid var(--line)',
             borderRadius: 18,
             padding: '40px 36px',
           }}
@@ -115,7 +117,7 @@ function Signup({ onHome, onLogin }) {
               margin: 0,
               font: "600 28px/1.1 'Inter', sans-serif",
               letterSpacing: '-0.025em',
-              color: '#1d1d1f',
+              color: 'var(--ink)',
             }}
           >
             Criar conta
@@ -124,7 +126,7 @@ function Signup({ onHome, onLogin }) {
             style={{
               margin: '8px 0 28px',
               font: "400 15px/1.5 'Inter', sans-serif",
-              color: '#86868b',
+              color: 'var(--mut)',
             }}
           >
             É gratuito para professores da educação básica.
@@ -191,7 +193,7 @@ function Signup({ onHome, onLogin }) {
               margin: '18px 0 0',
               textAlign: 'center',
               font: "400 12px/1.5 'Inter', sans-serif",
-              color: '#a6a6ab',
+              color: 'var(--faint)',
             }}
           >
             Ao criar uma conta, você concorda com os Termos e a Política de Privacidade do

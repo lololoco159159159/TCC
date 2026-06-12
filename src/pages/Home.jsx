@@ -1,11 +1,12 @@
 import Logo from '../components/Logo'
+import ThemeToggle from '../components/ThemeToggle'
 
 // Home simplificada: nav do design + hero básico com os botões de
 // acesso às telas de Entrar e Criar conta. O grafo ilustrativo, o
 // marquee de disciplinas e o footer completos virão depois.
 function Home({ onLogin, onSignup }) {
   return (
-    <div style={{ minHeight: '100vh', background: '#ffffff' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {/* Navegação superior */}
       <nav
         style={{
@@ -16,10 +17,10 @@ function Home({ onLogin, onSignup }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '14px 32px',
-          background: 'rgba(255,255,255,0.82)',
+          background: 'rgba(var(--card-rgb), 0.82)',
           backdropFilter: 'saturate(180%) blur(20px)',
           WebkitBackdropFilter: 'saturate(180%) blur(20px)',
-          borderBottom: '1px solid #eef0f1',
+          borderBottom: '1px solid var(--line)',
         }}
       >
         <Logo />
@@ -30,11 +31,12 @@ function Home({ onLogin, onSignup }) {
           <span className="eg-link-nav">Ajuda</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+          <ThemeToggle />
           <span
             onClick={onLogin}
             style={{
               font: "500 14px/1 'Inter', sans-serif",
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               cursor: 'pointer',
               letterSpacing: '-0.01em',
             }}
@@ -51,7 +53,7 @@ function Home({ onLogin, onSignup }) {
         </div>
       </nav>
 
-      {/* Hero central */}
+      {/* Hero central  */}
       <section style={{ padding: '70px 24px 60px' }}>
         <div
           style={{
@@ -64,12 +66,12 @@ function Home({ onLogin, onSignup }) {
           }}
         >
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, marginBottom: 22 }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#1f8a5b' }} />
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />
             <span
               style={{
                 font: "500 12px/1 'IBM Plex Mono', monospace",
                 letterSpacing: '0.16em',
-                color: '#6e6e73',
+                color: 'var(--mut)',
                 textTransform: 'uppercase',
               }}
             >
@@ -81,7 +83,7 @@ function Home({ onLogin, onSignup }) {
               margin: 0,
               font: "600 clamp(40px, 8vw, 76px)/1.02 'Inter', sans-serif",
               letterSpacing: '-0.035em',
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               maxWidth: '11ch',
             }}
           >
@@ -92,14 +94,14 @@ function Home({ onLogin, onSignup }) {
               margin: '20px 0 0',
               font: "400 clamp(16px, 2.1vw, 20px)/1.5 'Inter', sans-serif",
               letterSpacing: '-0.01em',
-              color: '#515154',
+              color: 'var(--body)',
               maxWidth: 600,
             }}
           >
             Os grafos da BNCC de Computação mostram como cada habilidade se liga às matérias que
             você já ensina. Veja{' '}
-            <strong style={{ fontWeight: 600, color: '#1d1d1f' }}>matemática</strong> virar base
-            para <strong style={{ fontWeight: 600, color: '#1d1d1f' }}>algoritmo</strong> — e
+            <strong style={{ fontWeight: 600, color: 'var(--ink)' }}>matemática</strong> virar base
+            para <strong style={{ fontWeight: 600, color: 'var(--ink)' }}>algoritmo</strong> — e
             planeje com o currículo inteiro à vista.
           </p>
           <div

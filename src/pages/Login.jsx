@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import Logo from '../components/Logo'
+import ThemeToggle from '../components/ThemeToggle'
 
 // Estilos reutilizados nos rótulos e mensagens do formulário
 const estiloLabel = {
   font: "500 11px/1 'IBM Plex Mono', monospace",
   letterSpacing: '0.1em',
-  color: '#86868b',
+  color: 'var(--mut)',
   textTransform: 'uppercase',
 }
 
@@ -20,7 +21,7 @@ function emailValido(valor) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((valor || '').trim())
 }
 
-// Tela de Entrar — formulário centralizado sobre fundo cinza claro.
+// Tela de Entrar — formulário centralizado sobre fundo suave.
 // A autenticação real (back-end) é trabalho futuro; por ora apenas
 // valida os campos e simula o envio.
 function Login({ onHome, onSignup }) {
@@ -51,30 +52,31 @@ function Login({ onHome, onSignup }) {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        background: '#f5f5f7',
+        background: 'var(--bg-soft)',
       }}
     >
-      {/* Barra superior: logo + atalho para criar conta */}
+      {/* Barra superior: logo + toggle de tema + atalho para criar conta */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '18px 24px',
-          background: '#fff',
-          borderBottom: '1px solid #eef0f1',
+          background: 'var(--card)',
+          borderBottom: '1px solid var(--line)',
         }}
       >
         <Logo onClick={onHome} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ font: "400 14px/1 'Inter', sans-serif", color: '#86868b' }}>
+          <ThemeToggle style={{ marginRight: 10 }} />
+          <span style={{ font: "400 14px/1 'Inter', sans-serif", color: 'var(--mut)' }}>
             Novo por aqui?
           </span>
           <span
             onClick={onSignup}
             style={{
               font: "600 14px/1 'Inter', sans-serif",
-              color: '#1f8a5b',
+              color: 'var(--accent)',
               cursor: 'pointer',
             }}
           >
@@ -97,8 +99,8 @@ function Login({ onHome, onSignup }) {
           style={{
             width: '100%',
             maxWidth: 430,
-            background: '#fff',
-            border: '1px solid #ececef',
+            background: 'var(--card)',
+            border: '1px solid var(--line)',
             borderRadius: 18,
             padding: '40px 36px',
           }}
@@ -108,7 +110,7 @@ function Login({ onHome, onSignup }) {
               margin: 0,
               font: "600 28px/1.1 'Inter', sans-serif",
               letterSpacing: '-0.025em',
-              color: '#1d1d1f',
+              color: 'var(--ink)',
             }}
           >
             Entrar
@@ -117,7 +119,7 @@ function Login({ onHome, onSignup }) {
             style={{
               margin: '8px 0 28px',
               font: "400 15px/1.5 'Inter', sans-serif",
-              color: '#86868b',
+              color: 'var(--mut)',
             }}
           >
             Acesse e continue de onde você parou nos seus grafos.
@@ -153,7 +155,7 @@ function Login({ onHome, onSignup }) {
               <span
                 style={{
                   font: "400 13px/1 'Inter', sans-serif",
-                  color: '#1f8a5b',
+                  color: 'var(--accent)',
                   cursor: 'pointer',
                 }}
               >
@@ -183,9 +185,9 @@ function Login({ onHome, onSignup }) {
 
           {/* Divisor "ou" */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '24px 0' }}>
-            <div style={{ flex: 1, height: 1, background: '#ececef' }} />
-            <span style={{ font: "400 12px/1 'Inter', sans-serif", color: '#b3b3b8' }}>ou</span>
-            <div style={{ flex: 1, height: 1, background: '#ececef' }} />
+            <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+            <span style={{ font: "400 12px/1 'Inter', sans-serif", color: 'var(--faint)' }}>ou</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
           </div>
 
           <p
@@ -193,13 +195,13 @@ function Login({ onHome, onSignup }) {
               margin: 0,
               textAlign: 'center',
               font: "400 14px/1 'Inter', sans-serif",
-              color: '#86868b',
+              color: 'var(--mut)',
             }}
           >
             Ainda não tem conta?{' '}
             <span
               onClick={onSignup}
-              style={{ fontWeight: 600, color: '#1f8a5b', cursor: 'pointer' }}
+              style={{ fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}
             >
               Criar conta
             </span>
