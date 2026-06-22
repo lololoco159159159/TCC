@@ -26,6 +26,14 @@
   --pill-border: #e6decb;
   --dot-color: #dad0bb;
 
+  /* seção de depoimentos */
+  --testi-bg: #fdfdfb;
+  --testi-card: #f7f2e8;
+  --testi-accent: #06492d;
+  --testi-num: #5c6660;
+  --testi-label: #9a958a;
+  --testi-value: #3c4843;
+
   /* aliases de compatibilidade (código ainda não migrado) */
   --bg-soft: var(--bg2);
   --card: var(--pill-bg);
@@ -54,6 +62,14 @@
   --pill-bg: #121915;
   --pill-border: #222c27;
   --dot-color: #1c231f;
+
+  /* seção de depoimentos (no escuro os rótulos viram âmbar) */
+  --testi-bg: #000000;
+  --testi-card: #121915;
+  --testi-accent: #8e4806;
+  --testi-num: #8e4806;
+  --testi-label: #8e4806;
+  --testi-value: #ede6d8;
 
   /* aliases de compatibilidade */
   --accent-rgb: 58, 167, 109;
@@ -91,6 +107,18 @@ body {
 
 ::selection {
   background: rgba(var(--accent-rgb), 0.18);
+}
+
+/* fade sutil ao trocar a legenda ativa (seção de depoimentos) */
+@keyframes egFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 input::placeholder {

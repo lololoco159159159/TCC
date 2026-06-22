@@ -29,7 +29,10 @@ function StatsBand() {
       raf = requestAnimationFrame(tick)
     }
 
-    // Dispara uma única vez quando a faixa entra na viewport (≈ top < 80% da tela).
+    // Dispara uma única vez quando ~35% da faixa está visível. Usamos `threshold`
+    // (e não um `rootMargin` negativo embaixo) porque a faixa é hoje o ÚLTIMO
+    // elemento da página: com margem negativa o topo dela nunca cruzaria a linha
+    // de corte em telas altas, e os contadores ficariam presos em 0.
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
@@ -37,7 +40,7 @@ function StatsBand() {
           startCount()
         }
       },
-      { rootMargin: '0px 0px -20% 0px' },
+      { threshold: 0.35 },
     )
     io.observe(el)
 

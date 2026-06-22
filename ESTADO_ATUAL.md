@@ -93,15 +93,63 @@ Removidos artefatos do template Vite e resíduos do redesenho da Home:
   Sem token novo. Plano de origem: [PLANO_ETAPA3_STATS_BAND.md](PLANO_ETAPA3_STATS_BAND.md).
 - Verificado: `npm run build`, `npm run lint` (só o warning pré-existente) e `npm run dev` (200).
 
+### Correção (2026-06-22) — contadores da StatsBand presos em 0
+- Em [src/components/StatsBand.jsx](src/components/StatsBand.jsx) o `IntersectionObserver`
+  usava `rootMargin: '0px 0px -20% 0px'`. Como a faixa era o **último elemento da página**,
+  em telas altas o topo dela nunca cruzava a linha de corte (80%) e a animação nunca
+  disparava (ficava em 0). Trocado por `{ threshold: 0.35 }`, robusto a altura de viewport
+  e zoom de fonte. (Quando houver footer depois dela, o `-20%` também voltaria a funcionar.)
+
+### Etapa 4 (2026-06-22) — seção de depoimentos
+- **[src/components/TestimonialsSection.jsx](src/components/TestimonialsSection.jsx)** — 4ª seção,
+  "Quem ensina, sabe o que funciona." **Porte simplificado** do protótipo (que usa
+  three.js/WebGL): aqui é **puro DOM/CSS, sem three.js e sem dependências novas**. Zona
+  `#testiScrollZone` (300vh) com seção `sticky`; conforme o scroll, os 5 depoimentos
+  desfilam num efeito **coverflow** (card ativo centralizado e em destaque, laterais
+  reduzem/giram/esmaecem). Painel de legenda (nº + nome ativo) e barra de progresso na
+  base; cabeçalho com kicker + título. Progresso de scroll via `requestAnimationFrame`
+  (mesmo padrão de GraphSection).
+- **[src/data/depoimentos.js](src/data/depoimentos.js)** — os 5 depoimentos (dados mockados,
+  conteúdo verbatim do protótipo), seguindo a convenção de manter dados em `src/data/`
+  para troca futura por SPARQL.
+- Tokens `--testi-accent --testi-num --testi-label --testi-value` (claro/escuro) e o
+  keyframe `egFadeUp` adicionados em [src/index.css](src/index.css). **Fora de escopo:** a
+  fase 2 do protótipo (cortina revelando cards de séries) e o WebGL.
+- Plano de origem: [crie-um-plano-para-vast-lagoon.md](../../.claude/plans/crie-um-plano-para-vast-lagoon.md).
+- Verificado: `npm run lint` (só o warning pré-existente), `npm run build` (bundle +~5KB, sem
+  dependência nova) e `npm run dev` (200).
+
+#### Redesenho do layout (2026-06-22) — fiel ao protótipo
+- O layout deixou de ser coverflow centralizado e passou ao formato do protótipo:
+  **cabeçalho no topo-esquerda**, **legenda à esquerda** (nº + nome + Função/Etapa, em
+  grade rotulada) e **um card grande à direita** (levemente inclinado, `rotateY`) com o
+  depoimento em destaque; ao rolar, o card ativo desliza/esmaece dando lugar ao próximo.
+  Barra de progresso na base, quase em largura total.
+- Cores: **fundo da seção branco** e **cards bege** — novos tokens `--testi-bg` e
+  `--testi-card` em [src/index.css](src/index.css) (claro: `#ffffff`/`#f7f2e8`; escuro:
+  `#000000`/`#121915`).
+- Dados: [src/data/depoimentos.js](src/data/depoimentos.js) reestruturado de
+  `{ nome, papel, texto }` para `{ nome, funcao, etapa, texto }` (Função/Etapa separadas).
+- Verificado: `npm run lint`, `npm run build` e `npm run dev` (200).
+
+#### Ajuste de fidelidade dos cards (2026-06-22)
+- Cards mais fiéis ao exemplo em [src/components/TestimonialsSection.jsx](src/components/TestimonialsSection.jsx):
+  **cantos retos** (`borderRadius: 0`), contorno fino escuro (`1px solid var(--text)`) e
+  **sombra deslocada** (`22px 26px 40px -10px rgba(0,0,0,.28)`). Todos os cards com estilo
+  idêntico (sem variação ativo/inativo).
+- **Card maior**: passa a rastrear `wh` (`window.innerHeight`); `cardH` é o maior possível
+  pela altura disponível (`min(wh-180, 880)`), limitado pela largura da área direita.
+- **Faixas decorativas**: SVG ao fundo da seção (zIndex 1) com duas linhas finas
+  (`var(--edge)`, levemente inclinadas) no topo e na base — as "linhas da parede" do protótipo.
+- `--testi-bg` ajustado para `#fdfdfb` (branco levemente quente).
+
 ## 4. O que FALTA (próximas etapas)
 
 Em ordem aproximada das seções do protótipo final:
 
-1. **Seção de depoimentos** (`sticky`, `#testiScrollZone` 520vh). No protótipo usa WebGL
-   (three.js) numa galeria; avaliar porte fiel vs. simplificado.
-2. **Footer** completo.
-3. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos).
-4. **Back-end**: Apache Jena Fuseki (SPARQL) + lib de visualização de grafo
+1. **Footer** completo.
+2. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos).
+3. **Back-end**: Apache Jena Fuseki (SPARQL) + lib de visualização de grafo
    (Cytoscape.js / react-force-graph / D3 — a definir).
 
 ## 5. Como ler o protótipo final (arquivo "bundled")
@@ -152,9 +200,12 @@ src/
 │   ├── ThemeToggle.jsx        # toggle sol/lua (já bate com o protótipo)
 │   ├── GraphSection.jsx       # seção 2: grafo-globo interativo (Etapa 2 — FEITO)
 │   ├── StatsBand.jsx          # seção 3: banda de estatísticas, 3 contadores (Etapa 3 — FEITO)
+│   ├── TestimonialsSection.jsx # seção 4: depoimentos coverflow (Etapa 4 — FEITO)
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
+├── data/
+│   └── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
 ├── pages/
-│   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand (Etapas 1-3 — FEITO)
+│   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials (Etapas 1-4 — FEITO)
 │   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
 │   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
 ├── assets/{ufes,labotim}.png  # logos institucionais (exibidos no header)

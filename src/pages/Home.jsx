@@ -2,6 +2,7 @@ import Logo from '../components/Logo'
 import ThemeToggle from '../components/ThemeToggle'
 import GraphSection from '../components/GraphSection'
 import StatsBand from '../components/StatsBand'
+import TestimonialsSection from '../components/TestimonialsSection'
 import labotim from '../assets/labotim.png'
 import ufes from '../assets/ufes.png'
 
@@ -263,6 +264,9 @@ function Home({ onLogin, onSignup }) {
 
       {/* Seção 3: banda de estatísticas (3 contadores animados) */}
       <StatsBand />
+
+      {/* Seção 4: depoimentos (galeria coverflow dirigida por scroll) */}
+      <TestimonialsSection />
     </div>
   )
 }
