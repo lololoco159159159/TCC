@@ -1,5 +1,8 @@
 import Logo from '../components/Logo'
 import ThemeToggle from '../components/ThemeToggle'
+import GraphSection from '../components/GraphSection'
+import labotim from '../assets/labotim.png'
+import ufes from '../assets/ufes.png'
 
 // Home — Etapa 1 do redesenho (protótipo final): header + hero "Conhecimento
 // conectado". A grande seção de grafo interativo, a banda de estatísticas, os
@@ -40,7 +43,41 @@ function Home({ onLogin, onSignup }) {
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 'none' }}>
-          {/* Logos institucionais (UFES / LabOtim) entram aqui na próxima etapa. */}
+          <a
+            href="https://labotim.inf.ufes.br"
+            target="_blank"
+            rel="noopener"
+            title="LabOtim · Laboratório de Otimização e Modelagem Computacional"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              background: '#fff',
+              border: '1px solid rgba(28,38,32,.08)',
+              borderRadius: 9,
+              padding: '6px 12px',
+              boxShadow: '0 2px 7px -4px rgba(0,0,0,.25)',
+            }}
+          >
+            <img src={labotim} alt="LabOtim" style={{ height: 24, display: 'block' }} />
+          </a>
+          <a
+            href="https://www.ufes.br"
+            target="_blank"
+            rel="noopener"
+            title="Universidade Federal do Espírito Santo"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              background: '#fff',
+              border: '1px solid rgba(28,38,32,.08)',
+              borderRadius: 9,
+              padding: '6px 12px',
+              boxShadow: '0 2px 7px -4px rgba(0,0,0,.25)',
+            }}
+          >
+            <img src={ufes} alt="UFES" style={{ height: 24, display: 'block' }} />
+          </a>
+          <span style={{ width: 1, height: 26, background: 'var(--edge)' }} />
           <ThemeToggle />
           <span
             onClick={onLogin}
@@ -219,6 +256,9 @@ function Home({ onLogin, onSignup }) {
           </div>
         </div>
       </section>
+
+      {/* Seção 2: grafo-globo interativo "Cada matéria tem sua rede." */}
+      <GraphSection />
     </div>
   )
 }

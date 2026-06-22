@@ -24,6 +24,7 @@
   --edge: #d8ceb8;
   --pill-bg: #fbf8f1;
   --pill-border: #e6decb;
+  --dot-color: #dad0bb;
 
   /* aliases de compatibilidade (código ainda não migrado) */
   --bg-soft: var(--bg2);
@@ -52,6 +53,7 @@
   --edge: #262c28;
   --pill-bg: #121915;
   --pill-border: #222c27;
+  --dot-color: #1c231f;
 
   /* aliases de compatibilidade */
   --accent-rgb: 58, 167, 109;

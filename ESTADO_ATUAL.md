@@ -60,8 +60,7 @@ aliases que deixarem de ser usados.
     grupos de CTA ("Criar conta gratuita" / "Entrar") separados por divisor "ou".
 - **Logos institucionais** extraídos do bundle para
   [src/assets/ufes.png](src/assets/ufes.png) e
-  [src/assets/labotim.png](src/assets/labotim.png). **Ainda NÃO são exibidos** no
-  header — há um comentário marcando o lugar deles (entram na próxima etapa).
+  [src/assets/labotim.png](src/assets/labotim.png) (exibidos no header desde a Etapa 2).
 
 Verificado: `npm run build`, `npm run lint` (só 1 warning pré-existente em
 ThemeContext.jsx) e `npm run dev` (HTTP 200) OK.
@@ -74,19 +73,28 @@ Removidos artefatos do template Vite e resíduos do redesenho da Home:
 - Normalizadas as fontes em Login, Signup e FontSizeWidget: Inter→Figtree e
   IBM Plex Mono→JetBrains Mono (as antigas não são mais carregadas pelo `index.html`).
 
+### Etapa 2 (2026-06-22) — cabeçalho completo + seção "Cada matéria tem sua rede"
+- **Cabeçalho**: logos **UFES** e **LabOtim** (links institucionais) + divisória
+  adicionados em [src/pages/Home.jsx](src/pages/Home.jsx), à esquerda do ThemeToggle.
+- **[src/components/GraphSection.jsx](src/components/GraphSection.jsx)** — 2ª seção,
+  grafo-globo interativo **fiel ao protótipo**: `#graphScrollZone` (280vh) com seção
+  `sticky`; 15 nós numa esfera projetada em 2D que **gira 360°** conforme o scroll; o
+  globo **desliza/escala** para a esquerda e o **painel de texto surge** à direita; o
+  tooltip some; **hover** num nó realça vizinhos e rótulos das 21 arestas. Progresso de
+  scroll via `requestAnimationFrame`. Puro SVG/DOM (sem three.js / partículas).
+- Token `--dot-color` (fundo pontilhado) adicionado em [src/index.css](src/index.css).
+- Verificado: `npm run build`, `npm run lint` (só o warning pré-existente) e `npm run dev` (200).
+
 ## 4. O que FALTA (próximas etapas)
 
 Em ordem aproximada das seções do protótipo final:
 
-1. **Logos UFES/LabOtim no header** (assets já extraídos; só inserir + divisória).
-2. **Seção do grafo interativo** — bloco grande `sticky` com `scroll zone` de ~280vh,
-   globo wireframe em SVG, nós das matérias e tooltip "Passe o mouse…". É a parte
-   mais complexa (tem JS de animação/canvas no protótipo).
-3. **Banda de estatísticas** (`#statsBand`).
-4. **Seção de depoimentos** (`sticky`).
-5. **Footer** completo.
-6. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos).
-7. **Back-end**: Apache Jena Fuseki (SPARQL) + lib de visualização de grafo
+1. **Banda de estatísticas** (`#statsBand`) — 3 contadores animados (412 habilidades, etc.).
+2. **Seção de depoimentos** (`sticky`, `#testiScrollZone` 520vh). No protótipo usa WebGL
+   (three.js) numa galeria; avaliar porte fiel vs. simplificado.
+3. **Footer** completo.
+4. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos).
+5. **Back-end**: Apache Jena Fuseki (SPARQL) + lib de visualização de grafo
    (Cytoscape.js / react-force-graph / D3 — a definir).
 
 ## 5. Como ler o protótipo final (arquivo "bundled")
@@ -135,12 +143,13 @@ src/
 ├── components/
 │   ├── Logo.jsx               # logo grafo 9 nós + "EduGraph" (Spectral)
 │   ├── ThemeToggle.jsx        # toggle sol/lua (já bate com o protótipo)
+│   ├── GraphSection.jsx       # seção 2: grafo-globo interativo (Etapa 2 — FEITO)
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
 ├── pages/
-│   ├── Home.jsx               # Header + Hero (Etapa 1 — FEITO)
+│   ├── Home.jsx               # Header + Hero + GraphSection (Etapas 1-2 — FEITO)
 │   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
 │   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
-├── assets/{ufes,labotim}.png  # logos extraídos (ainda não usados)
+├── assets/{ufes,labotim}.png  # logos institucionais (exibidos no header)
 ├── App.jsx                    # roteamento por estado
 ├── main.jsx                   # entrada React
 └── index.css                  # design system (tokens + aliases + classes .eg-*)
