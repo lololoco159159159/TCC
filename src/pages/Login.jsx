@@ -4,7 +4,7 @@ import ThemeToggle from '../components/ThemeToggle'
 
 // Estilos reutilizados nos rótulos e mensagens do formulário
 const estiloLabel = {
-  font: "500 11px/1 'IBM Plex Mono', monospace",
+  font: "500 11px/1 'JetBrains Mono', monospace",
   letterSpacing: '0.1em',
   color: 'var(--mut)',
   textTransform: 'uppercase',
@@ -12,7 +12,7 @@ const estiloLabel = {
 
 const estiloErro = {
   marginTop: 7,
-  font: "400 13px/1.3 'Inter', sans-serif",
+  font: "400 13px/1.3 'Figtree', sans-serif",
   color: '#d1453b',
 }
 
@@ -69,13 +69,13 @@ function Login({ onHome, onSignup }) {
         <Logo onClick={onHome} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <ThemeToggle style={{ marginRight: 10 }} />
-          <span style={{ font: "400 14px/1 'Inter', sans-serif", color: 'var(--mut)' }}>
+          <span style={{ font: "400 14px/1 'Figtree', sans-serif", color: 'var(--mut)' }}>
             Novo por aqui?
           </span>
           <span
             onClick={onSignup}
             style={{
-              font: "600 14px/1 'Inter', sans-serif",
+              font: "600 14px/1 'Figtree', sans-serif",
               color: 'var(--accent)',
               cursor: 'pointer',
             }}
@@ -108,7 +108,7 @@ function Login({ onHome, onSignup }) {
           <h2
             style={{
               margin: 0,
-              font: "600 28px/1.1 'Inter', sans-serif",
+              font: "600 28px/1.1 'Figtree', sans-serif",
               letterSpacing: '-0.025em',
               color: 'var(--ink)',
             }}
@@ -118,7 +118,7 @@ function Login({ onHome, onSignup }) {
           <p
             style={{
               margin: '8px 0 28px',
-              font: "400 15px/1.5 'Inter', sans-serif",
+              font: "400 15px/1.5 'Figtree', sans-serif",
               color: 'var(--mut)',
             }}
           >
@@ -154,7 +154,7 @@ function Login({ onHome, onSignup }) {
               <label style={estiloLabel}>Senha</label>
               <span
                 style={{
-                  font: "400 13px/1 'Inter', sans-serif",
+                  font: "400 13px/1 'Figtree', sans-serif",
                   color: 'var(--accent)',
                   cursor: 'pointer',
                 }}
@@ -178,7 +178,7 @@ function Login({ onHome, onSignup }) {
           <button
             onClick={enviar}
             className="eg-btn-primario"
-            style={{ width: '100%', padding: 14, marginTop: 18, font: "600 16px/1 'Inter', sans-serif" }}
+            style={{ width: '100%', padding: 14, marginTop: 18, font: "600 16px/1 'Figtree', sans-serif" }}
           >
             {enviando ? 'Entrando…' : 'Entrar'}
           </button>
@@ -186,7 +186,7 @@ function Login({ onHome, onSignup }) {
           {/* Divisor "ou" */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '24px 0' }}>
             <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
-            <span style={{ font: "400 12px/1 'Inter', sans-serif", color: 'var(--faint)' }}>ou</span>
+            <span style={{ font: "400 12px/1 'Figtree', sans-serif", color: 'var(--faint)' }}>ou</span>
             <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
           </div>
 
@@ -194,7 +194,7 @@ function Login({ onHome, onSignup }) {
             style={{
               margin: 0,
               textAlign: 'center',
-              font: "400 14px/1 'Inter', sans-serif",
+              font: "400 14px/1 'Figtree', sans-serif",
               color: 'var(--mut)',
             }}
           >

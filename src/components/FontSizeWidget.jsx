@@ -42,7 +42,7 @@ function FontSizeWidget() {
         style={{
           ...estiloBotaoBase,
           borderRadius: '14px 14px 6px 6px',
-          font: "700 22px/1 'Inter', sans-serif",
+          font: "700 22px/1 'Figtree', sans-serif",
           opacity: fonteNoMaximo ? 0.35 : 1,
         }}
       >
@@ -50,7 +50,7 @@ function FontSizeWidget() {
       </button>
       <span
         style={{
-          font: "600 10px/1 'IBM Plex Mono', monospace",
+          font: "600 10px/1 'JetBrains Mono', monospace",
           letterSpacing: '0.05em',
           color: 'var(--mut)',
         }}
@@ -64,7 +64,7 @@ function FontSizeWidget() {
         style={{
           ...estiloBotaoBase,
           borderRadius: '6px 6px 14px 14px',
-          font: "700 13px/1 'Inter', sans-serif",
+          font: "700 13px/1 'Figtree', sans-serif",
           opacity: fonteNoMinimo ? 0.35 : 1,
         }}
       >

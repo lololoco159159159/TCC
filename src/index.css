@@ -28,7 +28,6 @@
   /* aliases de compatibilidade (código ainda não migrado) */
   --bg-soft: var(--bg2);
   --card: var(--pill-bg);
-  --card-rgb: 251, 248, 241;
   --ink: var(--text);
   --mut: var(--muted);
   --line: var(--pill-border);
@@ -55,7 +54,6 @@
   --pill-border: #222c27;
 
   /* aliases de compatibilidade */
-  --card-rgb: 18, 25, 21;
   --accent-rgb: 58, 167, 109;
 }
 
@@ -144,30 +142,6 @@ input::placeholder {
 }
 
 .eg-btn-primario:active {
-  transform: scale(0.96);
-}
-
-.eg-btn-secundario {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: transparent;
-  color: var(--ink);
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  font-family: 'Figtree', sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.1px;
-  cursor: pointer;
-  transition: transform 0.12s ease, border-color 0.2s, color 0.2s;
-}
-
-.eg-btn-secundario:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.eg-btn-secundario:active {
   transform: scale(0.96);
 }
 

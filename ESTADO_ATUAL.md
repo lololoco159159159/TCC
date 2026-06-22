@@ -39,7 +39,7 @@ a autoridade da paleta**. Nomes dos tokens (do protótipo): `--bg --bg2 --text
 
 ### Aliases de compatibilidade (importante!)
 `index.css` ainda define aliases dos nomes **antigos** (`--ink --accent
---accent-hover --line --line-strong --card --bg-soft --mut --*-rgb`) apontando para
+--accent-hover --line --line-strong --card --bg-soft --mut --accent-rgb`) apontando para
 os novos tokens. Isso mantém **Login** e **Signup** funcionando com a paleta nova
 **antes** de serem migrados. Ao migrar essas telas para os tokens novos, remover os
 aliases que deixarem de ser usados.
@@ -65,6 +65,14 @@ aliases que deixarem de ser usados.
 
 Verificado: `npm run build`, `npm run lint` (só 1 warning pré-existente em
 ThemeContext.jsx) e `npm run dev` (HTTP 200) OK.
+
+### Limpeza de código (2026-06-22)
+Removidos artefatos do template Vite e resíduos do redesenho da Home:
+- Apagados `src/App.css` (boilerplate não importado) e `src/assets/react.svg` (sem referência).
+- Removida a classe `.eg-btn-secundario` de `index.css` (o hero novo usa botões inline).
+- Removido o token `--card-rgb` (sem uso após a reescrita da Home).
+- Normalizadas as fontes em Login, Signup e FontSizeWidget: Inter→Figtree e
+  IBM Plex Mono→JetBrains Mono (as antigas não são mais carregadas pelo `index.html`).
 
 ## 4. O que FALTA (próximas etapas)
 
@@ -130,8 +138,8 @@ src/
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
 ├── pages/
 │   ├── Home.jsx               # Header + Hero (Etapa 1 — FEITO)
-│   ├── Login.jsx              # ainda no visual antigo (herda paleta via aliases)
-│   └── Signup.jsx             # ainda no visual antigo (herda paleta via aliases)
+│   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
+│   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
 ├── assets/{ufes,labotim}.png  # logos extraídos (ainda não usados)
 ├── App.jsx                    # roteamento por estado
 ├── main.jsx                   # entrada React

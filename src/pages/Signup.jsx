@@ -6,7 +6,7 @@ import ThemeToggle from '../components/ThemeToggle'
 const estiloLabel = {
   display: 'block',
   marginBottom: 8,
-  font: "500 11px/1 'IBM Plex Mono', monospace",
+  font: "500 11px/1 'JetBrains Mono', monospace",
   letterSpacing: '0.1em',
   color: 'var(--mut)',
   textTransform: 'uppercase',
@@ -14,7 +14,7 @@ const estiloLabel = {
 
 const estiloErro = {
   marginTop: 7,
-  font: "400 13px/1.3 'Inter', sans-serif",
+  font: "400 13px/1.3 'Figtree', sans-serif",
   color: '#d1453b',
 }
 
@@ -76,13 +76,13 @@ function Signup({ onHome, onLogin }) {
         <Logo onClick={onHome} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <ThemeToggle style={{ marginRight: 10 }} />
-          <span style={{ font: "400 14px/1 'Inter', sans-serif", color: 'var(--mut)' }}>
+          <span style={{ font: "400 14px/1 'Figtree', sans-serif", color: 'var(--mut)' }}>
             Já tem conta?
           </span>
           <span
             onClick={onLogin}
             style={{
-              font: "600 14px/1 'Inter', sans-serif",
+              font: "600 14px/1 'Figtree', sans-serif",
               color: 'var(--accent)',
               cursor: 'pointer',
             }}
@@ -115,7 +115,7 @@ function Signup({ onHome, onLogin }) {
           <h2
             style={{
               margin: 0,
-              font: "600 28px/1.1 'Inter', sans-serif",
+              font: "600 28px/1.1 'Figtree', sans-serif",
               letterSpacing: '-0.025em',
               color: 'var(--ink)',
             }}
@@ -125,7 +125,7 @@ function Signup({ onHome, onLogin }) {
           <p
             style={{
               margin: '8px 0 28px',
-              font: "400 15px/1.5 'Inter', sans-serif",
+              font: "400 15px/1.5 'Figtree', sans-serif",
               color: 'var(--mut)',
             }}
           >
@@ -183,7 +183,7 @@ function Signup({ onHome, onLogin }) {
           <button
             onClick={enviar}
             className="eg-btn-primario"
-            style={{ width: '100%', padding: 14, marginTop: 18, font: "600 16px/1 'Inter', sans-serif" }}
+            style={{ width: '100%', padding: 14, marginTop: 18, font: "600 16px/1 'Figtree', sans-serif" }}
           >
             {enviando ? 'Criando conta…' : 'Criar conta'}
           </button>
@@ -192,7 +192,7 @@ function Signup({ onHome, onLogin }) {
             style={{
               margin: '18px 0 0',
               textAlign: 'center',
-              font: "400 12px/1.5 'Inter', sans-serif",
+              font: "400 12px/1.5 'Figtree', sans-serif",
               color: 'var(--faint)',
             }}
           >
