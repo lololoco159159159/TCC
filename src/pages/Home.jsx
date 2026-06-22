@@ -1,6 +1,7 @@
 import Logo from '../components/Logo'
 import ThemeToggle from '../components/ThemeToggle'
 import GraphSection from '../components/GraphSection'
+import StatsBand from '../components/StatsBand'
 import labotim from '../assets/labotim.png'
 import ufes from '../assets/ufes.png'
 
@@ -259,6 +260,9 @@ function Home({ onLogin, onSignup }) {
 
       {/* Seção 2: grafo-globo interativo "Cada matéria tem sua rede." */}
       <GraphSection />
+
+      {/* Seção 3: banda de estatísticas (3 contadores animados) */}
+      <StatsBand />
     </div>
   )
 }

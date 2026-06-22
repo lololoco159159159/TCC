@@ -85,16 +85,23 @@ Removidos artefatos do template Vite e resíduos do redesenho da Home:
 - Token `--dot-color` (fundo pontilhado) adicionado em [src/index.css](src/index.css).
 - Verificado: `npm run build`, `npm run lint` (só o warning pré-existente) e `npm run dev` (200).
 
+### Etapa 3 (2026-06-22) — banda de estatísticas
+- **[src/components/StatsBand.jsx](src/components/StatsBand.jsx)** — faixa `#statsBand` com os
+  3 dados de exemplo (412 habilidades BNCC mapeadas · 9 áreas conectadas · 5.º–9.º ano). Os
+  números **contam de 0** até o valor final (easeInOutCubic, 1.4s) **uma única vez** quando a
+  faixa entra na viewport (`IntersectionObserver`). Renderizado no Home após `<GraphSection />`.
+  Sem token novo. Plano de origem: [PLANO_ETAPA3_STATS_BAND.md](PLANO_ETAPA3_STATS_BAND.md).
+- Verificado: `npm run build`, `npm run lint` (só o warning pré-existente) e `npm run dev` (200).
+
 ## 4. O que FALTA (próximas etapas)
 
 Em ordem aproximada das seções do protótipo final:
 
-1. **Banda de estatísticas** (`#statsBand`) — 3 contadores animados (412 habilidades, etc.).
-2. **Seção de depoimentos** (`sticky`, `#testiScrollZone` 520vh). No protótipo usa WebGL
+1. **Seção de depoimentos** (`sticky`, `#testiScrollZone` 520vh). No protótipo usa WebGL
    (three.js) numa galeria; avaliar porte fiel vs. simplificado.
-3. **Footer** completo.
-4. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos).
-5. **Back-end**: Apache Jena Fuseki (SPARQL) + lib de visualização de grafo
+2. **Footer** completo.
+3. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos).
+4. **Back-end**: Apache Jena Fuseki (SPARQL) + lib de visualização de grafo
    (Cytoscape.js / react-force-graph / D3 — a definir).
 
 ## 5. Como ler o protótipo final (arquivo "bundled")
@@ -144,9 +151,10 @@ src/
 │   ├── Logo.jsx               # logo grafo 9 nós + "EduGraph" (Spectral)
 │   ├── ThemeToggle.jsx        # toggle sol/lua (já bate com o protótipo)
 │   ├── GraphSection.jsx       # seção 2: grafo-globo interativo (Etapa 2 — FEITO)
+│   ├── StatsBand.jsx          # seção 3: banda de estatísticas, 3 contadores (Etapa 3 — FEITO)
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
 ├── pages/
-│   ├── Home.jsx               # Header + Hero + GraphSection (Etapas 1-2 — FEITO)
+│   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand (Etapas 1-3 — FEITO)
 │   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
 │   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
 ├── assets/{ufes,labotim}.png  # logos institucionais (exibidos no header)
