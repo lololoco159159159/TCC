@@ -49,17 +49,34 @@ Esses dados alimentarão o grafo de conhecimento que esta interface visa exibir 
 
 ## Como rodar localmente
 
-Pré-requisito: **Node.js 18+** ([nodejs.org](https://nodejs.org))
+### 1. Instalar o Node.js e o npm
+
+**Ubuntu / Debian:**
 
 ```bash
-# 1. Instalar dependências (só na primeira vez)
-npm install
+sudo apt update
+sudo apt install -y nodejs npm
+```
 
-# 2. Subir o servidor de desenvolvimento
+### 2. Instalar as dependências do projeto
+
+Na pasta do projeto, rode **uma vez**:
+
+```bash
+npm install
+```
+
+### 3. Subir o servidor de desenvolvimento
+
+```bash
 npm run dev
 ```
 
-Abra http://localhost:5173 no navegador. As alterações em `src/` atualizam a tela automaticamente.
+Abra http://localhost:5173 no navegador. As alterações em `src/` atualizam a tela automaticamente (hot reload).
+
+---
+
+### Outros comandos
 
 ```bash
 npm run build    # gera versão otimizada em dist/
