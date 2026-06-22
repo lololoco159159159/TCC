@@ -1,130 +1,218 @@
 import Logo from '../components/Logo'
 import ThemeToggle from '../components/ThemeToggle'
 
-// Home simplificada: nav do design + hero básico com os botões de
-// acesso às telas de Entrar e Criar conta. O grafo ilustrativo, o
-// marquee de disciplinas e o footer completos virão depois.
+// Home — Etapa 1 do redesenho (protótipo final): header + hero "Conhecimento
+// conectado". A grande seção de grafo interativo, a banda de estatísticas, os
+// depoimentos e o footer completos virão nas próximas etapas.
 function Home({ onLogin, onSignup }) {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      {/* Navegação superior */}
-      <nav
+      {/* ============ HEADER ============ */}
+      <header
         style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '14px 32px',
-          background: 'rgba(var(--card-rgb), 0.82)',
-          backdropFilter: 'saturate(180%) blur(20px)',
-          WebkitBackdropFilter: 'saturate(180%) blur(20px)',
-          borderBottom: '1px solid var(--line)',
+          gap: 18,
+          padding: '20px 28px',
+          maxWidth: 1480,
+          margin: '0 auto',
         }}
       >
-        <Logo />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 30 }}>
+        <Logo tamanho={38} />
+
+        <nav
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 20,
+            fontSize: 15,
+            fontWeight: 500,
+            color: 'var(--muted)',
+            whiteSpace: 'nowrap',
+            flex: 'none',
+          }}
+        >
           <span className="eg-link-nav">Grafos</span>
           <span className="eg-link-nav">BNCC</span>
           <span className="eg-link-nav">Para escolas</span>
           <span className="eg-link-nav">Ajuda</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+        </nav>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 'none' }}>
+          {/* Logos institucionais (UFES / LabOtim) entram aqui na próxima etapa. */}
           <ThemeToggle />
           <span
             onClick={onLogin}
             style={{
-              font: "500 14px/1 'Inter', sans-serif",
-              color: 'var(--ink)',
+              fontSize: 15,
+              fontWeight: 600,
+              color: 'var(--text)',
               cursor: 'pointer',
-              letterSpacing: '-0.01em',
+              whiteSpace: 'nowrap',
             }}
           >
             Entrar
           </span>
           <button
             onClick={onSignup}
-            className="eg-btn-primario"
-            style={{ padding: '9px 18px', font: "600 14px/1 'Inter', sans-serif", whiteSpace: 'nowrap' }}
+            style={{
+              fontSize: 15,
+              fontWeight: 600,
+              color: '#fff',
+              background: 'var(--green)',
+              padding: '9px 18px',
+              borderRadius: 999,
+              border: 'none',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
           >
             Criar conta
           </button>
         </div>
-      </nav>
+      </header>
 
-      {/* Hero central  */}
-      <section style={{ padding: '70px 24px 60px' }}>
-        <div
-          style={{
-            maxWidth: 760,
-            margin: '0 auto',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textAlign: 'center',
-          }}
-        >
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 9, marginBottom: 22 }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />
-            <span
-              style={{
-                font: "500 12px/1 'IBM Plex Mono', monospace",
-                letterSpacing: '0.16em',
-                color: 'var(--mut)',
-                textTransform: 'uppercase',
-              }}
-            >
-              BNCC · Pensamento Computacional
-            </span>
-          </div>
-          <h1
-            style={{
-              margin: 0,
-              font: "600 clamp(40px, 8vw, 76px)/1.02 'Inter', sans-serif",
-              letterSpacing: '-0.035em',
-              color: 'var(--ink)',
-              maxWidth: '11ch',
-            }}
-          >
-            Conhecimento conectado.
-          </h1>
-          <p
-            style={{
-              margin: '20px 0 0',
-              font: "400 clamp(16px, 2.1vw, 20px)/1.5 'Inter', sans-serif",
-              letterSpacing: '-0.01em',
-              color: 'var(--body)',
-              maxWidth: 600,
-            }}
-          >
-            Os grafos da BNCC de Computação mostram como cada habilidade se liga às matérias que
-            você já ensina. Veja{' '}
-            <strong style={{ fontWeight: 600, color: 'var(--ink)' }}>matemática</strong> virar base
-            para <strong style={{ fontWeight: 600, color: 'var(--ink)' }}>algoritmo</strong> — e
-            planeje com o currículo inteiro à vista.
-          </p>
+      {/* ============ HERO ============ */}
+      <section
+        style={{
+          maxWidth: 1320,
+          margin: '0 auto',
+          padding: '40px 48px 30px',
+          display: 'grid',
+          gridTemplateColumns: '1.05fr 1fr',
+          gap: 40,
+          alignItems: 'center',
+          minHeight: 540,
+        }}
+      >
+        {/* Coluna esquerda: label + título + parágrafo */}
+        <div style={{ maxWidth: 560 }}>
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: 12,
-              marginTop: 32,
-              flexWrap: 'wrap',
-              justifyContent: 'center',
+              font: "12px/1 'JetBrains Mono', monospace",
+              letterSpacing: '0.14em',
+              color: 'var(--muted)',
+              textTransform: 'uppercase',
+              marginBottom: 26,
             }}
           >
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--gold)' }} />
+            <span style={{ width: 30, height: 1, background: 'var(--edge)' }} />
+            <span>BNCC · Pensamento Computacional</span>
+          </div>
+
+          <h1
+            style={{
+              margin: 0,
+              font: "700 clamp(52px, 6vw, 88px)/0.98 'Spectral', serif",
+              letterSpacing: '-0.02em',
+              color: 'var(--text)',
+              marginBottom: 26,
+            }}
+          >
+            Conhecimento
+            <br />
+            <em style={{ fontStyle: 'italic', fontWeight: 600, color: 'var(--gold)' }}>
+              conectado.
+            </em>
+          </h1>
+
+          <p
+            style={{
+              margin: 0,
+              fontSize: 18,
+              lineHeight: 1.62,
+              color: 'var(--muted)',
+              maxWidth: 480,
+            }}
+          >
+            Os grafos da BNCC de Computação mostram como cada habilidade se liga às matérias que
+            você já ensina. Veja{' '}
+            <strong style={{ color: 'var(--text)', fontWeight: 700 }}>matemática</strong> virar base
+            para <strong style={{ color: 'var(--text)', fontWeight: 700 }}>algoritmo</strong> — e
+            planeje com o currículo inteiro à vista.
+          </p>
+        </div>
+
+        {/* Coluna direita: dois grupos de CTA separados por divisor "ou" */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            justifyContent: 'center',
+            maxWidth: 330,
+            width: '100%',
+            margin: '0 auto',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 11 }}>
+            <span
+              style={{
+                font: "12px/1 'JetBrains Mono', monospace",
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'var(--muted)',
+              }}
+            >
+              Junte-se à comunidade
+            </span>
             <button
               onClick={onSignup}
-              className="eg-btn-primario"
-              style={{ padding: '13px 24px', font: "600 15px/1 'Inter', sans-serif" }}
+              style={{
+                width: '100%',
+                textAlign: 'center',
+                fontSize: 16,
+                fontWeight: 600,
+                color: '#fff',
+                background: 'var(--green)',
+                padding: '16px 28px',
+                borderRadius: 999,
+                border: 'none',
+                cursor: 'pointer',
+              }}
             >
               Criar conta gratuita
             </button>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '26px 2px' }}>
+            <span style={{ flex: 1, height: 1, background: 'var(--edge)' }} />
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--green)' }} />
+            <span
+              style={{
+                font: "11px/1 'JetBrains Mono', monospace",
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: 'var(--muted)',
+              }}
+            >
+              ou
+            </span>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--gold)' }} />
+            <span style={{ flex: 1, height: 1, background: 'var(--edge)' }} />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 11 }}>
+            <span style={{ fontSize: 13, color: 'var(--faint)' }}>Já possui conta?</span>
             <button
               onClick={onLogin}
-              className="eg-btn-secundario"
-              style={{ padding: '13px 24px', font: "600 15px/1 'Inter', sans-serif" }}
+              style={{
+                width: '100%',
+                textAlign: 'center',
+                fontSize: 16,
+                fontWeight: 600,
+                color: 'var(--text)',
+                background: 'transparent',
+                padding: '16px 28px',
+                borderRadius: 999,
+                border: '1px solid var(--pill-border)',
+                cursor: 'pointer',
+              }}
             >
               Entrar
             </button>

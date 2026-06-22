@@ -20,6 +20,8 @@ Um professor de Matemática, por exemplo, pode entrar no grafo, selecionar sua d
 
 Este repositório contém o **front-end React** do projeto. Por enquanto, as telas estão implementadas com dados estáticos; a integração com o servidor de grafos (Apache Jena Fuseki via SPARQL) está prevista para a segunda etapa do TCC.
 
+A interface está sendo migrada por partes para o protótipo final (nova paleta creme/verde/dourado e novas fontes). O andamento detalhado dessa migração — o que já foi feito e o que falta — está em [ESTADO_ATUAL.md](ESTADO_ATUAL.md).
+
 **Telas disponíveis:**
 
 | Tela | Descrição |
@@ -30,7 +32,7 @@ Este repositório contém o **front-end React** do projeto. Por enquanto, as tel
 
 **Recursos de acessibilidade:**
 
-- **Modo claro / escuro** — toggle sol/lua na barra de navegação; no modo escuro o acento visual muda de verde para roxo. A preferência persiste entre sessões.
+- **Modo claro / escuro** — toggle sol/lua na barra de navegação; o modo claro usa fundo creme com acentos verde e dourado, e o escuro inverte para fundo preto com verde e âmbar. A preferência persiste entre sessões.
 - **Tamanho de fonte** — botões A/A na lateral direita ajustam o zoom do site em 6 níveis (60% a 160%). A preferência persiste entre sessões.
 
 ## Contexto acadêmico
@@ -44,7 +46,7 @@ Esses dados alimentarão o grafo de conhecimento que esta interface visa exibir 
 - **React 18** + **Vite** — interface e build
 - **JavaScript / JSX** — sem TypeScript por ora
 - **CSS Variables** — sistema de temas (claro/escuro) sem biblioteca de UI
-- **Google Fonts** — Inter (interface) e IBM Plex Mono (rótulos e labels)
+- **Google Fonts** — Spectral (títulos), Figtree (interface) e JetBrains Mono (rótulos e labels)
 - Futuro: **Apache Jena Fuseki** (servidor SPARQL) e biblioteca de visualização de grafos (Cytoscape.js, react-force-graph ou D3.js — a definir)
 
 ## Como rodar localmente

@@ -1,25 +1,37 @@
-// Logo do EduGraph: três nós conectados (mini grafo) + nome do produto.
+// Logo do EduGraph: grafo de 9 nós conectados + nome do produto.
 // Usado na nav da home e no topo das telas de Entrar / Criar conta.
 // As cores vêm das variáveis de tema, então o logo acompanha o modo escuro.
-function Logo({ onClick, tamanho = 22 }) {
+function Logo({ onClick, tamanho = 38 }) {
+  const altura = Math.round((tamanho * 120) / 150)
   return (
     <div
       onClick={onClick}
-      style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
     >
-      <svg width={tamanho} height={tamanho} viewBox="0 0 22 22" fill="none">
-        <line x1="6" y1="6" x2="16" y2="9" style={{ stroke: 'var(--accent)' }} strokeWidth="1.7" />
-        <line x1="16" y1="9" x2="9.5" y2="16.5" style={{ stroke: 'var(--accent)' }} strokeWidth="1.7" />
-        <line x1="6" y1="6" x2="9.5" y2="16.5" style={{ stroke: 'var(--line-strong)' }} strokeWidth="1.7" />
-        <circle cx="6" cy="6" r="3.1" style={{ fill: 'var(--ink)' }} />
-        <circle cx="16" cy="9" r="3.1" style={{ fill: 'var(--accent)' }} />
-        <circle cx="9.5" cy="16.5" r="2.6" style={{ fill: 'var(--ink)' }} />
+      <svg width={tamanho} height={altura} viewBox="0 0 150 120" fill="none" aria-hidden="true">
+        <path
+          d="M33 47L64 46M64 46L80 74M80 74L64 100M64 100L34 101M34 101L18 74M18 74L33 47M49 74L33 47M49 74L64 46M49 74L80 74M49 74L64 100M49 74L34 101M49 74L18 74M64 46L101 20M101 20L132 44"
+          style={{ stroke: 'var(--green)' }}
+          strokeWidth="3"
+          strokeOpacity=".45"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx="33" cy="47" r="8" style={{ fill: 'var(--gold)' }} />
+        <circle cx="64" cy="46" r="8" style={{ fill: 'var(--green)' }} />
+        <circle cx="80" cy="74" r="8" style={{ fill: 'var(--green-deep)' }} />
+        <circle cx="64" cy="100" r="8" style={{ fill: 'var(--gold)' }} />
+        <circle cx="34" cy="101" r="8" style={{ fill: 'var(--green)' }} />
+        <circle cx="18" cy="74" r="8" style={{ fill: 'var(--green-deep)' }} />
+        <circle cx="49" cy="74" r="9.5" style={{ fill: 'var(--green)' }} />
+        <circle cx="101" cy="20" r="8" style={{ fill: 'var(--gold)' }} />
+        <circle cx="132" cy="44" r="8" style={{ fill: 'var(--green)' }} />
       </svg>
       <span
         style={{
-          font: "700 18px/1 'Inter', sans-serif",
-          letterSpacing: '-0.02em',
-          color: 'var(--ink)',
+          font: "700 22px/1 'Spectral', serif",
+          letterSpacing: '-0.01em',
+          color: 'var(--text)',
         }}
       >
         EduGraph
