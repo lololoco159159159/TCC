@@ -224,7 +224,7 @@ function TestimonialsSection() {
             const stepX = cardW + vw * 0.7 // separação entre cards
             const baseX = vw * 0.19 // mantém o ativo em centro-direita (~69%)
             const x = baseX + dist * stepX
-            const scale = 1 - Math.min(ad, 2) * 0.055 // encolhe "muito pouco"
+            const scale = 1 - Math.min(ad, 2) * 0.5 // encolhe "muito pouco"
             const opacity = ad > 1.8 ? Math.max(0, 1 - (ad - 1.8) * 2) : 1 // só some já fora da tela
             const zIndex = 100 - Math.round(ad * 10)
             const shOff = Math.round(cardW * 0.05) // sombra quadrada (offset ~ protótipo)
