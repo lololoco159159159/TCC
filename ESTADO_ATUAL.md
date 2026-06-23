@@ -143,6 +143,24 @@ Removidos artefatos do template Vite e resíduos do redesenho da Home:
   (`var(--edge)`, levemente inclinadas) no topo e na base — as "linhas da parede" do protótipo.
 - `--testi-bg` ajustado para `#fdfdfb` (branco levemente quente).
 
+#### Imersão / animação da "parede" (2026-06-22)
+Aproximação maior ao protótipo WebGL em [src/components/TestimonialsSection.jsx](src/components/TestimonialsSection.jsx):
+- **Card desliza para a esquerda e encolhe de leve** (`scale` ~−5,5%/card) em vez de
+  **esmaecer**: removido o fade por `opacity`; o card ativo descansa em centro-direita
+  (`baseX = vw*0.19`) e cada passo de scroll (`stepX = cardW + vw*0.14`) empurra todos
+  para a esquerda. Cards distantes saem da tela (cortados pelo `overflow:hidden` da `<section>`).
+- **Nome do professor por cima do card**: o container dos cards passou a ocupar a seção
+  inteira (`inset:0`) com `zIndex:2`, **abaixo da legenda** (`zIndex:5`) — o card que sai
+  escorrega por baixo do nome em itálico da legenda.
+- **Sombra quadrada**: troca da sombra borrada por uma sólida **sem blur**
+  (`Npx Npx 0 0 rgba(0,0,0,.16)`, offset ~5% da largura), acompanhando a inclinação do
+  card — como o plano de sombra do protótipo.
+- **Parede mais inclinada** (`rotateY(-10deg)` → `rotateY(-14deg)`, ≈ os −0,25 rad do
+  WebGL) e **card maior** (`cardH` máx. 880→960; largura máx. 50%→54% da viewport).
+- **Linhas de enfeite mais diagonais** (inclinação ~5%→~16%), reforçando a perspectiva
+  da "parede" convergindo à esquerda.
+- Verificado: `npm run dev` (módulo transpila via Vite, HTTP 200).
+
 ## 4. O que FALTA (próximas etapas)
 
 Em ordem aproximada das seções do protótipo final:
@@ -200,7 +218,7 @@ src/
 │   ├── ThemeToggle.jsx        # toggle sol/lua (já bate com o protótipo)
 │   ├── GraphSection.jsx       # seção 2: grafo-globo interativo (Etapa 2 — FEITO)
 │   ├── StatsBand.jsx          # seção 3: banda de estatísticas, 3 contadores (Etapa 3 — FEITO)
-│   ├── TestimonialsSection.jsx # seção 4: depoimentos coverflow (Etapa 4 — FEITO)
+│   ├── TestimonialsSection.jsx # seção 4: depoimentos, card deslizante/parede (Etapa 4 — FEITO)
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
 ├── data/
 │   └── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)

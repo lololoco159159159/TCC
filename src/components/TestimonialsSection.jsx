@@ -7,7 +7,7 @@ import depoimentos from '../data/depoimentos'
 // (nº + nome + função/etapa) à esquerda; UM card grande à direita, levemente
 // inclinado, com o depoimento em destaque; barra de progresso na base. Uma zona
 // sticky de 300vh prende a seção e o scroll avança pelos 5 depoimentos — o card
-// ativo desliza/esmaece dando lugar ao próximo. Sem three.js nem dependências novas.
+// ativo desliza dando lugar ao próximo. Sem three.js nem dependências novas.
 
 const N = depoimentos.length
 const clamp01 = (x) => Math.max(0, Math.min(1, x))
@@ -61,10 +61,10 @@ function TestimonialsSection() {
 
   // dimensões responsivas do card (retrato 14:18) — o maior possível pela altura
   // disponível, sem invadir a barra de progresso, e limitado pela largura da área.
-  let cardH = Math.max(460, Math.min(wh - 180, 880))
+  let cardH = Math.max(520, Math.min(wh - 150, 960))
   let cardW = cardH * (14 / 18)
-  if (cardW > vw * 0.5) {
-    cardW = vw * 0.5
+  if (cardW > vw * 0.54) {
+    cardW = vw * 0.54
     cardH = cardW * (18 / 14)
   }
 
@@ -89,8 +89,8 @@ function TestimonialsSection() {
         >
           {/* faixas hugando os cantos, inclinadas como a "parede" em perspectiva
               (topo sobe para a direita; base desce para a direita) */}
-          <line x1="-2%" y1="5%" x2="102%" y2="0%" stroke="var(--edge)" strokeWidth="1" opacity="0.75" />
-          <line x1="-2%" y1="89%" x2="102%" y2="94%" stroke="var(--edge)" strokeWidth="1" opacity="0.75" />
+          <line x1="-2%" y1="10%" x2="102%" y2="-6%" stroke="var(--edge)" strokeWidth="1" opacity="0.75" />
+          <line x1="-2%" y1="90%" x2="102%" y2="106%" stroke="var(--edge)" strokeWidth="1" opacity="0.75" />
         </svg>
 
         {/* ---- cabeçalho (topo-esquerda) ---- */}
@@ -211,19 +211,23 @@ function TestimonialsSection() {
         <div
           style={{
             position: 'absolute',
-            left: '38%',
-            right: 0,
-            top: 0,
-            bottom: 0,
+            inset: 0,
             perspective: 1600,
-            overflow: 'hidden',
+            zIndex: 2,
           }}
         >
           {depoimentos.map((d, i) => {
             const dist = i - pos
             const ad = Math.abs(dist)
-            const opacity = Math.max(0, 1 - ad * 1.5)
+            // desliza p/ esquerda e encolhe de leve (sem fade) — como a câmera
+            // "afastando" do protótipo; o card ativo descansa em centro-direita.
+            const stepX = cardW + vw * 0.7 // separação entre cards
+            const baseX = vw * 0.19 // mantém o ativo em centro-direita (~69%)
+            const x = baseX + dist * stepX
+            const scale = 1 - Math.min(ad, 2) * 0.055 // encolhe "muito pouco"
+            const opacity = ad > 1.8 ? Math.max(0, 1 - (ad - 1.8) * 2) : 1 // só some já fora da tela
             const zIndex = 100 - Math.round(ad * 10)
+            const shOff = Math.round(cardW * 0.05) // sombra quadrada (offset ~ protótipo)
             return (
               <article
                 key={d.nome}
@@ -237,7 +241,7 @@ function TestimonialsSection() {
                   marginTop: -cardH / 2,
                   zIndex,
                   opacity,
-                  transform: `translateX(${(dist * (cardW + 120)).toFixed(1)}px) rotateY(-10deg)`,
+                  transform: `translateX(${x.toFixed(1)}px) scale(${scale.toFixed(3)}) rotateY(-14deg)`,
                   transformStyle: 'preserve-3d',
                   display: 'flex',
                   flexDirection: 'column',
@@ -245,7 +249,7 @@ function TestimonialsSection() {
                   borderRadius: 0,
                   border: '1px solid var(--text)',
                   background: 'var(--testi-card)',
-                  boxShadow: '22px 26px 40px -10px rgba(0,0,0,0.28)',
+                  boxShadow: `${shOff}px ${shOff}px 0 0 rgba(0,0,0,0.16)`,
                 }}
               >
                 {/* índice no topo-direito */}
