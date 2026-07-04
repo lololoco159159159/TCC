@@ -3,12 +3,13 @@ import ThemeToggle from '../components/ThemeToggle'
 import GraphSection from '../components/GraphSection'
 import StatsBand from '../components/StatsBand'
 import TestimonialsSection from '../components/TestimonialsSection'
+import Footer from '../components/Footer'
 import labotim from '../assets/labotim.png'
 import ufes from '../assets/ufes.png'
 
-// Home — Etapa 1 do redesenho (protótipo final): header + hero "Conhecimento
-// conectado". A grande seção de grafo interativo, a banda de estatísticas, os
-// depoimentos e o footer completos virão nas próximas etapas.
+// Home — landing de scroll longo (protótipo final): header + hero "Conhecimento
+// conectado" + grafo-globo interativo + banda de estatísticas + depoimentos (que
+// revelam a grade "Encontre as habilidades da sua turma.") + footer.
 function Home({ onLogin, onSignup }) {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -265,8 +266,12 @@ function Home({ onLogin, onSignup }) {
       {/* Seção 3: banda de estatísticas (3 contadores animados) */}
       <StatsBand />
 
-      {/* Seção 4: depoimentos (galeria coverflow dirigida por scroll) */}
+      {/* Seção 4: depoimentos + revelação da grade "Encontre as habilidades da
+          sua turma." (cortina dirigida por scroll) */}
       <TestimonialsSection />
+
+      {/* Footer: fim do site */}
+      <Footer onSignup={onSignup} />
     </div>
   )
 }

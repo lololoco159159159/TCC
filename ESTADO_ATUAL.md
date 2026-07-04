@@ -6,7 +6,7 @@
 > mora **aqui**. Ao iniciar uma sessão, leia este arquivo primeiro e, ao concluir
 > uma etapa, atualize-o.
 
-Última atualização: 2026-06-22.
+Última atualização: 2026-07-04.
 
 ---
 
@@ -113,8 +113,9 @@ Removidos artefatos do template Vite e resíduos do redesenho da Home:
   conteúdo verbatim do protótipo), seguindo a convenção de manter dados em `src/data/`
   para troca futura por SPARQL.
 - Tokens `--testi-accent --testi-num --testi-label --testi-value` (claro/escuro) e o
-  keyframe `egFadeUp` adicionados em [src/index.css](src/index.css). **Fora de escopo:** a
-  fase 2 do protótipo (cortina revelando cards de séries) e o WebGL.
+  keyframe `egFadeUp` adicionados em [src/index.css](src/index.css). **Fora de escopo à
+  época:** a fase 2 do protótipo (cortina revelando cards de séries — **feita na Etapa 5**)
+  e o WebGL (continua fora de escopo).
 - Plano de origem: [crie-um-plano-para-vast-lagoon.md](../../.claude/plans/crie-um-plano-para-vast-lagoon.md).
 - Verificado: `npm run lint` (só o warning pré-existente), `npm run build` (bundle +~5KB, sem
   dependência nova) e `npm run dev` (200).
@@ -161,13 +162,37 @@ Aproximação maior ao protótipo WebGL em [src/components/TestimonialsSection.j
   da "parede" convergindo à esquerda.
 - Verificado: `npm run dev` (módulo transpila via Vite, HTTP 200).
 
+### Etapa 5 (2026-07-04) — grade "Encontre as habilidades da sua turma." + footer
+Última seção do protótipo + fim do site. No protótipo a grade **não** é seção solta: é
+a **camada de fundo** do scroll-zone dos depoimentos (cortina de 520vh). Optou-se pela
+**revelação integrada** (fiel ao protótipo), estendendo o componente de depoimentos.
+- **[src/components/TestimonialsSection.jsx](src/components/TestimonialsSection.jsx)** —
+  agora implementa a **fase 2 (cortina)** que a Etapa 4 deixou de fora. O `#testiScrollZone`
+  cresceu de **300vh → 520vh** e o scroll tem duas fases: `SPLIT = 0.6` reparte entre o
+  **desfile** dos depoimentos (fase 1, inalterada — `pos = p1 * (N-1)`) e a **revelação**
+  (fase 2, `p2`). A camada da frente (depoimentos, fundo `--testi-bg`) **desliza para a
+  esquerda** (`translateX`) e sai; a borda direita varre a tela e revela **pela direita** a
+  **camada de fundo** (que entra com leve parallax da direita): kicker "Explore por série" + título "Encontre as
+  habilidades da sua turma." + parágrafo + link "Ver todos os grafos" + 8 `GradeCard`
+  (hover destaca com borda/texto dourado→escuro). O fundo da `<section>` passou de
+  `--testi-bg` para `--bg2`. A barra de progresso agora acompanha `p1`.
+- **[src/data/series.js](src/data/series.js)** — as 8 séries (5.º ano…3.º EM) com o nº de
+  habilidades (mock; troca futura por SPARQL), seguindo a convenção de `src/data/`.
+- **[src/components/Footer.jsx](src/components/Footer.jsx)** — footer completo (fiel ao
+  protótipo): marca (**reusa `<Logo>`**) + descrição, colunas **Plataforma**/**Apoio**,
+  parceiros **LabOtim**/**UFES** (**reusa** os assets do header) e rodapé legal. "Criar conta"
+  chama `onSignup`. Renderizado no [Home.jsx](src/pages/Home.jsx) após `<TestimonialsSection />`.
+- Tokens `--grade-card --grade-card-hover` (claro/escuro) e classes `.eg-footer-link` /
+  `.eg-footer-legal` adicionados em [src/index.css](src/index.css).
+- Verificado: `npm run lint` (só o warning pré-existente), `npm run build` (46 módulos, sem
+  dependência nova) e `npm run dev` (HTTP 200, sem erro de transform).
+
 ## 4. O que FALTA (próximas etapas)
 
-Em ordem aproximada das seções do protótipo final:
+Com a Etapa 5, a landing (Home) está **completa** do header ao footer. Restam:
 
-1. **Footer** completo.
-2. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos).
-3. **Back-end**: Apache Jena Fuseki (SPARQL) + lib de visualização de grafo
+1. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos).
+2. **Back-end**: Apache Jena Fuseki (SPARQL) + lib de visualização de grafo
    (Cytoscape.js / react-force-graph / D3 — a definir).
 
 ## 5. Como ler o protótipo final (arquivo "bundled")
@@ -218,15 +243,17 @@ src/
 │   ├── ThemeToggle.jsx        # toggle sol/lua (já bate com o protótipo)
 │   ├── GraphSection.jsx       # seção 2: grafo-globo interativo (Etapa 2 — FEITO)
 │   ├── StatsBand.jsx          # seção 3: banda de estatísticas, 3 contadores (Etapa 3 — FEITO)
-│   ├── TestimonialsSection.jsx # seção 4: depoimentos, card deslizante/parede (Etapa 4 — FEITO)
+│   ├── TestimonialsSection.jsx # seção 4: depoimentos + cortina que revela a grade de séries (Etapas 4-5 — FEITO)
+│   ├── Footer.jsx             # footer / fim do site (Etapa 5 — FEITO)
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
 ├── data/
-│   └── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
+│   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
+│   └── series.js              # 8 séries + nº de habilidades (mock; futuro SPARQL)
 ├── pages/
-│   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials (Etapas 1-4 — FEITO)
+│   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
 │   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
 │   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
-├── assets/{ufes,labotim}.png  # logos institucionais (exibidos no header)
+├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)
 ├── App.jsx                    # roteamento por estado
 ├── main.jsx                   # entrada React
 └── index.css                  # design system (tokens + aliases + classes .eg-*)

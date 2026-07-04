@@ -34,6 +34,10 @@
   --testi-label: #9a958a;
   --testi-value: #3c4843;
 
+  /* seção "Explore por série" (grade de habilidades) */
+  --grade-card: #f7f2e8;
+  --grade-card-hover: #e6ddca;
+
   /* aliases de compatibilidade (código ainda não migrado) */
   --bg-soft: var(--bg2);
   --card: var(--pill-bg);
@@ -70,6 +74,10 @@
   --testi-num: #8e4806;
   --testi-label: #8e4806;
   --testi-value: #ede6d8;
+
+  /* seção "Explore por série" (cards destacados do preto) */
+  --grade-card: #121915;
+  --grade-card-hover: #1b241f;
 
   /* aliases de compatibilidade */
   --accent-rgb: 58, 167, 109;
@@ -195,4 +203,28 @@ input::placeholder {
 
 .eg-link-nav:hover {
   color: var(--ink);
+}
+
+/* ---- Links do footer ---- */
+
+.eg-footer-link {
+  font: 400 14px/1 'Figtree', sans-serif;
+  color: var(--body);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.eg-footer-link:hover {
+  color: var(--green);
+}
+
+.eg-footer-legal {
+  font-size: 12px;
+  color: var(--faint);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.eg-footer-legal:hover {
+  color: var(--body);
 }
