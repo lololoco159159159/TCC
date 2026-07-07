@@ -56,7 +56,7 @@ const CY = 340
 const R = 322
 const clamp01 = (x) => Math.max(0, Math.min(1, x))
 
-function GraphSection() {
+function GraphSection({ onGrafos }) {
   const zoneRef = useRef(null)
   const [sp, setSp] = useState(0) // progresso de scroll 0..1
   const [hover, setHover] = useState(null)
@@ -449,6 +449,10 @@ function GraphSection() {
               </p>
               <a
                 href="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onGrafos?.()
+                }}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',

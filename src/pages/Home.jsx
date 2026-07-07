@@ -263,7 +263,7 @@ function Home({ onLogin, onSignup, onGrafos }) {
       </section>
 
       {/* Seção 2: grafo-globo interativo "Cada matéria tem sua rede." */}
-      <GraphSection />
+      <GraphSection onGrafos={onGrafos} />
 
       {/* Seção 3: banda de estatísticas (3 contadores animados) */}
       <StatsBand />
