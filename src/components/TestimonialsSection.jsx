@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import depoimentos from '../data/depoimentos'
-import series from '../data/series'
+import { habilidadesPorAno } from '../data/mockFuseki'
 import MateriaPopover from './MateriaPopover'
 
 // Seção "Quem ensina, sabe o que funciona." — depoimentos + grade de séries.
@@ -16,6 +16,10 @@ import MateriaPopover from './MateriaPopover'
 const N = depoimentos.length
 const clamp01 = (x) => Math.max(0, Math.min(1, x))
 const dois = (n) => String(n).padStart(2, '0')
+
+// Séries da grade vêm do "back-end" (mock do Fuseki) — mesma fonte da página de
+// grafos e da banda de estatísticas; futura consulta SPARQL de agregação.
+const series = habilidadesPorAno()
 
 // Card de uma série na grade "Explore por série": nº de habilidades + o ano.
 // No hover/aberto ganha destaque (fundo/borda dourada e texto escuro). Clicar

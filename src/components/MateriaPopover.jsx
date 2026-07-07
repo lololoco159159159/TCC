@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import materias from '../data/materias'
+import { LISTA_DISCIPLINAS } from '../data/mockFuseki'
 
 // Popover ("balão") ancorado a um card de série na grade "Explore por série".
 // Sobe ao abrir (keyframe egFadeUp), com uma setinha apontando para o card.
@@ -8,6 +8,8 @@ import materias from '../data/materias'
 // O grid não se mexe: o balão é position:absolute (fora do fluxo) sobre o card.
 
 const TODAS = 'Todas as matérias'
+// As matérias vêm do "back-end" (mock do Fuseki) — mesma fonte da página de grafos.
+const materias = LISTA_DISCIPLINAS.map((d) => d.label)
 
 function MateriaPopover({ ano, onClose, placement = 'baixo', anchorRef }) {
   const ref = useRef(null)

@@ -230,6 +230,52 @@ claro/escuro do site** com ThemeToggle (o protótipo é só claro). A implementa
 - Verificado: `npm run lint` (só o warning pré-existente), `npm run build` (sem dependência
   nova) e `npm run dev` (HTTP 200).
 
+### Etapa 8 (2026-07-07) — página "Grafos": dados / mock do Fuseki (G2)
+- **[src/data/mockFuseki.js](src/data/mockFuseki.js)** — o endpoint SPARQL **simulado**,
+  extraído **verbatim** do asset `mock-fuseki.js` do bundle do protótipo (receita no §5)
+  — só ganhou a nota de proveniência no cabeçalho. ES module puro (sem API de browser;
+  usa apenas `performance.now()`, disponível em browser e Node). Exports: `PREFIXOS
+  EIXOS ANOS RELACOES NOS ARESTAS LISTA_* INDICE`, `buscar()`, `construirConsulta{Grafo,
+  Expansao,Detalhe}()` (SPARQL real), `config`/`setConfig()`, `consultarFuseki()`
+  (Promise no contrato `application/sparql-results+json` + `ms`; simula latência, erro
+  HTTP 503 e recorte vazio) e `conexoesDe()` (conexões agrupadas por relação).
+- **Correção de contagens** (o relatório da decodificação havia estimado errado): são
+  **64 nós** (**8 disciplinas** + 11 conceitos + 45 habilidades — as 8 disciplinas batem
+  com as 8 matérias de `materias.js`) e **169 arestas** (53 `desenvolve` ·
+  82 `podeSerTrabalhadaEm` · 34 `progrideDe`). §4.1 e §5 corrigidos.
+- **Sem UI nova** (critério da G2): nada importa o módulo ainda — o bundle não mudou.
+- Testado via Node (script de aceitação): contagens, `buscar` (acentos/pontuação),
+  consultas SPARQL geradas, `consultarFuseki` nos 3 tipos + modos vazio/erro/latência,
+  `setConfig` e `conexoesDe`. Tudo passou.
+- Verificado: `npm run lint` (0 erros no módulo novo; só o warning pré-existente),
+  `npm run build` e `npm run dev` (módulo transpila e serve com HTTP 200).
+
+#### Ajuste (2026-07-07) — recorte 5.º–9.º ano + dados dinâmicos na Home
+- **[src/data/mockFuseki.js](src/data/mockFuseki.js)** — removido o **Ensino Médio**
+  (entrada `EM` de `ANOS` e as 8 habilidades `EM13CO*`): o site cobre o fundamental.
+  Novas contagens: **56 nós** (8 disciplinas + 11 conceitos + **37 habilidades**) e
+  **136 arestas** (43 `desenvolve` · 67 `podeSerTrabalhadaEm` · 26 `progrideDe`), zero
+  arestas órfãs (nenhuma habilidade EF apontava `prog` para EM). Nova função exportada
+  **`estatisticas()`** → `{ habilidades, componentes, anoInicial, anoFinal }` (futuro:
+  consulta SPARQL de agregação). O cabeçalho documenta os desvios do original.
+- **[src/components/StatsBand.jsx](src/components/StatsBand.jsx)** — os 3 números da
+  banda deixaram de ser estáticos (412/9/5º–9º) e passam a vir de `estatisticas()` do
+  mock (a "costura" do back-end): 37 habilidades · 8 **componentes curriculares
+  conectados** (rótulo ajustado; antes "áreas de conhecimento") · 5.º–9.º ano. Quando o
+  Fuseki real existir, a banda o refletirá sem mudanças de UI.
+- **`src/data/materias.js` removido** — duplicava as 8 disciplinas do mock. O
+  [MateriaPopover.jsx](src/components/MateriaPopover.jsx) agora lê
+  `LISTA_DISCIPLINAS` do `mockFuseki.js` (fonte única).
+- **`src/data/series.js` removido** — a grade "Encontre as habilidades da sua
+  turma." ([TestimonialsSection.jsx](src/components/TestimonialsSection.jsx))
+  agora consome a nova função **`habilidadesPorAno()`** do mock (futuro: SPARQL
+  `COUNT … GROUP BY ?etapa`). Consequência visual: a grade passa a mostrar as
+  **5 séries reais do mock** (5.º–9.º ano, com 6/8/9/7/7 habilidades) em vez das
+  9 séries com números inventados — coerente com o recorte do site.
+- Verificado: teste de aceitação em Node re-rodado com as novas contagens (tudo
+  passou), `npm run lint` (0 erros), `npm run build` (mock agora entra no bundle via
+  StatsBand, +~13KB) e `npm run dev` (200 em todos os módulos alterados).
+
 ## 4. O que FALTA (próximas etapas)
 
 Com a Etapa 5, a landing (Home) está **completa** do header ao footer. Restam:
@@ -246,8 +292,9 @@ Com a Etapa 5, a landing (Home) está **completa** do header ao footer. Restam:
 Protótipo: [design/prototipo_grafo.html](design/prototipo_grafo.html) — página de
 1 viewport: header → barra de busca/filtros → `<canvas>` 2D com física custom →
 painel de detalhe flutuante → footer abaixo da dobra. Dados num **mock do Fuseki**
-(67 nós: 11 disciplinas + 11 conceitos + 45 habilidades; ~95 arestas
-`desenvolve`/`podeSerTrabalhadaEm`/`progrideDe`).
+(**56 nós**: 8 disciplinas + 11 conceitos + 37 habilidades; **136 arestas**
+`desenvolve`/`podeSerTrabalhadaEm`/`progrideDe` — recorte **5.º–9.º ano**, sem EM;
+contagens conferidas na G2 + ajuste).
 
 Regra de segurança: **uma etapa por sessão** — implementar, verificar
 (`lint`/`build`/`dev`) e registrar aqui antes de seguir à próxima. Tokens novos
@@ -256,13 +303,13 @@ sempre com contraparte escura (a página acompanha o tema do site).
 - [x] **G1 — Conexão + casca** *(Etapa 7, 2026-07-07)*: página, rota, links
   ("Grafos" na nav, "Ver todos os grafos →", "Explorar grafos"), header próprio,
   card-convite, footer.
-- [ ] **G2 — Dados (mock Fuseki)**: extrair o `mock-fuseki.js` do bundle (ver §5)
-  e portar para `src/data/mockFuseki.js` (ES module): `EIXOS/ANOS/RELACOES/NOS/
-  ARESTAS/LISTA_*`, `buscar()` (normaliza acentos, pontua por código/label/texto),
+- [x] **G2 — Dados (mock Fuseki)** *(Etapa 8, 2026-07-07)*: `mock-fuseki.js`
+  extraído do bundle e portado verbatim para `src/data/mockFuseki.js` (ES module):
+  `EIXOS/ANOS/RELACOES/NOS/ARESTAS/LISTA_*`, `buscar()`,
   `construirConsulta{Grafo,Expansao,Detalhe}()` (texto SPARQL real),
-  `consultarFuseki()` (latência/erro/vazio simulados via `setConfig`) e
-  `conexoesDe()`. Sem UI nova. Critério: 67 nós, ~95 arestas e consultas geradas
-  conferidas via console.
+  `consultarFuseki()` (latência/erro/vazio via `setConfig`) e `conexoesDe()`.
+  Sem UI nova. Aceito via teste em Node: **64 nós, 169 arestas**, consultas e
+  modos simulados conferidos.
 - [ ] **G3 — Barra de busca/filtros + máquina de estados**: busca com autocomplete
   (`buscar()`), pills de série (5º–9º), dropdowns matéria/conceito, prévia
   "N vértices", botão **Filtrar** e link Limpar (modelo de **seleção pendente**:
@@ -350,7 +397,8 @@ Particularidades:
   `dacfc242-29cf-4b8b-88e7-139502e68ac5`, **gzip+base64**). Para extrair:
   localizar o uuid no manifest JSON, decodificar base64 e dar gunzip — é um ES
   module (~29k chars) que simula o endpoint Fuseki (`consultarFuseki`, consultas
-  SPARQL reais, 67 nós, ~95 arestas).
+  SPARQL reais). **Já extraído na G2** → [src/data/mockFuseki.js](src/data/mockFuseki.js)
+  (com ajustes locais: recorte 5.º–9.º ano e `estatisticas()` — ver o cabeçalho do módulo).
 - O template usa `style-hover=`/`style-focus=` (atributos do bundler) → viram
   `:hover`/`:focus` em classes; `<sc-for>`/`<sc-if>` → `.map()`/render condicional.
 - **Só tema claro, sem CSS variables** — no porte, mapear os hex para tokens
@@ -384,8 +432,9 @@ src/
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
 ├── data/
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
-│   ├── series.js              # séries (1.º–9.º ano) + nº de habilidades (mock; futuro SPARQL)
-│   └── materias.js            # matérias/componentes curriculares (mock; futuro SPARQL)
+│   └── mockFuseki.js          # endpoint SPARQL simulado: 56 nós, 136 arestas (5.º–9.º), consultas reais,
+│                              #   estatisticas() e habilidadesPorAno(); alimenta StatsBand, MateriaPopover
+│                              #   e a grade de séries (Etapa 8/G2 — FEITO)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
 │   ├── Grafos.jsx             # página do grafo de conhecimento — casca G1 (Etapa 7); roadmap §4.1 (EM ANDAMENTO)

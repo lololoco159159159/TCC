@@ -1,10 +1,14 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
+import { estatisticas } from '../data/mockFuseki'
 
 // Banda de estatísticas: 3 números que contam de 0 até o valor final quando a
 // faixa entra na tela (uma única vez), espelhando o protótipo. Um único
 // progresso `cp` (0→1, easeInOutCubic em 1.4s) move os três em sincronia.
+// Os valores vêm do "back-end" (mock do Fuseki em src/data/mockFuseki.js) —
+// quando o endpoint SPARQL real existir, esta banda o refletirá sem mudanças.
 
 const DUR = 1400 // ms
+const EST = estatisticas() // { habilidades, componentes, anoInicial, anoFinal }
 
 function StatsBand() {
   const ref = useRef(null)
@@ -29,10 +33,10 @@ function StatsBand() {
       raf = requestAnimationFrame(tick)
     }
 
-    // Dispara uma única vez quando ~35% da faixa está visível. Usamos `threshold`
-    // (e não um `rootMargin` negativo embaixo) porque a faixa é hoje o ÚLTIMO
-    // elemento da página: com margem negativa o topo dela nunca cruzaria a linha
-    // de corte em telas altas, e os contadores ficariam presos em 0.
+    // Dispara uma única vez quando ~35% da faixa está visível. `threshold` é
+    // robusto a altura de viewport e zoom de fonte (um `rootMargin` negativo
+    // embaixo já prendeu os contadores em 0 quando a faixa era o último
+    // elemento da página).
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
@@ -51,9 +55,12 @@ function StatsBand() {
   }, [])
 
   const stats = [
-    { value: String(Math.round(412 * cp)), label: 'habilidades BNCC mapeadas' },
-    { value: String(Math.round(9 * cp)), label: 'áreas de conhecimento conectadas' },
-    { value: `5.º – ${Math.round(9 * cp)}.º ano`, label: 'anos disponíveis agora' },
+    { value: String(Math.round(EST.habilidades * cp)), label: 'habilidades BNCC mapeadas' },
+    { value: String(Math.round(EST.componentes * cp)), label: 'componentes curriculares conectados' },
+    {
+      value: `${EST.anoInicial}.º – ${Math.round(EST.anoFinal * cp)}.º ano`,
+      label: 'anos disponíveis agora',
+    },
   ]
 
   return (
