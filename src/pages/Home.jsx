@@ -10,7 +10,7 @@ import ufes from '../assets/ufes.png'
 // Home — landing de scroll longo (protótipo final): header + hero "Conhecimento
 // conectado" + grafo-globo interativo + banda de estatísticas + depoimentos (que
 // revelam a grade "Encontre as habilidades da sua turma.") + footer.
-function Home({ onLogin, onSignup }) {
+function Home({ onLogin, onSignup, onGrafos }) {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {/* ============ HEADER ============ */}
@@ -39,7 +39,9 @@ function Home({ onLogin, onSignup }) {
             flex: 'none',
           }}
         >
-          <span className="eg-link-nav">Grafos</span>
+          <span className="eg-link-nav" onClick={onGrafos}>
+            Grafos
+          </span>
           <span className="eg-link-nav">BNCC</span>
           <span className="eg-link-nav">Para escolas</span>
           <span className="eg-link-nav">Ajuda</span>
@@ -268,10 +270,10 @@ function Home({ onLogin, onSignup }) {
 
       {/* Seção 4: depoimentos + revelação da grade "Encontre as habilidades da
           sua turma." (cortina dirigida por scroll) */}
-      <TestimonialsSection />
+      <TestimonialsSection onGrafos={onGrafos} />
 
       {/* Footer: fim do site */}
-      <Footer onSignup={onSignup} />
+      <Footer onSignup={onSignup} onGrafos={onGrafos} />
     </div>
   )
 }

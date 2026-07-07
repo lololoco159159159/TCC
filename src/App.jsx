@@ -2,10 +2,11 @@ import { useState } from 'react'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import Grafos from './pages/Grafos'
 import FontSizeWidget from './components/FontSizeWidget'
 import { useTheme } from './context/ThemeContext'
 
-// Navegação por estado entre as três telas atuais.
+// Navegação por estado entre as telas.
 // Quando o site crescer, isto pode ser substituído por react-router-dom.
 function App() {
   const [tela, setTela] = useState('home')
@@ -21,8 +22,23 @@ function App() {
     pagina = <Login onHome={() => irPara('home')} onSignup={() => irPara('signup')} />
   } else if (tela === 'signup') {
     pagina = <Signup onHome={() => irPara('home')} onLogin={() => irPara('login')} />
+  } else if (tela === 'grafos') {
+    pagina = (
+      <Grafos
+        onHome={() => irPara('home')}
+        onLogin={() => irPara('login')}
+        onSignup={() => irPara('signup')}
+        onGrafos={() => irPara('grafos')}
+      />
+    )
   } else {
-    pagina = <Home onLogin={() => irPara('login')} onSignup={() => irPara('signup')} />
+    pagina = (
+      <Home
+        onLogin={() => irPara('login')}
+        onSignup={() => irPara('signup')}
+        onGrafos={() => irPara('grafos')}
+      />
+    )
   }
 
   return (

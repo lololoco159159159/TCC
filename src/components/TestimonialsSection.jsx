@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import depoimentos from '../data/depoimentos'
 import series from '../data/series'
+import MateriaPopover from './MateriaPopover'
 
 // Seção "Quem ensina, sabe o que funciona." — depoimentos + grade de séries.
 // Porte SIMPLIFICADO do protótipo (que usa three.js/WebGL numa parede 3D): aqui é
@@ -17,16 +18,37 @@ const clamp01 = (x) => Math.max(0, Math.min(1, x))
 const dois = (n) => String(n).padStart(2, '0')
 
 // Card de uma série na grade "Explore por série": nº de habilidades + o ano.
-// No hover ganha destaque (fundo/borda dourada e texto escuro), como no protótipo.
-function GradeCard({ ano, habilidades }) {
+// No hover/aberto ganha destaque (fundo/borda dourada e texto escuro). Clicar
+// abre o MateriaPopover ancorado ao card — o grid não se mexe (o balão é
+// position:absolute, fora do fluxo). Só um card fica aberto por vez (estado no pai).
+function GradeCard({ ano, habilidades, aberto, onToggle }) {
   const [hover, setHover] = useState(false)
+  const [placement, setPlacement] = useState('baixo')
+  const cardRef = useRef(null)
+
+  const aoClicar = () => {
+    if (aberto) {
+      onToggle(null)
+      return
+    }
+    // decide a direção do balão para não ser cortado pelo rodapé da <section>
+    const r = cardRef.current?.getBoundingClientRect()
+    setPlacement(r && r.bottom + 340 > window.innerHeight ? 'cima' : 'baixo')
+    onToggle(ano)
+  }
+
+  const destaque = hover || aberto
   return (
     <div
+      ref={cardRef}
+      onClick={aoClicar}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        background: hover ? 'var(--grade-card-hover)' : 'var(--grade-card)',
-        border: `1px solid ${hover ? 'var(--gold)' : 'var(--pill-border)'}`,
+        position: 'relative',
+        zIndex: aberto ? 20 : undefined,
+        background: destaque ? 'var(--grade-card-hover)' : 'var(--grade-card)',
+        border: `1px solid ${destaque ? 'var(--gold)' : 'var(--pill-border)'}`,
         borderRadius: 12,
         padding: '20px 16px',
         textAlign: 'center',
@@ -34,7 +56,7 @@ function GradeCard({ ano, habilidades }) {
         transition: 'background .25s ease, border-color .25s ease',
       }}
     >
-      <div style={{ font: "700 28px/1 'Spectral', serif", color: hover ? 'var(--text)' : 'var(--gold)' }}>
+      <div style={{ font: "700 28px/1 'Spectral', serif", color: destaque ? 'var(--text)' : 'var(--gold)' }}>
         {habilidades}
       </div>
       <div
@@ -43,20 +65,24 @@ function GradeCard({ ano, habilidades }) {
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
           marginTop: 8,
-          color: hover ? 'var(--text)' : 'var(--muted)',
+          color: destaque ? 'var(--text)' : 'var(--muted)',
         }}
       >
         {ano}
       </div>
+      {aberto && (
+        <MateriaPopover ano={ano} placement={placement} anchorRef={cardRef} onClose={() => onToggle(null)} />
+      )}
     </div>
   )
 }
 
-function TestimonialsSection() {
+function TestimonialsSection({ onGrafos }) {
   const zoneRef = useRef(null)
   const [sp, setSp] = useState(0) // progresso de scroll 0..1 no zone inteiro
   const [vw, setVw] = useState(typeof window !== 'undefined' ? window.innerWidth : 1400)
   const [wh, setWh] = useState(typeof window !== 'undefined' ? window.innerHeight : 900)
+  const [anoAberto, setAnoAberto] = useState(null) // série com o popover de matérias aberto
 
   // Progresso de scroll por rAF (imune a throttling de evento), como em GraphSection.
   useEffect(() => {
@@ -180,10 +206,14 @@ function TestimonialsSection() {
               </h2>
               <p style={{ margin: 0, fontSize: 16, lineHeight: 1.65, color: 'var(--muted)', marginBottom: 28 }}>
                 Cada série tem seu mapa de habilidades. Clique para ver o grafo e entender o que conecta o
-                currículo do 5.º ao 9.º ano.
+                currículo.
               </p>
               <a
                 href="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onGrafos?.()
+                }}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -199,10 +229,16 @@ function TestimonialsSection() {
               </a>
             </div>
 
-            {/* coluna direita: grade 4×2 com os cards de série */}
+            {/* coluna direita: grade com os cards de série */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
               {series.map((s) => (
-                <GradeCard key={s.ano} ano={s.ano} habilidades={s.habilidades} />
+                <GradeCard
+                  key={s.ano}
+                  ano={s.ano}
+                  habilidades={s.habilidades}
+                  aberto={anoAberto === s.ano}
+                  onToggle={setAnoAberto}
+                />
               ))}
             </div>
           </div>

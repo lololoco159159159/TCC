@@ -5,8 +5,9 @@ import ufes from '../assets/ufes.png'
 // Footer do EduGraph — fim do site (fiel ao protótipo final). Três faixas:
 // marca + colunas de links, parceiros institucionais (LabOtim / UFES) e rodapé
 // legal. Reaproveita o <Logo> (grafo de 9 nós + "EduGraph") e os logos já
-// extraídos em src/assets. "Criar conta" leva ao cadastro via onSignup.
-function Footer({ onSignup }) {
+// extraídos em src/assets. "Criar conta" leva ao cadastro via onSignup;
+// "Explorar grafos" leva à página de grafos via onGrafos.
+function Footer({ onSignup, onGrafos }) {
   const larguraMax = 1040
 
   return (
@@ -48,9 +49,9 @@ function Footer({ onSignup }) {
             >
               Plataforma
             </span>
-            <a href="#" className="eg-footer-link">
+            <span className="eg-footer-link" onClick={onGrafos}>
               Explorar grafos
-            </a>
+            </span>
             <a href="#" className="eg-footer-link">
               BNCC Computação
             </a>

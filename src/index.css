@@ -38,6 +38,9 @@
   --grade-card: #f7f2e8;
   --grade-card-hover: #e6ddca;
 
+  /* página de grafos (fundo da área de trabalho / canvas) */
+  --grafo-bg: #f3eddf;
+
   /* aliases de compatibilidade (código ainda não migrado) */
   --bg-soft: var(--bg2);
   --card: var(--pill-bg);
@@ -78,6 +81,9 @@
   /* seção "Explore por série" (cards destacados do preto) */
   --grade-card: #121915;
   --grade-card-hover: #1b241f;
+
+  /* página de grafos */
+  --grafo-bg: #0c110e;
 
   /* aliases de compatibilidade */
   --accent-rgb: 58, 167, 109;
@@ -227,4 +233,41 @@ input::placeholder {
 
 .eg-footer-legal:hover {
   color: var(--body);
+}
+
+/* ---- Popover de matérias (balão da grade "Explore por série") ---- */
+
+.eg-materia-chip {
+  font: 400 13.5px/1 'Figtree', sans-serif;
+  color: var(--body);
+  background: var(--pill-bg);
+  border: 1px solid var(--pill-border);
+  border-radius: 999px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.eg-materia-chip:hover {
+  border-color: var(--gold);
+}
+
+.eg-materia-chip--sel {
+  background: var(--grade-card-hover);
+  border-color: var(--green);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.eg-materia-fechar {
+  border: none;
+  background: none;
+  padding: 0;
+  font: 400 20px/1 'Figtree', sans-serif;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.eg-materia-fechar:hover {
+  color: var(--text);
 }

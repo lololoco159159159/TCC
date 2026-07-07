@@ -6,7 +6,7 @@
 > mora **aqui**. Ao iniciar uma sessão, leia este arquivo primeiro e, ao concluir
 > uma etapa, atualize-o.
 
-Última atualização: 2026-07-04.
+Última atualização: 2026-07-07.
 
 ---
 
@@ -187,13 +187,127 @@ a **camada de fundo** do scroll-zone dos depoimentos (cortina de 520vh). Optou-s
 - Verificado: `npm run lint` (só o warning pré-existente), `npm run build` (46 módulos, sem
   dependência nova) e `npm run dev` (HTTP 200, sem erro de transform).
 
+### Etapa 6 (2026-07-07) — popover de matérias ("balão") na grade
+Interação nova sobre a grade de séries: **clicar** num card abre um popover ancorado a ele.
+- **[src/components/MateriaPopover.jsx](src/components/MateriaPopover.jsx)** — o "balão":
+  cabeçalho "MATÉRIA — {ano}" + botão **×**, chips de matérias ("Todas as matérias"
+  selecionada por padrão), **setinha** apontando para o card e animação de subida (reusa o
+  keyframe `egFadeUp`). Fecha no ×, **clicando fora** (`mousedown` no `document`) ou com
+  **Esc**. Acessível (`role="dialog"`, chips `<button>` com `aria-pressed`). Seleção é só
+  visual (a tela de grafo é trabalho futuro).
+- **[src/data/materias.js](src/data/materias.js)** — as 8 matérias (mock; "Todas as
+  matérias" é adicionada na UI).
+- **[src/components/TestimonialsSection.jsx](src/components/TestimonialsSection.jsx)** — o
+  `GradeCard` virou clicável: estado `anoAberto` no pai (**um card aberto por vez**), card
+  `position:relative` (o **grid não se mexe** — o balão é `absolute`), destaque mantido
+  enquanto aberto, `zIndex` elevado, e escolha de abrir **para baixo/cima** conforme o espaço
+  disponível (evita corte pelo `overflow:hidden` da seção).
+- Classes `.eg-materia-chip` (+ `--sel`) e `.eg-materia-fechar` em [src/index.css](src/index.css).
+- Plano de origem: [PLANO_POPOVER_MATERIAS.md](PLANO_POPOVER_MATERIAS.md).
+- Verificado: `npm run lint` (só o warning pré-existente), `npm run build` (sem dependência
+  nova) e `npm run dev` (HTTP 200, sem erro de transform).
+
+### Etapa 7 (2026-07-07) — página "Grafos": conexão + casca (G1)
+Início da página que exibirá **de fato o grafo de conhecimento** (o coração do TCC).
+Protótipo: [design/prototipo_grafo.html](design/prototipo_grafo.html) (leitura: §5).
+Duas decisões tomadas nesta etapa: **motor próprio portado do protótipo** (canvas 2D +
+física custom — sem lib externa, resolvendo o "a definir" antigo) e **adaptação ao tema
+claro/escuro do site** com ThemeToggle (o protótipo é só claro). A implementação é
+**por partes** — roadmap completo em **§4.1**; esta etapa cobre só a G1:
+- **[src/pages/Grafos.jsx](src/pages/Grafos.jsx)** — casca: quadro de 1 viewport com
+  header próprio (60px: logo, nav com **"Grafos" ativo** sublinhado em verde, logos
+  LabOtim/UFES, ThemeToggle, Entrar/Criar conta — trecho que na G10 vira o perfil mock),
+  área de trabalho (fundo `--grafo-bg` pontilhado com `--dot-color`) com o
+  **card-convite** ("Monte um recorte e explore o grafo.") e `<Footer/>` abaixo da dobra.
+- **Rota** `tela === 'grafos'` em [src/App.jsx](src/App.jsx) (callbacks
+  `onHome/onLogin/onSignup/onGrafos`).
+- **Conexões** (prop `onGrafos` propagada): nav **"Grafos"** no header da Home,
+  **"Ver todos os grafos →"** na grade da cortina
+  ([TestimonialsSection.jsx](src/components/TestimonialsSection.jsx)) e
+  **"Explorar grafos"** no [Footer.jsx](src/components/Footer.jsx) — os três navegam
+  para a página.
+- Token `--grafo-bg` (claro `#f3eddf` / escuro `#0c110e`) em [src/index.css](src/index.css).
+- Verificado: `npm run lint` (só o warning pré-existente), `npm run build` (sem dependência
+  nova) e `npm run dev` (HTTP 200).
+
 ## 4. O que FALTA (próximas etapas)
 
 Com a Etapa 5, a landing (Home) está **completa** do header ao footer. Restam:
 
-1. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos).
-2. **Back-end**: Apache Jena Fuseki (SPARQL) + lib de visualização de grafo
-   (Cytoscape.js / react-force-graph / D3 — a definir).
+1. **Página "Grafos"** — casca no ar (Etapa 7); seguir o roadmap **G2–G11** em §4.1.
+2. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos).
+3. **Back-end**: subir um Apache Jena Fuseki real e trocar o mock
+   (`src/data/mockFuseki.js`, etapa G2) por `fetch` ao endpoint SPARQL. A dúvida
+   antiga "qual lib de visualização" foi **resolvida na Etapa 7**: motor próprio
+   portado do protótipo, sem lib externa.
+
+### 4.1 Página de grafos — caminho por etapas (G1–G11)
+
+Protótipo: [design/prototipo_grafo.html](design/prototipo_grafo.html) — página de
+1 viewport: header → barra de busca/filtros → `<canvas>` 2D com física custom →
+painel de detalhe flutuante → footer abaixo da dobra. Dados num **mock do Fuseki**
+(67 nós: 11 disciplinas + 11 conceitos + 45 habilidades; ~95 arestas
+`desenvolve`/`podeSerTrabalhadaEm`/`progrideDe`).
+
+Regra de segurança: **uma etapa por sessão** — implementar, verificar
+(`lint`/`build`/`dev`) e registrar aqui antes de seguir à próxima. Tokens novos
+sempre com contraparte escura (a página acompanha o tema do site).
+
+- [x] **G1 — Conexão + casca** *(Etapa 7, 2026-07-07)*: página, rota, links
+  ("Grafos" na nav, "Ver todos os grafos →", "Explorar grafos"), header próprio,
+  card-convite, footer.
+- [ ] **G2 — Dados (mock Fuseki)**: extrair o `mock-fuseki.js` do bundle (ver §5)
+  e portar para `src/data/mockFuseki.js` (ES module): `EIXOS/ANOS/RELACOES/NOS/
+  ARESTAS/LISTA_*`, `buscar()` (normaliza acentos, pontua por código/label/texto),
+  `construirConsulta{Grafo,Expansao,Detalhe}()` (texto SPARQL real),
+  `consultarFuseki()` (latência/erro/vazio simulados via `setConfig`) e
+  `conexoesDe()`. Sem UI nova. Critério: 67 nós, ~95 arestas e consultas geradas
+  conferidas via console.
+- [ ] **G3 — Barra de busca/filtros + máquina de estados**: busca com autocomplete
+  (`buscar()`), pills de série (5º–9º), dropdowns matéria/conceito, prévia
+  "N vértices", botão **Filtrar** e link Limpar (modelo de **seleção pendente**:
+  só aplica no Filtrar); fluxo `pend → filtros → consultarFuseki('grafo')`;
+  `status` início/carregando (skeleton de nós pulsando)/vazio/erro (com "Tentar
+  novamente"); resumo do recorte (nós · conexões · ms); sincronização com a URL
+  (`?serie=&disciplina=&conceito=`). Ainda sem canvas — validar pelas contagens.
+- [ ] **G4 — Render estático do canvas**: `<canvas>` HiDPI, posições iniciais em
+  espiral de ângulo áureo (raio por tipo: habilidade ~70+, conceito 230,
+  disciplina 330; raio visual 11/14/17), `desenhar()` (grid pontilhado com
+  parallax, transform de câmera, arestas com seta — tracejada em `progrideDe` —,
+  nós com rótulo+halo) e `enquadrar()` (fit-to-view). Tokens novos de cor por tipo
+  de nó (claro/escuro; base clara do protótipo: habilidade `#1B9E77`, conceito
+  `#7C4DFF`, disciplina `#E11D48`).
+- [ ] **G5 — Física**: `fisica()` fiel às constantes do protótipo — repulsão
+  `min(2800/d², 12)·alpha` + anti-colisão, molas por relação (repouso
+  130/175/205 × força 0.028), gravidade ao centro 0.0045, damping 0.86, cooling
+  `alpha *= 0.988`; loop `tick` via RAF; reaquecimentos (filtrar 1.0 / expandir
+  0.8 / drag 0.25); `assentar(N)` para o modo "sem animação".
+- [ ] **G6 — Interações do canvas**: conversão tela→mundo e hit-test, hover
+  (tooltip + destaque de vizinhos, resto esmaecido), clique seleciona, arrastar
+  nó, pan no vazio, wheel-zoom no cursor (clamp `[0.18, 3]`), botões
+  +/−/recentrar, Esc limpa, `centrarEm(id)`.
+- [ ] **G7 — Painel de detalhe**: aside "de vidro" flutuante à esquerda
+  (arrastável, redimensionável, esconder/reabrir por aba), estado vazio
+  (cheat-sheet de interações) e selecionado (tipo, código `EFxxCOxx`, título,
+  pills ano/eixo/área, texto normativo via `consultarFuseki('detalhe')`,
+  **conexões agrupadas por relação** clicáveis), "Vistos por último"
+  (+ placeholder "Assistente do grafo — em breve").
+- [ ] **G8 — Expandir + desfazer**: 2×clique (ou botão do painel) →
+  `consultarFuseki('expansao')` traz vizinhos de fora do recorte (itens
+  esmaecidos no painel indicam "clique para expandir"); histórico de snapshots
+  (máx 10) e botão **Desfazer** com contador.
+- [ ] **G9 — Overlays finais**: legenda "Tipos de nó" com toggle por tipo +
+  contagens, **gaveta SPARQL** (mostra a consulta real gerada + tempo + checkbox
+  "Simular falha do endpoint (HTTP 503)"), popover de paleta no canto do canvas.
+- [ ] **G10 — Perfil mock + acessibilidade + persistência**: dropdown de perfil
+  no header (identidade, turmas ano+matéria → filtro "Turmas" na barra),
+  **paletas para daltonismo** (protanopia/deuteranopia/tritanopia), modo
+  **formas em vez de cores** (círculo/quadrado/triângulo), modo **sem animação**;
+  persistência em `localStorage['edugraphPrefs']` (+ posição/largura do painel).
+  Substitui o Entrar/Criar conta do header da página.
+- [ ] **G11 — Integração com a Home**: os `GradeCard` e os chips do
+  `MateriaPopover` abrem a página **com o recorte já aplicado** (série/matéria
+  via estado ou pela URL da G3) — "Ver o grafo desta turma".
 
 ## 5. Como ler o protótipo final (arquivo "bundled")
 
@@ -221,6 +335,27 @@ Ordem das seções dentro do template: **Header → Hero ("Conhecimento conectad
 Grafo interativo → Banda de estatísticas → Depoimentos → Footer** (+ overlays de
 Login/Signup). A paleta e as fontes do protótipo estão no método `themeVars()`.
 
+### Protótipo da página de grafos ([design/prototipo_grafo.html](design/prototipo_grafo.html))
+
+Mesmo formato de bundle e mesma receita acima (só trocar o nome do arquivo).
+Particularidades:
+
+- A **lógica da página** (estado, física do grafo, interações do canvas) não está
+  no HTML: fica num `<script type="text/x-dc" data-dc-script>` **dentro do
+  template decodificado** (~43k chars) — uma `class Component` com `state`,
+  handlers e o motor do canvas. É a referência para o porte (constantes da
+  física, hit-test, câmera).
+- Os **dados do grafo** também não estão no template: vivem no asset
+  **`mock-fuseki.js`** dentro do `<script type="__bundler/manifest">` (uuid
+  `dacfc242-29cf-4b8b-88e7-139502e68ac5`, **gzip+base64**). Para extrair:
+  localizar o uuid no manifest JSON, decodificar base64 e dar gunzip — é um ES
+  module (~29k chars) que simula o endpoint Fuseki (`consultarFuseki`, consultas
+  SPARQL reais, 67 nós, ~95 arestas).
+- O template usa `style-hover=`/`style-focus=` (atributos do bundler) → viram
+  `:hover`/`:focus` em classes; `<sc-for>`/`<sc-if>` → `.map()`/render condicional.
+- **Só tema claro, sem CSS variables** — no porte, mapear os hex para tokens
+  `var(--…)` com contraparte escura (decisão da Etapa 7).
+
 ## 6. Convenções do código
 
 - **Estilos inline** (`style={{}}`) na maioria dos componentes; classes utilitárias
@@ -243,14 +378,17 @@ src/
 │   ├── ThemeToggle.jsx        # toggle sol/lua (já bate com o protótipo)
 │   ├── GraphSection.jsx       # seção 2: grafo-globo interativo (Etapa 2 — FEITO)
 │   ├── StatsBand.jsx          # seção 3: banda de estatísticas, 3 contadores (Etapa 3 — FEITO)
-│   ├── TestimonialsSection.jsx # seção 4: depoimentos + cortina que revela a grade de séries (Etapas 4-5 — FEITO)
+│   ├── TestimonialsSection.jsx # seção 4: depoimentos + cortina que revela a grade; cards abrem popover (Etapas 4-6 — FEITO)
+│   ├── MateriaPopover.jsx     # balão de matérias ancorado ao card de série (Etapa 6 — FEITO)
 │   ├── Footer.jsx             # footer / fim do site (Etapa 5 — FEITO)
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
 ├── data/
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
-│   └── series.js              # 8 séries + nº de habilidades (mock; futuro SPARQL)
+│   ├── series.js              # séries (1.º–9.º ano) + nº de habilidades (mock; futuro SPARQL)
+│   └── materias.js            # matérias/componentes curriculares (mock; futuro SPARQL)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
+│   ├── Grafos.jsx             # página do grafo de conhecimento — casca G1 (Etapa 7); roadmap §4.1 (EM ANDAMENTO)
 │   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
 │   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
 ├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)
