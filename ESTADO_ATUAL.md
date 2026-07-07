@@ -276,6 +276,58 @@ claro/escuro do site** com ThemeToggle (o protótipo é só claro). A implementa
   passou), `npm run lint` (0 erros), `npm run build` (mock agora entra no bundle via
   StatsBand, +~13KB) e `npm run dev` (200 em todos os módulos alterados).
 
+### Etapa 9 (2026-07-07) — página "Grafos": filtros + estados (G3) e render do canvas (G4)
+A página ganhou o coração funcional: montar um recorte e **ver o grafo**. Trechos
+portados diretamente do dc-script/template do protótipo (ver §5).
+- **[src/components/GrafoFiltros.jsx](src/components/GrafoFiltros.jsx)** (G3) — barra de
+  busca e filtros: **busca com autocomplete** (`buscar()` do mock; bolinha colorida por
+  tipo, Enter escolhe a 1ª, Esc/blur fecha; escolher **matéria/conceito aplica na hora**,
+  habilidade abre o recorte do ano dela), **pills de série** com 3 estados
+  (pendente/aplicada/neutra), **selects** de matéria e conceito, **prévia "N vértices"**
+  (`contarVertices` do pendente), botão **Filtrar** (esmaecido sem mudança pendente) e
+  link **Limpar**. Modelo de **seleção pendente**: nada consulta até o Filtrar.
+- **[src/pages/Grafos.jsx](src/pages/Grafos.jsx)** (G3) — máquina de estados
+  `inicio/carregando/pronto/vazio/erro` com os overlays do protótipo: card-convite
+  (início), **skeleton de 14 nós pulsando** + spinner "Consultando endpoint SPARQL…"
+  (carregando), card de **erro** (mensagem monoespaçada + Tentar novamente / Voltar ao
+  início) e card de **vazio** (Limpar filtros); **resumo do recorte** (pill topo-centro:
+  recorte · nós · conexões · ms); fluxo `pend → filtros → consultarFuseki('grafo')` com
+  guarda de sequência (descarta resposta atrasada); **sincronização com a URL**
+  (`?serie=&disciplina=&conceito=` — lê no mount com validação e escreve via
+  `history.replaceState`); `montarGrafo()` porta o `construirGrafo` do protótipo
+  (dedupe de arestas, `nosIsolados`, posições estáveis entre recortes).
+- **[src/components/GrafoCanvas.jsx](src/components/GrafoCanvas.jsx)** (G4) — canvas 2D
+  **HiDPI** com o `desenhar()` fiel: grid pontilhado com **parallax**, transform de
+  câmera com **aproximação suave** (lerp 0.14/frame), **arestas com seta** (tracejadas
+  em `progrideDe`), nós por tipo com **rótulo + halo**, `enquadrar()` (fit-to-view) ao
+  trocar o recorte; posições iniciais em **espiral de ângulo áureo** (dist 70+/230/330,
+  raio visual 11/14/17). Cores **resolvidas dos tokens** via `getComputedStyle`
+  (re-lidas na troca de tema). `hoverRef`/`selecionadoRef` e o chip de rótulo de
+  relação já existem para a G6; física fica para a G5 (layout estático por ora).
+- **[src/index.css](src/index.css)** — tokens novos (claro/escuro): `--no-habilidade
+  --no-conceito --no-disciplina --grafo-aresta --grafo-aresta-destaque --grafo-anel
+  --grafo-halo --grafo-tooltip-bg/fg --grafo-previa-bg/borda`; keyframes `egPulsar
+  egGirar egSurgir`; classes `.eg-grafo-busca .eg-grafo-sugestao .eg-grafo-pill
+  .eg-grafo-filtrar`.
+- Verificado: `npm run lint` (0 erros, só o warning pré-existente), `npm run build`
+  (+~20KB, sem dependência nova) e `npm run dev` (200 em todos os módulos novos).
+
+#### Correções (2026-07-07) — deep-link e paleta do canvas
+- **Deep-link abria a Home**: o roteamento por estado sempre iniciava `tela='home'`,
+  então uma URL com recorte (`?serie=7&disciplina=matematica`) nunca montava a página
+  Grafos. Em [src/App.jsx](src/App.jsx), `telaInicial()` agora inspeciona a URL e abre
+  direto em `grafos` quando há parâmetros de recorte; e `irPara()` **limpa** esses
+  parâmetros ao navegar para fora do grafo (o recorte só faz sentido lá).
+- **Halo/grid com a cor do tema anterior**: ao alternar claro↔escuro, o halo dos
+  rótulos e o grid pontilhado do canvas ficavam com as cores do tema **anterior**
+  (halo creme no escuro; preto ao voltar pro claro). Causa: o efeito do
+  `GrafoCanvas` (filho) lia os tokens **antes** de o `ThemeProvider` (pai) aplicar o
+  `data-theme` no `<html>` — efeitos de filho rodam primeiro no React, então a
+  paleta ficava um toggle atrasada. Em
+  [src/components/GrafoCanvas.jsx](src/components/GrafoCanvas.jsx) a paleta agora é
+  re-resolvida **dentro do loop de desenho**, quando o atributo `data-theme` do
+  `<html>` de fato muda.
+
 ## 4. O que FALTA (próximas etapas)
 
 Com a Etapa 5, a landing (Home) está **completa** do header ao footer. Restam:
@@ -310,20 +362,14 @@ sempre com contraparte escura (a página acompanha o tema do site).
   `consultarFuseki()` (latência/erro/vazio via `setConfig`) e `conexoesDe()`.
   Sem UI nova. Aceito via teste em Node: **64 nós, 169 arestas**, consultas e
   modos simulados conferidos.
-- [ ] **G3 — Barra de busca/filtros + máquina de estados**: busca com autocomplete
-  (`buscar()`), pills de série (5º–9º), dropdowns matéria/conceito, prévia
-  "N vértices", botão **Filtrar** e link Limpar (modelo de **seleção pendente**:
-  só aplica no Filtrar); fluxo `pend → filtros → consultarFuseki('grafo')`;
-  `status` início/carregando (skeleton de nós pulsando)/vazio/erro (com "Tentar
-  novamente"); resumo do recorte (nós · conexões · ms); sincronização com a URL
-  (`?serie=&disciplina=&conceito=`). Ainda sem canvas — validar pelas contagens.
-- [ ] **G4 — Render estático do canvas**: `<canvas>` HiDPI, posições iniciais em
-  espiral de ângulo áureo (raio por tipo: habilidade ~70+, conceito 230,
-  disciplina 330; raio visual 11/14/17), `desenhar()` (grid pontilhado com
-  parallax, transform de câmera, arestas com seta — tracejada em `progrideDe` —,
-  nós com rótulo+halo) e `enquadrar()` (fit-to-view). Tokens novos de cor por tipo
-  de nó (claro/escuro; base clara do protótipo: habilidade `#1B9E77`, conceito
-  `#7C4DFF`, disciplina `#E11D48`).
+- [x] **G3 — Barra de busca/filtros + máquina de estados** *(Etapa 9, 2026-07-07)*:
+  `GrafoFiltros.jsx` (busca com autocomplete, pills de série, selects, prévia,
+  Filtrar/Limpar, seleção pendente) + máquina de estados e overlays em
+  `Grafos.jsx` (início/carregando/vazio/erro, resumo do recorte, URL sync).
+- [x] **G4 — Render estático do canvas** *(Etapa 9, 2026-07-07)*:
+  `GrafoCanvas.jsx` — HiDPI, espiral de ângulo áureo, `desenhar()` (grid com
+  parallax, câmera com lerp, arestas com seta/tracejado, nós com rótulo+halo),
+  `enquadrar()`; cores por tipo de nó em tokens claro/escuro.
 - [ ] **G5 — Física**: `fisica()` fiel às constantes do protótipo — repulsão
   `min(2800/d², 12)·alpha` + anti-colisão, molas por relação (repouso
   130/175/205 × força 0.028), gravidade ao centro 0.0045, damping 0.86, cooling
@@ -429,6 +475,8 @@ src/
 │   ├── TestimonialsSection.jsx # seção 4: depoimentos + cortina que revela a grade; cards abrem popover (Etapas 4-6 — FEITO)
 │   ├── MateriaPopover.jsx     # balão de matérias ancorado ao card de série (Etapa 6 — FEITO)
 │   ├── Footer.jsx             # footer / fim do site (Etapa 5 — FEITO)
+│   ├── GrafoFiltros.jsx       # barra de busca/filtros da página de grafos (Etapa 9/G3 — FEITO)
+│   ├── GrafoCanvas.jsx        # canvas 2D do grafo: render estático + enquadrar (Etapa 9/G4 — FEITO)
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
 ├── data/
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
@@ -437,7 +485,7 @@ src/
 │                              #   e a grade de séries (Etapa 8/G2 — FEITO)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
-│   ├── Grafos.jsx             # página do grafo de conhecimento — casca G1 (Etapa 7); roadmap §4.1 (EM ANDAMENTO)
+│   ├── Grafos.jsx             # página do grafo — casca + filtros + estados + canvas (G1–G4); roadmap §4.1 (EM ANDAMENTO)
 │   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
 │   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
 ├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)
