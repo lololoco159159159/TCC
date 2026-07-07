@@ -2,12 +2,14 @@ import { useEffect, useRef } from 'react'
 import { RELACOES } from '../data/mockFuseki'
 
 // Canvas 2D do grafo de conhecimento — porte fiel do motor do protótipo
-// (design/prototipo_grafo.html). Etapa G4: render ESTÁTICO — grid pontilhado com
-// parallax, transform de câmera (pan/zoom com aproximação suave via lerp),
-// arestas com seta (tracejadas em progrideDe), nós por tipo com rótulo+halo e
-// enquadrar() (fit-to-view). A física (G5) e as interações de ponteiro (G6)
-// entram nas próximas etapas — hoverRef/selecionadoRef já existem para elas.
-// As cores vêm dos tokens CSS (claro/escuro), resolvidas por getComputedStyle.
+// (design/prototipo_grafo.html). Etapas G4+G5: render (grid pontilhado com
+// parallax, câmera com aproximação suave, arestas com seta — tracejadas em
+// progrideDe —, nós por tipo com rótulo+halo, enquadrar fit-to-view) + FÍSICA
+// (fisica(): repulsão + anti-colisão + molas por relação + gravidade ao centro,
+// com esfriamento por alpha; assentar(N) resolve o layout de uma vez para o
+// modo "sem animação" da G10). As interações de ponteiro (G6) entram na próxima
+// etapa — hoverRef/selecionadoRef/dragRef já existem para elas. As cores vêm
+// dos tokens CSS (claro/escuro), resolvidas por getComputedStyle.
 
 // Lê os tokens do design system para uso no canvas (que não entende var()).
 function lerPaleta() {
@@ -32,22 +34,101 @@ function lerPaleta() {
   }
 }
 
-function GrafoCanvas({ nos, arestas, versao }) {
+function GrafoCanvas({ nos, arestas, versao, semAnim = false }) {
   const canvasRef = useRef(null)
   const cam = useRef({ x: 0, y: 0, k: 1 })
   const alvoCam = useRef(null)
   const paleta = useRef(null)
   const temaLido = useRef('') // tema cujos tokens estão em `paleta`
+  const alpha = useRef(0) // "temperatura" da simulação (esfria a cada frame)
   const hoverRef = useRef(null) // preenchidos na G6 (interações)
   const selecionadoRef = useRef(null)
+  const dragRef = useRef(null) // nó em arraste (G6) — a física não integra a posição dele
 
-  // dados sempre atuais para o loop de desenho (sem religar o RAF a cada render)
+  // dados/props sempre atuais para o loop de desenho (sem religar o RAF a cada render)
   const dados = useRef({ nos, arestas })
   dados.current = { nos, arestas }
+  const semAnimRef = useRef(semAnim)
+  semAnimRef.current = semAnim
 
-  // enquadra o recorte novo (fit-to-view) assim que o grafo muda
+  // Física do layout — porte fiel do protótipo. A cada iteração: repulsão entre
+  // todos os pares (com anti-colisão garantindo raio+raio+10px entre centros),
+  // molas por aresta com comprimento de repouso por relação, gravidade ao
+  // centro, damping e esfriamento (alpha). Muta os nós do Map em `dados` — os
+  // mesmos objetos do estado da página; o React não re-renderiza por isso, e
+  // não precisa: só o canvas lê x/y, a cada frame.
+  function fisica() {
+    const { nos: mapa, arestas: ars } = dados.current
+    const ns = [...mapa.values()]
+    const L = { desenvolve: 130, podeSerTrabalhadaEm: 175, progrideDe: 205 }
+    for (let i = 0; i < ns.length; i++) {
+      for (let j = i + 1; j < ns.length; j++) {
+        const a = ns[i]
+        const b = ns[j]
+        let dx = b.x - a.x
+        let dy = b.y - a.y
+        const d = Math.hypot(dx, dy) || 1
+        const f = Math.min(2800 / (d * d), 12) * alpha.current
+        dx /= d
+        dy /= d
+        a.vx -= dx * f
+        a.vy -= dy * f
+        b.vx += dx * f
+        b.vy += dy * f
+        const min = a.r + b.r + 10
+        if (d < min) {
+          const e = (min - d) * 0.35
+          a.vx -= dx * e
+          a.vy -= dy * e
+          b.vx += dx * e
+          b.vy += dy * e
+        }
+      }
+    }
+    ars.forEach((ar) => {
+      const a = mapa.get(ar.a)
+      const b = mapa.get(ar.b)
+      if (!a || !b) return
+      let dx = b.x - a.x
+      let dy = b.y - a.y
+      const d = Math.hypot(dx, dy) || 1
+      const f = (d - (L[ar.rel] || 150)) * 0.028 * alpha.current
+      dx /= d
+      dy /= d
+      a.vx += dx * f
+      a.vy += dy * f
+      b.vx -= dx * f
+      b.vy -= dy * f
+    })
+    ns.forEach((n) => {
+      n.vx -= n.x * 0.0045 * alpha.current
+      n.vy -= n.y * 0.0045 * alpha.current
+      n.vx *= 0.86
+      n.vy *= 0.86
+      if (dragRef.current && dragRef.current.id === n.id) return
+      n.x += n.vx
+      n.y += n.vy
+    })
+    alpha.current *= 0.988
+  }
+
+  // assenta o layout de imediato (modo "sem animação" — preferência da G10)
+  function assentar(iteracoes) {
+    alpha.current = 1
+    for (let i = 0; i < iteracoes; i++) fisica()
+    alpha.current = 0
+  }
+
+  // recorte novo: reaquece a simulação (alpha = 1) e enquadra depois que o
+  // layout abriu (~420ms, como o protótipo); sem animação, assenta na hora
   useEffect(() => {
-    const t = setTimeout(enquadrar, 60)
+    if (semAnimRef.current) {
+      assentar(260)
+      enquadrar()
+      return undefined
+    }
+    alpha.current = 1
+    const t = setTimeout(enquadrar, 420)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [versao])
@@ -266,13 +347,22 @@ function GrafoCanvas({ nos, arestas, versao }) {
         cv.width = Math.round(rt.width * dpr)
         cv.height = Math.round(rt.height * dpr)
       }
+      // física roda enquanto a simulação está quente (ou durante um arraste, G6)
+      if (!semAnimRef.current && (alpha.current > 0.012 || dragRef.current)) fisica()
       const a = alvoCam.current
       if (a) {
         const c = cam.current
-        c.x += (a.x - c.x) * 0.14
-        c.y += (a.y - c.y) * 0.14
-        c.k += (a.k - c.k) * 0.14
-        if (Math.abs(a.x - c.x) < 0.5 && Math.abs(a.k - c.k) < 0.004) alvoCam.current = null
+        if (semAnimRef.current) {
+          c.x = a.x
+          c.y = a.y
+          c.k = a.k
+          alvoCam.current = null
+        } else {
+          c.x += (a.x - c.x) * 0.14
+          c.y += (a.y - c.y) * 0.14
+          c.k += (a.k - c.k) * 0.14
+          if (Math.abs(a.x - c.x) < 0.5 && Math.abs(a.k - c.k) < 0.004) alvoCam.current = null
+        }
       }
       desenhar(cv, rt)
     }

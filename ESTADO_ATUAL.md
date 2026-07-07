@@ -328,6 +328,29 @@ portados diretamente do dc-script/template do protótipo (ver §5).
   re-resolvida **dentro do loop de desenho**, quando o atributo `data-theme` do
   `<html>` de fato muda.
 
+### Etapa 10 (2026-07-07) — página "Grafos": física do layout (G5)
+O grafo deixou de ser a espiral estática (que sobrepunha nós) e passou a **assentar
+organicamente** — e com garantia de espaçamento.
+- **[src/components/GrafoCanvas.jsx](src/components/GrafoCanvas.jsx)** — `fisica()`
+  **fiel às constantes do protótipo**: repulsão entre todos os pares
+  `min(2800/d², 12)·alpha` + **anti-colisão** (distância mínima entre centros =
+  `raio_A + raio_B + 10px`, empurrão `(min−d)·0.35` — **nenhum nó fica sobre outro**);
+  **molas por aresta** com repouso por relação (`desenvolve` 130 ·
+  `podeSerTrabalhadaEm` 175 · `progrideDe` 205, força 0.028); **gravidade ao centro**
+  0.0045; **damping** 0.86; **esfriamento** `alpha *= 0.988`. Roda no loop RAF
+  enquanto `alpha > 0.012` (ou durante arraste — `dragRef`, pronto para a G6).
+- **Reaquecimento**: recorte novo (prop `versao`) reaquece com `alpha = 1`; o
+  `enquadrar()` (fit-to-view) passou de 60ms para **420ms** após a chegada dos dados,
+  como no protótipo — a câmera enquadra o layout já aberto pela física.
+- **`assentar(N)`**: resolve N iterações de uma vez (alpha 1 → 0) — é o caminho do
+  modo **"sem animação"** (prop `semAnim`, já aceita pelo componente e com salto de
+  câmera instantâneo; quem a liga é a preferência de acessibilidade da G10).
+- Nota de implementação: a física **muta** os nós do Map do estado (mesmos objetos) —
+  intencional e documentado no código: só o canvas lê `x/y`, a cada frame, como no
+  protótipo.
+- Verificado: `npm run lint` (0 erros, só o warning pré-existente), `npm run build`
+  (+~1,5KB, sem dependência nova) e `npm run dev` (200 nos módulos alterados).
+
 ## 4. O que FALTA (próximas etapas)
 
 Com a Etapa 5, a landing (Home) está **completa** do header ao footer. Restam:
@@ -370,11 +393,11 @@ sempre com contraparte escura (a página acompanha o tema do site).
   `GrafoCanvas.jsx` — HiDPI, espiral de ângulo áureo, `desenhar()` (grid com
   parallax, câmera com lerp, arestas com seta/tracejado, nós com rótulo+halo),
   `enquadrar()`; cores por tipo de nó em tokens claro/escuro.
-- [ ] **G5 — Física**: `fisica()` fiel às constantes do protótipo — repulsão
-  `min(2800/d², 12)·alpha` + anti-colisão, molas por relação (repouso
-  130/175/205 × força 0.028), gravidade ao centro 0.0045, damping 0.86, cooling
-  `alpha *= 0.988`; loop `tick` via RAF; reaquecimentos (filtrar 1.0 / expandir
-  0.8 / drag 0.25); `assentar(N)` para o modo "sem animação".
+- [x] **G5 — Física** *(Etapa 10, 2026-07-07)*: `fisica()` com as constantes
+  exatas (repulsão + anti-colisão, molas 130/175/205 × 0.028, gravidade 0.0045,
+  damping 0.86, cooling 0.988) no loop RAF; reaquecimento `alpha = 1` no
+  recorte (expandir 0.8 / drag 0.25 chegam com G8/G6); `assentar(N)` + prop
+  `semAnim` prontos para a G10.
 - [ ] **G6 — Interações do canvas**: conversão tela→mundo e hit-test, hover
   (tooltip + destaque de vizinhos, resto esmaecido), clique seleciona, arrastar
   nó, pan no vazio, wheel-zoom no cursor (clamp `[0.18, 3]`), botões
@@ -476,7 +499,7 @@ src/
 │   ├── MateriaPopover.jsx     # balão de matérias ancorado ao card de série (Etapa 6 — FEITO)
 │   ├── Footer.jsx             # footer / fim do site (Etapa 5 — FEITO)
 │   ├── GrafoFiltros.jsx       # barra de busca/filtros da página de grafos (Etapa 9/G3 — FEITO)
-│   ├── GrafoCanvas.jsx        # canvas 2D do grafo: render estático + enquadrar (Etapa 9/G4 — FEITO)
+│   ├── GrafoCanvas.jsx        # canvas 2D do grafo: render + física (repulsão/anti-colisão/molas) + enquadrar (G4–G5 — FEITO)
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
 ├── data/
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
@@ -485,7 +508,7 @@ src/
 │                              #   e a grade de séries (Etapa 8/G2 — FEITO)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
-│   ├── Grafos.jsx             # página do grafo — casca + filtros + estados + canvas (G1–G4); roadmap §4.1 (EM ANDAMENTO)
+│   ├── Grafos.jsx             # página do grafo — casca + filtros + estados + canvas com física (G1–G5); roadmap §4.1 (EM ANDAMENTO)
 │   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
 │   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
 ├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)

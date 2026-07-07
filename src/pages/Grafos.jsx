@@ -10,12 +10,12 @@ import { ANOS, NOS, LISTA_HABILIDADES, buscar, consultarFuseki } from '../data/m
 
 // Página "Grafos" — a tela que exibe o grafo de conhecimento (BNCC ×
 // Pensamento Computacional). Protótipo: design/prototipo_grafo.html.
-// Etapas G3+G4 do roadmap (ESTADO_ATUAL.md §4.1): barra de busca/filtros com
+// Etapas G3–G5 do roadmap (ESTADO_ATUAL.md §4.1): barra de busca/filtros com
 // SELEÇÃO PENDENTE (só aplica no Filtrar), máquina de estados
 // início/carregando/pronto/vazio/erro, sincronização com a URL
-// (?serie=&disciplina=&conceito=) e o canvas com o render ESTÁTICO do recorte
-// (espiral áurea + enquadrar). Física (G5), interações (G6) e painel de
-// detalhe (G7) chegam nas próximas etapas.
+// (?serie=&disciplina=&conceito=) e o canvas do recorte — espiral áurea como
+// semente + FÍSICA (repulsão/anti-colisão/molas) assentando o layout.
+// Interações de ponteiro (G6) e painel de detalhe (G7) chegam nas próximas etapas.
 
 const FILTROS_VAZIOS = { ano: '', disciplina: '', conceito: '' }
 const TIPOS_TODOS = { habilidade: true, conceito: true, disciplina: true }
