@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import { RELACOES } from '../data/mockFuseki'
 
 // Canvas 2D do grafo de conhecimento — porte fiel do motor do protótipo
@@ -7,9 +7,13 @@ import { RELACOES } from '../data/mockFuseki'
 // progrideDe —, nós por tipo com rótulo+halo, enquadrar fit-to-view) + FÍSICA
 // (fisica(): repulsão + anti-colisão + molas por relação + gravidade ao centro,
 // com esfriamento por alpha; assentar(N) resolve o layout de uma vez para o
-// modo "sem animação" da G10). As interações de ponteiro (G6) entram na próxima
-// etapa — hoverRef/selecionadoRef/dragRef já existem para elas. As cores vêm
-// dos tokens CSS (claro/escuro), resolvidas por getComputedStyle.
+// modo "sem animação" da G10). Etapa G6: interações de ponteiro — hit-test no
+// mundo, hover (tooltip + vizinhos, cursor pointer/grab), clique seleciona
+// (estado no pai, via onSelecionar), arrastar nó (reaquece a física), pan no
+// vazio (soltar sem mover desseleciona), wheel-zoom ancorado no cursor (clamp
+// [0.18, 3]) e a API imperativa { centrarEm, enquadrar, zoomMais, zoomMenos }
+// para os botões da página, a busca e as etapas G7/G11. As cores vêm dos
+// tokens CSS (claro/escuro), resolvidas por getComputedStyle.
 
 // Lê os tokens do design system para uso no canvas (que não entende var()).
 function lerPaleta() {
@@ -34,22 +38,28 @@ function lerPaleta() {
   }
 }
 
-function GrafoCanvas({ nos, arestas, versao, semAnim = false }) {
+const GrafoCanvas = forwardRef(function GrafoCanvas(
+  { nos, arestas, versao, semAnim = false, selecionadoId = null, onSelecionar },
+  ref,
+) {
   const canvasRef = useRef(null)
   const cam = useRef({ x: 0, y: 0, k: 1 })
   const alvoCam = useRef(null)
   const paleta = useRef(null)
   const temaLido = useRef('') // tema cujos tokens estão em `paleta`
   const alpha = useRef(0) // "temperatura" da simulação (esfria a cada frame)
-  const hoverRef = useRef(null) // preenchidos na G6 (interações)
-  const selecionadoRef = useRef(null)
-  const dragRef = useRef(null) // nó em arraste (G6) — a física não integra a posição dele
+  const hoverRef = useRef(null) // nó sob o ponteiro (só o canvas precisa saber — não re-renderiza)
+  const selecionadoRef = useRef(null) // espelho da prop para o loop de desenho
+  const dragRef = useRef(null) // nó em arraste — a física não integra a posição dele
 
   // dados/props sempre atuais para o loop de desenho (sem religar o RAF a cada render)
   const dados = useRef({ nos, arestas })
   dados.current = { nos, arestas }
   const semAnimRef = useRef(semAnim)
   semAnimRef.current = semAnim
+  selecionadoRef.current = selecionadoId
+  const onSelecionarRef = useRef(onSelecionar)
+  onSelecionarRef.current = onSelecionar
 
   // Física do layout — porte fiel do protótipo. A cada iteração: repulsão entre
   // todos os pares (com anti-colisão garantindo raio+raio+10px entre centros),
@@ -122,6 +132,7 @@ function GrafoCanvas({ nos, arestas, versao, semAnim = false }) {
   // recorte novo: reaquece a simulação (alpha = 1) e enquadra depois que o
   // layout abriu (~420ms, como o protótipo); sem animação, assenta na hora
   useEffect(() => {
+    hoverRef.current = null // id antigo esmaeceria o grafo novo inteiro até o mouse mexer
     if (semAnimRef.current) {
       assentar(260)
       enquadrar()
@@ -158,6 +169,27 @@ function GrafoCanvas({ nos, arestas, versao, semAnim = false }) {
     alvoCam.current = { x: (x0 + x1) / 2 - L / (2 * k), y: (y0 + y1) / 2, k }
   }
 
+  // aproxima/afasta em passos (botões +/− da página), com os clamps do protótipo
+  function zoomCam(fator) {
+    const c = cam.current
+    alvoCam.current = { x: c.x, y: c.y, k: Math.min(3, Math.max(0.18, c.k * fator)) }
+  }
+
+  // leva a câmera até um nó (busca, painel da G7, deep-link da G11)
+  function centrarEm(id) {
+    const n = dados.current.nos.get(id)
+    if (!n) return
+    const k = Math.max(cam.current.k, 1)
+    alvoCam.current = { x: n.x - offsetPainel() / (2 * k), y: n.y, k }
+  }
+
+  useImperativeHandle(ref, () => ({
+    centrarEm,
+    enquadrar,
+    zoomMais: () => zoomCam(1.35),
+    zoomMenos: () => zoomCam(1 / 1.35),
+  }))
+
   // forma do nó por tipo (círculo hoje; quadrado/triângulo entram no modo
   // "formas em vez de cores" da G10)
   function tracarNo(ctx, n, r) {
@@ -192,7 +224,7 @@ function GrafoCanvas({ nos, arestas, versao, semAnim = false }) {
     ctx.scale(cam.current.k, cam.current.k)
     ctx.translate(-cam.current.x, -cam.current.y)
 
-    // foco (hover/seleção) destaca vizinhos e esmaece o resto — ativo na G6
+    // foco (hover/seleção) destaca vizinhos e esmaece o resto
     const foco = hoverRef.current || selecionadoRef.current
     const viz = new Set()
     if (foco) {
@@ -234,7 +266,7 @@ function GrafoCanvas({ nos, arestas, versao, semAnim = false }) {
         ctx.closePath()
         ctx.fill()
       }
-      // chip com o rótulo da relação, só na aresta em destaque (G6)
+      // chip com o rótulo da relação, só na aresta em destaque
       if (destaque && k > 0.5) {
         const mx = (a.x + b.x) / 2
         const my = (a.y + b.y) / 2
@@ -302,7 +334,7 @@ function GrafoCanvas({ nos, arestas, versao, semAnim = false }) {
     })
     ctx.globalAlpha = 1
 
-    // tooltip do hover em habilidade (ativa na G6)
+    // tooltip do hover em habilidade
     const hv = hoverRef.current ? ns.get(hoverRef.current) : null
     if (hv && hv.tipo === 'habilidade' && hv.resumo) {
       ctx.font = `600 ${11.5 / k}px "Figtree", sans-serif`
@@ -324,8 +356,7 @@ function GrafoCanvas({ nos, arestas, versao, semAnim = false }) {
     ctx.restore()
   }
 
-  // loop de desenho: HiDPI + câmera com aproximação suave (lerp 0.14/frame).
-  // A física (G5) será chamada daqui quando existir.
+  // loop de desenho: HiDPI + câmera com aproximação suave (lerp 0.14/frame)
   useEffect(() => {
     let raf = 0
     const tick = () => {
@@ -347,7 +378,7 @@ function GrafoCanvas({ nos, arestas, versao, semAnim = false }) {
         cv.width = Math.round(rt.width * dpr)
         cv.height = Math.round(rt.height * dpr)
       }
-      // física roda enquanto a simulação está quente (ou durante um arraste, G6)
+      // física roda enquanto a simulação está quente (ou durante um arraste)
       if (!semAnimRef.current && (alpha.current > 0.012 || dragRef.current)) fisica()
       const a = alvoCam.current
       if (a) {
@@ -371,13 +402,137 @@ function GrafoCanvas({ nos, arestas, versao, semAnim = false }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Interações de ponteiro (G6) — porte fiel dos handlers do protótipo.
+  // `moveu` distingue clique de arraste/pan: soltar sem ter movido em cima de
+  // um nó SELECIONA; soltar sem ter movido no vazio DESSELECIONA.
+  useEffect(() => {
+    const cv = canvasRef.current
+    if (!cv) return undefined
+    let pan = null // { sx, sy, cx, cy } — câmera no início do pan
+    let moveu = false
+
+    // converte o evento (tela) para coordenadas do mundo do grafo
+    const mundo = (ev) => {
+      const rt = cv.getBoundingClientRect()
+      const sx = ev.clientX - rt.left
+      const sy = ev.clientY - rt.top
+      return {
+        x: (sx - rt.width / 2) / cam.current.k + cam.current.x,
+        y: (sy - rt.height / 2) / cam.current.k + cam.current.y,
+        sx,
+        sy,
+        w: rt.width,
+        h: rt.height,
+      }
+    }
+
+    // hit-test: nó mais próximo cujo raio (+ tolerância de 6px de tela) contém o ponto
+    const acertar = (p) => {
+      let melhor = null
+      let md = 1e9
+      dados.current.nos.forEach((n) => {
+        const d = Math.hypot(n.x - p.x, n.y - p.y)
+        if (d < n.r + 6 / cam.current.k && d < md) {
+          md = d
+          melhor = n
+        }
+      })
+      return melhor
+    }
+
+    const aoDescer = (ev) => {
+      const p = mundo(ev)
+      const n = acertar(p)
+      moveu = false
+      if (n) {
+        dragRef.current = { id: n.id, dx: n.x - p.x, dy: n.y - p.y }
+        alvoCam.current = null
+      } else {
+        pan = { sx: p.sx, sy: p.sy, cx: cam.current.x, cy: cam.current.y }
+      }
+    }
+
+    const aoMover = (ev) => {
+      const p = mundo(ev)
+      if (dragRef.current) {
+        const n = dados.current.nos.get(dragRef.current.id)
+        if (n) {
+          n.x = p.x + dragRef.current.dx
+          n.y = p.y + dragRef.current.dy
+          n.vx = 0
+          n.vy = 0
+        }
+        if (!semAnimRef.current) alpha.current = Math.max(alpha.current, 0.25) // vizinhos acompanham
+        moveu = true
+        return
+      }
+      if (pan) {
+        cam.current.x = pan.cx - (p.sx - pan.sx) / cam.current.k
+        cam.current.y = pan.cy - (p.sy - pan.sy) / cam.current.k
+        if (Math.hypot(p.sx - pan.sx, p.sy - pan.sy) > 3) moveu = true
+        alvoCam.current = null
+        return
+      }
+      const n = acertar(p)
+      hoverRef.current = n ? n.id : null
+      cv.style.cursor = n ? 'pointer' : 'grab'
+    }
+
+    const aoSoltar = () => {
+      if (dragRef.current && !moveu) onSelecionarRef.current?.(dragRef.current.id)
+      else if (pan && !moveu) onSelecionarRef.current?.(null)
+      dragRef.current = null
+      pan = null
+    }
+
+    // desvio do protótipo: limpa o hover ao sair do palco (senão o tooltip
+    // e o destaque ficariam presos no último nó tocado)
+    const aoSair = () => {
+      hoverRef.current = null
+      cv.style.cursor = 'grab'
+    }
+
+    // zoom ancorado no cursor: o ponto do mundo sob o ponteiro fica parado
+    const aoRolar = (ev) => {
+      ev.preventDefault()
+      const p = mundo(ev)
+      const fator = Math.exp(-ev.deltaY * 0.0013)
+      const k2 = Math.min(3, Math.max(0.18, cam.current.k * fator))
+      cam.current.x = p.x - (p.sx - p.w / 2) / k2
+      cam.current.y = p.y - (p.sy - p.h / 2) / k2
+      cam.current.k = k2
+      alvoCam.current = null
+    }
+
+    cv.addEventListener('pointerdown', aoDescer)
+    cv.addEventListener('pointermove', aoMover)
+    cv.addEventListener('pointerleave', aoSair)
+    window.addEventListener('pointerup', aoSoltar) // soltar fora do canvas também encerra
+    cv.addEventListener('wheel', aoRolar, { passive: false }) // precisa de preventDefault (via React seria passivo)
+    return () => {
+      cv.removeEventListener('pointerdown', aoDescer)
+      cv.removeEventListener('pointermove', aoMover)
+      cv.removeEventListener('pointerleave', aoSair)
+      window.removeEventListener('pointerup', aoSoltar)
+      cv.removeEventListener('wheel', aoRolar)
+    }
+  }, [])
+
   return (
     <canvas
       ref={canvasRef}
       data-grafo-canvas="1"
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        display: 'block',
+        cursor: 'grab',
+        touchAction: 'none', // sem isto o navegador rouba o pointermove para rolar a página (touch)
+      }}
     />
   )
-}
+})
 
 export default GrafoCanvas

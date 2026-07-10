@@ -372,3 +372,22 @@ input::placeholder {
 .eg-grafo-filtrar:hover {
   background: var(--green-deep) !important;
 }
+
+/* botões +/−/recentrar sobre o canvas (G6) */
+.eg-grafo-zoom {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--pill-border);
+  background: var(--pill-bg);
+  color: var(--body);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(28, 38, 32, 0.07);
+  font-family: 'Figtree', system-ui, sans-serif;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.eg-grafo-zoom:hover {
+  border-color: var(--green);
+  color: var(--green);
+}

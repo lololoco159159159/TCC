@@ -6,7 +6,7 @@
 > mora **aqui**. Ao iniciar uma sessão, leia este arquivo primeiro e, ao concluir
 > uma etapa, atualize-o.
 
-Última atualização: 2026-07-07.
+Última atualização: 2026-07-10.
 
 ---
 
@@ -351,6 +351,38 @@ organicamente** — e com garantia de espaçamento.
 - Verificado: `npm run lint` (0 erros, só o warning pré-existente), `npm run build`
   (+~1,5KB, sem dependência nova) e `npm run dev` (200 nos módulos alterados).
 
+### Etapa 11 (2026-07-10) — página "Grafos": interações do canvas (G6)
+O grafo virou um objeto manipulável — handlers portados fielmente do dc-script do
+protótipo (conversão tela→mundo, hit-test com tolerância de 6px de tela, `moveu`
+distinguindo clique de arraste/pan).
+- **[src/components/GrafoCanvas.jsx](src/components/GrafoCanvas.jsx)** — efeito de
+  interações (listeners nativos; wheel com `passive: false` porque o `onWheel` do
+  React é passivo): **hover** liga tooltip/destaque de vizinhos já desenhados na G4
+  (cursor pointer/grab), **clique seleciona** (soltar sem mover; anel + esmaecer o
+  resto), **arrastar nó** (nó segue o ponteiro com `vx=vy=0` e reaquece a física a
+  `alpha ≥ 0.25`), **pan no vazio** (soltar sem mover desseleciona), **wheel-zoom
+  ancorado no cursor** (`k·exp(−deltaY·0.0013)`, clamp `[0.18, 3]`). A **seleção
+  subiu para a página** (props `selecionadoId`/`onSelecionar`; hover continua em ref,
+  sem re-render) e o componente virou `forwardRef` expondo `{ centrarEm, enquadrar,
+  zoomMais, zoomMenos }` (passos ×1.35, mesmos clamps) para os botões, a busca e as
+  G7/G11. Desvios documentados no código: `pointerleave` limpa o hover, hover zerado
+  na troca de recorte (senão o grafo novo nasceria esmaecido) e `touch-action: none`
+  no canvas (sem isso não há drag/pan em touch).
+- **[src/pages/Grafos.jsx](src/pages/Grafos.jsx)** — estado `selecionadoId` (zerado
+  quando o nó sai do recorte novo, como no protótipo), **Esc** limpa seleção e
+  sugestões (listener global), botões **+/−/recentrar** no topo-direita (só em
+  `pronto`; ícone do protótipo) e o fim do pendente da G3 na busca: **habilidade já
+  no grafo** → seleciona e centra sem reconsultar; **fora** → `pendenteSel` + recorte
+  do ano dela (limpando matéria/conceito, como o protótipo) e seleção+`centrarEm`
+  ~770ms depois (420 do enquadrar + 350), cancelada se outro recorte chegar antes.
+- Classe `.eg-grafo-zoom` (+ `:hover` verde) em [src/index.css](src/index.css) —
+  hover via CSS, não via estado JS. Sem token novo.
+- 2×clique (expandir) ficou para a **G8**, como no roadmap; painel de detalhe é G7.
+- Verificado: `npm run lint` (0 erros, só o warning pré-existente), `npm run build`
+  (sem dependência nova) e `npm run dev` (200 nos módulos alterados). Interações de
+  ponteiro exigem teste manual no navegador (checklist: hover/tooltip, clique
+  seleciona, Esc, arrastar nó, pan, wheel-zoom, botões, busca por habilidade).
+
 ## 4. O que FALTA (próximas etapas)
 
 Com a Etapa 5, a landing (Home) está **completa** do header ao footer. Restam:
@@ -398,10 +430,13 @@ sempre com contraparte escura (a página acompanha o tema do site).
   damping 0.86, cooling 0.988) no loop RAF; reaquecimento `alpha = 1` no
   recorte (expandir 0.8 / drag 0.25 chegam com G8/G6); `assentar(N)` + prop
   `semAnim` prontos para a G10.
-- [ ] **G6 — Interações do canvas**: conversão tela→mundo e hit-test, hover
-  (tooltip + destaque de vizinhos, resto esmaecido), clique seleciona, arrastar
-  nó, pan no vazio, wheel-zoom no cursor (clamp `[0.18, 3]`), botões
-  +/−/recentrar, Esc limpa, `centrarEm(id)`.
+- [x] **G6 — Interações do canvas** *(Etapa 11, 2026-07-10)*: conversão
+  tela→mundo e hit-test, hover (tooltip + destaque de vizinhos, resto
+  esmaecido), clique seleciona (estado no pai), arrastar nó (reaquece a
+  física), pan no vazio (deseleciona), wheel-zoom no cursor (clamp
+  `[0.18, 3]`), botões +/−/recentrar (×1.35), Esc limpa, API
+  `{ centrarEm, enquadrar, zoomMais, zoomMenos }` via ref; busca por
+  habilidade seleciona/centra o nó (fim do pendente da G3).
 - [ ] **G7 — Painel de detalhe**: aside "de vidro" flutuante à esquerda
   (arrastável, redimensionável, esconder/reabrir por aba), estado vazio
   (cheat-sheet de interações) e selecionado (tipo, código `EFxxCOxx`, título,
@@ -499,7 +534,8 @@ src/
 │   ├── MateriaPopover.jsx     # balão de matérias ancorado ao card de série (Etapa 6 — FEITO)
 │   ├── Footer.jsx             # footer / fim do site (Etapa 5 — FEITO)
 │   ├── GrafoFiltros.jsx       # barra de busca/filtros da página de grafos (Etapa 9/G3 — FEITO)
-│   ├── GrafoCanvas.jsx        # canvas 2D do grafo: render + física (repulsão/anti-colisão/molas) + enquadrar (G4–G5 — FEITO)
+│   ├── GrafoCanvas.jsx        # canvas 2D do grafo: render + física + interações (hover/seleção/drag/pan/zoom,
+│   │                          #   API centrarEm/enquadrar/zoom± via ref) (G4–G6 — FEITO)
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
 ├── data/
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
@@ -508,7 +544,7 @@ src/
 │                              #   e a grade de séries (Etapa 8/G2 — FEITO)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
-│   ├── Grafos.jsx             # página do grafo — casca + filtros + estados + canvas com física (G1–G5); roadmap §4.1 (EM ANDAMENTO)
+│   ├── Grafos.jsx             # página do grafo — casca + filtros + estados + canvas com física e interações (G1–G6); roadmap §4.1 (EM ANDAMENTO)
 │   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
 │   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
 ├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)

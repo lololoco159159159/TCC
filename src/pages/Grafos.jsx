@@ -10,12 +10,14 @@ import { ANOS, NOS, LISTA_HABILIDADES, buscar, consultarFuseki } from '../data/m
 
 // Página "Grafos" — a tela que exibe o grafo de conhecimento (BNCC ×
 // Pensamento Computacional). Protótipo: design/prototipo_grafo.html.
-// Etapas G3–G5 do roadmap (ESTADO_ATUAL.md §4.1): barra de busca/filtros com
+// Etapas G3–G6 do roadmap (ESTADO_ATUAL.md §4.1): barra de busca/filtros com
 // SELEÇÃO PENDENTE (só aplica no Filtrar), máquina de estados
 // início/carregando/pronto/vazio/erro, sincronização com a URL
-// (?serie=&disciplina=&conceito=) e o canvas do recorte — espiral áurea como
-// semente + FÍSICA (repulsão/anti-colisão/molas) assentando o layout.
-// Interações de ponteiro (G6) e painel de detalhe (G7) chegam nas próximas etapas.
+// (?serie=&disciplina=&conceito=), o canvas do recorte — espiral áurea como
+// semente + FÍSICA (repulsão/anti-colisão/molas) assentando o layout — e as
+// interações (G6): seleção de nó (estado aqui; anel/esmaecer no canvas), Esc
+// limpa, botões +/−/recentrar sobre o canvas e busca de habilidade que
+// seleciona/centra o nó. Painel de detalhe (G7) chega na próxima etapa.
 
 const FILTROS_VAZIOS = { ano: '', disciplina: '', conceito: '' }
 const TIPOS_TODOS = { habilidade: true, conceito: true, disciplina: true }
@@ -131,16 +133,23 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
   const [contagens, setContagens] = useState({ habilidade: 0, conceito: 0, disciplina: 0, conexoes: 0 })
   const [tempoMs, setTempoMs] = useState(0)
   const [msgErro, setMsgErro] = useState('')
+  const [selecionadoId, setSelecionadoId] = useState(null) // nó selecionado (anel no canvas; painel na G7)
   const seq = useRef(0) // descarta respostas fora de ordem
   const nosRef = useRef(new Map()) // recorte anterior (estabilidade de posição)
+  const canvasApi = useRef(null) // { centrarEm, enquadrar, zoomMais, zoomMenos } (G6)
+  const pendenteSel = useRef(null) // habilidade escolhida na busca, a selecionar quando o recorte chegar
+  const tSel = useRef(0)
 
   function aplicarFiltros(f) {
+    clearTimeout(tSel.current) // recorte novo cancela uma seleção agendada pela busca
     sincronizarURL(f)
     setPend({ ano: f.ano, disciplina: f.disciplina, conceito: f.conceito })
     setFiltros(f)
     const vazio = !f.ano && !f.disciplina && !f.conceito
     if (vazio) {
       nosRef.current = new Map()
+      pendenteSel.current = null
+      setSelecionadoId(null)
       setGrafo((g) => ({ nos: new Map(), arestas: [], versao: g.versao + 1 }))
       setStatus('inicio')
       return
@@ -160,6 +169,18 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
         setTempoMs(ms)
         setGrafo((g) => ({ ...montado, versao: g.versao + 1 }))
         setStatus(montado.nos.size === 0 ? 'vazio' : 'pronto')
+        // a seleção só sobrevive se o nó continua no recorte novo (protótipo)
+        setSelecionadoId((sel) => (sel && montado.nos.has(sel) ? sel : null))
+        // habilidade vinda da busca: seleciona e centra quando o layout assentar
+        // (420ms do enquadrar + 350ms, os mesmos tempos do protótipo)
+        const alvo = pendenteSel.current
+        pendenteSel.current = null
+        if (alvo && montado.nos.has(alvo)) {
+          tSel.current = setTimeout(() => {
+            setSelecionadoId(alvo)
+            canvasApi.current?.centrarEm(alvo)
+          }, 770)
+        }
       })
       .catch((err) => {
         if (meuSeq !== seq.current) return
@@ -178,6 +199,18 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
     const okD = disciplina && NOS.get(disciplina)?.tipo === 'disciplina' ? disciplina : ''
     const okC = conceito && NOS.get(conceito)?.tipo === 'conceito' ? conceito : ''
     if (okS || okD || okC) aplicarFiltros({ ano: okS, disciplina: okD, conceito: okC })
+    return () => clearTimeout(tSel.current)
+  }, [])
+
+  // Esc limpa a seleção do grafo (e fecha as sugestões da busca), como no protótipo
+  useEffect(() => {
+    const aoTecla = (ev) => {
+      if (ev.key !== 'Escape') return
+      setSelecionadoId(null)
+      setSugestoes([])
+    }
+    window.addEventListener('keydown', aoTecla)
+    return () => window.removeEventListener('keydown', aoTecla)
   }, [])
 
   // ---- busca com autocomplete ----
@@ -190,8 +223,16 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
     setSugestoes([])
     if (s.tipo === 'disciplina') aplicarFiltros({ ...filtros, disciplina: s.id })
     else if (s.tipo === 'conceito') aplicarFiltros({ ...filtros, conceito: s.id })
-    // habilidade: abre o recorte do ano dela (selecionar/centrar no nó chega na G6)
-    else aplicarFiltros({ ...filtros, ano: s.ano })
+    else if (grafo.nos.has(s.id)) {
+      // habilidade já no recorte atual: seleciona e centra sem reconsultar
+      setSelecionadoId(s.id)
+      canvasApi.current?.centrarEm(s.id)
+    } else {
+      // habilidade fora do recorte: abre o recorte do ano dela (limpando os
+      // demais filtros, como o protótipo) e seleciona quando o grafo assentar
+      pendenteSel.current = s.id
+      aplicarFiltros({ ano: s.ano, disciplina: '', conceito: '' })
+    }
   }
 
   // ---- derivados da barra ----
@@ -340,7 +381,63 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
 
         {/* ============ ÁREA DE TRABALHO: canvas + overlays de estado ============ */}
         <main style={{ flex: 1, position: 'relative', background: 'var(--grafo-bg)', overflow: 'hidden', minHeight: 0 }}>
-          <GrafoCanvas nos={grafo.nos} arestas={grafo.arestas} versao={grafo.versao} />
+          <GrafoCanvas
+            ref={canvasApi}
+            nos={grafo.nos}
+            arestas={grafo.arestas}
+            versao={grafo.versao}
+            selecionadoId={selecionadoId}
+            onSelecionar={setSelecionadoId}
+          />
+
+          {/* controles de zoom + recentrar (topo-direita, sobre o canvas) */}
+          {status === 'pronto' && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 14,
+                right: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                alignItems: 'flex-end',
+              }}
+            >
+              <button
+                type="button"
+                className="eg-grafo-zoom"
+                title="Aproximar"
+                onClick={() => canvasApi.current?.zoomMais()}
+                style={{ fontSize: 17, fontWeight: 600 }}
+              >
+                +
+              </button>
+              <button
+                type="button"
+                className="eg-grafo-zoom"
+                title="Afastar"
+                onClick={() => canvasApi.current?.zoomMenos()}
+                style={{ fontSize: 19 }}
+              >
+                −
+              </button>
+              <button
+                type="button"
+                className="eg-grafo-zoom"
+                title="Recentrar o grafo"
+                onClick={() => canvasApi.current?.enquadrar()}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 9V5a2 2 0 0 1 2-2h4" />
+                  <path d="M15 3h4a2 2 0 0 1 2 2v4" />
+                  <path d="M21 15v4a2 2 0 0 1-2 2h-4" />
+                  <path d="M9 21H5a2 2 0 0 1-2-2v-4" />
+                  <circle cx="12" cy="12" r="2.4" />
+                </svg>
+              </button>
+            </div>
+          )}
 
           {/* resumo do recorte (pill topo-centro) */}
           {status === 'pronto' && (
