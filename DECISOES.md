@@ -1,12 +1,15 @@
 # Decisões de projeto — EduGraph (TCC)
 
 > **O que é este arquivo:** o registro das decisões importantes do projeto, escrito
-> para **preparar a defesa**. Cada entrada explica o problema, o que foi decidido,
-> o que foi considerado e rejeitado, e traz uma **fala pronta para a banca**.
+> para **preparar a defesa e a escrita da monografia**. Cada entrada explica o
+> problema, o que foi decidido, o que foi considerado e rejeitado, traz uma **fala
+> pronta para a banca** (oral) e um **parágrafo de monografia** (texto acadêmico,
+> pronto para adaptar ao capítulo indicado).
 >
 > **Regra (ver ESTADO_ATUAL.md §6):** toda decisão relevante — de escopo,
 > arquitetura, biblioteca, dado ou acessibilidade — ganha uma entrada aqui no
-> momento em que é tomada. Formato de cada entrada:
+> momento em que é tomada, **sempre com todos os campos abaixo, inclusive o
+> parágrafo de monografia**. Formato de cada entrada:
 >
 > ```
 > ## D<N> — Título curto
@@ -14,7 +17,9 @@
 > **O problema** — que dilema existia.
 > **A decisão** — o que foi feito.
 > **Alternativas rejeitadas** — o que se considerou e por que não.
-> **Para a banca** — fala pronta, em 1–3 frases.
+> **Para a banca** — fala pronta (oral), em 1–3 frases.
+> **Monografia** — parágrafo em tom acadêmico (impessoal, terceira pessoa),
+>   pronto para adaptar ao texto do TCC, indicando o capítulo/seção onde encaixa.
 > ```
 
 ---
@@ -43,6 +48,17 @@ retrabalho.
 contrato exato do Apache Jena Fuseki — mesmo formato de resposta, mesma latência,
 mesmos erros. As consultas exibidas na interface são SPARQL válido. A integração
 real é a substituição do corpo de uma única função por um fetch."*
+
+**Monografia** *(cap. de Arquitetura/Metodologia de desenvolvimento):*
+"Para desacoplar o desenvolvimento da interface da disponibilidade do servidor de
+grafos, adotou-se a técnica de *mock* com contrato fiel: um módulo que simula o
+endpoint SPARQL do Apache Jena Fuseki, aceitando os mesmos parâmetros e retornando
+respostas no formato padronizado `application/sparql-results+json` (W3C), incluindo
+a simulação de latência de rede e de falhas HTTP. As consultas SPARQL geradas pela
+interface são sintaticamente válidas e exibidas ao usuário, de modo que o front-end
+foi integralmente desenvolvido e validado contra o contrato real do serviço. Assim, a
+integração com o triplestore reduz-se à substituição da função de transporte por uma
+chamada HTTP, sem alterações nas camadas de apresentação."
 
 ---
 
@@ -75,6 +91,19 @@ servidor."* Se perguntarem o caminho real: back-end junto ao Fuseki, senha com h
 (bcrypt/argon2), sessão por token, e as turmas do professor podem virar triplas RDF
 na própria ontologia (`edu:lecionaTurma`), unificando contas e grafo.
 
+**Monografia** *(cap. de Escopo/Delimitação, com retomada em Trabalhos Futuros):*
+"O sistema de autenticação e gerenciamento de contas foi deliberadamente excluído do
+escopo de implementação, por constituir infraestrutura consolidada que não agrega
+contribuição ao objeto central do trabalho — o grafo de conhecimento curricular.
+Optou-se por especificá-lo por meio de protótipos funcionais de alta fidelidade: as
+telas de cadastro e acesso implementam as regras de validação previstas, e a página
+de exploração exibe um perfil simulado que demonstra a experiência-alvo (identidade
+do docente, turmas cadastradas e preferências de acessibilidade). As preferências do
+usuário são persistidas localmente (*Web Storage*) sob o mesmo contrato de dados que,
+em trabalhos futuros, será transferido ao servidor mediante autenticação com
+armazenamento seguro de credenciais (funções de *hash* como bcrypt ou Argon2) e
+sessões baseadas em token."
+
 ---
 
 ## D3 — Motor de visualização próprio (canvas 2D + física portada), sem biblioteca
@@ -101,6 +130,19 @@ forças com anti-colisão e molas cujo comprimento reflete a semântica da rela�
 escolha por não usar biblioteca deu controle total sobre o design aprovado e mantém o
 projeto sem dependências de visualização."*
 
+**Monografia** *(cap. de Implementação, seção de visualização do grafo):*
+"Para a renderização do grafo optou-se por um motor de visualização próprio, baseado
+em Canvas 2D, em detrimento de bibliotecas consolidadas como D3.js e Cytoscape.js. O
+layout é calculado por um algoritmo dirigido por forças (*force-directed*) que
+combina repulsão entre pares de nós, restrição de anti-colisão (distância mínima
+entre centros), atração por molas ao longo das arestas e gravidade central, com
+resfriamento progressivo da simulação. Destaca-se que o comprimento de repouso das
+molas é função do tipo semântico da relação — arestas de progressão curricular
+(`progrideDe`) possuem repouso maior que as de desenvolvimento de conceito
+(`desenvolve`) —, de modo que a própria geometria do layout reflete a estrutura da
+ontologia. A decisão eliminou dependências externas de visualização e garantiu
+controle integral sobre o comportamento interativo especificado no protótipo."
+
 ---
 
 ## D4 — Fidelidade ao protótipo como método de migração
@@ -126,6 +168,17 @@ perceba, e o resultado deixa de ser o design aprovado.
 previamente; a implementação porta o comportamento verbatim e documenta cada desvio
 consciente — o que se vê no ar é o design validado, não uma reinterpretação."*
 
+**Monografia** *(cap. de Metodologia):*
+"O desenvolvimento seguiu um processo incremental guiado por protótipo: a interface
+foi previamente especificada em protótipos navegáveis de alta fidelidade e, aprovado
+o design, a implementação procedeu por etapas curtas e verificáveis, portando de
+forma literal os parâmetros de comportamento (tempos de animação, constantes da
+simulação física, limites de zoom) e registrando em documentação versionada todo
+desvio consciente em relação ao protótipo, com sua justificativa. Cada etapa foi
+validada por análise estática, compilação de produção e execução local antes do
+início da seguinte, o que manteve a rastreabilidade entre o design aprovado e o
+produto final."
+
 ---
 
 ## D5 — Tema claro/escuro por tokens CSS (o protótipo era só claro)
@@ -147,6 +200,16 @@ pelo código; a autoridade única no `index.css` mantém 1 lugar para mudar cor.
 **Para a banca.** *"O design system é um conjunto de tokens CSS com variante clara e
 escura; até o canvas 2D lê essas variáveis, então tema, paleta de acessibilidade e
 componentes mudam juntos, a partir de uma única fonte."*
+
+**Monografia** *(cap. de Implementação, seção de interface/design system):*
+"A identidade visual foi implementada como um sistema de *design tokens* — variáveis
+CSS customizadas definidas em ponto único, com valores para os temas claro e escuro
+selecionados por atributo no elemento raiz do documento. O elemento Canvas, que não
+interpreta variáveis CSS nativamente, resolve os tokens em tempo de execução por meio
+de `getComputedStyle`, com cache invalidado à troca de tema ou de paleta de
+acessibilidade. Essa centralização garante que todos os componentes — incluindo a
+visualização do grafo — respondam de forma consistente e simultânea às trocas de
+tema, a partir de uma única fonte de verdade cromática."
 
 ---
 
@@ -177,6 +240,19 @@ Universal Design de Okabe & Ito, referência para visualização científica; o 
 formas dá redundância de canal (cor + geometria); e o modo sem animação atende
 sensibilidade a movimento. As preferências persistem entre visitas."*
 
+**Monografia** *(seção de Acessibilidade — cite Okabe & Ito, 2008, e as WCAG):*
+"Considerando que a visualização codifica o tipo dos nós por cor, foram implementados
+recursos de acessibilidade em três camadas complementares: (i) paletas alternativas
+para protanopia, deuteranopia e tritanopia, derivadas do *Color Universal Design*
+(CUD) de Okabe e Ito, conjunto cromático validado para percepção por pessoas com
+daltonismo e amplamente adotado em visualização científica; (ii) modo de codificação
+redundante por forma geométrica (círculo, quadrado e triângulo por tipo de nó),
+atendendo inclusive à acromatopsia, em conformidade com o princípio das WCAG de não
+transmitir informação exclusivamente pela cor; e (iii) modo de redução de movimento,
+que desativa a simulação física e apresenta o layout estabilizado imediatamente. As
+preferências são persistidas entre sessões, juntamente com o ajuste global de tamanho
+de fonte e o tema escuro."
+
 ---
 
 ## D7 — "Habilidades" não pode ser ocultada na legenda (desvio do protótipo)
@@ -195,6 +271,18 @@ e `progrideDe` são centradas nelas) — ocultá-las esvaziava o grafo em 100% d
 ontologia: as habilidades são o eixo de todas as relações, então ocultá-las produziria
 sempre um grafo vazio — a interface passou a refletir essa propriedade do modelo."*
 (Bônus: demonstra que você entende a topologia do seu próprio grafo.)
+
+**Monografia** *(cap. de Implementação ou discussão de resultados — bom exemplo de
+adaptação da interface ao modelo):*
+"Durante a implementação da legenda com filtro por tipo de nó, identificou-se uma
+propriedade estrutural da ontologia: todas as relações modeladas (`desenvolve`,
+`podeSerTrabalhadaEm` e `progrideDe`) têm habilidades como vértice de origem, de modo
+que ocultá-las resultaria invariavelmente em um grafo vazio. A interface foi então
+ajustada em desvio consciente ao protótipo original: o tipo Habilidade é apresentado
+como categoria fixa (com contagem visível, porém não alternável), enquanto Conceitos
+e Componentes Curriculares permanecem filtráveis. O caso ilustra como propriedades
+topológicas do modelo de conhecimento impõem restrições legítimas ao design da
+interface."
 
 ---
 
@@ -221,6 +309,16 @@ física).
 dinâmico, e um design system central de tokens e classes para tema e interação — sem
 dependências de CSS."*
 
+**Monografia** *(cap. de Implementação, nota sobre tecnologias — parágrafo curto):*
+"A estilização adota uma abordagem híbrida sem dependências externas: estilos inline
+para estrutura e para propriedades calculadas em função do estado da aplicação (como
+animações dirigidas por rolagem e pela simulação física), e uma folha central
+contendo os *tokens* de tema e as classes utilitárias responsáveis por
+pseudo-classes (`:hover`, `:focus`) e quadros de animação. A escolha preservou o
+mapeamento direto com o protótipo aprovado e dispensou *frameworks* de CSS,
+mantendo o conjunto de dependências do projeto restrito ao React e à ferramenta de
+build."
+
 ---
 
 ## D9 — Roteamento por estado, sem react-router
@@ -243,6 +341,14 @@ tratamento manual de qualquer forma.
 navegação é estado React, e a única URL semanticamente importante — a do recorte do
 grafo, usada para compartilhar visões — é sincronizada manualmente."*
 
+**Monografia** *(cap. de Implementação, nota sobre tecnologias — parágrafo curto):*
+"A navegação entre as quatro telas da aplicação é controlada por estado React, sem
+biblioteca de roteamento. A única URL com valor semântico — a que codifica o recorte
+do grafo (série, componente curricular e conceito) e permite o compartilhamento de
+visões — é sincronizada manualmente com a *History API* do navegador, sendo lida e
+validada na inicialização (suporte a *deep-linking*) e atualizada a cada consulta
+aplicada."
+
 ---
 
 ## D10 — Recorte curricular: 5.º–9.º ano (sem Ensino Médio)
@@ -263,7 +369,19 @@ serão consultas SPARQL de agregação, sem mudança de UI."* (Nota de honestida
 textos das habilidades do mock são **plausíveis, não oficiais** — a carga oficial da
 BNCC-Computação é trabalho da integração.)
 
+**Monografia** *(cap. de Delimitação/Materiais, junto da descrição do conjunto de
+dados):*
+"O domínio foi delimitado aos anos finais do ensino fundamental (5.º ao 9.º ano),
+recorte em que a articulação entre a BNCC-Computação e os componentes curriculares é
+mais direta. O conjunto de dados de demonstração compreende 56 vértices (8
+componentes curriculares, 11 conceitos de computação e 37 habilidades) e 136 arestas
+tipadas. Ressalta-se que os enunciados das habilidades são plausíveis, elaborados
+para fins de demonstração, e que a carga do texto normativo oficial constitui etapa
+da integração com o repositório definitivo. Todos os indicadores quantitativos
+exibidos na interface (totais da página inicial, contagens por série e por tipo) são
+agregações computadas sobre o próprio grafo, e não valores fixados manualmente."
+
 ---
 
-*Última atualização: 2026-07-11. Novas decisões: adicionar no topo da lista D<N+1>
-seguindo o formato do cabeçalho.*
+*Última atualização: 2026-07-11. Novas decisões: adicionar ao fim da lista como
+D<N+1>, seguindo o formato do cabeçalho — **sempre com o parágrafo de monografia**.*

@@ -8,8 +8,10 @@
 >
 > **Decisões importantes** (escopo, arquitetura, biblioteca, dados,
 > acessibilidade) são registradas em **[DECISOES.md](DECISOES.md)** — organizado e
-> didático, é o material de preparação da defesa. Ao tomar uma decisão dessas,
-> adicione a entrada lá **na hora** (formato no cabeçalho do arquivo).
+> didático, é o material de preparação da defesa E da escrita do texto. Ao tomar
+> uma decisão dessas, adicione a entrada lá **na hora**, com **todos** os campos do
+> formato do cabeçalho — inclusive o **parágrafo de monografia** (tom acadêmico,
+> com o capítulo onde encaixa).
 
 Última atualização: 2026-07-11.
 
@@ -742,7 +744,8 @@ Particularidades:
   porque os tokens estão definidos globalmente.
 - **Decisões importantes → [DECISOES.md](DECISOES.md)**: toda escolha relevante de
   escopo/arquitetura/biblioteca/dados/acessibilidade ganha uma entrada didática lá
-  (problema → decisão → alternativas rejeitadas → fala pronta para a banca), no
+  (problema → decisão → alternativas rejeitadas → fala pronta para a banca →
+  **parágrafo de monografia**, em tom acadêmico e com o capítulo onde encaixa), no
   momento em que é tomada. O arquivo é versionado e já contém D1–D10 (retroativas).
 
 ## 7. Estrutura de arquivos
