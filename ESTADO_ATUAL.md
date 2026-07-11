@@ -526,10 +526,11 @@ overlays que faltavam no palco. Componentes pequenos e irmãos num único módul
   `#0072B2/#E69F00/#000000`, deuteranopia `#0072B2/#E69F00/#CC79A7`, tritanopia
   `#D55E00/#0072B2/#009E73`; crédito adicionado no rodapé do popover.
 - **FontSizeWidget × popover de paleta**: o popover cobria o widget A/A (fixo a 50% da
-  lateral direita). A posição do widget saiu do inline para a classe `.eg-font-widget`
-  (com `transition: top`); com o popover aberto, a página de grafos põe
-  `data-paleta-aberta="1"` no `<html>` e o CSS desliza o widget para `top: 80%` —
-  fechou, volta. Mesmo padrão desacoplado do `data-theme` (o widget é global, do App).
+  lateral direita). A posição do widget saiu do inline para a classe `.eg-font-widget`;
+  com o popover aberto, a página de grafos põe `data-paleta-aberta="1"` no `<html>` e o
+  CSS **esconde o widget com fade** (`opacity: 0` + `pointer-events: none`; a 1ª versão
+  deslizava para `top: 80%`, mas caía em cima da legenda "Tipos de nó") — fechou o
+  popover, reaparece. Mesmo padrão desacoplado do `data-theme` (o widget é global, do App).
 - Verificado: lint/build/dev OK.
 
 #### Correção (2026-07-11) — protanopia ↔ deuteranopia não recoloria o canvas

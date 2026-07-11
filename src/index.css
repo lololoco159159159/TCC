@@ -248,7 +248,8 @@ input::placeholder {
 }
 
 /* Botões A/A do widget de tamanho de fonte */
-/* wrapper do widget A/A — desliza quando o popover de paleta (grafos) abre */
+/* wrapper do widget A/A — some (fade) enquanto o popover de paleta (grafos)
+   está aberto: deslizar para baixo caía em cima da legenda "Tipos de nó" */
 .eg-font-widget {
   position: fixed;
   right: 14px;
@@ -259,11 +260,12 @@ input::placeholder {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  transition: top 0.25s ease;
+  transition: opacity 0.2s ease;
 }
 
 :root[data-paleta-aberta='1'] .eg-font-widget {
-  top: 80%;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .eg-font-btn:hover {

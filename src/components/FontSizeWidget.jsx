@@ -20,8 +20,8 @@ const estiloBotaoBase = {
 // com o percentual atual entre eles. O zoom é aplicado no #eg-root.
 // A posição vem da classe .eg-font-widget (index.css): quando o popover de
 // paleta da página de grafos está aberto (atributo data-paleta-aberta no
-// <html>), o widget desliza para baixo para não ser coberto — e volta ao
-// fechar.
+// <html>), o widget some com fade (deslizar cobria a legenda "Tipos de nó")
+// e reaparece ao fechar.
 function FontSizeWidget() {
   const { setFont, fontPct, fonteNoMaximo, fonteNoMinimo } = useTheme()
 
