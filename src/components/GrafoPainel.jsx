@@ -14,7 +14,8 @@ import { ANOS, EIXOS, NOS } from '../data/mockFuseki'
 // placeholder do assistente. Posição/largura persistem em localStorage na G10;
 // por ora vivem no estado da página. Hovers via classes .eg-painel-* (CSS).
 
-// cores por tipo de nó — mesmos tokens do canvas (formas p/ daltonismo: G10)
+// cores por tipo de nó — mesmos tokens do canvas; a FORMA vem das classes
+// .eg-no-* (quadrado/triângulo no modo "formas em vez de cores" da G10)
 const COR = {
   habilidade: 'var(--no-habilidade)',
   conceito: 'var(--no-conceito)',
@@ -30,7 +31,7 @@ const MONO_LABEL = {
 
 function Bolinha({ tipo, tamanho }) {
   return (
-    <span style={{ width: tamanho, height: tamanho, borderRadius: '50%', background: COR[tipo], flex: 'none' }} />
+    <span className={`eg-no-${tipo}`} style={{ width: tamanho, height: tamanho, background: COR[tipo], flex: 'none' }} />
   )
 }
 

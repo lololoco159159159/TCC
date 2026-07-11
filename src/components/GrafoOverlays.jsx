@@ -13,7 +13,11 @@ import { PALETAS } from '../data/paletas'
 //   • PaletaPopover — botão-swatch na coluna de zoom que abre o popover
 //     "Cores do grafo · daltonismo" (Padrão/Protanopia/Deuteranopia/
 //     Tritanopia, de src/data/paletas.js). A troca escreve os tokens --no-*
-//     no <html> (efeito na página); formas/sem-animação e persistência: G10.
+//     no <html> (efeito na página).
+//   • OpcoesAcessibilidade (G10) — o miolo do popover, compartilhado com o
+//     dropdown de perfil (GrafoPerfil): linhas de paleta + toggles "formas em
+//     vez de cores" e "desativar animações e física". As formas dos pontinhos
+//     DOM vêm das classes .eg-no-* + data-formas no <html> (index.css).
 
 const MONO_LABEL = {
   font: "9.5px/1 'JetBrains Mono', monospace",
@@ -59,7 +63,7 @@ export function LegendaTipos({ tipos, contagens, aoAlternar }) {
           marginBottom: 8,
         }}
       >
-        <span style={{ width: 11, height: 11, borderRadius: '50%', background: 'var(--no-habilidade)', flex: 'none' }} />
+        <span className="eg-no-habilidade" style={{ width: 11, height: 11, background: 'var(--no-habilidade)', flex: 'none' }} />
         <span style={{ flex: 1, textAlign: 'left', font: "600 12.5px/1.4 'Figtree', sans-serif", color: 'var(--body)' }}>
           {NOMES_TIPO.habilidade}
         </span>
@@ -105,7 +109,7 @@ export function LegendaTipos({ tipos, contagens, aoAlternar }) {
                 opacity: oculto ? 0.45 : 1,
               }}
             >
-              <span style={{ width: 11, height: 11, borderRadius: '50%', background: `var(--no-${t})`, flex: 'none' }} />
+              <span className={`eg-no-${t}`} style={{ width: 11, height: 11, background: `var(--no-${t})`, flex: 'none' }} />
               <span
                 style={{
                   flex: 1,
@@ -259,16 +263,139 @@ export function GavetaSparql({ consulta, tempoMs, simErro, aoSimErro }) {
   )
 }
 
-// ---- Botão-swatch + popover de paleta (coluna de zoom) ----
-export function PaletaPopover({ aberta, aoAlternar, paleta, aoEscolher }) {
+// interruptor 34×20 do protótipo (verde ligado, --edge desligado)
+function Chave({ ligada }) {
+  return (
+    <span
+      style={{
+        width: 34,
+        height: 20,
+        borderRadius: 999,
+        background: ligada ? 'var(--green)' : 'var(--edge)',
+        position: 'relative',
+        flex: 'none',
+        transition: 'background .15s',
+      }}
+    >
+      <span
+        style={{
+          position: 'absolute',
+          top: 2,
+          left: ligada ? 16 : 2,
+          width: 16,
+          height: 16,
+          borderRadius: '50%',
+          background: '#fff',
+          boxShadow: '0 1px 3px rgba(0,0,0,.3)',
+          transition: 'left .15s',
+        }}
+      />
+    </span>
+  )
+}
+
+// ---- Miolo de acessibilidade (paletas + formas + sem animação) ----
+// Compartilhado entre o PaletaPopover e o dropdown de perfil (GrafoPerfil).
+export function OpcoesAcessibilidade({ paleta, aoEscolherPaleta, formas, aoToggleFormas, semAnim, aoToggleSemAnim }) {
   // a linha "Padrão" mostra as cores de fábrica (hex do tema claro, como o
-  // protótipo) — os swatches das outras linhas são as cores das paletas
+  // protótipo) — os swatches das outras linhas são as cores das paletas CUD
   const opcoes = [
     { id: 'padrao', nome: 'Padrão', sub: 'cores do sistema', c: { habilidade: '#1b9e77', conceito: '#7c4dff', disciplina: '#e11d48' } },
     { id: 'protanopia', nome: 'Protanopia', sub: 'dificuldade com vermelho', c: PALETAS.protanopia },
     { id: 'deuteranopia', nome: 'Deuteranopia', sub: 'dificuldade com verde', c: PALETAS.deuteranopia },
     { id: 'tritanopia', nome: 'Tritanopia', sub: 'dificuldade com azul', c: PALETAS.tritanopia },
   ]
+  const toggles = [
+    {
+      titulo: 'Formas em vez de cores',
+      sub: 'daltonismo total: bola, quadrado e triângulo',
+      ligada: formas,
+      ao: aoToggleFormas,
+    },
+    {
+      titulo: 'Desativar animações e física',
+      sub: 'o grafo assenta de imediato, sem movimento',
+      ligada: semAnim,
+      ao: aoToggleSemAnim,
+    },
+  ]
+  return (
+    <>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {opcoes.map((pl) => {
+          const ativa = paleta === pl.id
+          return (
+            <button
+              key={pl.id}
+              type="button"
+              className="eg-paleta-opcao"
+              onClick={() => aoEscolherPaleta(pl.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 9,
+                width: '100%',
+                padding: '7px 9px',
+                border: `1px solid ${ativa ? 'var(--green)' : 'var(--pill-border)'}`,
+                background: ativa ? 'var(--grafo-previa-bg)' : 'transparent',
+                borderRadius: 10,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <span style={{ display: 'inline-flex', gap: 3, flex: 'none' }}>
+                {['habilidade', 'conceito', 'disciplina'].map((t) => (
+                  <span key={t} className={`eg-no-${t}`} style={{ width: 10, height: 10, background: pl.c[t] }} />
+                ))}
+              </span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', font: "700 12.5px/1.4 'Figtree', sans-serif", color: 'var(--text)' }}>
+                  {pl.nome}
+                </span>
+                <span style={{ display: 'block', fontSize: 10.5, color: 'var(--faint)' }}>{pl.sub}</span>
+              </span>
+              <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 700, opacity: ativa ? 1 : 0 }}>✓</span>
+            </button>
+          )
+        })}
+      </div>
+      <div style={{ borderTop: '1px dashed var(--pill-border)', marginTop: 9, paddingTop: 5 }}>
+        {toggles.map((t) => (
+          <button
+            key={t.titulo}
+            type="button"
+            className="eg-toggle-linha"
+            onClick={t.ao}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              width: '100%',
+              padding: '7px 6px',
+              border: 'none',
+              background: 'transparent',
+              borderRadius: 9,
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
+          >
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', font: "700 12px/1.4 'Figtree', sans-serif", color: 'var(--text)' }}>
+                {t.titulo}
+              </span>
+              <span style={{ display: 'block', fontSize: 10, color: 'var(--faint)' }}>{t.sub}</span>
+            </span>
+            <Chave ligada={t.ligada} />
+          </button>
+        ))}
+      </div>
+    </>
+  )
+}
+
+// ---- Botão-swatch + popover de paleta (coluna de zoom) ----
+export function PaletaPopover({ aberta, aoAlternar, paleta, formas, semAnim, ...acessibilidade }) {
+  const custom = paleta !== 'padrao' || formas || semAnim
   return (
     <>
       <button
@@ -280,7 +407,7 @@ export function PaletaPopover({ aberta, aoAlternar, paleta, aoEscolher }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderColor: paleta !== 'padrao' ? 'var(--green)' : undefined,
+          borderColor: custom ? 'var(--green)' : undefined,
         }}
       >
         {/* swatch com as cores ATUAIS (tokens --no-*, já com override da paleta) */}
@@ -303,45 +430,7 @@ export function PaletaPopover({ aberta, aoAlternar, paleta, aoEscolher }) {
           }}
         >
           <div style={{ ...MONO_LABEL, marginBottom: 9 }}>Cores do grafo · daltonismo</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {opcoes.map((pl) => {
-              const ativa = paleta === pl.id
-              return (
-                <button
-                  key={pl.id}
-                  type="button"
-                  className="eg-paleta-opcao"
-                  onClick={() => aoEscolher(pl.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 9,
-                    width: '100%',
-                    padding: '7px 9px',
-                    border: `1px solid ${ativa ? 'var(--green)' : 'var(--pill-border)'}`,
-                    background: ativa ? 'var(--grafo-previa-bg)' : 'transparent',
-                    borderRadius: 10,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <span style={{ display: 'inline-flex', gap: 3, flex: 'none' }}>
-                    {['habilidade', 'conceito', 'disciplina'].map((t) => (
-                      <span key={t} style={{ width: 10, height: 10, borderRadius: '50%', background: pl.c[t] }} />
-                    ))}
-                  </span>
-                  <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: 'block', font: "700 12.5px/1.4 'Figtree', sans-serif", color: 'var(--text)' }}>
-                      {pl.nome}
-                    </span>
-                    <span style={{ display: 'block', fontSize: 10.5, color: 'var(--faint)' }}>{pl.sub}</span>
-                  </span>
-                  <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 700, opacity: ativa ? 1 : 0 }}>✓</span>
-                </button>
-              )
-            })}
-          </div>
-          {/* toggles "formas em vez de cores" e "sem animação" chegam na G10 */}
+          <OpcoesAcessibilidade paleta={paleta} formas={formas} semAnim={semAnim} {...acessibilidade} />
           <p
             style={{
               margin: '9px 0 0',

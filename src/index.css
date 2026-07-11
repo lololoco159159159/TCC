@@ -498,3 +498,42 @@ input::placeholder {
 .eg-paleta-opcao:hover {
   border-color: var(--green) !important;
 }
+
+/* ---- Página de grafos: perfil, turmas e formas (G10) ---- */
+
+/* pontinhos de tipo de nó (sugestões, legenda, painel, paleta): a FORMA vem
+   daqui — no modo "formas em vez de cores" (data-formas no <html>), conceito
+   vira quadrado e disciplina vira triângulo, como no canvas */
+.eg-no-habilidade,
+.eg-no-conceito,
+.eg-no-disciplina {
+  border-radius: 50%;
+}
+
+:root[data-formas='1'] .eg-no-conceito {
+  border-radius: 2px;
+}
+
+:root[data-formas='1'] .eg-no-disciplina {
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+/* item de turma no dropdown da barra de filtros */
+.eg-turma-item {
+  font-family: 'Figtree', system-ui, sans-serif;
+}
+
+.eg-turma-item:hover {
+  background: var(--bg) !important;
+}
+
+/* botão "+ Adicionar" turma (perfil) */
+.eg-turma-add:hover {
+  background: var(--grafo-previa-bg) !important;
+}
+
+/* linhas com interruptor (formas / sem animação) */
+.eg-toggle-linha:hover {
+  background: var(--grafo-bg) !important;
+}

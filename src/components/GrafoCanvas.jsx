@@ -41,7 +41,17 @@ function lerPaleta() {
 }
 
 const GrafoCanvas = forwardRef(function GrafoCanvas(
-  { nos, arestas, versao, semAnim = false, selecionadoId = null, onSelecionar, onExpandir, offsetEsquerda = 0 },
+  {
+    nos,
+    arestas,
+    versao,
+    semAnim = false,
+    formas = false,
+    selecionadoId = null,
+    onSelecionar,
+    onExpandir,
+    offsetEsquerda = 0,
+  },
   ref,
 ) {
   const canvasRef = useRef(null)
@@ -59,6 +69,8 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
   dados.current = { nos, arestas }
   const semAnimRef = useRef(semAnim)
   semAnimRef.current = semAnim
+  const formasRef = useRef(formas)
+  formasRef.current = formas
   selecionadoRef.current = selecionadoId
   const onSelecionarRef = useRef(onSelecionar)
   onSelecionarRef.current = onSelecionar
@@ -201,14 +213,29 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     centrarEm,
     enquadrar,
     reaquecer,
+    assentar, // usado ao ligar o modo "sem animação" com um grafo em cena (G10)
     zoomMais: () => zoomCam(1.35),
     zoomMenos: () => zoomCam(1 / 1.35),
   }))
 
-  // forma do nó por tipo (círculo hoje; quadrado/triângulo entram no modo
-  // "formas em vez de cores" da G10)
+  // forma do nó por tipo — modo "formas em vez de cores" (G10, daltonismo
+  // total): habilidade continua círculo; conceito vira quadrado; disciplina
+  // vira triângulo. Constantes do protótipo.
   function tracarNo(ctx, n, r) {
-    ctx.arc(n.x, n.y, r, 0, 7)
+    if (!formasRef.current || n.tipo === 'habilidade') {
+      ctx.arc(n.x, n.y, r, 0, 7)
+      return
+    }
+    if (n.tipo === 'conceito') {
+      const s = r * 0.92
+      ctx.rect(n.x - s, n.y - s, s * 2, s * 2)
+      return
+    }
+    const s = r * 1.22 // disciplina: triângulo
+    ctx.moveTo(n.x, n.y - s)
+    ctx.lineTo(n.x + s * 0.866, n.y + s * 0.5)
+    ctx.lineTo(n.x - s * 0.866, n.y + s * 0.5)
+    ctx.closePath()
   }
 
   function desenhar(cv, rt) {

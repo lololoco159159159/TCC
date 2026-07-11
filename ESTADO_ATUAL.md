@@ -5,6 +5,11 @@
 > `.gitignore` (não sincroniza entre máquinas), então o estado real do trabalho
 > mora **aqui**. Ao iniciar uma sessão, leia este arquivo primeiro e, ao concluir
 > uma etapa, atualize-o.
+>
+> **Decisões importantes** (escopo, arquitetura, biblioteca, dados,
+> acessibilidade) são registradas em **[DECISOES.md](DECISOES.md)** — organizado e
+> didático, é o material de preparação da defesa. Ao tomar uma decisão dessas,
+> adicione a entrada lá **na hora** (formato no cabeçalho do arquivo).
 
 Última atualização: 2026-07-11.
 
@@ -541,6 +546,55 @@ overlays que faltavam no palco. Componentes pequenos e irmãos num único módul
   (a legenda/painel, que usam `var()` direto, atualizavam). A chave agora concatena os
   **três** tokens `--no-*`. Verificado: lint/build/dev OK.
 
+### Etapa 15 (2026-07-11) — página "Grafos": perfil mock + acessibilidade + persistência (G10)
+A página ganhou "dona": a Profa. Mariana (mock), suas turmas como atalho de filtro, e
+as preferências de acessibilidade que sobrevivem ao reload.
+- **[src/components/GrafoPerfil.jsx](src/components/GrafoPerfil.jsx)** (novo) —
+  **substitui o Entrar/Criar conta** do header da página: botão de conta (avatar "MS" +
+  "Profa. Mariana" + seta; borda verde aberto) abre o dropdown fixo (`top:66 right:20`,
+  368px; backdrop `fixed inset:0` fecha ao clicar fora): **identidade** (avatar 46px,
+  nome em Spectral, e-mail), **"Alterar senha"** (aviso: "chega junto com o sistema de
+  contas"), **"Minhas turmas"** (lista ano+matéria com **Filtrar** — aplica o recorte —
+  e **×** remover; selects + **"+ Adicionar"** com dedupe) e **"Acessibilidade · cores
+  do grafo"** (reusa `OpcoesAcessibilidade`) + nota "Preferências salvas na sua conta".
+- **[src/components/GrafoOverlays.jsx](src/components/GrafoOverlays.jsx)** —
+  **`OpcoesAcessibilidade`** (novo export): o miolo compartilhado entre o PaletaPopover
+  e o perfil — linhas de paleta CUD + toggles **"Formas em vez de cores"** e
+  **"Desativar animações e física"** (interruptor 34×20 do protótipo, componente
+  `Chave`). O botão-swatch fica verde quando qualquer preferência é não-padrão.
+- **[src/components/GrafoFiltros.jsx](src/components/GrafoFiltros.jsx)** — botão
+  **"Turmas"** (chapeuzinho + seta) entre os selects e a prévia: dropdown com as turmas
+  do perfil (clicar **aplica ano+matéria na hora**), estado vazio ("Você ainda não tem
+  turmas cadastradas.") e link **"Gerenciar turmas no perfil"** (abre o dropdown do
+  perfil). Aberto/fechado vive na página (Esc e clique no vazio fecham; abrir um
+  popover fecha o outro).
+- **Modo formas** (daltonismo total): no canvas, `tracarNo()` portado do protótipo —
+  conceito vira **quadrado** (`s = r·0.92`), disciplina vira **triângulo** (`s = r·1.22`),
+  habilidade continua círculo. Nos pontinhos DOM (sugestões, legenda, painel, vistos,
+  paleta), a forma vem das **classes `.eg-no-*`** + atributo `data-formas` no `<html>`
+  (quadrado: `border-radius: 2px`; triângulo: `clip-path: polygon(…)`) — um só switch
+  CSS recolore tudo, mesmo padrão do `data-theme`/paleta.
+- **Modo sem animação**: prop `semAnim` (aceita desde a G5) finalmente ligada — física
+  desligada, `assentar(N)` resolve o layout de uma vez, câmera salta sem lerp. Ligar
+  com um grafo em cena chama `canvasApi.assentar(200)` após 30ms (novo método na API
+  imperativa, fiel ao protótipo).
+- **Persistência** ([src/pages/Grafos.jsx](src/pages/Grafos.jsx)) —
+  `localStorage['edugraphPrefs']` guarda `{ paleta, formas, semAnim, turmas, painel }`.
+  `lerPrefs()` valida campo a campo no load (prefs corrompidas viram padrão, como o
+  protótipo); efeito de gravação com **debounce de 150ms** (o arrasto do painel muda o
+  estado a cada pointermove — não vale um write por frame). A posição/largura/esc do
+  painel de contexto agora sobrevive ao reload.
+- Classes `.eg-no-{habilidade,conceito,disciplina}` (+ variantes `data-formas`),
+  `.eg-turma-item .eg-turma-add .eg-toggle-linha` em [src/index.css](src/index.css).
+  Sem token novo. Prop `onLogin` removida da página (sem uso após o perfil).
+- Verificado: `npm run lint` (0 erros, só o warning pré-existente), `npm run build`
+  (+~13KB, sem dependência nova) e `npm run dev` (200 nos módulos novos/alterados).
+  Teste manual: perfil abre/fecha (backdrop, Esc); adicionar turma "7.º ano ·
+  Matemática" → aparece no dropdown Turmas → Filtrar aplica o recorte; formas trocam
+  no canvas E nos pontinhos DOM; sem-animação assenta na hora (recorte novo sem
+  física); recarregar a página preserva paleta/formas/semAnim/turmas/painel; Limpar
+  prefs = apagar a chave no devtools.
+
 ## 4. O que FALTA (próximas etapas)
 
 Com a Etapa 5, a landing (Home) está **completa** do header ao footer. Restam:
@@ -615,12 +669,14 @@ sempre com contraparte escura (a página acompanha o tema do site).
   `setConfig`), popover de paleta (daltonismo, `src/data/paletas.js`;
   override dos tokens `--no-*` no `<html>`). Formas/sem-anim/persistência
   ficaram na G10, como o roadmap.
-- [ ] **G10 — Perfil mock + acessibilidade + persistência**: dropdown de perfil
-  no header (identidade, turmas ano+matéria → filtro "Turmas" na barra),
-  **paletas para daltonismo** (protanopia/deuteranopia/tritanopia), modo
-  **formas em vez de cores** (círculo/quadrado/triângulo), modo **sem animação**;
-  persistência em `localStorage['edugraphPrefs']` (+ posição/largura do painel).
-  Substitui o Entrar/Criar conta do header da página.
+- [x] **G10 — Perfil mock + acessibilidade + persistência** *(Etapa 15,
+  2026-07-11)*: `GrafoPerfil.jsx` no lugar do Entrar/Criar conta (identidade,
+  turmas com Filtrar/remover/adicionar, acessibilidade); botão "Turmas" na
+  barra (`GrafoFiltros`); modo **formas** (canvas `tracarNo` + classes
+  `.eg-no-*` com `data-formas`); modo **sem animação** (`semAnim` +
+  `assentar(200)`); persistência validada em `localStorage['edugraphPrefs']`
+  (paleta, formas, semAnim, turmas, painel; debounce 150ms).
+  `OpcoesAcessibilidade` compartilhado entre popover e perfil.
 - [ ] **G11 — Integração com a Home**: os `GradeCard` e os chips do
   `MateriaPopover` abrem a página **com o recorte já aplicado** (série/matéria
   via estado ou pela URL da G3) — "Ver o grafo desta turma".
@@ -684,6 +740,10 @@ Particularidades:
 - Idioma do projeto e dos comentários: **português**.
 - Use sempre `var(--token)` (sem fallback `,#hex`) ao portar trechos do protótipo,
   porque os tokens estão definidos globalmente.
+- **Decisões importantes → [DECISOES.md](DECISOES.md)**: toda escolha relevante de
+  escopo/arquitetura/biblioteca/dados/acessibilidade ganha uma entrada didática lá
+  (problema → decisão → alternativas rejeitadas → fala pronta para a banca), no
+  momento em que é tomada. O arquivo é versionado e já contém D1–D10 (retroativas).
 
 ## 7. Estrutura de arquivos
 
@@ -704,7 +764,10 @@ src/
 │   ├── GrafoPainel.jsx        # painel de contexto "de vidro": detalhe do nó, conexões por relação,
 │   │                          #   expandir conexões, vistos por último, assistente (placeholder) (G7–G8 — FEITO)
 │   ├── GrafoOverlays.jsx      # legenda "Tipos de nó" (toggle reconsulta), gaveta SPARQL (consulta real +
-│   │                          #   simular falha 503) e popover de paleta/daltonismo (Etapa 14/G9 — FEITO)
+│   │                          #   simular falha 503), popover de paleta/daltonismo e OpcoesAcessibilidade
+│   │                          #   (paletas + formas + sem animação) (G9–G10 — FEITO)
+│   ├── GrafoPerfil.jsx        # perfil mock do header: identidade, turmas (filtro rápido) e acessibilidade;
+│   │                          #   prefs em localStorage['edugraphPrefs'] (Etapa 15/G10 — FEITO)
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
 ├── data/
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
@@ -714,7 +777,7 @@ src/
 │                              #   e a grade de séries (Etapa 8/G2 — FEITO)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
-│   ├── Grafos.jsx             # página do grafo — casca + filtros + estados + canvas + painel + expandir/desfazer + overlays (G1–G9); roadmap §4.1 (EM ANDAMENTO)
+│   ├── Grafos.jsx             # página do grafo — filtros + estados + canvas + painel + expandir/desfazer + overlays + perfil/prefs (G1–G10); falta G11 (§4.1)
 │   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
 │   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
 ├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)

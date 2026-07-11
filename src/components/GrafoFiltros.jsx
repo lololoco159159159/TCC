@@ -5,6 +5,9 @@ import { ANOS, LISTA_DISCIPLINAS, LISTA_CONCEITOS } from '../data/mockFuseki'
 // mexem em `pend`; a consulta ao endpoint acontece apenas no botão Filtrar.
 // A busca tem autocomplete (buscar() do mock) — escolher uma sugestão aplica o
 // recorte na hora. A prévia "N vértices" antecipa o tamanho do recorte pendente.
+// G10: botão "Turmas" (dropdown com as turmas do perfil mock — clicar aplica o
+// recorte ano+matéria na hora; "Gerenciar turmas no perfil" abre o dropdown
+// do perfil). Estado aberto/fechado vive na página (Esc/clique no vazio fecham).
 
 // estilo das pills de série: pendente (escolhida agora) > aplicada (no recorte
 // atual) > neutra — mesmos três estados do protótipo
@@ -31,6 +34,11 @@ function GrafoFiltros({
   filtrosAtivos,
   aoFiltrar,
   aoLimpar,
+  turmas,
+  turmasAberto,
+  aoToggleTurmas,
+  aoFiltrarTurma,
+  aoAbrirPerfil,
 }) {
   const aoTeclarBusca = (e) => {
     if (e.key === 'Enter' && sugestoes.length) aoEscolherSugestao(sugestoes[0])
@@ -108,13 +116,8 @@ function GrafoFiltros({
                 }}
               >
                 <span
-                  style={{
-                    width: 9,
-                    height: 9,
-                    borderRadius: '50%',
-                    background: `var(--no-${s.tipo})`,
-                    flex: 'none',
-                  }}
+                  className={`eg-no-${s.tipo}`}
+                  style={{ width: 9, height: 9, background: `var(--no-${s.tipo})`, flex: 'none' }}
                 />
                 <span
                   style={{
@@ -226,6 +229,120 @@ function GrafoFiltros({
           </option>
         ))}
       </select>
+
+      {/* ---- turmas do perfil (G10): clicar numa turma aplica ano+matéria ---- */}
+      <div style={{ position: 'relative', flex: 'none' }}>
+        <button
+          type="button"
+          className="eg-painel-chip"
+          title="Filtrar por uma das suas turmas"
+          onClick={aoToggleTurmas}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 7,
+            padding: '8px 13px',
+            borderRadius: 10,
+            border: `1px solid ${turmasAberto ? 'var(--green)' : 'var(--pill-border)'}`,
+            background: 'var(--bg)',
+            color: 'var(--body)',
+            font: "600 13px/1 'Figtree', sans-serif",
+            cursor: 'pointer',
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 10 12 5 2 10l10 5z" />
+            <path d="M6 12v5c3 3 9 3 12 0v-5" />
+          </svg>
+          <span>Turmas</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+        {turmasAberto && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 42,
+              left: 0,
+              width: 250,
+              background: 'var(--pill-bg)',
+              border: '1px solid var(--pill-border)',
+              borderRadius: 14,
+              boxShadow: '0 18px 44px rgba(28,38,32,.16)',
+              zIndex: 60,
+              animation: 'egSurgir .14s ease',
+              padding: 8,
+            }}
+          >
+            {turmas.map((t) => (
+              <button
+                key={`${t.ano}|${t.disciplina}`}
+                type="button"
+                className="eg-turma-item"
+                title="Filtrar por esta turma"
+                onClick={() => aoFiltrarTurma(t)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 9,
+                  width: '100%',
+                  padding: '8px 10px',
+                  border: 'none',
+                  background: 'transparent',
+                  borderRadius: 9,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flex: 'none' }}>
+                  <path d="M22 10 12 5 2 10l10 5z" />
+                  <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                </svg>
+                <span
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    font: "600 13px/1.3 'Figtree', sans-serif",
+                    color: 'var(--text)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {t.label}
+                </span>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flex: 'none' }}>
+                  <path d="M4 5h16l-6.5 8v5.5L10.5 20v-7z" />
+                </svg>
+              </button>
+            ))}
+            {turmas.length === 0 && (
+              <p style={{ margin: '4px 6px 6px', fontSize: 12, lineHeight: 1.5, color: 'var(--faint)' }}>
+                Você ainda não tem turmas cadastradas.
+              </p>
+            )}
+            <div style={{ borderTop: '1px dashed var(--pill-border)', margin: '4px 6px 2px', paddingTop: 7 }}>
+              <button
+                type="button"
+                onClick={aoAbrirPerfil}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  padding: '2px 0',
+                  color: 'var(--green)',
+                  font: "700 12px/1.3 'Figtree', sans-serif",
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: 3,
+                }}
+              >
+                Gerenciar turmas no perfil
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* ---- prévia + Filtrar + Limpar ---- */}
       {temPend && (

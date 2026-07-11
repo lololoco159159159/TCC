@@ -5,6 +5,7 @@ import Footer from '../components/Footer'
 import GrafoFiltros from '../components/GrafoFiltros'
 import GrafoCanvas from '../components/GrafoCanvas'
 import GrafoPainel from '../components/GrafoPainel'
+import GrafoPerfil from '../components/GrafoPerfil'
 import { GavetaSparql, LegendaTipos, PaletaPopover } from '../components/GrafoOverlays'
 import { PALETAS } from '../data/paletas'
 import labotim from '../assets/labotim.png'
@@ -42,9 +43,34 @@ import {
 // o filtro `tipos` na consulta), gaveta SPARQL (última consulta gerada + ms +
 // simular falha 503 via setConfig) e popover de paleta (daltonismo — escreve
 // os tokens --no-* no <html>; o canvas detecta o override e relê as cores).
+// G10: perfil mock no header (GrafoPerfil — identidade, turmas, acessibilidade),
+// filtro "Turmas" na barra, modo formas (data-formas no <html> + prop do
+// canvas), modo sem animação (prop semAnim + assentar) e PERSISTÊNCIA das
+// preferências em localStorage['edugraphPrefs'] (paleta, formas, semAnim,
+// turmas e posição/largura do painel — lidas com validação no mount).
 
 const TIPOS_TODOS = { habilidade: true, conceito: true, disciplina: true }
 const FILTROS_VAZIOS = { ano: '', disciplina: '', conceito: '', tipos: TIPOS_TODOS }
+const PAINEL_PADRAO = { x: 12, w: 392, esc: false }
+
+// Lê localStorage['edugraphPrefs'] com validação campo a campo (prefs
+// corrompidas viram padrão). Roda uma vez, na carga do módulo (só browser).
+function lerPrefs() {
+  const padrao = { paleta: 'padrao', formas: false, semAnim: false, turmas: [], painel: PAINEL_PADRAO }
+  try {
+    const p = JSON.parse(localStorage.getItem('edugraphPrefs') || '{}')
+    return {
+      paleta: p.paleta === 'padrao' || PALETAS[p.paleta] ? p.paleta : 'padrao',
+      formas: typeof p.formas === 'boolean' ? p.formas : false,
+      semAnim: typeof p.semAnim === 'boolean' ? p.semAnim : false,
+      turmas: Array.isArray(p.turmas) ? p.turmas.filter((t) => t && t.ano && t.disciplina) : [],
+      painel: p.painel && typeof p.painel === 'object' ? { ...PAINEL_PADRAO, ...p.painel } : PAINEL_PADRAO,
+    }
+  } catch {
+    return padrao
+  }
+}
+const PREFS = lerPrefs()
 
 // mapa reverso uri -> id para ler os bindings sparql-results+json do endpoint
 const URI_PARA_ID = new Map([...NOS.values()].map((n) => [n.uri, n.id]))
@@ -147,7 +173,7 @@ function sincronizarURL(f) {
   }
 }
 
-function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
+function Grafos({ onHome, onSignup, onGrafos }) {
   const [status, setStatus] = useState('inicio') // inicio | carregando | pronto | vazio | erro
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS) // recorte aplicado
   const [pend, setPend] = useState(FILTROS_VAZIOS) // seleção pendente (aplica no Filtrar)
@@ -160,13 +186,18 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
   const [selecionadoId, setSelecionadoId] = useState(null) // nó selecionado (anel no canvas + painel)
   const [detalhe, setDetalhe] = useState(null) // { id, carregando, texto, grupos } do painel (G7)
   const [vistos, setVistos] = useState([]) // últimos 5 nós selecionados (chips do painel)
-  const [painel, setPainel] = useState({ x: 12, w: 392, esc: false }) // persiste em localStorage na G10
+  const [painel, setPainel] = useState(PREFS.painel) // posição/largura persistem (G10)
   const [expandindo, setExpandindo] = useState(false) // consulta de expansão em voo (G8)
   const [desfaziveis, setDesfaziveis] = useState(0) // tamanho do histórico de expansões
   const [consulta, setConsulta] = useState('') // última consulta SPARQL gerada (gaveta, G9)
   const [simErro, setSimErro] = useState(false) // simular falha do endpoint (gaveta, G9)
-  const [paleta, setPaleta] = useState('padrao') // paleta de cores dos nós (G9; persiste na G10)
+  const [paleta, setPaleta] = useState(PREFS.paleta) // paleta de cores dos nós (G9/G10)
   const [paletaAberta, setPaletaAberta] = useState(false)
+  const [formas, setFormas] = useState(PREFS.formas) // formas em vez de cores (G10)
+  const [semAnim, setSemAnim] = useState(PREFS.semAnim) // desativar animações e física (G10)
+  const [turmas, setTurmas] = useState(PREFS.turmas) // turmas do perfil mock (G10)
+  const [perfilAberto, setPerfilAberto] = useState(false)
+  const [turmasAberto, setTurmasAberto] = useState(false)
   const seq = useRef(0) // descarta respostas fora de ordem
   const nosRef = useRef(new Map()) // nós do grafo ATUAL (estabilidade de posição + closures assíncronas)
   const histExp = useRef([]) // snapshots pré-expansão (máx. 10, G8)
@@ -206,7 +237,8 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
     selRef.current = null
     setSelecionadoId(null)
     setDetalhe(null)
-    setPaletaAberta(false) // clicar no vazio também fecha o popover (protótipo)
+    setPaletaAberta(false) // clicar no vazio também fecha os popovers (protótipo)
+    setTurmasAberto(false)
   }
 
   // Expande as conexões de um nó (G8): consultarFuseki('expansao') traz os
@@ -401,10 +433,34 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
       setDetalhe(null)
       setSugestoes([])
       setPaletaAberta(false)
+      setPerfilAberto(false)
+      setTurmasAberto(false)
     }
     window.addEventListener('keydown', aoTecla)
     return () => window.removeEventListener('keydown', aoTecla)
   }, [])
+
+  // Persistência das preferências (G10). Debounce de 150ms: o arrasto do
+  // painel muda o estado a cada pointermove e não vale um write por frame.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem('edugraphPrefs', JSON.stringify({ paleta, formas, semAnim, turmas, painel }))
+      } catch {
+        /* sem storage */
+      }
+    }, 150)
+    return () => clearTimeout(t)
+  }, [paleta, formas, semAnim, turmas, painel])
+
+  // modo "formas em vez de cores": o atributo no <html> troca a forma dos
+  // pontinhos DOM (classes .eg-no-* no index.css); o canvas recebe via prop
+  useEffect(() => {
+    const el = document.documentElement
+    if (formas) el.setAttribute('data-formas', '1')
+    else el.removeAttribute('data-formas')
+    return () => el.removeAttribute('data-formas')
+  }, [formas])
 
   // gaveta SPARQL: o checkbox liga o modo de falha do mock (próxima consulta → 503)
   useEffect(() => {
@@ -461,6 +517,40 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
       pendenteSel.current = s.id
       aplicarFiltros({ ano: s.ano, disciplina: '', conceito: '' })
     }
+  }
+
+  // ---- turmas do perfil mock (G10) ----
+  const rotuloTurma = (t) =>
+    `${(ANOS.find((a) => a.id === t.ano) || {}).label || t.ano} · ${NOS.get(t.disciplina)?.label || t.disciplina}`
+  const turmasUI = turmas.map((t, i) => ({ ...t, label: rotuloTurma(t), indice: i }))
+  const aoAddTurma = (ano, disciplina) =>
+    setTurmas((ts) =>
+      ts.some((t) => t.ano === ano && t.disciplina === disciplina) ? ts : [...ts, { ano, disciplina }],
+    )
+  const aoRemoverTurma = (i) => setTurmas((ts) => ts.filter((_, j) => j !== i))
+  const aoFiltrarTurma = (t) => {
+    setTurmasAberto(false)
+    setPerfilAberto(false)
+    aplicarFiltros({ ...filtros, ano: t.ano, disciplina: t.disciplina, conceito: '' })
+  }
+
+  // ---- toggles de acessibilidade (G10) ----
+  const aoToggleFormas = () => setFormas((f) => !f)
+  const aoToggleSemAnim = () => {
+    const novo = !semAnim
+    setSemAnim(novo)
+    // ligar com um grafo em cena: assenta o layout de uma vez (protótipo);
+    // 30ms dão tempo de a prop nova chegar ao canvas antes do salto
+    if (novo && grafo.nos.size) setTimeout(() => canvasApi.current?.assentar(200), 30)
+  }
+  // props compartilhadas entre o popover de paleta e o perfil
+  const acessibilidade = {
+    paleta,
+    aoEscolherPaleta: setPaleta,
+    formas,
+    aoToggleFormas,
+    semAnim,
+    aoToggleSemAnim,
   }
 
   // ---- derivados da barra ----
@@ -556,35 +646,20 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
             </a>
             <span style={{ width: 1, height: 24, background: 'var(--edge)' }} />
             <ThemeToggle />
-            {/* Na etapa G10 este trecho vira o perfil (mock) do protótipo */}
-            <span
-              onClick={onLogin}
-              style={{
-                fontSize: 14,
-                fontWeight: 600,
-                color: 'var(--text)',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
+            {/* perfil mock (G10) — substitui o Entrar/Criar conta do protótipo */}
+            <GrafoPerfil
+              aberto={perfilAberto}
+              aoAlternar={() => {
+                setPerfilAberto((a) => !a)
+                setTurmasAberto(false)
               }}
-            >
-              Entrar
-            </span>
-            <button
-              onClick={onSignup}
-              style={{
-                fontSize: 14,
-                fontWeight: 600,
-                color: '#fff',
-                background: 'var(--green)',
-                padding: '8px 16px',
-                borderRadius: 999,
-                border: 'none',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Criar conta
-            </button>
+              aoFechar={() => setPerfilAberto(false)}
+              turmas={turmasUI}
+              aoAddTurma={aoAddTurma}
+              aoRemoverTurma={aoRemoverTurma}
+              aoFiltrarTurma={aoFiltrarTurma}
+              {...acessibilidade}
+            />
           </div>
         </header>
 
@@ -605,6 +680,17 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
           filtrosAtivos={filtrosAtivos}
           aoFiltrar={() => aplicarFiltros({ ...filtros, ...pend })}
           aoLimpar={() => aplicarFiltros(FILTROS_VAZIOS)}
+          turmas={turmasUI}
+          turmasAberto={turmasAberto}
+          aoToggleTurmas={() => {
+            setTurmasAberto((a) => !a)
+            setPerfilAberto(false)
+          }}
+          aoFiltrarTurma={aoFiltrarTurma}
+          aoAbrirPerfil={() => {
+            setTurmasAberto(false)
+            setPerfilAberto(true)
+          }}
         />
 
         {/* ============ ÁREA DE TRABALHO: canvas + overlays de estado ============ */}
@@ -618,6 +704,8 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
             onSelecionar={(id) => (id ? selecionar(id) : desselecionar())}
             onExpandir={expandir}
             offsetEsquerda={painel.esc ? 0 : painel.x + painel.w}
+            semAnim={semAnim}
+            formas={formas}
           />
 
           {/* controles de zoom + recentrar (topo-direita, sobre o canvas) */}
@@ -669,8 +757,7 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
               <PaletaPopover
                 aberta={paletaAberta}
                 aoAlternar={() => setPaletaAberta((a) => !a)}
-                paleta={paleta}
-                aoEscolher={setPaleta}
+                {...acessibilidade}
               />
             </div>
           )}
