@@ -39,7 +39,7 @@ function lerPaleta() {
 }
 
 const GrafoCanvas = forwardRef(function GrafoCanvas(
-  { nos, arestas, versao, semAnim = false, selecionadoId = null, onSelecionar },
+  { nos, arestas, versao, semAnim = false, selecionadoId = null, onSelecionar, offsetEsquerda = 0 },
   ref,
 ) {
   const canvasRef = useRef(null)
@@ -60,6 +60,8 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
   selecionadoRef.current = selecionadoId
   const onSelecionarRef = useRef(onSelecionar)
   onSelecionarRef.current = onSelecionar
+  const offsetRef = useRef(offsetEsquerda)
+  offsetRef.current = offsetEsquerda
 
   // Física do layout — porte fiel do protótipo. A cada iteração: repulsão entre
   // todos os pares (com anti-colisão garantindo raio+raio+10px entre centros),
@@ -144,8 +146,9 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [versao])
 
-  // G7: quando o painel de detalhe existir, descontar sua largura do palco
-  const offsetPainel = () => 0
+  // largura ocupada pelo painel de contexto (G7) — enquadrar/centrarEm miram
+  // o centro do espaço LIVRE à direita dele, como no protótipo
+  const offsetPainel = () => offsetRef.current
 
   function enquadrar() {
     const { nos: ns } = dados.current

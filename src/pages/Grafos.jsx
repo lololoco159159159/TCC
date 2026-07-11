@@ -4,9 +4,10 @@ import ThemeToggle from '../components/ThemeToggle'
 import Footer from '../components/Footer'
 import GrafoFiltros from '../components/GrafoFiltros'
 import GrafoCanvas from '../components/GrafoCanvas'
+import GrafoPainel from '../components/GrafoPainel'
 import labotim from '../assets/labotim.png'
 import ufes from '../assets/ufes.png'
-import { ANOS, NOS, LISTA_HABILIDADES, buscar, consultarFuseki } from '../data/mockFuseki'
+import { ANOS, NOS, LISTA_HABILIDADES, buscar, conexoesDe, consultarFuseki } from '../data/mockFuseki'
 
 // Página "Grafos" — a tela que exibe o grafo de conhecimento (BNCC ×
 // Pensamento Computacional). Protótipo: design/prototipo_grafo.html.
@@ -17,7 +18,9 @@ import { ANOS, NOS, LISTA_HABILIDADES, buscar, consultarFuseki } from '../data/m
 // semente + FÍSICA (repulsão/anti-colisão/molas) assentando o layout — e as
 // interações (G6): seleção de nó (estado aqui; anel/esmaecer no canvas), Esc
 // limpa, botões +/−/recentrar sobre o canvas e busca de habilidade que
-// seleciona/centra o nó. Painel de detalhe (G7) chega na próxima etapa.
+// seleciona/centra o nó. G7: selecionar dispara consultarFuseki('detalhe') +
+// conexoesDe() e alimenta o GrafoPainel (vidro flutuante, arrastável); a
+// largura ocupada pelo painel é descontada do palco (offsetEsquerda do canvas).
 
 const FILTROS_VAZIOS = { ano: '', disciplina: '', conceito: '' }
 const TIPOS_TODOS = { habilidade: true, conceito: true, disciplina: true }
@@ -133,12 +136,56 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
   const [contagens, setContagens] = useState({ habilidade: 0, conceito: 0, disciplina: 0, conexoes: 0 })
   const [tempoMs, setTempoMs] = useState(0)
   const [msgErro, setMsgErro] = useState('')
-  const [selecionadoId, setSelecionadoId] = useState(null) // nó selecionado (anel no canvas; painel na G7)
+  const [selecionadoId, setSelecionadoId] = useState(null) // nó selecionado (anel no canvas + painel)
+  const [detalhe, setDetalhe] = useState(null) // { id, carregando, texto, grupos } do painel (G7)
+  const [vistos, setVistos] = useState([]) // últimos 5 nós selecionados (chips do painel)
+  const [painel, setPainel] = useState({ x: 12, w: 392, esc: false }) // persiste em localStorage na G10
   const seq = useRef(0) // descarta respostas fora de ordem
   const nosRef = useRef(new Map()) // recorte anterior (estabilidade de posição)
+  const selRef = useRef(null) // espelho de selecionadoId para closures assíncronas
   const canvasApi = useRef(null) // { centrarEm, enquadrar, zoomMais, zoomMenos } (G6)
   const pendenteSel = useRef(null) // habilidade escolhida na busca, a selecionar quando o recorte chegar
   const tSel = useRef(0)
+
+  // Seleciona um nó: registra nos "vistos", abre o painel com as conexões
+  // (síncronas, do mock) e consulta o texto normativo/definição no endpoint —
+  // com fallback local se a consulta falhar (fiel ao protótipo).
+  function selecionar(id) {
+    const base = NOS.get(id)
+    if (!base) return
+    selRef.current = id
+    setSelecionadoId(id)
+    setVistos((v) => [id, ...v.filter((x) => x !== id)].slice(0, 5))
+    setDetalhe({ id, carregando: true, texto: '', grupos: conexoesDe(id) })
+    consultarFuseki('detalhe', { id })
+      .then(({ json }) => {
+        if (selRef.current !== id) return // seleção mudou enquanto consultava
+        let texto = ''
+        json.results.bindings.forEach((b) => {
+          if (b.propriedade.value === 'edu:textoNormativo' || b.propriedade.value === 'edu:definicao')
+            texto = b.valor.value
+        })
+        setDetalhe((d) => (d && d.id === id ? { ...d, carregando: false, texto } : d))
+      })
+      .catch(() => {
+        if (selRef.current !== id) return
+        setDetalhe((d) => (d && d.id === id ? { ...d, carregando: false, texto: base.texto || base.def || '' } : d))
+      })
+  }
+
+  function desselecionar() {
+    selRef.current = null
+    setSelecionadoId(null)
+    setDetalhe(null)
+  }
+
+  // Vai até um nó a partir do painel (conexões / vistos). Fora do recorte,
+  // vira expansão na G8 — por ora só os nós presentes respondem.
+  function irPara(id) {
+    if (!grafo.nos.has(id)) return
+    selecionar(id)
+    canvasApi.current?.centrarEm(id)
+  }
 
   function aplicarFiltros(f) {
     clearTimeout(tSel.current) // recorte novo cancela uma seleção agendada pela busca
@@ -149,7 +196,7 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
     if (vazio) {
       nosRef.current = new Map()
       pendenteSel.current = null
-      setSelecionadoId(null)
+      desselecionar()
       setGrafo((g) => ({ nos: new Map(), arestas: [], versao: g.versao + 1 }))
       setStatus('inicio')
       return
@@ -169,15 +216,15 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
         setTempoMs(ms)
         setGrafo((g) => ({ ...montado, versao: g.versao + 1 }))
         setStatus(montado.nos.size === 0 ? 'vazio' : 'pronto')
-        // a seleção só sobrevive se o nó continua no recorte novo (protótipo)
-        setSelecionadoId((sel) => (sel && montado.nos.has(sel) ? sel : null))
+        // a seleção (e o painel) só sobrevive se o nó continua no recorte novo
+        if (!(selRef.current && montado.nos.has(selRef.current))) desselecionar()
         // habilidade vinda da busca: seleciona e centra quando o layout assentar
         // (420ms do enquadrar + 350ms, os mesmos tempos do protótipo)
         const alvo = pendenteSel.current
         pendenteSel.current = null
         if (alvo && montado.nos.has(alvo)) {
           tSel.current = setTimeout(() => {
-            setSelecionadoId(alvo)
+            selecionar(alvo)
             canvasApi.current?.centrarEm(alvo)
           }, 770)
         }
@@ -200,13 +247,17 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
     const okC = conceito && NOS.get(conceito)?.tipo === 'conceito' ? conceito : ''
     if (okS || okD || okC) aplicarFiltros({ ano: okS, disciplina: okD, conceito: okC })
     return () => clearTimeout(tSel.current)
+    // roda uma única vez, no mount — aplicarFiltros muda a cada render por design
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Esc limpa a seleção do grafo (e fecha as sugestões da busca), como no protótipo
   useEffect(() => {
     const aoTecla = (ev) => {
       if (ev.key !== 'Escape') return
+      selRef.current = null
       setSelecionadoId(null)
+      setDetalhe(null)
       setSugestoes([])
     }
     window.addEventListener('keydown', aoTecla)
@@ -225,7 +276,7 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
     else if (s.tipo === 'conceito') aplicarFiltros({ ...filtros, conceito: s.id })
     else if (grafo.nos.has(s.id)) {
       // habilidade já no recorte atual: seleciona e centra sem reconsultar
-      setSelecionadoId(s.id)
+      selecionar(s.id)
       canvasApi.current?.centrarEm(s.id)
     } else {
       // habilidade fora do recorte: abre o recorte do ano dela (limpando os
@@ -387,7 +438,8 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
             arestas={grafo.arestas}
             versao={grafo.versao}
             selecionadoId={selecionadoId}
-            onSelecionar={setSelecionadoId}
+            onSelecionar={(id) => (id ? selecionar(id) : desselecionar())}
+            offsetEsquerda={painel.esc ? 0 : painel.x + painel.w}
           />
 
           {/* controles de zoom + recentrar (topo-direita, sobre o canvas) */}
@@ -743,6 +795,18 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
               </div>
             </div>
           )}
+
+          {/* painel de contexto (G7) — zIndex 30: acima do card-convite,
+              abaixo dos overlays de carregando/erro/vazio (32) */}
+          <GrafoPainel
+            painel={painel}
+            aoMudarPainel={(patch) => setPainel((p) => ({ ...p, ...patch }))}
+            detalhe={detalhe}
+            noGrafo={(id) => grafo.nos.has(id)}
+            vistos={vistos}
+            aoIr={irPara}
+            aoFechar={desselecionar}
+          />
         </main>
       </div>
 

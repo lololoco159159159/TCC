@@ -6,7 +6,7 @@
 > mora **aqui**. Ao iniciar uma sessão, leia este arquivo primeiro e, ao concluir
 > uma etapa, atualize-o.
 
-Última atualização: 2026-07-10.
+Última atualização: 2026-07-11.
 
 ---
 
@@ -383,6 +383,50 @@ distinguindo clique de arraste/pan).
   ponteiro exigem teste manual no navegador (checklist: hover/tooltip, clique
   seleciona, Esc, arrastar nó, pan, wheel-zoom, botões, busca por habilidade).
 
+### Etapa 12 (2026-07-11) — página "Grafos": painel de detalhe (G7)
+O aside "de vidro" do protótipo — o lugar onde o professor lê o texto oficial da
+habilidade sem sair do grafo.
+- **[src/components/GrafoPainel.jsx](src/components/GrafoPainel.jsx)** (novo) — painel
+  flutuante à esquerda do palco (vidro: `--pill-bg` 72% + `backdrop-filter: blur(14px)`,
+  `zIndex` 30 — acima do card-convite, abaixo dos overlays de estado em 32).
+  **Arrastável** pela alça superior e **redimensionável** pela borda direita (clamps do
+  protótipo: `x ∈ [8, W−w−8]`, `w ∈ [320, min(620, W−x−8)]`; listeners na `window` para
+  o arrasto sobreviver fora do aside); botão **esconder** vira a aba "Painel"
+  (topo-esquerda) que reabre. **Sem seleção**: cheat-sheet de interações (hover/clique/
+  2×clique/arrastar, verbatim). **Com seleção**: bolinha + tipo, chip do código
+  `EFxxCOxx`, título em Spectral, pills ano/eixo/área, bloco "Texto normativo — BNCC
+  Computação"/"Definição" (spinner `egGirar` enquanto consulta; sem bloco para matéria),
+  **conexões agrupadas por relação** (contador por grupo; item clicável navega via
+  `irPara`; **fora do recorte** fica a 62% com chip "+ expandir" — a expansão em si é
+  G8) e os links da **fonte oficial** (BNCC Computação / Resolução CNE/CEB). Rodapé:
+  chips **"Vistos por último"** (últimos 5, clicáveis) + placeholder **"Assistente do
+  grafo — em breve"** (input + aviso "Em desenvolvimento…").
+- **[src/pages/Grafos.jsx](src/pages/Grafos.jsx)** — `selecionar(id)` agora é o fluxo
+  completo do protótipo: registra nos vistos (máx. 5, sem duplicar), abre o painel com
+  `conexoesDe(id)` (síncrono, do mock) e busca o texto via `consultarFuseki('detalhe')`
+  (parse de `edu:textoNormativo`/`edu:definicao`; **fallback local** `base.texto/def` se
+  a consulta falhar; guarda `selRef` descarta resposta de seleção antiga). Estados novos
+  `detalhe` e `painel {x:12, w:392, esc}` (persistência em localStorage fica p/ G10);
+  `irPara(id)` centraliza a navegação painel→canvas (nó fora do recorte: no-op até a
+  G8). Esc/recorte novo/Limpar também fecham o painel.
+- **[src/components/GrafoCanvas.jsx](src/components/GrafoCanvas.jsx)** — prop nova
+  `offsetEsquerda` (= `painel.x + painel.w`, 0 se escondido) alimenta o `offsetPainel()`
+  que estava stub desde a G4: `enquadrar()` e `centrarEm()` miram o centro do espaço
+  **livre** à direita do painel, como no protótipo.
+- Classes `.eg-painel-chip .eg-painel-fechar .eg-painel-item .eg-painel-fonte
+  .eg-painel-ia(:focus) .eg-painel-enviar` em [src/index.css](src/index.css) (hovers via
+  CSS). **Sem token novo** — os rgba() do protótipo viraram `color-mix()` sobre tokens
+  existentes (`--pill-bg --bg --bg2 --edge --grafo-previa-*`), então o vidro acompanha o
+  tema escuro de graça.
+- Fora do escopo (roadmap): botão "Expandir conexões deste nó" e o clique em item fora
+  do recorte (**G8**); persistência da posição/largura e formas por tipo (**G10**).
+- Verificado: `npm run lint` (0 erros; 1 disable documentado no efeito de mount da URL,
+  mesmo padrão do canvas), `npm run build` (+~17KB, sem dependência nova) e
+  `npm run dev` (200 nos módulos novos/alterados). Teste manual no navegador:
+  clicar nó → painel com texto e conexões; arrastar/redimensionar/esconder painel;
+  navegar por conexão e por "visto"; Esc/× fecham; recorte novo enquadra à direita
+  do painel.
+
 ## 4. O que FALTA (próximas etapas)
 
 Com a Etapa 5, a landing (Home) está **completa** do header ao footer. Restam:
@@ -437,12 +481,14 @@ sempre com contraparte escura (a página acompanha o tema do site).
   `[0.18, 3]`), botões +/−/recentrar (×1.35), Esc limpa, API
   `{ centrarEm, enquadrar, zoomMais, zoomMenos }` via ref; busca por
   habilidade seleciona/centra o nó (fim do pendente da G3).
-- [ ] **G7 — Painel de detalhe**: aside "de vidro" flutuante à esquerda
-  (arrastável, redimensionável, esconder/reabrir por aba), estado vazio
-  (cheat-sheet de interações) e selecionado (tipo, código `EFxxCOxx`, título,
-  pills ano/eixo/área, texto normativo via `consultarFuseki('detalhe')`,
-  **conexões agrupadas por relação** clicáveis), "Vistos por último"
-  (+ placeholder "Assistente do grafo — em breve").
+- [x] **G7 — Painel de detalhe** *(Etapa 12, 2026-07-11)*: `GrafoPainel.jsx` —
+  aside "de vidro" flutuante à esquerda (arrastável, redimensionável,
+  esconder/reabrir por aba), cheat-sheet no vazio, detalhe do selecionado
+  (tipo, código, título, pills ano/eixo/área, texto normativo via
+  `consultarFuseki('detalhe')` com fallback local, conexões agrupadas por
+  relação clicáveis — "fora do recorte" espera a G8), "Vistos por último"
+  (máx. 5) + placeholder do assistente; `offsetEsquerda` desconta o painel
+  do enquadramento do canvas.
 - [ ] **G8 — Expandir + desfazer**: 2×clique (ou botão do painel) →
   `consultarFuseki('expansao')` traz vizinhos de fora do recorte (itens
   esmaecidos no painel indicam "clique para expandir"); histórico de snapshots
@@ -536,6 +582,8 @@ src/
 │   ├── GrafoFiltros.jsx       # barra de busca/filtros da página de grafos (Etapa 9/G3 — FEITO)
 │   ├── GrafoCanvas.jsx        # canvas 2D do grafo: render + física + interações (hover/seleção/drag/pan/zoom,
 │   │                          #   API centrarEm/enquadrar/zoom± via ref) (G4–G6 — FEITO)
+│   ├── GrafoPainel.jsx        # painel de contexto "de vidro": detalhe do nó, conexões por relação,
+│   │                          #   vistos por último, assistente (placeholder) (Etapa 12/G7 — FEITO)
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
 ├── data/
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
@@ -544,7 +592,7 @@ src/
 │                              #   e a grade de séries (Etapa 8/G2 — FEITO)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
-│   ├── Grafos.jsx             # página do grafo — casca + filtros + estados + canvas com física e interações (G1–G6); roadmap §4.1 (EM ANDAMENTO)
+│   ├── Grafos.jsx             # página do grafo — casca + filtros + estados + canvas + painel de detalhe (G1–G7); roadmap §4.1 (EM ANDAMENTO)
 │   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
 │   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
 ├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)

@@ -391,3 +391,53 @@ input::placeholder {
   border-color: var(--green);
   color: var(--green);
 }
+
+/* ---- Página de grafos: painel de contexto (G7) ---- */
+
+/* chips/botões que "acendem" em verde (esconder, vistos, aba de reabrir) */
+.eg-painel-chip:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+/* botão × de limpar a seleção (acende em dourado, como o protótipo) */
+.eg-painel-fechar:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* item de conexão na lista do painel */
+.eg-painel-item {
+  font-family: 'Figtree', system-ui, sans-serif;
+}
+
+.eg-painel-item:hover {
+  background: color-mix(in srgb, var(--grafo-bg) 85%, transparent);
+}
+
+/* links da fonte oficial */
+.eg-painel-fonte:hover {
+  text-decoration: underline;
+}
+
+/* campo do assistente (placeholder) */
+.eg-painel-ia {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 13px;
+  border: 1px solid var(--edge);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  font: 400 13px/1.4 'Figtree', sans-serif;
+  color: var(--text);
+  outline: none;
+}
+
+.eg-painel-ia:focus {
+  border-color: var(--green);
+  background: var(--pill-bg);
+}
+
+.eg-painel-enviar:hover {
+  background: var(--green-deep) !important;
+}
