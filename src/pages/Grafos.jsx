@@ -5,9 +5,22 @@ import Footer from '../components/Footer'
 import GrafoFiltros from '../components/GrafoFiltros'
 import GrafoCanvas from '../components/GrafoCanvas'
 import GrafoPainel from '../components/GrafoPainel'
+import { GavetaSparql, LegendaTipos, PaletaPopover } from '../components/GrafoOverlays'
+import { PALETAS } from '../data/paletas'
 import labotim from '../assets/labotim.png'
 import ufes from '../assets/ufes.png'
-import { ANOS, NOS, LISTA_HABILIDADES, buscar, conexoesDe, consultarFuseki } from '../data/mockFuseki'
+import {
+  ANOS,
+  NOS,
+  LISTA_HABILIDADES,
+  buscar,
+  conexoesDe,
+  construirConsultaDetalhe,
+  construirConsultaExpansao,
+  construirConsultaGrafo,
+  consultarFuseki,
+  setConfig,
+} from '../data/mockFuseki'
 
 // Página "Grafos" — a tela que exibe o grafo de conhecimento (BNCC ×
 // Pensamento Computacional). Protótipo: design/prototipo_grafo.html.
@@ -25,9 +38,13 @@ import { ANOS, NOS, LISTA_HABILIDADES, buscar, conexoesDe, consultarFuseki } fro
 // consultarFuseki('expansao') funde os vizinhos ao grafo SEM re-enquadrar
 // (versao não muda; só reaquece a física), com histórico de snapshots
 // (máx. 10) e o botão "Desfazer expansão" no topo do palco.
+// G9: overlays finais — legenda "Tipos de nó" (toggle por tipo reconsulta com
+// o filtro `tipos` na consulta), gaveta SPARQL (última consulta gerada + ms +
+// simular falha 503 via setConfig) e popover de paleta (daltonismo — escreve
+// os tokens --no-* no <html>; o canvas detecta o override e relê as cores).
 
-const FILTROS_VAZIOS = { ano: '', disciplina: '', conceito: '' }
 const TIPOS_TODOS = { habilidade: true, conceito: true, disciplina: true }
+const FILTROS_VAZIOS = { ano: '', disciplina: '', conceito: '', tipos: TIPOS_TODOS }
 
 // mapa reverso uri -> id para ler os bindings sparql-results+json do endpoint
 const URI_PARA_ID = new Map([...NOS.values()].map((n) => [n.uri, n.id]))
@@ -146,6 +163,10 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
   const [painel, setPainel] = useState({ x: 12, w: 392, esc: false }) // persiste em localStorage na G10
   const [expandindo, setExpandindo] = useState(false) // consulta de expansão em voo (G8)
   const [desfaziveis, setDesfaziveis] = useState(0) // tamanho do histórico de expansões
+  const [consulta, setConsulta] = useState('') // última consulta SPARQL gerada (gaveta, G9)
+  const [simErro, setSimErro] = useState(false) // simular falha do endpoint (gaveta, G9)
+  const [paleta, setPaleta] = useState('padrao') // paleta de cores dos nós (G9; persiste na G10)
+  const [paletaAberta, setPaletaAberta] = useState(false)
   const seq = useRef(0) // descarta respostas fora de ordem
   const nosRef = useRef(new Map()) // nós do grafo ATUAL (estabilidade de posição + closures assíncronas)
   const histExp = useRef([]) // snapshots pré-expansão (máx. 10, G8)
@@ -164,6 +185,7 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
     setSelecionadoId(id)
     setVistos((v) => [id, ...v.filter((x) => x !== id)].slice(0, 5))
     setDetalhe({ id, carregando: true, texto: '', grupos: conexoesDe(id) })
+    setConsulta(construirConsultaDetalhe(id))
     consultarFuseki('detalhe', { id })
       .then(({ json }) => {
         if (selRef.current !== id) return // seleção mudou enquanto consultava
@@ -184,6 +206,7 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
     selRef.current = null
     setSelecionadoId(null)
     setDetalhe(null)
+    setPaletaAberta(false) // clicar no vazio também fecha o popover (protótipo)
   }
 
   // Expande as conexões de um nó (G8): consultarFuseki('expansao') traz os
@@ -195,6 +218,7 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
     if (!nosRef.current.has(id) || expandindo) return
     const meuSeq = ++seq.current
     setExpandindo(true)
+    setConsulta(construirConsultaExpansao(id))
     consultarFuseki('expansao', { id })
       .then(({ json, ms }) => {
         if (meuSeq !== seq.current) return
@@ -317,10 +341,11 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
       setStatus('inicio')
       return
     }
-    const params = { ...f, eixo: '', componentes: [], tipos: TIPOS_TODOS }
+    const params = { ...f, eixo: '', componentes: [], tipos: f.tipos || TIPOS_TODOS }
     const meuSeq = ++seq.current
     setStatus('carregando')
     setMsgErro('')
+    setConsulta(construirConsultaGrafo(params))
     consultarFuseki('grafo', params)
       .then(({ json, ms }) => {
         if (meuSeq !== seq.current) return
@@ -361,7 +386,7 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
     const okS = ANOS.some((a) => a.id === serie) ? serie : ''
     const okD = disciplina && NOS.get(disciplina)?.tipo === 'disciplina' ? disciplina : ''
     const okC = conceito && NOS.get(conceito)?.tipo === 'conceito' ? conceito : ''
-    if (okS || okD || okC) aplicarFiltros({ ano: okS, disciplina: okD, conceito: okC })
+    if (okS || okD || okC) aplicarFiltros({ ano: okS, disciplina: okD, conceito: okC, tipos: TIPOS_TODOS })
     return () => clearTimeout(tSel.current)
     // roda uma única vez, no mount — aplicarFiltros muda a cada render por design
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -375,10 +400,46 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
       setSelecionadoId(null)
       setDetalhe(null)
       setSugestoes([])
+      setPaletaAberta(false)
     }
     window.addEventListener('keydown', aoTecla)
     return () => window.removeEventListener('keydown', aoTecla)
   }, [])
+
+  // gaveta SPARQL: o checkbox liga o modo de falha do mock (próxima consulta → 503)
+  useEffect(() => {
+    setConfig({ erro: simErro })
+    return () => setConfig({ erro: false }) // sair da página desliga a simulação
+  }, [simErro])
+
+  // popover de paleta aberto: avisa pelo <html> para o FontSizeWidget (global,
+  // renderizado no App) deslizar para baixo e não ser coberto pelo popover
+  useEffect(() => {
+    const el = document.documentElement
+    if (paletaAberta) el.setAttribute('data-paleta-aberta', '1')
+    else el.removeAttribute('data-paleta-aberta')
+    return () => el.removeAttribute('data-paleta-aberta')
+  }, [paletaAberta])
+
+  // paleta para daltonismo: sobrescreve os tokens --no-* no <html> (vale para
+  // canvas, painel, legenda e filtros de uma vez); 'padrao' remove o override
+  useEffect(() => {
+    const raiz = document.documentElement.style
+    const cores = PALETAS[paleta]
+    const aplicar = (c) => {
+      if (c) {
+        raiz.setProperty('--no-habilidade', c.habilidade)
+        raiz.setProperty('--no-conceito', c.conceito)
+        raiz.setProperty('--no-disciplina', c.disciplina)
+      } else {
+        raiz.removeProperty('--no-habilidade')
+        raiz.removeProperty('--no-conceito')
+        raiz.removeProperty('--no-disciplina')
+      }
+    }
+    aplicar(cores)
+    return () => aplicar(null)
+  }, [paleta])
 
   // ---- busca com autocomplete ----
   const aoBuscar = (termo) => {
@@ -605,7 +666,31 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
                   <circle cx="12" cy="12" r="2.4" />
                 </svg>
               </button>
+              <PaletaPopover
+                aberta={paletaAberta}
+                aoAlternar={() => setPaletaAberta((a) => !a)}
+                paleta={paleta}
+                aoEscolher={setPaleta}
+              />
             </div>
+          )}
+
+          {/* legenda "Tipos de nó" + gaveta SPARQL (G9) — também no vazio,
+              para reabilitar um tipo oculto / inspecionar a consulta */}
+          {(status === 'pronto' || status === 'vazio') && (
+            <>
+              <LegendaTipos
+                tipos={filtros.tipos || TIPOS_TODOS}
+                contagens={contagens}
+                aoAlternar={(t) =>
+                  aplicarFiltros({
+                    ...filtros,
+                    tipos: { ...(filtros.tipos || TIPOS_TODOS), [t]: (filtros.tipos || TIPOS_TODOS)[t] === false },
+                  })
+                }
+              />
+              <GavetaSparql consulta={consulta} tempoMs={tempoMs} simErro={simErro} aoSimErro={setSimErro} />
+            </>
           )}
 
           {/* desfazer expansão (pill abaixo do resumo, G8) */}

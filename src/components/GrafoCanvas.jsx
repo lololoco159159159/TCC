@@ -382,9 +382,16 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       // atributo aqui (e não num efeito atrelado ao ThemeContext) porque o
       // efeito do filho roda ANTES de o Provider aplicar o atributo — a
       // paleta ficaria sempre um toggle atrasada (halo/grid do tema anterior).
+      // A chave inclui os overrides inline dos TRÊS tokens --no-* (paleta de
+      // daltonismo, G9): lê-se o VALOR escrito no <html>, e não uma prop,
+      // para o cache só virar quando os tokens novos já estão aplicados.
+      // Os três entram na chave porque paletas distintas compartilham cores
+      // (protanopia e deuteranopia diferem só na disciplina).
       const tema = document.documentElement.getAttribute('data-theme') || 'light'
-      if (!paleta.current || tema !== temaLido.current) {
-        temaLido.current = tema
+      const estilo = document.documentElement.style
+      const chave = `${tema}|${estilo.getPropertyValue('--no-habilidade')}|${estilo.getPropertyValue('--no-conceito')}|${estilo.getPropertyValue('--no-disciplina')}`
+      if (!paleta.current || chave !== temaLido.current) {
+        temaLido.current = chave
         paleta.current = lerPaleta()
       }
       const rt = cv.getBoundingClientRect()

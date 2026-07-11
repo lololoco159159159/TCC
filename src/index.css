@@ -248,6 +248,24 @@ input::placeholder {
 }
 
 /* Botões A/A do widget de tamanho de fonte */
+/* wrapper do widget A/A — desliza quando o popover de paleta (grafos) abre */
+.eg-font-widget {
+  position: fixed;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: top 0.25s ease;
+}
+
+:root[data-paleta-aberta='1'] .eg-font-widget {
+  top: 80%;
+}
+
 .eg-font-btn:hover {
   transform: scale(1.07);
 }
@@ -451,4 +469,30 @@ input::placeholder {
 .eg-grafo-desfazer:hover {
   border-color: var(--gold) !important;
   color: var(--gold) !important;
+}
+
+/* ---- Página de grafos: overlays finais (G9) ---- */
+
+/* linha da legenda "Tipos de nó" */
+.eg-legenda-item {
+  font-family: 'Figtree', system-ui, sans-serif;
+}
+
+.eg-legenda-item:hover {
+  background: var(--grafo-bg) !important;
+}
+
+/* botão que abre a gaveta SPARQL */
+.eg-grafo-sparql:hover {
+  border-color: var(--green) !important;
+  color: var(--green) !important;
+}
+
+/* opção do popover de paleta */
+.eg-paleta-opcao {
+  font-family: 'Figtree', system-ui, sans-serif;
+}
+
+.eg-paleta-opcao:hover {
+  border-color: var(--green) !important;
 }

@@ -18,23 +18,15 @@ const estiloBotaoBase = {
 // Widget de acessibilidade fixo no meio da lateral direita:
 // um "A" grande (aumenta a fonte) sobre um "A" pequeno (diminui),
 // com o percentual atual entre eles. O zoom é aplicado no #eg-root.
+// A posição vem da classe .eg-font-widget (index.css): quando o popover de
+// paleta da página de grafos está aberto (atributo data-paleta-aberta no
+// <html>), o widget desliza para baixo para não ser coberto — e volta ao
+// fechar.
 function FontSizeWidget() {
   const { setFont, fontPct, fonteNoMaximo, fonteNoMinimo } = useTheme()
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        right: 14,
-        top: '50%',
-        transform: 'translateY(-50%)',
-        zIndex: 120,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 6,
-      }}
-    >
+    <div className="eg-font-widget">
       <button
         onClick={() => setFont(1)}
         title="Aumentar tamanho da letra"
