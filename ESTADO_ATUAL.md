@@ -460,6 +460,86 @@ O grafo deixou de ser um recorte fixo: dá para **crescer** a partir de qualquer
   Desfazer volta cada passo (contador decrementa) e some no zero; recorte novo zera o
   histórico; a câmera NÃO re-enquadra ao expandir.
 
+### Etapa 14 (2026-07-11) — página "Grafos": overlays finais (G9)
+Legenda com filtro por tipo, gaveta SPARQL e paleta para daltonismo — os três
+overlays que faltavam no palco. Componentes pequenos e irmãos num único módulo.
+- **[src/components/GrafoOverlays.jsx](src/components/GrafoOverlays.jsx)** (novo; três
+  exports nomeados):
+  - **`LegendaTipos`** (canto inferior direito) — contagem por tipo com bolinha nas
+    cores `--no-*` e **toggle** que oculta/mostra o tipo **reconsultando o endpoint**:
+    o filtro `tipos` agora viaja em `filtros` (o `FILTER (?origemTipo NOT IN …)` da
+    consulta gerada pelo mock passa a ser exercitado). Tipo oculto: opacidade 0.45,
+    riscado, contagem "—". Rodapé com a linha tracejada "progressão entre anos".
+    Visível em `pronto` e `vazio` (fiel ao protótipo — inclusive o overlay de vazio
+    por cima, transparente).
+  - **`GavetaSparql`** (ao lado da legenda, estado `aberta` interno) — pill "SPARQL"
+    (bolinha verde → dourada quando a simulação de falha está ligada) abre a gaveta
+    com a **última consulta real** enviada (`construirConsulta{Grafo,Expansao,Detalhe}`
+    agora alimentam o estado `consulta` da página), o tempo em ms, o checkbox
+    **"Simular falha do endpoint (HTTP 503)"** (efeito `[simErro]` → `setConfig({erro})`;
+    desligado ao sair da página) e a nota de troca por um Fuseki real. O `<pre>` usa
+    cores fixas de terminal (escuro nos 2 temas, de propósito).
+  - **`PaletaPopover`** (na coluna de zoom) — botão-swatch (3 círculos nas cores
+    ATUAIS via tokens; borda verde quando a paleta não é a padrão) abre "Cores do
+    grafo · daltonismo": **Padrão / Protanopia / Deuteranopia / Tritanopia** com
+    amostras, ✓ na ativa. Esc e clique no vazio fecham (via `desselecionar`).
+- **[src/data/paletas.js](src/data/paletas.js)** (novo) — os hex das 3 paletas de
+  daltonismo (verbatim do protótipo; módulo próprio para não quebrar o fast-refresh
+  com export não-componente).
+- **[src/pages/Grafos.jsx](src/pages/Grafos.jsx)** — `FILTROS_VAZIOS` ganhou `tipos`
+  (Limpar re-liga os 3); estados `consulta/simErro/paleta/paletaAberta`; efeito da
+  paleta escreve/remove os overrides `--no-*` no `<html>` (vale para canvas, painel,
+  filtros e legenda de uma vez; limpa ao desmontar).
+- **[src/components/GrafoCanvas.jsx](src/components/GrafoCanvas.jsx)** — a chave do
+  cache de cores passou de `tema` para `tema|override(--no-habilidade)`: o canvas
+  relê os tokens quando a paleta muda, **lendo o valor já aplicado no `<html>`** (uma
+  prop criaria corrida: o RAF poderia recachear antes de o efeito escrever os tokens).
+- Classes `.eg-legenda-item .eg-grafo-sparql .eg-paleta-opcao` em
+  [src/index.css](src/index.css). Sem token novo.
+- Fora do escopo (G10): toggles "formas em vez de cores" e "sem animação" no popover,
+  persistência da paleta em localStorage.
+- Verificado: `npm run lint` (0 erros, só o warning pré-existente), `npm run build`
+  (+~10KB, sem dependência nova) e `npm run dev` (200 nos módulos novos/alterados).
+  Teste manual: ocultar "Conceitos" pela legenda (reconsulta e some do grafo; "—" na
+  contagem); gaveta mostra a consulta com o FILTER; ligar a simulação → Filtrar cai no
+  card de erro (bolinha do pill fica dourada); trocar para Deuteranopia recolore
+  canvas, legenda, painel e busca; Padrão volta ao normal; tema escuro convive com a
+  paleta.
+
+#### Ajuste (2026-07-11) — Habilidades sempre visíveis na legenda
+- Em [src/components/GrafoOverlays.jsx](src/components/GrafoOverlays.jsx), a linha
+  **Habilidades** da legenda deixou de ser alternável (desvio documentado do
+  protótipo): **toda aresta do grafo passa por uma habilidade** (`desenvolve`,
+  `podeSerTrabalhadaEm` e `progrideDe` são centradas nelas), então ocultá-las
+  esvaziava o recorte em 100% dos casos. A linha continua exibindo a contagem
+  (cursor default, sem hover; tooltip explica). Conceitos e Matérias seguem
+  alternáveis. Verificado: lint/build/dev OK.
+
+#### Ajustes de UX (2026-07-11) — legenda, paleta CUD e widget de fonte
+- **Legenda** ([GrafoOverlays.jsx](src/components/GrafoOverlays.jsx)): a linha
+  **Habilidades** virou uma "linha-selo" visivelmente não-clicável — fundo `--bg2`,
+  contorno tracejado, chip **FIXO** — apartada dos dois toggles. A chave de leitura no
+  rodapé ganhou a **linha contínua** ("conexão direta no recorte") acima da tracejada
+  ("progressão entre anos").
+- **Paletas de daltonismo** ([src/data/paletas.js](src/data/paletas.js)) trocadas pelas
+  cores do **Color Universal Design (CUD) de Okabe & Ito**: protanopia
+  `#0072B2/#E69F00/#000000`, deuteranopia `#0072B2/#E69F00/#CC79A7`, tritanopia
+  `#D55E00/#0072B2/#009E73`; crédito adicionado no rodapé do popover.
+- **FontSizeWidget × popover de paleta**: o popover cobria o widget A/A (fixo a 50% da
+  lateral direita). A posição do widget saiu do inline para a classe `.eg-font-widget`
+  (com `transition: top`); com o popover aberto, a página de grafos põe
+  `data-paleta-aberta="1"` no `<html>` e o CSS desliza o widget para `top: 80%` —
+  fechou, volta. Mesmo padrão desacoplado do `data-theme` (o widget é global, do App).
+- Verificado: lint/build/dev OK.
+
+#### Correção (2026-07-11) — protanopia ↔ deuteranopia não recoloria o canvas
+- A chave do cache de cores do [GrafoCanvas.jsx](src/components/GrafoCanvas.jsx) usava
+  só o override de `--no-habilidade` — e as paletas CUD de protanopia e deuteranopia
+  **compartilham** habilidade (`#0072B2`) e conceito (`#E69F00`), diferindo apenas na
+  disciplina. Trocar uma pela outra não mudava a chave e o canvas não relia os tokens
+  (a legenda/painel, que usam `var()` direto, atualizavam). A chave agora concatena os
+  **três** tokens `--no-*`. Verificado: lint/build/dev OK.
+
 ## 4. O que FALTA (próximas etapas)
 
 Com a Etapa 5, a landing (Home) está **completa** do header ao footer. Restam:
@@ -528,9 +608,12 @@ sempre com contraparte escura (a página acompanha o tema do site).
   histórico de snapshots (máx. 10, zerado por recorte) e pill **"Desfazer
   expansão ×N"**; `irPara` completo (expande o selecionado para alcançar
   itens fora do recorte).
-- [ ] **G9 — Overlays finais**: legenda "Tipos de nó" com toggle por tipo +
-  contagens, **gaveta SPARQL** (mostra a consulta real gerada + tempo + checkbox
-  "Simular falha do endpoint (HTTP 503)"), popover de paleta no canto do canvas.
+- [x] **G9 — Overlays finais** *(Etapa 14, 2026-07-11)*: `GrafoOverlays.jsx` —
+  legenda "Tipos de nó" com toggle por tipo + contagens (filtro `tipos` na
+  consulta), gaveta SPARQL (consulta real + ms + "Simular falha HTTP 503" via
+  `setConfig`), popover de paleta (daltonismo, `src/data/paletas.js`;
+  override dos tokens `--no-*` no `<html>`). Formas/sem-anim/persistência
+  ficaram na G10, como o roadmap.
 - [ ] **G10 — Perfil mock + acessibilidade + persistência**: dropdown de perfil
   no header (identidade, turmas ano+matéria → filtro "Turmas" na barra),
   **paletas para daltonismo** (protanopia/deuteranopia/tritanopia), modo
@@ -619,15 +702,18 @@ src/
 │   │                          #   2×clique expande; API centrarEm/enquadrar/reaquecer/zoom± via ref) (G4–G8 — FEITO)
 │   ├── GrafoPainel.jsx        # painel de contexto "de vidro": detalhe do nó, conexões por relação,
 │   │                          #   expandir conexões, vistos por último, assistente (placeholder) (G7–G8 — FEITO)
+│   ├── GrafoOverlays.jsx      # legenda "Tipos de nó" (toggle reconsulta), gaveta SPARQL (consulta real +
+│   │                          #   simular falha 503) e popover de paleta/daltonismo (Etapa 14/G9 — FEITO)
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
 ├── data/
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
+│   ├── paletas.js             # paletas de daltonismo (protan/deuteran/tritanopia) da página de grafos (G9)
 │   └── mockFuseki.js          # endpoint SPARQL simulado: 56 nós, 136 arestas (5.º–9.º), consultas reais,
 │                              #   estatisticas() e habilidadesPorAno(); alimenta StatsBand, MateriaPopover
 │                              #   e a grade de séries (Etapa 8/G2 — FEITO)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
-│   ├── Grafos.jsx             # página do grafo — casca + filtros + estados + canvas + painel + expandir/desfazer (G1–G8); roadmap §4.1 (EM ANDAMENTO)
+│   ├── Grafos.jsx             # página do grafo — casca + filtros + estados + canvas + painel + expandir/desfazer + overlays (G1–G9); roadmap §4.1 (EM ANDAMENTO)
 │   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
 │   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
 ├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)
