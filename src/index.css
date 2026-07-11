@@ -441,3 +441,14 @@ input::placeholder {
 .eg-painel-enviar:hover {
   background: var(--green-deep) !important;
 }
+
+/* botão "Expandir conexões deste nó" (G8) */
+.eg-painel-expandir:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--grafo-previa-bg) 90%, transparent) !important;
+}
+
+/* pill "Desfazer expansão" sobre o canvas (G8) — acende em dourado */
+.eg-grafo-desfazer:hover {
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
+}

@@ -21,6 +21,10 @@ import { ANOS, NOS, LISTA_HABILIDADES, buscar, conexoesDe, consultarFuseki } fro
 // seleciona/centra o nó. G7: selecionar dispara consultarFuseki('detalhe') +
 // conexoesDe() e alimenta o GrafoPainel (vidro flutuante, arrastável); a
 // largura ocupada pelo painel é descontada do palco (offsetEsquerda do canvas).
+// G8: expandir (2×clique, botão do painel ou item "fora do recorte") →
+// consultarFuseki('expansao') funde os vizinhos ao grafo SEM re-enquadrar
+// (versao não muda; só reaquece a física), com histórico de snapshots
+// (máx. 10) e o botão "Desfazer expansão" no topo do palco.
 
 const FILTROS_VAZIOS = { ano: '', disciplina: '', conceito: '' }
 const TIPOS_TODOS = { habilidade: true, conceito: true, disciplina: true }
@@ -140,8 +144,11 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
   const [detalhe, setDetalhe] = useState(null) // { id, carregando, texto, grupos } do painel (G7)
   const [vistos, setVistos] = useState([]) // últimos 5 nós selecionados (chips do painel)
   const [painel, setPainel] = useState({ x: 12, w: 392, esc: false }) // persiste em localStorage na G10
+  const [expandindo, setExpandindo] = useState(false) // consulta de expansão em voo (G8)
+  const [desfaziveis, setDesfaziveis] = useState(0) // tamanho do histórico de expansões
   const seq = useRef(0) // descarta respostas fora de ordem
-  const nosRef = useRef(new Map()) // recorte anterior (estabilidade de posição)
+  const nosRef = useRef(new Map()) // nós do grafo ATUAL (estabilidade de posição + closures assíncronas)
+  const histExp = useRef([]) // snapshots pré-expansão (máx. 10, G8)
   const selRef = useRef(null) // espelho de selecionadoId para closures assíncronas
   const canvasApi = useRef(null) // { centrarEm, enquadrar, zoomMais, zoomMenos } (G6)
   const pendenteSel = useRef(null) // habilidade escolhida na busca, a selecionar quando o recorte chegar
@@ -179,16 +186,125 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
     setDetalhe(null)
   }
 
-  // Vai até um nó a partir do painel (conexões / vistos). Fora do recorte,
-  // vira expansão na G8 — por ora só os nós presentes respondem.
+  // Expande as conexões de um nó (G8): consultarFuseki('expansao') traz os
+  // vizinhos de fora do recorte e os funde ao grafo — nós novos nascem num
+  // círculo de 90px ao redor da origem e a física os assenta (reaquecer 0.8,
+  // SEM re-enquadrar: `versao` não muda). Antes de fundir, tira um snapshot
+  // para o Desfazer (histórico de até 10). Fiel ao protótipo.
+  function expandir(id, aposExpandir) {
+    if (!nosRef.current.has(id) || expandindo) return
+    const meuSeq = ++seq.current
+    setExpandindo(true)
+    consultarFuseki('expansao', { id })
+      .then(({ json, ms }) => {
+        if (meuSeq !== seq.current) return
+        const foto = {
+          nos: [...nosRef.current.values()].map((n) => ({ ...n })),
+          arestas: grafo.arestas.map((a) => ({ ...a })),
+        }
+        const origem = nosRef.current.get(id)
+        const novosNos = new Map(nosRef.current)
+        const novasArestas = [...grafo.arestas]
+        const vistas = new Set(novasArestas.map((ar) => `${ar.a}|${ar.rel}|${ar.b}`))
+        let mudou = false
+        json.results.bindings.forEach((b) => {
+          const a = URI_PARA_ID.get(b.origem.value)
+          const c = URI_PARA_ID.get(b.destino.value)
+          if (!a || !c) return
+          const rel = b.relacao.value.replace('edu:', '')
+          ;[a, c].forEach((nid) => {
+            if (novosNos.has(nid)) return
+            const base = NOS.get(nid)
+            const ang = Math.random() * Math.PI * 2
+            novosNos.set(nid, {
+              id: nid,
+              tipo: base.tipo,
+              label: base.label,
+              resumo: base.resumo || '',
+              ano: base.ano || '',
+              x: origem.x + Math.cos(ang) * 90,
+              y: origem.y + Math.sin(ang) * 90,
+              vx: 0,
+              vy: 0,
+              r: base.tipo === 'disciplina' ? 17 : base.tipo === 'conceito' ? 14 : 11,
+            })
+            mudou = true
+          })
+          const chave = `${a}|${rel}|${c}`
+          if (!vistas.has(chave)) {
+            vistas.add(chave)
+            novasArestas.push({ a, b: c, rel })
+            mudou = true
+          }
+        })
+        if (mudou) {
+          histExp.current.push(foto)
+          if (histExp.current.length > 10) histExp.current.shift()
+          setDesfaziveis(histExp.current.length)
+        }
+        nosRef.current = novosNos
+        const cont = { habilidade: 0, conceito: 0, disciplina: 0, conexoes: novasArestas.length }
+        novosNos.forEach((n) => cont[n.tipo]++)
+        setContagens(cont)
+        setTempoMs(ms)
+        setGrafo((g) => ({ ...g, nos: novosNos, arestas: novasArestas }))
+        setStatus('pronto')
+        setExpandindo(false)
+        canvasApi.current?.reaquecer(0.8)
+        if (aposExpandir) setTimeout(aposExpandir, 250)
+      })
+      .catch((err) => {
+        if (meuSeq !== seq.current) return
+        setExpandindo(false)
+        setMsgErro(String(err.message || err))
+        setStatus('erro')
+      })
+  }
+
+  // Desfaz a última expansão: restaura o snapshot (posições inclusas) e
+  // reaquece de leve (0.5). A seleção só sobrevive se o nó ainda existe.
+  function desfazerExpansao() {
+    const foto = histExp.current.pop()
+    if (!foto) return
+    setDesfaziveis(histExp.current.length)
+    const nos = new Map(foto.nos.map((n) => [n.id, { ...n }]))
+    const arestas = foto.arestas.map((a) => ({ ...a }))
+    nosRef.current = nos
+    const cont = { habilidade: 0, conceito: 0, disciplina: 0, conexoes: arestas.length }
+    nos.forEach((n) => cont[n.tipo]++)
+    setContagens(cont)
+    setGrafo((g) => ({ ...g, nos, arestas }))
+    if (!(selRef.current && nos.has(selRef.current))) desselecionar()
+    canvasApi.current?.reaquecer(0.5)
+  }
+
+  // Vai até um nó a partir do painel (conexões / vistos), como no protótipo:
+  // presente no grafo → seleciona e centra; fora do recorte com um nó
+  // selecionado → expande o selecionado e então vai ao alvo se ele chegou;
+  // fora e sem seleção → só seleciona (o painel mostra o detalhe).
   function irPara(id) {
-    if (!grafo.nos.has(id)) return
-    selecionar(id)
-    canvasApi.current?.centrarEm(id)
+    if (grafo.nos.has(id)) {
+      selecionar(id)
+      canvasApi.current?.centrarEm(id)
+      return
+    }
+    if (selRef.current) {
+      expandir(selRef.current, () => {
+        if (nosRef.current.has(id)) {
+          selecionar(id)
+          canvasApi.current?.centrarEm(id)
+        }
+      })
+    } else {
+      selecionar(id)
+    }
   }
 
   function aplicarFiltros(f) {
     clearTimeout(tSel.current) // recorte novo cancela uma seleção agendada pela busca
+    histExp.current = [] // recorte novo invalida o histórico de expansões (protótipo)
+    setDesfaziveis(0)
+    setExpandindo(false)
     sincronizarURL(f)
     setPend({ ano: f.ano, disciplina: f.disciplina, conceito: f.conceito })
     setFiltros(f)
@@ -439,6 +555,7 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
             versao={grafo.versao}
             selecionadoId={selecionadoId}
             onSelecionar={(id) => (id ? selecionar(id) : desselecionar())}
+            onExpandir={expandir}
             offsetEsquerda={painel.esc ? 0 : painel.x + painel.w}
           />
 
@@ -489,6 +606,45 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
                 </svg>
               </button>
             </div>
+          )}
+
+          {/* desfazer expansão (pill abaixo do resumo, G8) */}
+          {status === 'pronto' && desfaziveis > 0 && (
+            <button
+              type="button"
+              className="eg-grafo-desfazer"
+              title="Desfazer a última expansão (volta um passo)"
+              onClick={desfazerExpansao}
+              style={{
+                position: 'absolute',
+                top: 52,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'color-mix(in srgb, var(--pill-bg) 90%, transparent)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                border: '1px solid var(--pill-border)',
+                borderRadius: 999,
+                padding: '7px 14px',
+                boxShadow: '0 6px 18px rgba(28,38,32,.08)',
+                cursor: 'pointer',
+                font: "600 12.5px/1 'Figtree', sans-serif",
+                color: 'var(--body)',
+                animation: 'egSurgir .16s ease',
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 14 4 9l5-5" />
+                <path d="M4 9h10a6 6 0 0 1 0 12h-3" />
+              </svg>
+              <span>Desfazer expansão</span>
+              <span style={{ font: "10px/1 'JetBrains Mono', monospace", color: 'var(--faint)' }}>
+                ×{desfaziveis}
+              </span>
+            </button>
           )}
 
           {/* resumo do recorte (pill topo-centro) */}
@@ -806,6 +962,8 @@ function Grafos({ onHome, onLogin, onSignup, onGrafos }) {
             vistos={vistos}
             aoIr={irPara}
             aoFechar={desselecionar}
+            aoExpandir={() => selecionadoId && expandir(selecionadoId)}
+            expandindo={expandindo}
           />
         </main>
       </div>

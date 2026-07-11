@@ -7,9 +7,10 @@ import { ANOS, EIXOS, NOS } from '../data/mockFuseki'
 // protótipo: x ∈ [8, W−w−8], w ∈ [320, min(620, W−x−8)]), com botão de esconder
 // (vira a aba "Painel" no topo-esquerda). Sem seleção mostra o cheat-sheet de
 // interações; com seleção mostra tipo, código, título, pills (ano/eixo/área),
-// texto normativo/definição (spinner enquanto consulta o endpoint) e as
+// texto normativo/definição (spinner enquanto consulta o endpoint), as
 // CONEXÕES agrupadas por relação — item fora do recorte ganha o chip
-// "+ expandir" (a expansão em si chega na G8). Rodapé: "Vistos por último" +
+// "+ expandir" e o clique expande via aoIr (G8) — e o botão "Expandir
+// conexões deste nó" (aoExpandir/expandindo). Rodapé: "Vistos por último" +
 // placeholder do assistente. Posição/largura persistem em localStorage na G10;
 // por ora vivem no estado da página. Hovers via classes .eg-painel-* (CSS).
 
@@ -41,7 +42,7 @@ const ATALHOS = [
   ['arrastar', 'move nós ou o quadro; roda = zoom'],
 ]
 
-function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, aoFechar }) {
+function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, aoFechar, aoExpandir, expandindo }) {
   const asideRef = useRef(null)
   const atual = useRef(painel) // x/w correntes para os handlers de arrasto/resize
   atual.current = painel
@@ -476,6 +477,27 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
               ))}
             </div>
           </div>
+
+          {/* expandir conexões (G8) — traz do endpoint os vizinhos fora do recorte */}
+          <button
+            type="button"
+            className="eg-painel-expandir"
+            onClick={aoExpandir}
+            disabled={expandindo}
+            style={{
+              width: '100%',
+              padding: '10px 16px',
+              borderRadius: 12,
+              border: '1.5px solid var(--green)',
+              background: 'color-mix(in srgb, var(--bg) 50%, transparent)',
+              color: 'var(--green)',
+              font: "600 13.5px/1.4 'Figtree', sans-serif",
+              cursor: expandindo ? 'wait' : 'pointer',
+              marginBottom: 20,
+            }}
+          >
+            {expandindo ? 'Expandindo…' : 'Expandir conexões deste nó'}
+          </button>
 
           {/* fonte oficial */}
           <div style={{ borderTop: '1px solid color-mix(in srgb, var(--edge) 80%, transparent)', paddingTop: 14 }}>

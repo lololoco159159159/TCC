@@ -427,6 +427,39 @@ habilidade sem sair do grafo.
   navegar por conexão e por "visto"; Esc/× fecham; recorte novo enquadra à direita
   do painel.
 
+### Etapa 13 (2026-07-11) — página "Grafos": expandir + desfazer (G8)
+O grafo deixou de ser um recorte fixo: dá para **crescer** a partir de qualquer nó e
+**voltar atrás**. Porte fiel de `expandir()/snapshot()/desfazerExpansao()` do protótipo.
+- **[src/pages/Grafos.jsx](src/pages/Grafos.jsx)** — `expandir(id, aposExpandir)`:
+  `consultarFuseki('expansao')` traz os vizinhos e **funde** ao grafo (dedupe de arestas
+  por `a|rel|b`; nós novos nascem num **círculo de 90px** ao redor da origem e a física
+  os assenta). A fusão **não re-enquadra**: `versao` não muda — o canvas só recebe
+  `reaquecer(0.8)`. Antes de fundir, um **snapshot** (nós com posição + arestas, cópias
+  profundas) entra no histórico `histExp` (**máx. 10**; zerado a cada recorte novo, como
+  o protótipo). `desfazerExpansao()` restaura o snapshot (posições inclusas), atualiza
+  contagens, mantém a seleção só se o nó sobreviveu e reaquece de leve (0.5). Guarda de
+  sequência compartilhada com `aplicarFiltros` (recorte novo invalida expansão em voo);
+  falha da expansão cai no card de **erro** padrão. `irPara(id)` agora é o completo do
+  protótipo: nó presente → seleciona/centra; **fora do recorte com seleção** → expande o
+  selecionado e vai ao alvo se ele chegou (callback após 250ms); fora sem seleção → só
+  seleciona (painel mostra o detalhe). Botão **"Desfazer expansão ×N"** (pill topo-centro
+  a 52px, abaixo do resumo; hover dourado; só em `pronto` com histórico).
+- **[src/components/GrafoCanvas.jsx](src/components/GrafoCanvas.jsx)** — **2×clique**
+  num nó seleciona + expande (`onExpandir`, listener `dblclick` no efeito de interações);
+  API nova **`reaquecer(nivel)`** (`alpha = max(alpha, nivel)`; com `semAnim` assenta
+  160/120 iterações de uma vez, fiel ao protótipo).
+- **[src/components/GrafoPainel.jsx](src/components/GrafoPainel.jsx)** — botão
+  **"Expandir conexões deste nó"** (borda verde, entre as conexões e a fonte oficial;
+  "Expandindo…" + `disabled` durante a consulta) e os itens **"+ expandir"** das
+  conexões agora funcionam via `irPara`.
+- Classes `.eg-painel-expandir` e `.eg-grafo-desfazer` em [src/index.css](src/index.css).
+  Sem token novo.
+- Verificado: `npm run lint` (0 erros, só o warning pré-existente), `npm run build`
+  (+~4KB, sem dependência nova) e `npm run dev` (200 nos módulos alterados). Teste
+  manual: 2×clique expande; botão do painel expande; item "+ expandir" expande e navega;
+  Desfazer volta cada passo (contador decrementa) e some no zero; recorte novo zera o
+  histórico; a câmera NÃO re-enquadra ao expandir.
+
 ## 4. O que FALTA (próximas etapas)
 
 Com a Etapa 5, a landing (Home) está **completa** do header ao footer. Restam:
@@ -489,10 +522,12 @@ sempre com contraparte escura (a página acompanha o tema do site).
   relação clicáveis — "fora do recorte" espera a G8), "Vistos por último"
   (máx. 5) + placeholder do assistente; `offsetEsquerda` desconta o painel
   do enquadramento do canvas.
-- [ ] **G8 — Expandir + desfazer**: 2×clique (ou botão do painel) →
-  `consultarFuseki('expansao')` traz vizinhos de fora do recorte (itens
-  esmaecidos no painel indicam "clique para expandir"); histórico de snapshots
-  (máx 10) e botão **Desfazer** com contador.
+- [x] **G8 — Expandir + desfazer** *(Etapa 13, 2026-07-11)*: 2×clique, botão
+  do painel ou item "+ expandir" → `consultarFuseki('expansao')` funde os
+  vizinhos (nascem a 90px da origem; sem re-enquadrar, `reaquecer(0.8)`);
+  histórico de snapshots (máx. 10, zerado por recorte) e pill **"Desfazer
+  expansão ×N"**; `irPara` completo (expande o selecionado para alcançar
+  itens fora do recorte).
 - [ ] **G9 — Overlays finais**: legenda "Tipos de nó" com toggle por tipo +
   contagens, **gaveta SPARQL** (mostra a consulta real gerada + tempo + checkbox
   "Simular falha do endpoint (HTTP 503)"), popover de paleta no canto do canvas.
@@ -581,9 +616,9 @@ src/
 │   ├── Footer.jsx             # footer / fim do site (Etapa 5 — FEITO)
 │   ├── GrafoFiltros.jsx       # barra de busca/filtros da página de grafos (Etapa 9/G3 — FEITO)
 │   ├── GrafoCanvas.jsx        # canvas 2D do grafo: render + física + interações (hover/seleção/drag/pan/zoom,
-│   │                          #   API centrarEm/enquadrar/zoom± via ref) (G4–G6 — FEITO)
+│   │                          #   2×clique expande; API centrarEm/enquadrar/reaquecer/zoom± via ref) (G4–G8 — FEITO)
 │   ├── GrafoPainel.jsx        # painel de contexto "de vidro": detalhe do nó, conexões por relação,
-│   │                          #   vistos por último, assistente (placeholder) (Etapa 12/G7 — FEITO)
+│   │                          #   expandir conexões, vistos por último, assistente (placeholder) (G7–G8 — FEITO)
 │   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
 ├── data/
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
@@ -592,7 +627,7 @@ src/
 │                              #   e a grade de séries (Etapa 8/G2 — FEITO)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
-│   ├── Grafos.jsx             # página do grafo — casca + filtros + estados + canvas + painel de detalhe (G1–G7); roadmap §4.1 (EM ANDAMENTO)
+│   ├── Grafos.jsx             # página do grafo — casca + filtros + estados + canvas + painel + expandir/desfazer (G1–G8); roadmap §4.1 (EM ANDAMENTO)
 │   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
 │   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
 ├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)

@@ -11,9 +11,11 @@ import { RELACOES } from '../data/mockFuseki'
 // mundo, hover (tooltip + vizinhos, cursor pointer/grab), clique seleciona
 // (estado no pai, via onSelecionar), arrastar nó (reaquece a física), pan no
 // vazio (soltar sem mover desseleciona), wheel-zoom ancorado no cursor (clamp
-// [0.18, 3]) e a API imperativa { centrarEm, enquadrar, zoomMais, zoomMenos }
-// para os botões da página, a busca e as etapas G7/G11. As cores vêm dos
-// tokens CSS (claro/escuro), resolvidas por getComputedStyle.
+// [0.18, 3]) e a API imperativa { centrarEm, enquadrar, reaquecer, zoomMais,
+// zoomMenos } para os botões da página, a busca e o painel. Etapa G8:
+// 2×clique seleciona + expande (onExpandir); reaquecer(nivel) assenta a
+// expansão/desfazer sem re-enquadrar. As cores vêm dos tokens CSS
+// (claro/escuro), resolvidas por getComputedStyle.
 
 // Lê os tokens do design system para uso no canvas (que não entende var()).
 function lerPaleta() {
@@ -39,7 +41,7 @@ function lerPaleta() {
 }
 
 const GrafoCanvas = forwardRef(function GrafoCanvas(
-  { nos, arestas, versao, semAnim = false, selecionadoId = null, onSelecionar, offsetEsquerda = 0 },
+  { nos, arestas, versao, semAnim = false, selecionadoId = null, onSelecionar, onExpandir, offsetEsquerda = 0 },
   ref,
 ) {
   const canvasRef = useRef(null)
@@ -60,6 +62,8 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
   selecionadoRef.current = selecionadoId
   const onSelecionarRef = useRef(onSelecionar)
   onSelecionarRef.current = onSelecionar
+  const onExpandirRef = useRef(onExpandir)
+  onExpandirRef.current = onExpandir
   const offsetRef = useRef(offsetEsquerda)
   offsetRef.current = offsetEsquerda
 
@@ -186,9 +190,17 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     alvoCam.current = { x: n.x - offsetPainel() / (2 * k), y: n.y, k }
   }
 
+  // reaquece a simulação sem re-enquadrar (expansão 0.8 / desfazer 0.5, G8);
+  // no modo sem animação assenta o layout de uma vez, como o protótipo
+  function reaquecer(nivel) {
+    if (semAnimRef.current) assentar(nivel >= 0.8 ? 160 : 120)
+    else alpha.current = Math.max(alpha.current, nivel)
+  }
+
   useImperativeHandle(ref, () => ({
     centrarEm,
     enquadrar,
+    reaquecer,
     zoomMais: () => zoomCam(1.35),
     zoomMenos: () => zoomCam(1 / 1.35),
   }))
@@ -488,6 +500,14 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       pan = null
     }
 
+    // 2×clique num nó: seleciona e expande as conexões dele (G8)
+    const aoDuploClique = (ev) => {
+      const n = acertar(mundo(ev))
+      if (!n) return
+      onSelecionarRef.current?.(n.id)
+      onExpandirRef.current?.(n.id)
+    }
+
     // desvio do protótipo: limpa o hover ao sair do palco (senão o tooltip
     // e o destaque ficariam presos no último nó tocado)
     const aoSair = () => {
@@ -511,12 +531,14 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     cv.addEventListener('pointermove', aoMover)
     cv.addEventListener('pointerleave', aoSair)
     window.addEventListener('pointerup', aoSoltar) // soltar fora do canvas também encerra
+    cv.addEventListener('dblclick', aoDuploClique)
     cv.addEventListener('wheel', aoRolar, { passive: false }) // precisa de preventDefault (via React seria passivo)
     return () => {
       cv.removeEventListener('pointerdown', aoDescer)
       cv.removeEventListener('pointermove', aoMover)
       cv.removeEventListener('pointerleave', aoSair)
       window.removeEventListener('pointerup', aoSoltar)
+      cv.removeEventListener('dblclick', aoDuploClique)
       cv.removeEventListener('wheel', aoRolar)
     }
   }, [])
