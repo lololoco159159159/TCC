@@ -13,7 +13,7 @@
 > formato do cabeçalho — inclusive o **parágrafo de monografia** (tom acadêmico,
 > com o capítulo onde encaixa).
 
-Última atualização: 2026-07-11.
+Última atualização: 2026-07-12.
 
 ---
 
@@ -629,6 +629,8 @@ completa contra o mock.**
 A landing (Home, Etapas 1–6) e a **página de grafos (G1–G11, Etapas 7–16)** estão
 completas. Restam:
 
+0. **Revisão e polimento do código** — roadmap R0–R7 em **§4.2** (em andamento;
+   fazer ANTES das frentes abaixo).
 1. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos).
 2. **Back-end**: subir um Apache Jena Fuseki real e trocar o mock
    (`src/data/mockFuseki.js`, etapa G2) por `fetch` ao endpoint SPARQL — ver a
@@ -710,6 +712,193 @@ sempre com contraparte escura (a página acompanha o tema do site).
   `verGrafoDaTurma` escreve `?serie=&disciplina=` na URL e navega; a página
   aplica o recorte pelo deep-link da G3. `habilidadesPorAno()` ganhou `id`.
   **Roadmap G1–G11 concluído.**
+
+### 4.2 Revisão e polimento — caminho por etapas (R0–R7)
+
+Refatoração de **limpeza pura, ZERO mudança de comportamento ou visual**. Plano
+aprovado em 2026-07-12 (inventário completo feito nessa data). Regra: **uma fase por
+sessão** — implementar, verificar, commitar (1 commit por fase, mensagem clara) e
+marcar aqui antes da próxima.
+
+**Restrições invioláveis (valem em TODAS as fases):**
+- Bug encontrado → **não corrigir**; anotar na seção "Relatório da revisão" (criar ao
+  final) para o autor decidir.
+- Sem dependência nova; motor próprio de física/canvas intocável (decisões D1/D3/D4
+  do [DECISOES.md](DECISOES.md) — nada aqui pode contrariá-las).
+- Não renomear contratos: chaves de localStorage (`edugraphPrefs`, `eg_theme`,
+  `eg_font`), parâmetros de URL (`serie/disciplina/conceito`), exports de
+  `src/data/mockFuseki.js`, cabeçalho de proveniência do mock.
+- Não tocar: `design/`, `PLANO_*.md`, dados do mock, `DECISOES.md` (exceto entrada
+  nova). Login/Signup: só limpeza superficial (redesenho é etapa própria).
+- Remoções só com **zero ocorrências em grep incluindo strings/template literals**
+  (`var(--no-${…})`, `eg-no-${…}`, keyframes em `animation:` inline, seletores
+  `data-theme/data-formas/data-paleta-aberta`). Na dúvida: manter e listar.
+- **Decisões já tomadas pelo autor (2026-07-12):** handlers ficam como estão e a
+  convenção é documentada (navegação entre telas = `on*`, demais callbacks = `ao*`);
+  criar `src/components/grafo/`; extrações da Home em inglês (`HomeHeader.jsx`,
+  `HeroSection.jsx`); NÃO renomear GraphSection/StatsBand/TestimonialsSection.
+
+**Verificação por fase:** `npm run lint` (0 erros, nenhum warning novo; de R5 em
+diante 0 warnings), `npm run build` (bundle igual ou menor — anotar tamanho),
+`npm run dev` (200). Commit só com os três verdes. Ao final de tudo: rodar o
+checklist de regressão (abaixo) no navegador.
+
+- [x] **Pré-passo — commit do trabalho pendente**: há mudanças não commitadas
+  (G11 + ajustes do autor no GrafoPerfil + .gitignore). Commitar como estão, com
+  mensagem própria (ex.: "G11: integração Home–Grafos + ajustes de perfil"), ANTES
+  de qualquer limpeza — nenhuma fase pode misturar limpeza com trabalho anterior.
+  Anotar o tamanho do bundle (`npm run build`) como baseline.
+- [x] **R0 — Este roadmap** *(2026-07-12)*: seção §4.2 + checklist de regressão.
+- [ ] **R1 — Código morto seguro** (inventário 2026-07-12, conferir no grep antes):
+  (a) `App.jsx` ~linha 54: remover a prop `onLogin` passada a `<Grafos>` — a página
+  não a aceita desde a G10 (assinatura `function Grafos({ onHome, onSignup,
+  onGrafos })`); (b) `index.css`: remover os aliases `--accent-hover`,
+  `--accent-rgb`, `--line-strong` (zero usos no projeto); atualizar a lista de
+  aliases no §2 deste arquivo. **Manter deliberadamente** (anotar no relatório):
+  `--green-soft` (token da paleta documentada do protótipo, §2 — sem uso hoje, pode
+  servir ao redesenho de Login/Signup); aliases usados por Login/Signup/
+  FontSizeWidget (`--ink --accent --line --card --bg-soft --mut`); exports do
+  mockFuseki sem uso interno (contrato público, D1). ESLint já garante que não há
+  imports/variáveis órfãos; não há código comentado nem assets órfãos;
+  `package.json` está mínimo (react/react-dom).
+- [ ] **R2 — Comentários**: corrigir os desatualizados já achados —
+  `src/data/paletas.js:5` ("persistência… chega na G10": G10 feita, persiste via
+  `edugraphPrefs`) e `src/components/GrafoPainel.jsx:~14` ("posição/largura
+  persistem… na G10; por ora vivem no estado da página": já persistem) — e varrer
+  TODOS os cabeçalhos de componente comparando o que afirmam com o código (buscar
+  por "chega na G", "fica para a G", "próxima etapa", "por ora"). Remover ruído
+  (comentário que só repete a linha). **PRESERVAR** os porquês: proveniência do
+  protótipo, constantes da física (GrafoCanvas), bug de ordem de efeitos do tema
+  (GrafoCanvas, correção Etapa 9), chave do cache de cores (3 tokens, correção
+  2026-07-11), guardas de sequência (`seq/meuSeq`), clamps, desvios documentados
+  (CTA da G11, Habilidades fixas, pointerleave/touch-action). Onde faltar um porquê
+  em código não-óbvio, adicionar (curto, em português).
+- [ ] **R3 — CSS + escala de z-index**: reorganizar `index.css` em blocos com
+  sumário no topo (ordem: tokens claro → tokens dark → aliases de compatibilidade →
+  reset/base → keyframes → classes por área: nav/global, home/matéria,
+  grafos-barra, grafos-palco/zoom, painel, perfil/turmas, formas) — **sem alterar
+  nenhuma regra, seletor ou valor** (diff = só movimentação e comentários).
+  Documentar a escala de z-index em comentário no topo do index.css e em uma linha
+  no §6: `1–8` camadas internas da landing · `20` GradeCard aberto · `30` painel de
+  contexto/MateriaPopover · `32` overlays de estado do palco · `40` barra de
+  filtros · `60` dropdowns da barra (sugestões/turmas) · `120` widget A/A ·
+  `190/200` backdrop/dropdown do perfil. Nenhum valor muda.
+- [ ] **R4 — Constantes nomeadas** (valores IDÊNTICOS; só dar nome + comentário):
+  em `Grafos.jsx`: 770ms (seleção pós-busca = 420 do enquadrar + 350, protótipo),
+  250ms (callback pós-expansão), 30ms (assentar ao ligar semAnim), 150ms (debounce
+  de prefs), `VISTOS_MAX = 5`, `HISTORICO_EXPANSAO_MAX = 10`; em `GrafoCanvas.jsx`:
+  `ZOOM_MIN = 0.18` / `ZOOM_MAX = 3` (aparecem 3×: wheel, zoomCam — conferir
+  enquadrar que usa clamp próprio 0.2–1.5, é OUTRO limite, não unificar); em
+  `GrafoPainel.jsx`: limites de arrasto/resize 8/320/620 (o `PAINEL_PADRAO`
+  {x:12, w:392} já existe em Grafos.jsx). **Física do canvas intocada** (2800/12,
+  molas 130/175/205×0.028, 0.0045, 0.86, 0.988 — já documentada inline, D4).
+- [ ] **R5 — Warning do ThemeContext** (o único do lint): o hook `useTheme` é
+  exportado junto do Provider em `src/context/ThemeContext.jsx:77` (regra
+  react-refresh/only-export-components). Resolver SEM mudança de comportamento:
+  criar `src/context/useTheme.js` com o `createContext` + `useTheme` (o contexto
+  passa a ser importado pelo Provider); `ThemeContext.jsx` exporta SÓ o
+  `ThemeProvider`; atualizar os consumidores — `ThemeToggle.jsx`,
+  `FontSizeWidget.jsx`, `App.jsx` (import do hook muda de caminho). Resultado
+  esperado: **lint com 0 erros e 0 warnings**.
+- [ ] **R6 — Duplicações triviais**: (a) `MONO_LABEL` está idêntico em 3 arquivos
+  (`GrafoPainel.jsx`, `GrafoOverlays.jsx`, `GrafoPerfil.jsx`) → mover para
+  `src/components/grafo/estilos.js` (módulo `.js` SEM componente — não dispara o
+  warning react-refresh; se a R7a ainda não rodou, criar já na pasta nova);
+  (b) o par de `<a>` LabOtim/UFES aparece 3× (`Home.jsx` header — img 24px, padding
+  '6px 12px'; `Grafos.jsx` header — img 22px, padding '5px 10px'; `Footer.jsx` —
+  conferir tamanhos) → componente `LogosInstitucionais` parametrizado para que o
+  DOM resultante fique IDÊNTICO nos 3 usos (diferenças viram props; comparar com o
+  render atual antes/depois). **NÃO extrair** (variações sutis — anotar no
+  relatório): padrões Esc/clique-fora (MateriaPopover usa mousedown no document
+  ancorado no card; GrafoPerfil usa backdrop; Grafos usa keydown global; sugestões
+  usam blur) e estilos de `<select>` (GrafoFiltros × SELECT_TURMA não são iguais).
+- [ ] **R7a — Pasta por domínio**: `git mv` de GrafoCanvas/GrafoFiltros/
+  GrafoPainel/GrafoPerfil/GrafoOverlays (+ `estilos.js` da R6) para
+  `src/components/grafo/`; atualizar imports (Grafos.jsx e imports internos entre
+  eles) e o §7 deste arquivo. Commit só de moves (diff legível).
+- [ ] **R7b — Fragmentação de arquivos grandes** (movimentos PUROS de JSX com
+  props explícitas; nada de lógica nova; tamanhos em 2026-07-12: Grafos 1149,
+  GrafoPainel 639, GrafoCanvas 597, Testimonials 559, Home 281):
+  (a) `Home.jsx` → extrair `components/HomeHeader.jsx` (header: logo, nav, logos
+  institucionais, ThemeToggle, Entrar/Criar conta — props onLogin/onSignup/
+  onGrafos) e `components/HeroSection.jsx` (hero 2 colunas — props onLogin/
+  onSignup); Home vira composição pura como as demais seções;
+  (b) `Grafos.jsx` → extrair `components/grafo/GrafoEstados.jsx` com os 4 overlays
+  de estado (card-convite, carregando+skeleton — a const SKELETON vai junto —,
+  erro, vazio; ~330 linhas de JSX; props: status, msgErro, e callbacks
+  tentarNovamente/limpar); meta: página ≤ ~800 linhas;
+  (c) `TestimonialsSection.jsx` → extrair a função `GradeCard` (já é componente
+  separado no arquivo, ~28–95) para `components/GradeCard.jsx` (leva o
+  MateriaPopover junto no import).
+  **NÃO fragmentar** (anotar no relatório): GrafoCanvas (motor coeso — D3),
+  GrafoPainel (um único aside), GrafoOverlays (já modular, 4 exports pequenos),
+  mockFuseki (contrato — D1).
+- [ ] **Fechamento**: entrada "Limpeza e polimento (R0–R7)" no histórico (§3) com o
+  **relatório**: removido/consolidado/fragmentado (com motivo), mantido
+  deliberadamente (lista das fases acima), bugs encontrados e NÃO corrigidos;
+  atualizar §6 (convenção de handlers on*/ao* + escala de z-index) e §7 (árvore
+  nova); adicionar **D11 ao DECISOES.md** (convenções consolidadas: escala de
+  z-index, handlers, organização por domínio — formato completo do cabeçalho,
+  incluindo o parágrafo de monografia); comparar bundle final × baseline do
+  pré-passo; autor roda o checklist de regressão abaixo.
+
+#### Checklist de regressão manual (rodar ao final da revisão, no navegador)
+
+Compilado das notas "Verificado/Teste manual" das Etapas 1–16. Tema claro E escuro
+onde fizer sentido.
+
+**Home:** hero renderiza (título Spectral, CTAs Criar conta/Entrar) · nav Grafos
+navega · globo da GraphSection gira com o scroll e hover realça vizinhos ·
+contadores da StatsBand contam 1 única vez ao entrar na tela · depoimentos desfilam
+e a cortina revela a grade · GradeCard abre popover (fecha no ×, clique fora, Esc);
+chips selecionam; **"Ver o grafo desta turma"** abre a página consultando
+`?serie=X(&disciplina=Y)` (pill de resumo confere) · "Ver todos os grafos →" e
+links do Footer navegam.
+
+**Grafos — fluxo básico:** card-convite no início · pills de série com 3 estados +
+selects + prévia "N vértices" + Filtrar (esmaecido sem mudança) + Limpar ·
+carregando mostra skeleton + spinner · vazio e erro mostram os cards (Tentar
+novamente/Voltar/Limpar funcionam) · resumo do recorte no topo confere nós/
+conexões/ms.
+
+**Grafos — busca:** autocomplete com bolinhas por tipo; Enter escolhe a 1ª; Esc
+fecha · matéria/conceito aplicam na hora · habilidade JÁ no grafo: seleciona e
+centra sem reconsultar · habilidade FORA: abre o recorte do ano dela e
+seleciona/centra ~0,8s depois.
+
+**Grafos — canvas:** hover mostra tooltip e esmaece não-vizinhos (rótulo da aresta
+aparece) · clique seleciona (anel); clique no vazio desseleciona; Esc limpa ·
+arrastar nó move com a física acompanhando · pan e wheel-zoom ancorado no cursor ·
+botões +/−/recentrar · 2×clique expande.
+
+**Grafos — painel:** cheat-sheet sem seleção · com seleção: código, texto
+normativo (spinner antes), pills, conexões navegam (item fora do recorte tem
+"+ expandir" e expande) · botão "Expandir conexões deste nó" · arrastar pela alça,
+redimensionar pela borda, esconder → aba "Painel" reabre · vistos por último
+navegam · a câmera enquadra à direita do painel.
+
+**Grafos — expandir/desfazer:** expansão NÃO re-enquadra a câmera · "Desfazer
+expansão ×N" volta passo a passo e some no zero · recorte novo zera o histórico.
+
+**Grafos — overlays:** legenda: Habilidades fixa (selo FIXO), Conceitos/Matérias
+alternam reconsultando (contagem vira "—") · gaveta SPARQL mostra a consulta real
+(com FILTER ao ocultar tipo) + ms; checkbox 503 faz o próximo Filtrar cair no erro
+(bolinha dourada) · paleta: 4 opções recolorem canvas E pontinhos DOM (testar
+protanopia↔deuteranopia, que compartilham 2 cores); Padrão volta · formas: conceito
+quadrado/matéria triângulo no canvas e nos pontinhos · sem animação: recorte novo
+assenta instantâneo.
+
+**Grafos — perfil/turmas/persistência:** perfil abre/fecha (backdrop, Esc);
+alterar senha mostra aviso · adicionar turma (dedupe), remover, Filtrar aplica
+recorte · botão Turmas na barra idem + "Gerenciar turmas no perfil" · **reload
+preserva** paleta/formas/semAnim/turmas/posição+largura+esc do painel · deep-link
+`?serie=7&disciplina=matematica` direto abre consultando · sair do grafo limpa a
+URL.
+
+**Global:** tema claro↔escuro em ambas as páginas (canvas acompanha na hora, sem
+cor do tema anterior) · widget A/A muda a fonte, persiste no reload e some com
+fade quando o popover de paleta abre · lint 0/0, build sem dependência nova,
+bundle ≤ baseline.
 
 ## 5. Como ler o protótipo final (arquivo "bundled")
 
