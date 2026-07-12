@@ -93,10 +93,10 @@ function GrafoPerfil({
             letterSpacing: '0.03em',
           }}
         >
-          MS
+          P
         </span>
         <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
-          Profa. Mariana
+          Perfil
         </span>
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
           <path d="m6 9 6 6 6-6" />
@@ -141,14 +141,14 @@ function GrafoPerfil({
                   flex: 'none',
                 }}
               >
-                MS
+                P
               </span>
               <div style={{ minWidth: 0 }}>
                 <div style={{ font: "700 18px/1.15 'Spectral', serif", color: 'var(--text)' }}>
-                  Profa. Mariana Souza
+                  Perfil
                 </div>
                 <div style={{ fontSize: 12.5, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  mariana.souza@prof.edu.es.gov.br
+                  perfil.exemplo@prof.edu.es.gov.br
                 </div>
               </div>
             </div>

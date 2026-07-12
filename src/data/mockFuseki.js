@@ -152,9 +152,11 @@ export function estatisticas() {
 }
 
 // Habilidades por série (grade "Encontre as habilidades da sua turma." na Home).
+// `id` alimenta o deep-link "Ver o grafo desta turma" (?serie=<id>, G11).
 // Futuro: consulta SPARQL de agregação (COUNT ... GROUP BY ?etapa) ao Fuseki.
 export function habilidadesPorAno() {
   return ANOS.map(a => ({
+    id: a.id,
     ano: a.label,
     habilidades: HABILIDADES.filter(h => h.ano === a.id).length,
   }));

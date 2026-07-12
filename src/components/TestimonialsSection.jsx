@@ -24,8 +24,10 @@ const series = habilidadesPorAno()
 // Card de uma série na grade "Explore por série": nº de habilidades + o ano.
 // No hover/aberto ganha destaque (fundo/borda dourada e texto escuro). Clicar
 // abre o MateriaPopover ancorado ao card — o grid não se mexe (o balão é
-// position:absolute, fora do fluxo). Só um card fica aberto por vez (estado no pai).
-function GradeCard({ ano, habilidades, aberto, onToggle }) {
+// position:absolute, fora do fluxo). Só um card fica aberto por vez (estado no
+// pai). Desde a G11, o CTA do balão navega para a página de grafos com o
+// recorte série(+matéria) já aplicado (aoVerGrafo).
+function GradeCard({ ano, anoId, habilidades, aberto, onToggle, aoVerGrafo }) {
   const [hover, setHover] = useState(false)
   const [placement, setPlacement] = useState('baixo')
   const cardRef = useRef(null)
@@ -75,7 +77,13 @@ function GradeCard({ ano, habilidades, aberto, onToggle }) {
         {ano}
       </div>
       {aberto && (
-        <MateriaPopover ano={ano} placement={placement} anchorRef={cardRef} onClose={() => onToggle(null)} />
+        <MateriaPopover
+          ano={ano}
+          placement={placement}
+          anchorRef={cardRef}
+          onClose={() => onToggle(null)}
+          onVerGrafo={(disciplinaId) => aoVerGrafo(anoId, disciplinaId)}
+        />
       )}
     </div>
   )
@@ -87,6 +95,23 @@ function TestimonialsSection({ onGrafos }) {
   const [vw, setVw] = useState(typeof window !== 'undefined' ? window.innerWidth : 1400)
   const [wh, setWh] = useState(typeof window !== 'undefined' ? window.innerHeight : 900)
   const [anoAberto, setAnoAberto] = useState(null) // série com o popover de matérias aberto
+
+  // G11 — "Ver o grafo desta turma": escreve o recorte na URL e navega; a
+  // página de grafos lê ?serie=&disciplina= no mount (deep-link da G3) e
+  // aplica o filtro sozinha. O irPara() do App preserva os parâmetros quando
+  // o destino é a página de grafos.
+  const verGrafoDaTurma = (anoId, disciplinaId) => {
+    try {
+      const u = new URL(location.href)
+      u.searchParams.set('serie', anoId)
+      if (disciplinaId) u.searchParams.set('disciplina', disciplinaId)
+      else u.searchParams.delete('disciplina')
+      history.replaceState(null, '', u.toString())
+    } catch {
+      /* ambientes sem history: a página abre sem recorte */
+    }
+    onGrafos?.()
+  }
 
   // Progresso de scroll por rAF (imune a throttling de evento), como em GraphSection.
   useEffect(() => {
@@ -239,9 +264,11 @@ function TestimonialsSection({ onGrafos }) {
                 <GradeCard
                   key={s.ano}
                   ano={s.ano}
+                  anoId={s.id}
                   habilidades={s.habilidades}
                   aberto={anoAberto === s.ano}
                   onToggle={setAnoAberto}
+                  aoVerGrafo={verGrafoDaTurma}
                 />
               ))}
             </div>

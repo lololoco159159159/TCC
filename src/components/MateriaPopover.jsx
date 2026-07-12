@@ -3,17 +3,22 @@ import { LISTA_DISCIPLINAS } from '../data/mockFuseki'
 
 // Popover ("balão") ancorado a um card de série na grade "Explore por série".
 // Sobe ao abrir (keyframe egFadeUp), com uma setinha apontando para o card.
-// Lista as matérias como chips selecionáveis — a seleção é só visual por ora (a
-// tela de grafo é trabalho futuro). Fecha no ×, clicando fora ou com Esc.
+// Lista as matérias como chips selecionáveis e, desde a G11, fecha o ciclo com
+// a Home: o CTA "Ver o grafo desta turma →" chama onVerGrafo(disciplinaId) — a
+// seção escreve o recorte na URL e navega para a página de grafos, que o aplica
+// pelo deep-link da G3. Fecha no ×, clicando fora ou com Esc.
 // O grid não se mexe: o balão é position:absolute (fora do fluxo) sobre o card.
+// (Desvio documentado: o CTA não existe no protótipo — o balão de lá é só
+// visual; o botão materializa a integração prevista no roadmap G11.)
 
-const TODAS = 'Todas as matérias'
-// As matérias vêm do "back-end" (mock do Fuseki) — mesma fonte da página de grafos.
-const materias = LISTA_DISCIPLINAS.map((d) => d.label)
+// As matérias vêm do "back-end" (mock do Fuseki) — mesma fonte da página de
+// grafos; o chip "Todas as matérias" vira recorte sem disciplina (id vazio).
+const TODAS = { id: '', label: 'Todas as matérias' }
+const materias = [TODAS, ...LISTA_DISCIPLINAS.map((d) => ({ id: d.id, label: d.label }))]
 
-function MateriaPopover({ ano, onClose, placement = 'baixo', anchorRef }) {
+function MateriaPopover({ ano, onClose, onVerGrafo, placement = 'baixo', anchorRef }) {
   const ref = useRef(null)
-  const [selecionada, setSelecionada] = useState(TODAS)
+  const [selecionada, setSelecionada] = useState(TODAS.id)
 
   // Fecha ao clicar fora do CARD (mousedown) ou ao pressionar Esc. Usamos o card
   // (anchorRef), não só o balão: assim clicar no próprio card apenas alterna (o
@@ -36,7 +41,6 @@ function MateriaPopover({ ano, onClose, placement = 'baixo', anchorRef }) {
   }, [onClose, anchorRef])
 
   const paraCima = placement === 'cima'
-  const lista = [TODAS, ...materias]
 
   return (
     <div
@@ -97,21 +101,46 @@ function MateriaPopover({ ano, onClose, placement = 'baixo', anchorRef }) {
 
       {/* chips de matérias */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {lista.map((m) => {
-          const sel = selecionada === m
+        {materias.map((m) => {
+          const sel = selecionada === m.id
           return (
             <button
-              key={m}
+              key={m.id || 'todas'}
               type="button"
               aria-pressed={sel}
-              onClick={() => setSelecionada(m)}
+              onClick={() => setSelecionada(m.id)}
               className={sel ? 'eg-materia-chip eg-materia-chip--sel' : 'eg-materia-chip'}
             >
-              {m}
+              {m.label}
             </button>
           )
         })}
       </div>
+
+      {/* CTA da G11: abre a página de grafos com o recorte série(+matéria) aplicado */}
+      <button
+        type="button"
+        className="eg-grafo-filtrar"
+        onClick={() => onVerGrafo?.(selecionada)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          width: '100%',
+          marginTop: 14,
+          padding: '10px 16px',
+          borderRadius: 999,
+          border: 'none',
+          background: 'var(--green)',
+          color: '#fff',
+          font: "700 13.5px/1 'Figtree', sans-serif",
+          cursor: 'pointer',
+        }}
+      >
+        <span>Ver o grafo desta turma</span>
+        <span aria-hidden="true">→</span>
+      </button>
     </div>
   )
 }

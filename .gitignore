@@ -22,7 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-ESTRUTURA_DO_PROJETO.txt
 .claude
 CLAUDE.md
 implemente.txt

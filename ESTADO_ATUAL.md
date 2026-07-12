@@ -597,16 +597,42 @@ as preferências de acessibilidade que sobrevivem ao reload.
   física); recarregar a página preserva paleta/formas/semAnim/turmas/painel; Limpar
   prefs = apagar a chave no devtools.
 
+### Etapa 16 (2026-07-11) — integração Home ↔ Grafos (G11) · **roadmap G1–G11 completo**
+O ciclo fechou: da grade de séries da Home dá para cair na página de grafos **com o
+recorte da turma já aplicado** — reusando o deep-link da G3, sem mecanismo novo.
+- **[src/components/MateriaPopover.jsx](src/components/MateriaPopover.jsx)** — os chips
+  deixaram de ser rótulos soltos e carregam o **id real** da disciplina (de
+  `LISTA_DISCIPLINAS`; "Todas as matérias" = id vazio), e o balão ganhou o CTA
+  **"Ver o grafo desta turma →"** (verde, largura total), que chama
+  `onVerGrafo(disciplinaId)`. *Desvio documentado:* o CTA **não existe no protótipo**
+  (o balão de lá é só visual) — o botão materializa a integração prevista na G11.
+- **[src/components/TestimonialsSection.jsx](src/components/TestimonialsSection.jsx)** —
+  `verGrafoDaTurma(anoId, disciplinaId)`: escreve `?serie=&disciplina=` na URL
+  (`history.replaceState`) e chama `onGrafos()`. A página de grafos **remonta**, lê os
+  parâmetros no mount (deep-link da G3, com validação) e aplica o recorte sozinha — o
+  `irPara()` do App já preservava os parâmetros quando o destino é `grafos`.
+  `GradeCard` propaga `anoId`/`aoVerGrafo` ao balão.
+- **[src/data/mockFuseki.js](src/data/mockFuseki.js)** — `habilidadesPorAno()` passou
+  a devolver também o `id` da série (o rótulo "5.º ano" não serve de parâmetro).
+- Sem CSS novo (o CTA reusa `.eg-grafo-filtrar`); sem token novo.
+- Verificado: `npm run lint` (0 erros, só o warning pré-existente), `npm run build` e
+  `npm run dev` (200 nos módulos alterados). Teste manual: Home → rolar até a grade →
+  card "7.º ano" → chip "Matemática" → "Ver o grafo desta turma" → página abre já
+  consultando `serie=7&disciplina=matematica` (pill de resumo confere); com "Todas as
+  matérias", só `serie=7`; voltar à Home limpa a URL (comportamento do App).
+
+**Com a G11, o roadmap §4.1 (G1–G11) está 100% concluído — a página de grafos está
+completa contra o mock.**
+
 ## 4. O que FALTA (próximas etapas)
 
-Com a Etapa 5, a landing (Home) está **completa** do header ao footer. Restam:
+A landing (Home, Etapas 1–6) e a **página de grafos (G1–G11, Etapas 7–16)** estão
+completas. Restam:
 
-1. **Página "Grafos"** — casca no ar (Etapa 7); seguir o roadmap **G2–G11** em §4.1.
-2. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos).
-3. **Back-end**: subir um Apache Jena Fuseki real e trocar o mock
-   (`src/data/mockFuseki.js`, etapa G2) por `fetch` ao endpoint SPARQL. A dúvida
-   antiga "qual lib de visualização" foi **resolvida na Etapa 7**: motor próprio
-   portado do protótipo, sem lib externa.
+1. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos).
+2. **Back-end**: subir um Apache Jena Fuseki real e trocar o mock
+   (`src/data/mockFuseki.js`, etapa G2) por `fetch` ao endpoint SPARQL — ver a
+   receita no cabeçalho do próprio mock e a decisão D1 em [DECISOES.md](DECISOES.md).
 
 ### 4.1 Página de grafos — caminho por etapas (G1–G11)
 
@@ -679,9 +705,11 @@ sempre com contraparte escura (a página acompanha o tema do site).
   `assentar(200)`); persistência validada em `localStorage['edugraphPrefs']`
   (paleta, formas, semAnim, turmas, painel; debounce 150ms).
   `OpcoesAcessibilidade` compartilhado entre popover e perfil.
-- [ ] **G11 — Integração com a Home**: os `GradeCard` e os chips do
-  `MateriaPopover` abrem a página **com o recorte já aplicado** (série/matéria
-  via estado ou pela URL da G3) — "Ver o grafo desta turma".
+- [x] **G11 — Integração com a Home** *(Etapa 16, 2026-07-11)*: chips do
+  `MateriaPopover` com id real + CTA **"Ver o grafo desta turma →"** →
+  `verGrafoDaTurma` escreve `?serie=&disciplina=` na URL e navega; a página
+  aplica o recorte pelo deep-link da G3. `habilidadesPorAno()` ganhou `id`.
+  **Roadmap G1–G11 concluído.**
 
 ## 5. Como ler o protótipo final (arquivo "bundled")
 
@@ -758,8 +786,9 @@ src/
 │   ├── ThemeToggle.jsx        # toggle sol/lua (já bate com o protótipo)
 │   ├── GraphSection.jsx       # seção 2: grafo-globo interativo (Etapa 2 — FEITO)
 │   ├── StatsBand.jsx          # seção 3: banda de estatísticas, 3 contadores (Etapa 3 — FEITO)
-│   ├── TestimonialsSection.jsx # seção 4: depoimentos + cortina que revela a grade; cards abrem popover (Etapas 4-6 — FEITO)
-│   ├── MateriaPopover.jsx     # balão de matérias ancorado ao card de série (Etapa 6 — FEITO)
+│   ├── TestimonialsSection.jsx # seção 4: depoimentos + cortina que revela a grade; cards abrem popover;
+│   │                          #   "Ver o grafo desta turma" navega com recorte (Etapas 4-6 + G11 — FEITO)
+│   ├── MateriaPopover.jsx     # balão de matérias ancorado ao card de série; CTA da G11 (Etapas 6+16 — FEITO)
 │   ├── Footer.jsx             # footer / fim do site (Etapa 5 — FEITO)
 │   ├── GrafoFiltros.jsx       # barra de busca/filtros da página de grafos (Etapa 9/G3 — FEITO)
 │   ├── GrafoCanvas.jsx        # canvas 2D do grafo: render + física + interações (hover/seleção/drag/pan/zoom,
@@ -780,7 +809,7 @@ src/
 │                              #   e a grade de séries (Etapa 8/G2 — FEITO)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
-│   ├── Grafos.jsx             # página do grafo — filtros + estados + canvas + painel + expandir/desfazer + overlays + perfil/prefs (G1–G10); falta G11 (§4.1)
+│   ├── Grafos.jsx             # página do grafo — filtros + estados + canvas + painel + expandir/desfazer + overlays + perfil/prefs (G1–G11 — COMPLETA contra o mock)
 │   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
 │   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
 ├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)
