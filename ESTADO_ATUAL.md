@@ -835,23 +835,20 @@ checklist de regressão (abaixo) no navegador.
   ajustados: `../data/*` → `../../data/*` nos movidos, `./grafo/estilos` →
   `./estilos`, e Grafos.jsx aponta para `../components/grafo/*`. Renames
   detectados pelo git (RM); bundle byte-idêntico; §7 sincronizado.
-- [ ] **R7b — Fragmentação de arquivos grandes** (movimentos PUROS de JSX com
-  props explícitas; nada de lógica nova; tamanhos em 2026-07-12: Grafos 1149,
-  GrafoPainel 639, GrafoCanvas 597, Testimonials 559, Home 281):
-  (a) `Home.jsx` → ~~HomeHeader~~ **já feito fora do plano**: o ajuste de UX de
-  2026-07-12 criou o `components/SiteHeader.jsx` COMPARTILHADO entre Home e
-  Grafos (ver entrada no §3) — resta extrair `components/HeroSection.jsx`
-  (hero 2 colunas — props onLogin/onSignup); Home vira composição pura;
-  (b) `Grafos.jsx` → extrair `components/grafo/GrafoEstados.jsx` com os 4 overlays
-  de estado (card-convite, carregando+skeleton — a const SKELETON vai junto —,
-  erro, vazio; ~330 linhas de JSX; props: status, msgErro, e callbacks
-  tentarNovamente/limpar); meta: página ≤ ~800 linhas;
-  (c) `TestimonialsSection.jsx` → extrair a função `GradeCard` (já é componente
-  separado no arquivo, ~28–95) para `components/GradeCard.jsx` (leva o
-  MateriaPopover junto no import).
-  **NÃO fragmentar** (anotar no relatório): GrafoCanvas (motor coeso — D3),
-  GrafoPainel (um único aside), GrafoOverlays (já modular, 4 exports pequenos),
-  mockFuseki (contrato — D1).
+- [x] **R7b — Fragmentação de arquivos grandes** *(2026-07-12; movimentos puros
+  de JSX, props explícitas)*:
+  (a) `Home.jsx` → `components/HeroSection.jsx` (hero 2 colunas, props
+  onLogin/onSignup) — com o SiteHeader do ajuste de UX, a Home virou composição
+  pura de seções (**281 → 65 linhas**);
+  (b) `Grafos.jsx` → `components/grafo/GrafoEstados.jsx` (os 4 overlays de
+  estado: convite/carregando+SKELETON/erro/vazio; props status, msgErro,
+  aoTentarNovamente, aoLimpar; mesma posição no DOM, zIndex 32 preservado) —
+  página em **799 linhas** (meta ≤800 ✓);
+  (c) `TestimonialsSection.jsx` → `components/GradeCard.jsx` (verbatim, leva o
+  import do MateriaPopover; **559 → 491**).
+  **NÃO fragmentados** (relatório): GrafoCanvas (motor coeso — D3), GrafoPainel
+  (um único aside), GrafoOverlays (já modular), mockFuseki (contrato — D1).
+  Bundle 274.64 → 274.88 kB (+240 bytes de wrappers de componente).
 - [ ] **Fechamento**: entrada "Limpeza e polimento (R0–R7)" no histórico (§3) com o
   **relatório**: removido/consolidado/fragmentado (com motivo), mantido
   deliberadamente (lista das fases acima), bugs encontrados e NÃO corrigidos;
@@ -1005,6 +1002,8 @@ src/
 │   ├── Footer.jsx             # footer / fim do site (Etapa 5 — FEITO)
 │   ├── SiteHeader.jsx         # header único (Home + Grafos): nav no centro geométrico, slot de conta
 │   │                          #   de largura fixa (ajuste de UX de 2026-07-12)
+│   ├── HeroSection.jsx        # hero "Conhecimento conectado." da Home (R7b)
+│   ├── GradeCard.jsx          # card de série da grade (abre o MateriaPopover; R7b)
 │   ├── LogosInstitucionais.jsx # par de <a> LabOtim/UFES dos headers (R6; o Footer tem variação própria)
 │   ├── FontSizeWidget.jsx     # controles A/A de acessibilidade
 │   └── grafo/                 # componentes exclusivos da página de grafos (R7a)
@@ -1015,6 +1014,7 @@ src/
 │       ├── GrafoOverlays.jsx  # legenda "Tipos de nó", gaveta SPARQL, popover de paleta,
 │       │                      #   OpcoesAcessibilidade (G9–G10)
 │       ├── GrafoPerfil.jsx    # perfil mock: identidade, turmas, acessibilidade (G10)
+│       ├── GrafoEstados.jsx   # overlays de estado do palco: convite/carregando/erro/vazio (R7b)
 │       └── estilos.js         # estilos inline compartilhados do domínio (MONO_LABEL, R6)
 ├── data/
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
