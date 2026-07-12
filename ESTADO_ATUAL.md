@@ -645,14 +645,59 @@ recorte da turma já aplicado** — reusando o deep-link da G3, sem mecanismo no
 **Com a G11, o roadmap §4.1 (G1–G11) está 100% concluído — a página de grafos está
 completa contra o mock.**
 
+### Etapa 17 (2026-07-12) — Revisão e polimento (R0–R7b): relatório final
+Revisão de limpeza pura concluída (roadmap §4.2; zero mudança de comportamento,
+exceto os ajustes de UX pedidos pelo autor no meio dela, registrados à parte).
+
+**Removido:** prop `onLogin` morta passada a `<Grafos>` (App.jsx) — único código
+morto real do projeto (ESLint já bloqueava o resto).
+
+**Corrigido (comentários):** 6 desatualizados (paletas.js, GrafoPainel, Grafos,
+GrafoCanvas, Logo, GrafoPerfil — detalhes na R2). Nenhum ruído nem porquê
+faltante encontrado; todos os porquês (física, proveniência, guardas, caches)
+preservados.
+
+**Consolidado:** `useTheme` em módulo próprio (**lint zerado**: morreu o warning
+que acompanhava o projeto desde a Etapa 1); `MONO_LABEL` ×3 → `grafo/estilos.js`;
+logos LabOtim/UFES dos 2 headers → `LogosInstitucionais`; 12 números mágicos →
+constantes nomeadas (R4, valores idênticos); `index.css` com sumário + escala de
+z-index documentada (R3).
+
+**Reorganizado:** `components/grafo/` com os 6 arquivos do domínio (R7a, renames
+git); fragmentação R7b — Home 281→65 (HeroSection), Grafos 1149→799
+(GrafoEstados), Testimonials 559→491 (GradeCard). Fora da revisão, mas junto:
+header único `SiteHeader` (ajuste de UX).
+
+**Mantido deliberadamente (com motivo):**
+- `--green-soft`: paleta documentada do protótipo (§2), pode servir a Login/Signup.
+- Aliases `--accent-hover --accent-rgb --line-strong`: o inventário os deu como
+  órfãos, mas o **grep obrigatório pré-remoção** (regra do §4.2) mostrou usos
+  dentro do próprio index.css (`::selection`, `.eg-input`, `.eg-btn-primario`) —
+  lição registrada: inventário só de `.jsx` não basta.
+- Exports do mockFuseki sem uso interno: contrato público da troca pelo Fuseki (D1).
+- Padrões Esc/clique-fora (4 variações) e estilos de `<select>`: sutilmente
+  diferentes entre si — extração viraria abstração falsa.
+- Logos do Footer: variação de design própria, não duplicação.
+- GrafoCanvas/GrafoPainel/GrafoOverlays/mockFuseki não fragmentados (coesão/D3/D1).
+
+**Bugs encontrados e não corrigidos: nenhum** — a revisão não identificou defeito
+funcional.
+
+**Números finais:** lint **0 erros / 0 warnings**; bundle JS 275.86 → **274.88 kB**
+(−0,35%), CSS **7.45 kB idêntico**; sem dependência nova. Convenções novas
+registradas: **D11** no [DECISOES.md](DECISOES.md). Falta do autor: rodar o
+**checklist de regressão** do §4.2 no navegador.
+
 ## 4. O que FALTA (próximas etapas)
 
 A landing (Home, Etapas 1–6) e a **página de grafos (G1–G11, Etapas 7–16)** estão
 completas. Restam:
 
-0. **Revisão e polimento do código** — roadmap R0–R7 em **§4.2** (em andamento;
-   fazer ANTES das frentes abaixo).
-1. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos).
+0. ~~Revisão e polimento do código~~ — **concluída** (roadmap §4.2, Etapa 17);
+   falta só o autor rodar o checklist de regressão do §4.2 no navegador.
+1. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos —
+   incluindo `--accent-hover/--accent-rgb/--line-strong`, que hoje servem às
+   classes `.eg-input`/`.eg-btn-primario` dessas telas).
 2. **Back-end**: subir um Apache Jena Fuseki real e trocar o mock
    (`src/data/mockFuseki.js`, etapa G2) por `fetch` ao endpoint SPARQL — ver a
    receita no cabeçalho do próprio mock e a decisão D1 em [DECISOES.md](DECISOES.md).
@@ -849,14 +894,14 @@ checklist de regressão (abaixo) no navegador.
   **NÃO fragmentados** (relatório): GrafoCanvas (motor coeso — D3), GrafoPainel
   (um único aside), GrafoOverlays (já modular), mockFuseki (contrato — D1).
   Bundle 274.64 → 274.88 kB (+240 bytes de wrappers de componente).
-- [ ] **Fechamento**: entrada "Limpeza e polimento (R0–R7)" no histórico (§3) com o
-  **relatório**: removido/consolidado/fragmentado (com motivo), mantido
-  deliberadamente (lista das fases acima), bugs encontrados e NÃO corrigidos;
-  atualizar §6 (convenção de handlers on*/ao* + escala de z-index) e §7 (árvore
-  nova); adicionar **D11 ao DECISOES.md** (convenções consolidadas: escala de
-  z-index, handlers, organização por domínio — formato completo do cabeçalho,
-  incluindo o parágrafo de monografia); comparar bundle final × baseline do
-  pré-passo; autor roda o checklist de regressão abaixo.
+- [x] **Fechamento** *(2026-07-12)*: relatório final da revisão no §3
+  (**Etapa 17** — removido/corrigido/consolidado/reorganizado/mantido, **zero
+  bugs encontrados**); §6 ganhou a convenção de handlers (`on*` navegação /
+  `ao*` callbacks; z-index entrou na R3) e o §7 já estava sincronizado; **D11**
+  registrada no DECISOES.md (convenções consolidadas, com parágrafo de
+  monografia); bundle final **274.88 kB** × baseline 275.86 kB (−0,35%, CSS
+  idêntico), lint 0/0. **Pendente do autor:** rodar o checklist de regressão
+  abaixo no navegador.
 
 #### Checklist de regressão manual (rodar ao final da revisão, no navegador)
 
@@ -973,6 +1018,10 @@ Particularidades:
 - **Tema + zoom de fonte** via Context: [src/context/ThemeContext.jsx](src/context/ThemeContext.jsx)
   (atributo `data-theme` no `<html>`, persistência em localStorage).
 - Idioma do projeto e dos comentários: **português**.
+- **Handlers**: props de navegação entre telas usam `on*` (`onHome/onGrafos/...`,
+  padrão desde a Etapa 1); os demais callbacks de componente usam `ao*`
+  (`aoFechar/aoFiltrar/...`, padrão da página de grafos). Convenção consolidada na
+  revisão R0–R7 (decisão do autor: documentar, não renomear em massa) — ver D11.
 - Use sempre `var(--token)` (sem fallback `,#hex`) ao portar trechos do protótipo,
   porque os tokens estão definidos globalmente.
 - **Escala de z-index** (documentada no topo do `index.css`; não criar valores

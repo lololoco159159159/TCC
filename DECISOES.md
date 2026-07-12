@@ -383,5 +383,57 @@ agregações computadas sobre o próprio grafo, e não valores fixados manualmen
 
 ---
 
-*Última atualização: 2026-07-11. Novas decisões: adicionar ao fim da lista como
+## D11 — Convenções consolidadas na revisão de código (pós-roadmap)
+
+**Quando:** revisão R0–R7, 2026-07-12 · **Onde:** [ESTADO_ATUAL.md §4.2 e §6](ESTADO_ATUAL.md),
+[src/index.css](src/index.css) (topo), [src/components/grafo/](src/components/grafo/)
+
+**O problema.** Com Home e página de grafos completas (16 etapas), o código
+acumulou pequenas inconsistências naturais de um desenvolvimento incremental:
+dois padrões de nome de handler, valores de z-index espalhados sem documentação,
+todos os componentes numa pasta única e arquivos grandes demais para revisão
+confortável (a página de grafos chegou a 1.149 linhas).
+
+**A decisão.** Uma revisão de limpeza pura (zero mudança de comportamento), em
+fases commitadas separadamente, consolidou três convenções: (1) **handlers** —
+props de navegação entre telas mantêm o prefixo `on*` e os demais callbacks usam
+`ao*`; a convenção foi **documentada em vez de imposta por renomeação em massa**,
+preservando o histórico do git; (2) **escala de z-index** documentada em tabela
+única (1–8 camadas da landing · 20 card aberto · 30 painéis/popovers · 32
+overlays de estado · 40 barra de filtros · 60 dropdowns · 120 widget de fonte ·
+190/200 perfil), com a regra de não criar valores intermediários; (3)
+**organização por domínio** — os componentes exclusivos da página de grafos
+moveram para `src/components/grafo/`, e arquivos grandes foram fragmentados por
+seção (Home 281→65 linhas; Grafos 1.149→799) apenas onde o corte era um
+movimento puro de JSX.
+
+**Alternativas rejeitadas.** Renomear todos os handlers para um padrão único:
+diff gigante e histórico ilegível, sem ganho funcional; pastas por página
+(`components/Home/`): componentes compartilhados ficam sem casa e migram de
+pasta quando ganham segundo uso — o critério adotado é posse/domínio;
+fragmentar o motor do canvas: rejeitado por coesão (a física, o hit-test e a
+câmera compartilham o mesmo estado por refs — decisão D3).
+
+**Para a banca.** *"Ao final da implementação fizemos uma revisão sistemática de
+limpeza com regra explícita de zero mudança de comportamento: cada remoção exigiu
+busca por referências inclusive dentro de strings, o linter terminou sem nenhum
+aviso, o bundle ficou menor e as convenções do projeto — nomes, camadas de
+z-index, organização por domínio — foram consolidadas por escrito."*
+
+**Monografia** *(cap. de Metodologia ou Implementação, fechamento — parágrafo
+curto):*
+"Concluída a implementação, realizou-se uma etapa de refatoração conservadora
+(*refactoring*), com a restrição explícita de não alterar comportamento nem
+aparência: remoção de código morto verificada por busca textual exaustiva
+(incluindo referências construídas dinamicamente), consolidação de duplicações
+triviais, nomeação de constantes de interação, reorganização dos módulos por
+domínio e documentação das convenções do projeto (nomenclatura de *callbacks* e
+escala de empilhamento visual). A verificação por fase — análise estática sem
+avisos, compilação de produção com *bundle* final menor que o inicial e teste de
+regressão manual guiado por um checklist derivado dos critérios de aceitação de
+cada etapa — garantiu a equivalência funcional do resultado."
+
+---
+
+*Última atualização: 2026-07-12. Novas decisões: adicionar ao fim da lista como
 D<N+1>, seguindo o formato do cabeçalho — **sempre com o parágrafo de monografia**.*
