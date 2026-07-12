@@ -11,11 +11,16 @@ import { RELACOES } from '../data/mockFuseki'
 // mundo, hover (tooltip + vizinhos, cursor pointer/grab), clique seleciona
 // (estado no pai, via onSelecionar), arrastar nó (reaquece a física), pan no
 // vazio (soltar sem mover desseleciona), wheel-zoom ancorado no cursor (clamp
-// [0.18, 3]) e a API imperativa { centrarEm, enquadrar, reaquecer, zoomMais,
-// zoomMenos } para os botões da página, a busca e o painel. Etapa G8:
+// [0.18, 3]) e a API imperativa { centrarEm, enquadrar, reaquecer, assentar,
+// zoomMais, zoomMenos } para os botões da página, a busca e o painel. Etapa G8:
 // 2×clique seleciona + expande (onExpandir); reaquecer(nivel) assenta a
 // expansão/desfazer sem re-enquadrar. As cores vêm dos tokens CSS
 // (claro/escuro), resolvidas por getComputedStyle.
+
+// Limites do zoom da câmera (clamp do protótipo). Atenção: o fit-to-view do
+// enquadrar() usa a própria faixa 0.2–1.5 — é OUTRO limite, não unificar.
+const ZOOM_MIN = 0.18
+const ZOOM_MAX = 3
 
 // Lê os tokens do design system para uso no canvas (que não entende var()).
 function lerPaleta() {
@@ -191,7 +196,7 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
   // aproxima/afasta em passos (botões +/− da página), com os clamps do protótipo
   function zoomCam(fator) {
     const c = cam.current
-    alvoCam.current = { x: c.x, y: c.y, k: Math.min(3, Math.max(0.18, c.k * fator)) }
+    alvoCam.current = { x: c.x, y: c.y, k: Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, c.k * fator)) }
   }
 
   // leva a câmera até um nó (busca, painel da G7, deep-link da G11)
@@ -554,7 +559,7 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       ev.preventDefault()
       const p = mundo(ev)
       const fator = Math.exp(-ev.deltaY * 0.0013)
-      const k2 = Math.min(3, Math.max(0.18, cam.current.k * fator))
+      const k2 = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, cam.current.k * fator))
       cam.current.x = p.x - (p.sx - p.w / 2) / k2
       cam.current.y = p.y - (p.sy - p.h / 2) / k2
       cam.current.k = k2

@@ -2,7 +2,7 @@
 // Color Universal Design (CUD) de Okabe & Ito — cores independentes do tema
 // claro/escuro. A escolha sobrescreve os tokens --no-* no <html> (efeito em
 // Grafos.jsx); 'padrao' remove o override e volta aos tokens do index.css.
-// A persistência da preferência (localStorage) chega na G10.
+// A preferência persiste em localStorage['edugraphPrefs'] (G10).
 
 export const PALETAS = {
   protanopia: { habilidade: '#0072B2', conceito: '#E69F00', disciplina: '#000000' },

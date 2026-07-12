@@ -51,7 +51,6 @@ function App() {
     pagina = (
       <Grafos
         onHome={() => irPara('home')}
-        onLogin={() => irPara('login')}
         onSignup={() => irPara('signup')}
         onGrafos={() => irPara('grafos')}
       />

@@ -1,5 +1,5 @@
 // Logo do EduGraph: grafo de 9 nós conectados + nome do produto.
-// Usado na nav da home e no topo das telas de Entrar / Criar conta.
+// Usado nos headers (Home, Grafos, Entrar/Criar conta) e no Footer.
 // As cores vêm das variáveis de tema, então o logo acompanha o modo escuro.
 function Logo({ onClick, tamanho = 38 }) {
   const altura = Math.round((tamanho * 120) / 150)

@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { ANOS, LISTA_DISCIPLINAS } from '../data/mockFuseki'
 import { OpcoesAcessibilidade } from './GrafoOverlays'
 
-// Perfil MOCK do header da página de grafos (G10) — porte fiel do protótipo:
-// substitui o Entrar/Criar conta por um botão de conta (avatar "MS" +
-// "Profa. Mariana") que abre um dropdown fixo (backdrop fecha ao clicar fora):
+// Perfil MOCK do header da página de grafos (G10) — porte do protótipo com a
+// identidade genérica "Perfil" (avatar "P"; sem persona): substitui o
+// Entrar/Criar conta por um botão de conta que abre um dropdown fixo
+// (backdrop fecha ao clicar fora):
 //   • identidade + "Alterar senha" (aviso: o fluxo chega com o sistema de contas);
 //   • "Minhas turmas": lista ano+matéria com Filtrar (aplica o recorte) e
 //     remover, + selects e "+ Adicionar" (dedupe na página);

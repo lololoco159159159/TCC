@@ -1,6 +1,28 @@
-/* Estilos globais do EduGraph — baseados no design system do projeto */
+/* ============================================================================
+   Estilos globais do EduGraph — o design system do projeto (autoridade da
+   paleta; ver ESTADO_ATUAL.md §6).
 
-/* ---- Variáveis de tema (protótipo final) ----
+   SUMÁRIO (ordem dos blocos):
+     1. Tokens de tema — claro (:root), inclui aliases de compatibilidade
+     2. Tokens de tema — escuro (:root[data-theme='dark'])
+     3. Reset e base (box-sizing, body, cross-fade de tema, ::selection…)
+     4. Keyframes (egFadeUp · egPulsar · egGirar · egSurgir)
+     5. Classes .eg-* por área: formulários (Login/Signup) → botões → widget
+        A/A → navegação/footer → popover de matérias (Home) → página de
+        grafos (barra, zoom, painel, overlays, perfil/turmas/formas)
+
+   ESCALA DE Z-INDEX do app (valores em uso; não criar intermediários novos):
+      1–8  camadas internas da landing (linhas/cards/legenda das seções)
+       20  GradeCard com popover aberto (Home)
+       30  painel de contexto e popovers do palco (grafos) + balão de matérias
+       32  overlays de estado do palco (carregando/erro/vazio)
+       40  barra de busca/filtros (grafos)
+       60  dropdowns da barra (sugestões, turmas)
+      120  widget A/A (fixo, site inteiro — definido neste arquivo)
+  190/200  backdrop / dropdown do perfil (grafos)
+   ============================================================================ */
+
+/* ---- 1. Tokens de tema — claro ----
    Modo claro: papel creme com acento verde e dourado/terracota.
    Modo escuro: fundo preto com verde e âmbar.
    O tema é trocado pelo atributo data-theme no <html> (ver ThemeContext).
@@ -66,6 +88,7 @@
   --accent-rgb: 6, 73, 45;
 }
 
+/* ---- 2. Tokens de tema — escuro ---- */
 :root[data-theme='dark'] {
   /* tokens do protótipo */
   --bg: #000000;
@@ -115,6 +138,8 @@
   --accent-rgb: 58, 167, 109;
 }
 
+/* ---- 3. Reset e base ---- */
+
 *,
 *::before,
 *::after {
@@ -148,6 +173,12 @@ body {
 ::selection {
   background: rgba(var(--accent-rgb), 0.18);
 }
+
+input::placeholder {
+  color: var(--faint);
+}
+
+/* ---- 4. Keyframes ---- */
 
 /* fade sutil ao trocar a legenda ativa (seção de depoimentos) */
 @keyframes egFadeUp {
@@ -193,9 +224,7 @@ body {
   }
 }
 
-input::placeholder {
-  color: var(--faint);
-}
+/* ---- 5. Classes .eg-* ---- */
 
 /* ---- Campos de formulário (Login / Criar conta) ---- */
 
@@ -247,7 +276,8 @@ input::placeholder {
   transform: scale(0.96);
 }
 
-/* Botões A/A do widget de tamanho de fonte */
+/* ---- Widget A/A de tamanho de fonte ---- */
+
 /* wrapper do widget A/A — some (fade) enquanto o popover de paleta (grafos)
    está aberto: deslizar para baixo caía em cima da legenda "Tipos de nó" */
 .eg-font-widget {

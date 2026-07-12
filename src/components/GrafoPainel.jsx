@@ -11,8 +11,9 @@ import { ANOS, EIXOS, NOS } from '../data/mockFuseki'
 // CONEXÕES agrupadas por relação — item fora do recorte ganha o chip
 // "+ expandir" e o clique expande via aoIr (G8) — e o botão "Expandir
 // conexões deste nó" (aoExpandir/expandindo). Rodapé: "Vistos por último" +
-// placeholder do assistente. Posição/largura persistem em localStorage na G10;
-// por ora vivem no estado da página. Hovers via classes .eg-painel-* (CSS).
+// placeholder do assistente. Posição/largura/escondido vivem no estado da
+// página e persistem em localStorage['edugraphPrefs'] (G10). Hovers via
+// classes .eg-painel-* (CSS).
 
 // cores por tipo de nó — mesmos tokens do canvas; a FORMA vem das classes
 // .eg-no-* (quadrado/triângulo no modo "formas em vez de cores" da G10)
@@ -34,6 +35,11 @@ function Bolinha({ tipo, tamanho }) {
     <span className={`eg-no-${tipo}`} style={{ width: tamanho, height: tamanho, background: COR[tipo], flex: 'none' }} />
   )
 }
+
+// Limites de arrasto/redimensionamento do painel (clamps do protótipo)
+const MARGEM_PALCO = 8 // folga mínima até as bordas do palco
+const LARGURA_MIN = 320
+const LARGURA_MAX = 620
 
 // atalhos do cheat-sheet (estado sem seleção) — verbatim do protótipo
 const ATALHOS = [
@@ -64,7 +70,7 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
     const move = (e) => {
       const W = larguraPalco()
       const w = atual.current.w
-      const nx = Math.min(Math.max(8, inicial + e.clientX - x0), Math.max(8, W - w - 8))
+      const nx = Math.min(Math.max(MARGEM_PALCO, inicial + e.clientX - x0), Math.max(MARGEM_PALCO, W - w - MARGEM_PALCO))
       aoMudarPainel({ x: nx })
     }
     const solta = () => {
@@ -85,7 +91,7 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
     const move = (e) => {
       const W = larguraPalco()
       const x = atual.current.x
-      const nw = Math.min(Math.max(320, inicial + e.clientX - x0), Math.min(620, W - x - 8))
+      const nw = Math.min(Math.max(LARGURA_MIN, inicial + e.clientX - x0), Math.min(LARGURA_MAX, W - x - MARGEM_PALCO))
       aoMudarPainel({ w: nw })
     }
     const solta = () => {

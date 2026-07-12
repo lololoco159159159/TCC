@@ -53,6 +53,14 @@ const TIPOS_TODOS = { habilidade: true, conceito: true, disciplina: true }
 const FILTROS_VAZIOS = { ano: '', disciplina: '', conceito: '', tipos: TIPOS_TODOS }
 const PAINEL_PADRAO = { x: 12, w: 392, esc: false }
 
+// Tempos e limites da interação (valores do protótipo — não alterar)
+const ATRASO_SELECAO_BUSCA = 770 // 420ms do enquadrar + 350ms até selecionar/centrar
+const ATRASO_POS_EXPANSAO = 250 // espera o layout abrir antes de ir ao nó recém-chegado
+const ATRASO_ASSENTAR = 30 // a prop semAnim precisa chegar ao canvas antes do salto
+const DEBOUNCE_PREFS_MS = 150 // o arrasto do painel muda o estado a cada pointermove
+const VISTOS_MAX = 5 // chips "Vistos por último" no painel
+const HISTORICO_EXPANSAO_MAX = 10 // snapshots do Desfazer
+
 // Lê localStorage['edugraphPrefs'] com validação campo a campo (prefs
 // corrompidas viram padrão). Roda uma vez, na carga do módulo (só browser).
 function lerPrefs() {
@@ -202,7 +210,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
   const nosRef = useRef(new Map()) // nós do grafo ATUAL (estabilidade de posição + closures assíncronas)
   const histExp = useRef([]) // snapshots pré-expansão (máx. 10, G8)
   const selRef = useRef(null) // espelho de selecionadoId para closures assíncronas
-  const canvasApi = useRef(null) // { centrarEm, enquadrar, zoomMais, zoomMenos } (G6)
+  const canvasApi = useRef(null) // API do canvas: { centrarEm, enquadrar, reaquecer, assentar, zoomMais, zoomMenos }
   const pendenteSel = useRef(null) // habilidade escolhida na busca, a selecionar quando o recorte chegar
   const tSel = useRef(0)
 
@@ -214,7 +222,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
     if (!base) return
     selRef.current = id
     setSelecionadoId(id)
-    setVistos((v) => [id, ...v.filter((x) => x !== id)].slice(0, 5))
+    setVistos((v) => [id, ...v.filter((x) => x !== id)].slice(0, VISTOS_MAX))
     setDetalhe({ id, carregando: true, texto: '', grupos: conexoesDe(id) })
     setConsulta(construirConsultaDetalhe(id))
     consultarFuseki('detalhe', { id })
@@ -295,7 +303,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
         })
         if (mudou) {
           histExp.current.push(foto)
-          if (histExp.current.length > 10) histExp.current.shift()
+          if (histExp.current.length > HISTORICO_EXPANSAO_MAX) histExp.current.shift()
           setDesfaziveis(histExp.current.length)
         }
         nosRef.current = novosNos
@@ -307,7 +315,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
         setStatus('pronto')
         setExpandindo(false)
         canvasApi.current?.reaquecer(0.8)
-        if (aposExpandir) setTimeout(aposExpandir, 250)
+        if (aposExpandir) setTimeout(aposExpandir, ATRASO_POS_EXPANSAO)
       })
       .catch((err) => {
         if (meuSeq !== seq.current) return
@@ -399,7 +407,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
           tSel.current = setTimeout(() => {
             selecionar(alvo)
             canvasApi.current?.centrarEm(alvo)
-          }, 770)
+          }, ATRASO_SELECAO_BUSCA)
         }
       })
       .catch((err) => {
@@ -449,7 +457,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
       } catch {
         /* sem storage */
       }
-    }, 150)
+    }, DEBOUNCE_PREFS_MS)
     return () => clearTimeout(t)
   }, [paleta, formas, semAnim, turmas, painel])
 
@@ -541,7 +549,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
     setSemAnim(novo)
     // ligar com um grafo em cena: assenta o layout de uma vez (protótipo);
     // 30ms dão tempo de a prop nova chegar ao canvas antes do salto
-    if (novo && grafo.nos.size) setTimeout(() => canvasApi.current?.assentar(200), 30)
+    if (novo && grafo.nos.size) setTimeout(() => canvasApi.current?.assentar(200), ATRASO_ASSENTAR)
   }
   // props compartilhadas entre o popover de paleta e o perfil
   const acessibilidade = {

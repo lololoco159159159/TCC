@@ -749,49 +749,46 @@ checklist de regressão (abaixo) no navegador.
   de qualquer limpeza — nenhuma fase pode misturar limpeza com trabalho anterior.
   Anotar o tamanho do bundle (`npm run build`) como baseline.
 - [x] **R0 — Este roadmap** *(2026-07-12)*: seção §4.2 + checklist de regressão.
-- [ ] **R1 — Código morto seguro** (inventário 2026-07-12, conferir no grep antes):
-  (a) `App.jsx` ~linha 54: remover a prop `onLogin` passada a `<Grafos>` — a página
-  não a aceita desde a G10 (assinatura `function Grafos({ onHome, onSignup,
-  onGrafos })`); (b) `index.css`: remover os aliases `--accent-hover`,
-  `--accent-rgb`, `--line-strong` (zero usos no projeto); atualizar a lista de
-  aliases no §2 deste arquivo. **Manter deliberadamente** (anotar no relatório):
-  `--green-soft` (token da paleta documentada do protótipo, §2 — sem uso hoje, pode
-  servir ao redesenho de Login/Signup); aliases usados por Login/Signup/
-  FontSizeWidget (`--ink --accent --line --card --bg-soft --mut`); exports do
-  mockFuseki sem uso interno (contrato público, D1). ESLint já garante que não há
-  imports/variáveis órfãos; não há código comentado nem assets órfãos;
-  `package.json` está mínimo (react/react-dom).
-- [ ] **R2 — Comentários**: corrigir os desatualizados já achados —
-  `src/data/paletas.js:5` ("persistência… chega na G10": G10 feita, persiste via
-  `edugraphPrefs`) e `src/components/GrafoPainel.jsx:~14` ("posição/largura
-  persistem… na G10; por ora vivem no estado da página": já persistem) — e varrer
-  TODOS os cabeçalhos de componente comparando o que afirmam com o código (buscar
-  por "chega na G", "fica para a G", "próxima etapa", "por ora"). Remover ruído
-  (comentário que só repete a linha). **PRESERVAR** os porquês: proveniência do
-  protótipo, constantes da física (GrafoCanvas), bug de ordem de efeitos do tema
-  (GrafoCanvas, correção Etapa 9), chave do cache de cores (3 tokens, correção
-  2026-07-11), guardas de sequência (`seq/meuSeq`), clamps, desvios documentados
-  (CTA da G11, Habilidades fixas, pointerleave/touch-action). Onde faltar um porquê
-  em código não-óbvio, adicionar (curto, em português).
-- [ ] **R3 — CSS + escala de z-index**: reorganizar `index.css` em blocos com
-  sumário no topo (ordem: tokens claro → tokens dark → aliases de compatibilidade →
-  reset/base → keyframes → classes por área: nav/global, home/matéria,
-  grafos-barra, grafos-palco/zoom, painel, perfil/turmas, formas) — **sem alterar
-  nenhuma regra, seletor ou valor** (diff = só movimentação e comentários).
-  Documentar a escala de z-index em comentário no topo do index.css e em uma linha
-  no §6: `1–8` camadas internas da landing · `20` GradeCard aberto · `30` painel de
-  contexto/MateriaPopover · `32` overlays de estado do palco · `40` barra de
-  filtros · `60` dropdowns da barra (sugestões/turmas) · `120` widget A/A ·
-  `190/200` backdrop/dropdown do perfil. Nenhum valor muda.
-- [ ] **R4 — Constantes nomeadas** (valores IDÊNTICOS; só dar nome + comentário):
-  em `Grafos.jsx`: 770ms (seleção pós-busca = 420 do enquadrar + 350, protótipo),
-  250ms (callback pós-expansão), 30ms (assentar ao ligar semAnim), 150ms (debounce
-  de prefs), `VISTOS_MAX = 5`, `HISTORICO_EXPANSAO_MAX = 10`; em `GrafoCanvas.jsx`:
-  `ZOOM_MIN = 0.18` / `ZOOM_MAX = 3` (aparecem 3×: wheel, zoomCam — conferir
-  enquadrar que usa clamp próprio 0.2–1.5, é OUTRO limite, não unificar); em
-  `GrafoPainel.jsx`: limites de arrasto/resize 8/320/620 (o `PAINEL_PADRAO`
-  {x:12, w:392} já existe em Grafos.jsx). **Física do canvas intocada** (2800/12,
-  molas 130/175/205×0.028, 0.0045, 0.86, 0.988 — já documentada inline, D4).
+- [x] **R1 — Código morto seguro** *(2026-07-12)*: removida a prop `onLogin`
+  passada a `<Grafos>` em `App.jsx` (a página não a aceita desde a G10). **Os 3
+  aliases apontados pelo inventário NÃO foram removidos** — o grep obrigatório
+  pré-remoção mostrou que o inventário (que só varreu `.jsx`) errou: são usados
+  DENTRO do `index.css` — `--accent-rgb` pelo `::selection` (site todo),
+  `--line-strong` pela `.eg-input` e `--accent-hover` pela `.eg-btn-primario:hover`
+  (Login/Signup). Caem junto com a migração dessas telas. **Mantidos
+  deliberadamente** (relatório): esses 3 aliases; `--green-soft` (token da paleta
+  documentada do protótipo, §2 — sem uso hoje, pode servir ao redesenho de
+  Login/Signup); aliases usados por Login/Signup/FontSizeWidget (`--ink --accent
+  --line --card --bg-soft --mut`); exports do mockFuseki sem uso interno (contrato
+  público, D1). ESLint já garante que não há imports/variáveis órfãos; não há
+  código comentado nem assets órfãos; `package.json` está mínimo (react/react-dom).
+- [x] **R2 — Comentários** *(2026-07-12)*: corrigidos 6 comentários
+  desatualizados — `paletas.js` (persistência "chega na G10" → já persiste em
+  `edugraphPrefs`); cabeçalho do `GrafoPainel.jsx` ("por ora vivem no estado da
+  página" → persistem); `Grafos.jsx` (lista da API do canvas sem
+  `reaquecer/assentar`); cabeçalho do `GrafoCanvas.jsx` (idem, sem `assentar`);
+  `Logo.jsx` (dizia "home e Entrar/Criar conta" — hoje também Grafos e Footer);
+  cabeçalho do `GrafoPerfil.jsx` (descrevia "avatar MS + Profa. Mariana",
+  trocados pelo autor por "P + Perfil"). Varredura completa: "trabalho futuro"
+  de Login/Signup segue verdadeiro (mantido); anotações históricas (G1…G11) são
+  proveniência (mantidas); porquês todos preservados; nenhum ruído nem porquê
+  faltante encontrado.
+- [x] **R3 — CSS + escala de z-index** *(2026-07-12)*: `index.css` reorganizado
+  com **sumário numerado no topo** (1 tokens claro+aliases → 2 tokens dark → 3
+  reset/base → 4 keyframes → 5 classes por área) e a **escala de z-index
+  documentada** no mesmo comentário (e no §6). O arquivo já estava quase em
+  ordem: o diff real foi só comentários de seção + o `input::placeholder`
+  movido dos keyframes para o bloco base (regra única no projeto — cascata
+  idêntica). Os aliases ficaram DENTRO do `:root` (são declarações; separá-los
+  criaria um segundo bloco `:root` sem ganho). Nenhuma regra/valor mudou.
+- [x] **R4 — Constantes nomeadas** *(2026-07-12; valores idênticos)*: em
+  `Grafos.jsx` — `ATRASO_SELECAO_BUSCA=770`, `ATRASO_POS_EXPANSAO=250`,
+  `ATRASO_ASSENTAR=30`, `DEBOUNCE_PREFS_MS=150`, `VISTOS_MAX=5`,
+  `HISTORICO_EXPANSAO_MAX=10`; em `GrafoCanvas.jsx` — `ZOOM_MIN=0.18` /
+  `ZOOM_MAX=3` (2 pontos: wheel e zoomCam; o clamp 0.2–1.5 do `enquadrar` é
+  outro limite e ficou intocado — assim como os `globalAlpha: 0.18` do
+  esmaecer, que só coincidem no número); em `GrafoPainel.jsx` —
+  `MARGEM_PALCO=8`, `LARGURA_MIN=320`, `LARGURA_MAX=620`. **Física intocada.**
 - [ ] **R5 — Warning do ThemeContext** (o único do lint): o hook `useTheme` é
   exportado junto do Provider em `src/context/ThemeContext.jsx:77` (regra
   react-refresh/only-export-components). Resolver SEM mudança de comportamento:
@@ -959,6 +956,11 @@ Particularidades:
 - Idioma do projeto e dos comentários: **português**.
 - Use sempre `var(--token)` (sem fallback `,#hex`) ao portar trechos do protótipo,
   porque os tokens estão definidos globalmente.
+- **Escala de z-index** (documentada no topo do `index.css`; não criar valores
+  intermediários novos): `1–8` camadas internas da landing · `20` GradeCard aberto ·
+  `30` painel de contexto/popovers do palco/balão de matérias · `32` overlays de
+  estado · `40` barra de filtros · `60` dropdowns da barra · `120` widget A/A ·
+  `190/200` backdrop/dropdown do perfil.
 - **Decisões importantes → [DECISOES.md](DECISOES.md)**: toda escolha relevante de
   escopo/arquitetura/biblioteca/dados/acessibilidade ganha uma entrada didática lá
   (problema → decisão → alternativas rejeitadas → fala pronta para a banca →
