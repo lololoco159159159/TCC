@@ -1,4 +1,4 @@
-import { useTheme } from '../context/ThemeContext'
+import { useTheme } from '../context/useTheme'
 
 // Botão de alternância claro/escuro no formato sol/lua.
 // No modo claro o sol fica à direita sobre um céu azul com nuvens;

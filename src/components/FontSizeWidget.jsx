@@ -1,4 +1,4 @@
-import { useTheme } from '../context/ThemeContext'
+import { useTheme } from '../context/useTheme'
 
 // Estilo comum dos dois botões "A" (o raio das pontas muda entre eles)
 const estiloBotaoBase = {

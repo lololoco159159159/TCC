@@ -4,7 +4,7 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Grafos from './pages/Grafos'
 import FontSizeWidget from './components/FontSizeWidget'
-import { useTheme } from './context/ThemeContext'
+import { useTheme } from './context/useTheme'
 
 // Parâmetros de recorte do grafo na URL (deep-link da página Grafos)
 const PARAMS_GRAFO = ['serie', 'ano', 'disciplina', 'materia', 'conceito']

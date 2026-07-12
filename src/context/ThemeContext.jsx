@@ -1,10 +1,9 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { ThemeContext } from './useTheme'
 
 // Escala de zoom da fonte: do 60% ao 160%, padrão 100% (índice 2)
 const ESCALA_FONTE = [0.6, 0.8, 1, 1.2, 1.4, 1.6]
 const FONTE_PADRAO = 2
-
-const ThemeContext = createContext(null)
 
 // Lê as preferências salvas no localStorage (tema e tamanho de fonte).
 // Roda uma única vez na inicialização do estado.
@@ -71,11 +70,4 @@ export function ThemeProvider({ children }) {
   }
 
   return <ThemeContext.Provider value={valor}>{children}</ThemeContext.Provider>
-}
-
-// Hook de acesso ao tema — usado pelo ThemeToggle, FontSizeWidget e App
-export function useTheme() {
-  const ctx = useContext(ThemeContext)
-  if (!ctx) throw new Error('useTheme deve ser usado dentro de <ThemeProvider>')
-  return ctx
 }

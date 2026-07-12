@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import Logo from '../components/Logo'
-import ThemeToggle from '../components/ThemeToggle'
+import SiteHeader from '../components/SiteHeader'
 import Footer from '../components/Footer'
 import GrafoFiltros from '../components/GrafoFiltros'
 import GrafoCanvas from '../components/GrafoCanvas'
@@ -8,8 +7,6 @@ import GrafoPainel from '../components/GrafoPainel'
 import GrafoPerfil from '../components/GrafoPerfil'
 import { GavetaSparql, LegendaTipos, PaletaPopover } from '../components/GrafoOverlays'
 import { PALETAS } from '../data/paletas'
-import labotim from '../assets/labotim.png'
-import ufes from '../assets/ufes.png'
 import {
   ANOS,
   NOS,
@@ -583,93 +580,23 @@ function Grafos({ onHome, onSignup, onGrafos }) {
       {/* quadro de exatamente 1 viewport: header + filtros + área de trabalho;
           o footer fica abaixo da dobra e aparece ao rolar, como no protótipo */}
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
-        {/* ============ HEADER da página (60px) ============ */}
-        <header
-          style={{
-            flex: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 18,
-            height: 60,
-            padding: '0 26px',
-            borderBottom: '1px solid var(--edge)',
-            background: 'var(--bg)',
-          }}
-        >
-          <Logo tamanho={34} onClick={onHome} />
-
-          <nav style={{ display: 'flex', alignItems: 'center', gap: 20, whiteSpace: 'nowrap', flex: 'none' }}>
-            {/* item ativo: sublinhado verde, como no protótipo */}
-            <span
-              style={{
-                font: "600 14px/1 'Figtree', sans-serif",
-                color: 'var(--green)',
-                borderBottom: '2px solid var(--green)',
-                paddingBottom: 4,
-                cursor: 'default',
-              }}
-            >
-              Grafos
-            </span>
-            <span className="eg-link-nav">BNCC</span>
-            <span className="eg-link-nav">Para escolas</span>
-            <span className="eg-link-nav">Ajuda</span>
-          </nav>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 'none' }}>
-            <a
-              href="https://labotim.inf.ufes.br"
-              target="_blank"
-              rel="noopener"
-              title="LabOtim · Laboratório de Otimização e Modelagem Computacional"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                background: '#fff',
-                border: '1px solid rgba(28,38,32,.08)',
-                borderRadius: 9,
-                padding: '5px 10px',
-                boxShadow: '0 2px 7px -4px rgba(0,0,0,.25)',
-              }}
-            >
-              <img src={labotim} alt="LabOtim" style={{ height: 22, display: 'block' }} />
-            </a>
-            <a
-              href="https://www.ufes.br"
-              target="_blank"
-              rel="noopener"
-              title="Universidade Federal do Espírito Santo"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                background: '#fff',
-                border: '1px solid rgba(28,38,32,.08)',
-                borderRadius: 9,
-                padding: '5px 10px',
-                boxShadow: '0 2px 7px -4px rgba(0,0,0,.25)',
-              }}
-            >
-              <img src={ufes} alt="UFES" style={{ height: 22, display: 'block' }} />
-            </a>
-            <span style={{ width: 1, height: 24, background: 'var(--edge)' }} />
-            <ThemeToggle />
-            {/* perfil mock (G10) — substitui o Entrar/Criar conta do protótipo */}
-            <GrafoPerfil
-              aberto={perfilAberto}
-              aoAlternar={() => {
-                setPerfilAberto((a) => !a)
-                setTurmasAberto(false)
-              }}
-              aoFechar={() => setPerfilAberto(false)}
-              turmas={turmasUI}
-              aoAddTurma={aoAddTurma}
-              aoRemoverTurma={aoRemoverTurma}
-              aoFiltrarTurma={aoFiltrarTurma}
-              {...acessibilidade}
-            />
-          </div>
-        </header>
+        {/* ============ HEADER (compartilhado com a Home) ============ */}
+        <SiteHeader paginaAtiva="grafos" onHome={onHome} onGrafos={onGrafos}>
+          {/* perfil mock (G10) — substitui o Entrar/Criar conta do protótipo */}
+          <GrafoPerfil
+            aberto={perfilAberto}
+            aoAlternar={() => {
+              setPerfilAberto((a) => !a)
+              setTurmasAberto(false)
+            }}
+            aoFechar={() => setPerfilAberto(false)}
+            turmas={turmasUI}
+            aoAddTurma={aoAddTurma}
+            aoRemoverTurma={aoRemoverTurma}
+            aoFiltrarTurma={aoFiltrarTurma}
+            {...acessibilidade}
+          />
+        </SiteHeader>
 
         {/* ============ BARRA DE BUSCA E FILTROS (G3) ============ */}
         <GrafoFiltros

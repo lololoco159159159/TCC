@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { ANOS, EIXOS, NOS } from '../data/mockFuseki'
+import { MONO_LABEL } from './grafo/estilos'
 
 // Painel de contexto da página de grafos (G7) — porte fiel do aside "de vidro"
 // do protótipo (design/prototipo_grafo.html): flutua à esquerda do palco,
@@ -21,13 +22,6 @@ const COR = {
   habilidade: 'var(--no-habilidade)',
   conceito: 'var(--no-conceito)',
   disciplina: 'var(--no-disciplina)',
-}
-
-const MONO_LABEL = {
-  font: "9.5px/1 'JetBrains Mono', monospace",
-  letterSpacing: '0.16em',
-  color: 'var(--faint)',
-  textTransform: 'uppercase',
 }
 
 function Bolinha({ tipo, tamanho }) {

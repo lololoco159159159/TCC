@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { PALETAS } from '../data/paletas'
+import { MONO_LABEL } from './grafo/estilos'
 
 // Overlays finais da página de grafos (G9) — porte fiel do protótipo
 // (design/prototipo_grafo.html). Três blocos pequenos e irmãos do palco num
@@ -18,13 +19,6 @@ import { PALETAS } from '../data/paletas'
 //     dropdown de perfil (GrafoPerfil): linhas de paleta + toggles "formas em
 //     vez de cores" e "desativar animações e física". As formas dos pontinhos
 //     DOM vêm das classes .eg-no-* + data-formas no <html> (index.css).
-
-const MONO_LABEL = {
-  font: "9.5px/1 'JetBrains Mono', monospace",
-  letterSpacing: '0.16em',
-  color: 'var(--faint)',
-  textTransform: 'uppercase',
-}
 
 const NOMES_TIPO = { habilidade: 'Habilidades', conceito: 'Conceitos', disciplina: 'Matérias' }
 

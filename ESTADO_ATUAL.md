@@ -597,6 +597,27 @@ as preferências de acessibilidade que sobrevivem ao reload.
   física); recarregar a página preserva paleta/formas/semAnim/turmas/painel; Limpar
   prefs = apagar a chave no devtools.
 
+#### Ajuste de UX (2026-07-12) — header único para Home e Grafos
+A pedido do autor (durante a revisão §4.2, mas **fora dela** — é mudança visual):
+os dois headers viraram UM componente, **[src/components/SiteHeader.jsx](src/components/SiteHeader.jsx)**,
+na base compacta da página de grafos (60px, borda inferior, logo 34, logos
+institucionais 22px). A única diferença entre as páginas é o **slot da direita**
+(children): Home injeta **Entrar/Criar conta** (agora 14px/compactos, como eram no
+Grafos); Grafos injeta o **GrafoPerfil**. Prop `paginaAtiva="grafos"` marca o item
+da nav como ativo (sublinhado verde); fora dela "Grafos" navega; o Logo leva à
+Home quando `onHome` é passado. As laterais têm `flex: 1` e a nav vive no
+**centro geométrico** do header — trocar de página (slot direito mais largo ou
+estreito) não desloca os itens do meio (pedido do autor após comparar as telas).
+O slot de conta tem **largura fixa** (`LARGURA_SLOT_CONTA = 180`) nas duas
+páginas: logos institucionais, divisor e ThemeToggle ficam pixel-idênticos entre
+telas, e o botão de perfil se **estica** (`width: 100%`, seta com
+`margin-left: auto`) para ocupar o mesmo espaço do par Entrar/Criar conta. **Desvio do protótipo final documentado**: a Home
+perdeu o header alto/sem borda da landing em troca da consistência entre páginas
+(decisão do autor). Isso **antecipou e substituiu** a extração `HomeHeader.jsx`
+prevista na R7b. Home.jsx e Grafos.jsx perderam os imports de
+Logo/ThemeToggle/LogosInstitucionais (vivem no SiteHeader). Verificado: lint 0/0,
+build (bundle 274.90 → 274.34 kB), dev 200.
+
 ### Etapa 16 (2026-07-11) — integração Home ↔ Grafos (G11) · **roadmap G1–G11 completo**
 O ciclo fechou: da grade de séries da Home dá para cair na página de grafos **com o
 recorte da turma já aplicado** — reusando o deep-link da G3, sem mecanismo novo.
@@ -789,26 +810,25 @@ checklist de regressão (abaixo) no navegador.
   outro limite e ficou intocado — assim como os `globalAlpha: 0.18` do
   esmaecer, que só coincidem no número); em `GrafoPainel.jsx` —
   `MARGEM_PALCO=8`, `LARGURA_MIN=320`, `LARGURA_MAX=620`. **Física intocada.**
-- [ ] **R5 — Warning do ThemeContext** (o único do lint): o hook `useTheme` é
-  exportado junto do Provider em `src/context/ThemeContext.jsx:77` (regra
-  react-refresh/only-export-components). Resolver SEM mudança de comportamento:
-  criar `src/context/useTheme.js` com o `createContext` + `useTheme` (o contexto
-  passa a ser importado pelo Provider); `ThemeContext.jsx` exporta SÓ o
-  `ThemeProvider`; atualizar os consumidores — `ThemeToggle.jsx`,
-  `FontSizeWidget.jsx`, `App.jsx` (import do hook muda de caminho). Resultado
-  esperado: **lint com 0 erros e 0 warnings**.
-- [ ] **R6 — Duplicações triviais**: (a) `MONO_LABEL` está idêntico em 3 arquivos
-  (`GrafoPainel.jsx`, `GrafoOverlays.jsx`, `GrafoPerfil.jsx`) → mover para
-  `src/components/grafo/estilos.js` (módulo `.js` SEM componente — não dispara o
-  warning react-refresh; se a R7a ainda não rodou, criar já na pasta nova);
-  (b) o par de `<a>` LabOtim/UFES aparece 3× (`Home.jsx` header — img 24px, padding
-  '6px 12px'; `Grafos.jsx` header — img 22px, padding '5px 10px'; `Footer.jsx` —
-  conferir tamanhos) → componente `LogosInstitucionais` parametrizado para que o
-  DOM resultante fique IDÊNTICO nos 3 usos (diferenças viram props; comparar com o
-  render atual antes/depois). **NÃO extrair** (variações sutis — anotar no
-  relatório): padrões Esc/clique-fora (MateriaPopover usa mousedown no document
-  ancorado no card; GrafoPerfil usa backdrop; Grafos usa keydown global; sugestões
-  usam blur) e estilos de `<select>` (GrafoFiltros × SELECT_TURMA não são iguais).
+- [x] **R5 — Warning do ThemeContext** *(2026-07-12)*: criado
+  `src/context/useTheme.js` (contexto + hook, módulo sem componentes);
+  `ThemeContext.jsx` exporta só o `ThemeProvider` (importa o contexto do novo
+  módulo); imports do hook atualizados em `ThemeToggle.jsx`, `FontSizeWidget.jsx`
+  e `App.jsx`. **Lint zerado: 0 erros, 0 warnings.**
+- [x] **R6 — Duplicações triviais** *(2026-07-12)*: (a) `MONO_LABEL` (idêntico em
+  GrafoPainel/GrafoOverlays/GrafoPerfil) movido para
+  `src/components/grafo/estilos.js` (módulo `.js` sem componente, já na pasta da
+  R7a); (b) par de `<a>` LabOtim/UFES dos DOIS headers extraído para
+  `components/LogosInstitucionais.jsx` (fragment; props `altura`/`padding` — Home
+  24/'6px 12px', Grafos 22/'5px 10px'; DOM idêntico, espaçamento continua vindo do
+  gap do pai). **Desvio do plano, com motivo:** o 3º uso (`Footer.jsx`) NÃO foi
+  extraído — lá é outra variação de design (cards 42px, raio 12, sombra e padding
+  próprios, na faixa "Uma iniciativa de"), não duplicação acidental; parametrizar
+  4 estilos só para cobri-lo viraria indireção sem abstração. **NÃO extraídos**
+  (variações sutis — relatório): padrões Esc/clique-fora (MateriaPopover usa
+  mousedown no document ancorado no card; GrafoPerfil usa backdrop; Grafos usa
+  keydown global; sugestões usam blur) e estilos de `<select>` (GrafoFiltros ×
+  SELECT_TURMA não são iguais). Bundle: 275.91 → 274.90 kB.
 - [ ] **R7a — Pasta por domínio**: `git mv` de GrafoCanvas/GrafoFiltros/
   GrafoPainel/GrafoPerfil/GrafoOverlays (+ `estilos.js` da R6) para
   `src/components/grafo/`; atualizar imports (Grafos.jsx e imports internos entre
@@ -816,10 +836,10 @@ checklist de regressão (abaixo) no navegador.
 - [ ] **R7b — Fragmentação de arquivos grandes** (movimentos PUROS de JSX com
   props explícitas; nada de lógica nova; tamanhos em 2026-07-12: Grafos 1149,
   GrafoPainel 639, GrafoCanvas 597, Testimonials 559, Home 281):
-  (a) `Home.jsx` → extrair `components/HomeHeader.jsx` (header: logo, nav, logos
-  institucionais, ThemeToggle, Entrar/Criar conta — props onLogin/onSignup/
-  onGrafos) e `components/HeroSection.jsx` (hero 2 colunas — props onLogin/
-  onSignup); Home vira composição pura como as demais seções;
+  (a) `Home.jsx` → ~~HomeHeader~~ **já feito fora do plano**: o ajuste de UX de
+  2026-07-12 criou o `components/SiteHeader.jsx` COMPARTILHADO entre Home e
+  Grafos (ver entrada no §3) — resta extrair `components/HeroSection.jsx`
+  (hero 2 colunas — props onLogin/onSignup); Home vira composição pura;
   (b) `Grafos.jsx` → extrair `components/grafo/GrafoEstados.jsx` com os 4 overlays
   de estado (card-convite, carregando+skeleton — a const SKELETON vai junto —,
   erro, vazio; ~330 linhas de JSX; props: status, msgErro, e callbacks

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ANOS, LISTA_DISCIPLINAS } from '../data/mockFuseki'
 import { OpcoesAcessibilidade } from './GrafoOverlays'
+import { MONO_LABEL } from './grafo/estilos'
 
 // Perfil MOCK do header da página de grafos (G10) — porte do protótipo com a
 // identidade genérica "Perfil" (avatar "P"; sem persona): substitui o
@@ -12,13 +13,6 @@ import { OpcoesAcessibilidade } from './GrafoOverlays'
 //   • "Acessibilidade · cores do grafo": reusa OpcoesAcessibilidade (paletas
 //     CUD + formas + sem animação) — os mesmos controles do PaletaPopover.
 // As preferências persistem em localStorage['edugraphPrefs'] (efeito na página).
-
-const MONO_LABEL = {
-  font: "9.5px/1 'JetBrains Mono', monospace",
-  letterSpacing: '0.16em',
-  color: 'var(--faint)',
-  textTransform: 'uppercase',
-}
 
 const SELECT_TURMA = {
   minWidth: 0,
@@ -72,12 +66,14 @@ function GrafoPerfil({
           display: 'inline-flex',
           alignItems: 'center',
           gap: 9,
+          // width 100%: preenche o slot de conta do SiteHeader (mesma largura
+          // do par Entrar/Criar conta da Home — nada se desloca entre páginas)
+          width: '100%',
           padding: '5px 12px 5px 5px',
           borderRadius: 999,
           border: `1px solid ${aberto ? 'var(--green)' : 'var(--pill-border)'}`,
           background: 'var(--pill-bg)',
           cursor: 'pointer',
-          flex: 'none',
         }}
       >
         <span
@@ -99,7 +95,17 @@ function GrafoPerfil({
         <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
           Perfil
         </span>
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--muted)"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ marginLeft: 'auto', flex: 'none' }}
+        >
           <path d="m6 9 6 6 6-6" />
         </svg>
       </button>
