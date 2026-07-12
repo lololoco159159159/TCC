@@ -695,9 +695,11 @@ completas. Restam:
 
 0. ~~Revisão e polimento do código~~ — **concluída** (roadmap §4.2, Etapa 17);
    falta só o autor rodar o checklist de regressão do §4.2 no navegador.
-1. **Redesenho de Login e Signup** com os tokens novos (e remover aliases órfãos —
-   incluindo `--accent-hover/--accent-rgb/--line-strong`, que hoje servem às
-   classes `.eg-input`/`.eg-btn-primario` dessas telas).
+1. **Telas de conta (Entrar / Criar conta)** — roadmap próprio no **§4.3**
+   (A0–A5): fundo de vértices do protótipo, header no SiteHeader (slot fixo),
+   card e footer de vidro, e a remoção dos aliases órfãos (incluindo
+   `--accent-hover/--accent-rgb/--line-strong`, que hoje servem às classes
+   `.eg-input`/`.eg-btn-primario` dessas telas — caem na A5). **Em andamento.**
 2. **Back-end**: subir um Apache Jena Fuseki real e trocar o mock
    (`src/data/mockFuseki.js`, etapa G2) por `fetch` ao endpoint SPARQL — ver a
    receita no cabeçalho do próprio mock e a decisão D1 em [DECISOES.md](DECISOES.md).
@@ -960,6 +962,160 @@ URL.
 cor do tema anterior) · widget A/A muda a fonte, persiste no reload e some com
 fade quando o popover de paleta abre · lint 0/0, build sem dependência nova,
 bundle ≤ baseline.
+
+### 4.3 Telas de conta (Entrar / Criar conta) — caminho por etapas (A0–A5)
+
+Protótipo: [design/prototipo_final.html](design/prototipo_final.html) — overlays
+de auth (decodificar com a receita do §5). No arquivo decodificado (~1.557
+linhas): animação `particle-network` em **L428–577**, overlays em **L902–1025**,
+handlers `openLogin/openSignup/closeAuth/switchAuth` em L1548–1551, derivados
+(`authSwitchPrompt/authSwitchAction`) em L1369–1374, `themeVars()` em L1043.
+No protótipo, Login/Cadastro são um OVERLAY full-screen opaco sobre a landing;
+aqui continuam sendo PÁGINAS do App (roteamento por estado, D9), mantendo o
+escopo do D2: validação no cliente, envio simulado, nenhum back-end.
+
+**Desvios conscientes já decididos pelo autor** (registrar como D12 na A3):
+- **Header**: o overlay tem header próprio (73px; o logo fecha o overlay). Aqui
+  usamos o **SiteHeader único** (60px): o prompt de troca do protótipo
+  ("Novo por aqui? Criar conta" no Login / "Já tem conta? Entrar" no Signup —
+  span 14px `--muted` + link verde 700 inline) entra no **slot de conta fixo de
+  180px**; logo, nav, logos institucionais e ThemeToggle ficam pixel-idênticos
+  aos das outras telas. NÃO alterar `LARGURA_SLOT_CONTA`; se o prompt não
+  couber, reduzir gap/fonte do prompt, nunca o slot.
+- **Card**: no protótipo é OPACO (`--pill-bg`). Aqui vira **VIDRO** (receita do
+  GrafoPainel: `color-mix(in srgb, var(--pill-bg) 72%, transparent)` +
+  `backdrop-filter: blur(14px) saturate(1.15)`; calibrar o % se a legibilidade
+  pedir, documentando o valor final) para o fundo de vértices aparecer.
+  Geometria, cores e fontes internas seguem o protótipo à risca.
+- **Footer**: o overlay usa o footer do site TRANSLÚCIDO
+  (`color-mix(in srgb, var(--bg2) 20%, transparent)` + `blur(5px)`). Aqui o
+  [Footer.jsx](src/components/Footer.jsx) compartilhado ganha a prop opt-in
+  `vidro` (default false) — aplicar o vidro globalmente mudaria a cor do footer
+  na Home/Grafos (mix 20% sobre `--bg` ≠ `--bg2` sólido), quebrando a regra de
+  zero regressão do §4.2.
+
+**Espec do fundo animado (porte VERBATIM da classe de L428–577; uso em L906):**
+partículas criadas TODAS no mount — `qtd = w·h/density`, `density 13000` — com
+fade-in `+0.012`/frame (não há spawn ambiente contínuo; nós não morrem); drift
+retilíneo `velocity 0.6` com bounce a ±100px além das bordas; nó-cursor que
+segue o mouse (some no mouseleave); clique/segurar = rajada de 3 + 1 a cada
+50ms no ponto do cursor (mouseup para; touch equivalente); arestas contínuas
+por distância `D = 200` com `alpha = (D−d)/D · op1 · op2` e `lineWidth 0.7`;
+raio dos nós `rand(1.4, 2.6)`; DPR cap 2; `ResizeObserver` recria o campo
+(perde os nós clicados — fiel); `cursor: crosshair`. Cores do overlay: aresta
+`#B3A988`; nós `#2F9E5F #8C3E18 #C9A23F #A89D80` (mesmos hex nos 2 temas do
+protótipo). Estrutura de camadas: canvas `absolute inset:0 z:0`; header/main/
+footer com `position:relative; z-index:1`; o `main` central tem
+`pointer-events:none` (cliques no vazio atravessam até o canvas) e o card
+reativa com `pointer-events:auto`.
+
+**Regras** (mesmas do §4.1/§4.2): uma etapa por sessão — implementar, verificar
+(`npm run lint` 0/0 · `npm run build` · `npm run dev` + teste manual da etapa),
+registrar aqui e commitar (1 commit por etapa). Tokens novos sempre com
+contraparte escura. **Zero mudança visual/comportamental em Home e Grafos** —
+conferir o header e o footer delas a cada etapa. Os aliases antigos (`--ink
+--accent --line --card --bg-soft --mut --line-strong --accent-hover
+--accent-rgb`) só caem na A5, com grep obrigatório pré-remoção incluindo
+strings/template literals (lição da R1).
+
+- [x] **A0 — Este roadmap** *(2026-07-12)*: seção §4.3 (espec do protótipo
+  decodificada + desvios decididos + etapas A1–A5 + mini-checklist); item 1
+  do §4 atualizado. Commit: `A0: roadmap das telas de conta (§4.3)`.
+- [ ] **A1 — Estrutura + header**: criar `src/components/conta/MolduraConta.jsx`
+  (wrapper `position:relative` com `background:'var(--bg)'` da página inteira;
+  `SiteHeader` com `onHome`/`onGrafos` e o prompt de troca no slot — Login:
+  "Novo por aqui? *Criar conta*" → onSignup; Signup: "Já tem conta? *Entrar*"
+  → onLogin; `<main>` com `position:'relative', zIndex:1,
+  minHeight:'calc(100vh - 60px)', display:'flex', alignItems:'center',
+  justifyContent:'center', padding:'48px 24px'` e `pointerEvents:'none'`, com
+  os children embrulhados num div `pointerEvents:'auto'`; header e `<Footer>`
+  embrulhados em divs `position:'relative', zIndex:1`; footer abaixo da dobra
+  — opaco por ora). Reescrever a casca de [Login.jsx](src/pages/Login.jsx) e
+  [Signup.jsx](src/pages/Signup.jsx) para usar a moldura (a barra superior
+  própria antiga morre; o card atual permanece dentro, intocado nesta etapa).
+  [App.jsx](src/App.jsx): passar `onGrafos` às duas páginas. Verificar:
+  navegar Home ↔ Login ↔ Signup ↔ Grafos sem NENHUM deslocamento de
+  logo/nav/logos/toggle; prompt correto e clicável nas 2 telas; footer só
+  aparece ao rolar. Commit: `A1: estrutura e header das telas de conta`.
+- [ ] **A2 — Fundo de vértices**: tokens `--conta-aresta --conta-no-1
+  --conta-no-2 --conta-no-3 --conta-no-4` no [index.css](src/index.css)
+  (claro E escuro — inicialmente os mesmos hex do protótipo; ajustar o
+  contraste do escuro só se necessário, documentando). Criar
+  `src/components/conta/FundoVertices.jsx`: porte verbatim da classe
+  (Particle, size com DPR cap 2, createParticles por densidade, update com
+  rejeição barata `min(|dx|,|dy|)` antes da euclidiana, nó-cursor,
+  startSpawn 3+gotejamento/50ms, ResizeObserver, cleanup completo de
+  RAF/interval/listeners — inclusive o `mouseup` na window) como componente
+  React (useRef/useEffect, canvas próprio). Cores resolvidas dos tokens via
+  `getComputedStyle`, re-lidas na troca de `data-theme` (padrão GrafoCanvas).
+  Usar `getBoundingClientRect()` para dimensões e coordenadas (o App aplica
+  `zoom: fontZoom` — offsetWidth é pré-zoom; testar com A/A ≠ 100%).
+  `edugraphPrefs.semAnim` ligado → campo ESTÁTICO: partículas com opacity 1,
+  frame único, sem nó-cursor nem spawn por clique (D6). Montar na
+  MolduraConta (`absolute inset:0, zIndex:0, cursor:'crosshair'`). Verificar:
+  fade-in ao abrir; arestas < 200px; nó segue o cursor e some ao sair; clique
+  = rajada de 3; segurar goteja; cliques no vazio funcionam e no card NÃO
+  disparam spawn; resize recria; tema escuro recolore na hora; semAnim
+  estático. Commit: `A2: fundo de vértices das telas de conta`.
+- [ ] **A3 — Card de vidro**: reescrever o miolo de Login/Signup fiel ao
+  protótipo — card `maxWidth 400 · borderRadius 22 · padding 40 · border 1px
+  var(--pill-border) · boxShadow '0 34px 80px -42px rgba(0,0,0,.45)'` com o
+  VIDRO acima; h1 Spectral 700 34px (−.01em) `--text`; subtítulo Figtree
+  15/1.5 `--muted` (mb 28); labels JetBrains Mono 11px uppercase ls .14em
+  `--muted` (mb 8); inputs `padding 13px 16px, borderRadius 12, background
+  var(--bg), border 1px var(--pill-border), 15px --text`, focus `--green`
+  (Login: e-mail mb 20, senha mb 24; Signup: nome/e-mail mb 20, senha mb 24);
+  Login: linha da senha com "Esqueceu?" (13px 600 `--green`), divisor "ou"
+  (JetBrains Mono 11px ls .16em `--faint`, linhas `--pill-border`, margin
+  24px 0) e rodapé "Ainda não tem conta? Criar conta" (14px `--muted`, link
+  verde 700); Signup: termos (12.5px/1.55 `--faint`, mt 20). **Botão primário
+  DOURADO** (`--gold`, #fff, radius 999, padding 15, Figtree 700 16px; sem
+  hover de cor no protótipo — manter só o :active atual; qualquer hover extra
+  é desvio a documentar). Placeholders/textos idênticos aos atuais (que já
+  batem com o protótipo). MANTER validações e fluxos atuais (D2): regras,
+  mensagens, `#d1453b` na borda de erro, envio simulado (850/950ms → onHome).
+  Atualizar `.eg-input`/`.eg-btn-primario` no index.css para os tokens/
+  estilos novos (ou substituí-las por classes novas, pelo menor diff), com
+  focus/hover via classe (D8). Registrar **D12** no
+  [DECISOES.md](DECISOES.md) (vidro no card e footer + header unificado como
+  desvios conscientes do overlay; com parágrafo de monografia). Verificar
+  lado a lado com o protótipo aberto no navegador, claro E escuro; validações
+  ok; troca login↔signup ok; vértices visíveis através do card. Commit:
+  `A3: card de vidro fiel ao protótipo`.
+- [ ] **A4 — Footer de vidro**: prop `vidro` no
+  [Footer.jsx](src/components/Footer.jsx) (default false → byte-idêntico ao
+  atual): quando true, `background: 'color-mix(in srgb, var(--bg2) 20%,
+  transparent)'`, `backdropFilter/WebkitBackdropFilter: 'blur(5px)'` e
+  `position:'relative', zIndex:1` (substitui o div-wrapper da A1). Usar nas 2
+  telas de conta. Verificar: vértices borrados atrás do footer ao rolar;
+  footer da Home e do Grafos inalterado (comparar claro+escuro). Commit:
+  `A4: footer de vidro nas telas de conta`.
+- [ ] **A5 — Limpeza dos aliases + fechamento**:
+  [FontSizeWidget.jsx](src/components/FontSizeWidget.jsx) migra `--line →
+  --pill-border`, `--card → --pill-bg`, `--ink → --text`, `--mut → --muted`
+  (aliases apontam exatamente para esses — aparência idêntica). No
+  [index.css](src/index.css): `::selection` troca `rgba(var(--accent-rgb),
+  0.18)` por `color-mix(in srgb, var(--green) 18%, transparent)` (mesma cor
+  nos 2 temas). Depois, com **grep pré-remoção** (incluindo strings), remover
+  os aliases `--bg-soft --card --ink --mut --line --line-strong --accent
+  --accent-hover --accent-rgb` dos DOIS temas e atualizar o comentário do
+  topo do arquivo. `--green-soft` continua (token documentado da paleta do
+  protótipo, §2). ESTADO_ATUAL.md: apagar/encerrar a subseção "Aliases de
+  compatibilidade" do §2, atualizar o §7 (pasta `components/conta/`;
+  Login/Signup "FEITO") e marcar o item do §4. Rodar o mini-checklist de
+  regressão abaixo + spot-check de Home/Grafos; relatório curto no §3
+  (Etapa 18). Commit: `A5: limpeza dos aliases + fechamento`.
+
+#### Mini-checklist de regressão das telas de conta (rodar na A5)
+
+Login e Signup, claro E escuro: header idêntico ao das outras telas (nada se
+move ao navegar) · prompt de troca navega · logo → Home · nav Grafos → página
+de grafos · vértices: fade-in, arestas, nó-cursor, clique (rajada + segurar),
+some no card/header/footer (sem spawn), crosshair só no vazio · card de vidro
+legível com vértices atrás · validações (e-mail inválido, senha < 8, nome
+vazio) e envio simulado → Home · footer só ao rolar, translúcido com blur ·
+A/A ≠ 100% não desalinha os cliques do canvas · semAnim → fundo estático ·
+Home/Grafos byte-idênticos (header, footer, ::selection, widget A/A).
 
 ## 5. Como ler o protótipo final (arquivo "bundled")
 
