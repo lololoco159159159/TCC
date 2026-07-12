@@ -1,4 +1,4 @@
-import { ANOS, LISTA_DISCIPLINAS, LISTA_CONCEITOS } from '../data/mockFuseki'
+import { ANOS, LISTA_DISCIPLINAS, LISTA_CONCEITOS } from '../../data/mockFuseki'
 
 // Barra de busca e filtros da página de grafos (fiel ao protótipo).
 // Modelo de SELEÇÃO PENDENTE: pills de série e selects de matéria/conceito só

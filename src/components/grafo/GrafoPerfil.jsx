@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ANOS, LISTA_DISCIPLINAS } from '../data/mockFuseki'
+import { ANOS, LISTA_DISCIPLINAS } from '../../data/mockFuseki'
 import { OpcoesAcessibilidade } from './GrafoOverlays'
-import { MONO_LABEL } from './grafo/estilos'
+import { MONO_LABEL } from './estilos'
 
 // Perfil MOCK do header da página de grafos (G10) — porte do protótipo com a
 // identidade genérica "Perfil" (avatar "P"; sem persona): substitui o

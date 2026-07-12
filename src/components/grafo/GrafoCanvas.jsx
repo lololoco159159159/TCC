@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
-import { RELACOES } from '../data/mockFuseki'
+import { RELACOES } from '../../data/mockFuseki'
 
 // Canvas 2D do grafo de conhecimento — porte fiel do motor do protótipo
 // (design/prototipo_grafo.html). Etapas G4+G5: render (grid pontilhado com

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { PALETAS } from '../data/paletas'
-import { MONO_LABEL } from './grafo/estilos'
+import { PALETAS } from '../../data/paletas'
+import { MONO_LABEL } from './estilos'
 
 // Overlays finais da página de grafos (G9) — porte fiel do protótipo
 // (design/prototipo_grafo.html). Três blocos pequenos e irmãos do palco num

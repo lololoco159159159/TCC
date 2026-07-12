@@ -829,10 +829,12 @@ checklist de regressão (abaixo) no navegador.
   mousedown no document ancorado no card; GrafoPerfil usa backdrop; Grafos usa
   keydown global; sugestões usam blur) e estilos de `<select>` (GrafoFiltros ×
   SELECT_TURMA não são iguais). Bundle: 275.91 → 274.90 kB.
-- [ ] **R7a — Pasta por domínio**: `git mv` de GrafoCanvas/GrafoFiltros/
-  GrafoPainel/GrafoPerfil/GrafoOverlays (+ `estilos.js` da R6) para
-  `src/components/grafo/`; atualizar imports (Grafos.jsx e imports internos entre
-  eles) e o §7 deste arquivo. Commit só de moves (diff legível).
+- [x] **R7a — Pasta por domínio** *(2026-07-12)*: `git mv` de GrafoCanvas/
+  GrafoFiltros/GrafoPainel/GrafoPerfil/GrafoOverlays para
+  `src/components/grafo/` (o `estilos.js` da R6 já nasceu lá). Imports
+  ajustados: `../data/*` → `../../data/*` nos movidos, `./grafo/estilos` →
+  `./estilos`, e Grafos.jsx aponta para `../components/grafo/*`. Renames
+  detectados pelo git (RM); bundle byte-idêntico; §7 sincronizado.
 - [ ] **R7b — Fragmentação de arquivos grandes** (movimentos PUROS de JSX com
   props explícitas; nada de lógica nova; tamanhos em 2026-07-12: Grafos 1149,
   GrafoPainel 639, GrafoCanvas 597, Testimonials 559, Home 281):
@@ -1001,17 +1003,19 @@ src/
 │   │                          #   "Ver o grafo desta turma" navega com recorte (Etapas 4-6 + G11 — FEITO)
 │   ├── MateriaPopover.jsx     # balão de matérias ancorado ao card de série; CTA da G11 (Etapas 6+16 — FEITO)
 │   ├── Footer.jsx             # footer / fim do site (Etapa 5 — FEITO)
-│   ├── GrafoFiltros.jsx       # barra de busca/filtros da página de grafos (Etapa 9/G3 — FEITO)
-│   ├── GrafoCanvas.jsx        # canvas 2D do grafo: render + física + interações (hover/seleção/drag/pan/zoom,
-│   │                          #   2×clique expande; API centrarEm/enquadrar/reaquecer/zoom± via ref) (G4–G8 — FEITO)
-│   ├── GrafoPainel.jsx        # painel de contexto "de vidro": detalhe do nó, conexões por relação,
-│   │                          #   expandir conexões, vistos por último, assistente (placeholder) (G7–G8 — FEITO)
-│   ├── GrafoOverlays.jsx      # legenda "Tipos de nó" (toggle reconsulta), gaveta SPARQL (consulta real +
-│   │                          #   simular falha 503), popover de paleta/daltonismo e OpcoesAcessibilidade
-│   │                          #   (paletas + formas + sem animação) (G9–G10 — FEITO)
-│   ├── GrafoPerfil.jsx        # perfil mock do header: identidade, turmas (filtro rápido) e acessibilidade;
-│   │                          #   prefs em localStorage['edugraphPrefs'] (Etapa 15/G10 — FEITO)
-│   └── FontSizeWidget.jsx     # controles A/A de acessibilidade
+│   ├── SiteHeader.jsx         # header único (Home + Grafos): nav no centro geométrico, slot de conta
+│   │                          #   de largura fixa (ajuste de UX de 2026-07-12)
+│   ├── LogosInstitucionais.jsx # par de <a> LabOtim/UFES dos headers (R6; o Footer tem variação própria)
+│   ├── FontSizeWidget.jsx     # controles A/A de acessibilidade
+│   └── grafo/                 # componentes exclusivos da página de grafos (R7a)
+│       ├── GrafoFiltros.jsx   # barra de busca/filtros (Etapa 9/G3 — FEITO)
+│       ├── GrafoCanvas.jsx    # canvas 2D: render + física + interações (hover/seleção/drag/pan/zoom,
+│       │                      #   2×clique expande; API centrarEm/enquadrar/reaquecer/assentar/zoom± via ref)
+│       ├── GrafoPainel.jsx    # painel de contexto "de vidro": detalhe, conexões, expandir, vistos (G7–G8)
+│       ├── GrafoOverlays.jsx  # legenda "Tipos de nó", gaveta SPARQL, popover de paleta,
+│       │                      #   OpcoesAcessibilidade (G9–G10)
+│       ├── GrafoPerfil.jsx    # perfil mock: identidade, turmas, acessibilidade (G10)
+│       └── estilos.js         # estilos inline compartilhados do domínio (MONO_LABEL, R6)
 ├── data/
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
 │   ├── paletas.js             # paletas de daltonismo (protan/deuteran/tritanopia) da página de grafos (G9)

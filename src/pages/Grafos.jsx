@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import SiteHeader from '../components/SiteHeader'
 import Footer from '../components/Footer'
-import GrafoFiltros from '../components/GrafoFiltros'
-import GrafoCanvas from '../components/GrafoCanvas'
-import GrafoPainel from '../components/GrafoPainel'
-import GrafoPerfil from '../components/GrafoPerfil'
-import { GavetaSparql, LegendaTipos, PaletaPopover } from '../components/GrafoOverlays'
+import GrafoFiltros from '../components/grafo/GrafoFiltros'
+import GrafoCanvas from '../components/grafo/GrafoCanvas'
+import GrafoPainel from '../components/grafo/GrafoPainel'
+import GrafoPerfil from '../components/grafo/GrafoPerfil'
+import { GavetaSparql, LegendaTipos, PaletaPopover } from '../components/grafo/GrafoOverlays'
 import { PALETAS } from '../data/paletas'
 import {
   ANOS,

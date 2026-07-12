@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
-import { ANOS, EIXOS, NOS } from '../data/mockFuseki'
-import { MONO_LABEL } from './grafo/estilos'
+import { ANOS, EIXOS, NOS } from '../../data/mockFuseki'
+import { MONO_LABEL } from './estilos'
 
 // Painel de contexto da página de grafos (G7) — porte fiel do aside "de vidro"
 // do protótipo (design/prototipo_grafo.html): flutua à esquerda do palco,
