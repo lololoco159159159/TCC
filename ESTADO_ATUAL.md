@@ -688,6 +688,18 @@ funcional.
 registradas: **D11** no [DECISOES.md](DECISOES.md). Falta do autor: rodar o
 **checklist de regressão** do §4.2 no navegador.
 
+#### Ajuste de UX (2026-07-13) — conteúdo do slot de conta CENTRALIZADO
+A pedido do autor (durante a A1 do §4.3, mas vale para o site todo): o conteúdo
+do slot de conta do [SiteHeader.jsx](src/components/SiteHeader.jsx) (largura
+fixa de 180px) deixou de ser alinhado à direita (`justify-content: flex-end`)
+e passou a ser **centralizado** (`center`) — padroniza as 4 telas: par
+Entrar/Criar conta (Home), prompt de troca (Login/Signup) e botão de perfil
+(Grafos). O botão de perfil ([GrafoPerfil.jsx](src/components/grafo/GrafoPerfil.jsx))
+perdeu o `width: 100%` (e a seta o `margin-left: auto`): agora tem largura
+natural e centraliza no slot como os demais. O slot em si continua com os
+mesmos 180px — logo, nav, logos institucionais e ThemeToggle seguem imóveis
+entre páginas. Verificado: lint 0/0, build (274.45 kB), dev 200.
+
 ## 4. O que FALTA (próximas etapas)
 
 A landing (Home, Etapas 1–6) e a **página de grafos (G1–G11, Etapas 7–16)** estão
@@ -1021,22 +1033,25 @@ strings/template literals (lição da R1).
 - [x] **A0 — Este roadmap** *(2026-07-12)*: seção §4.3 (espec do protótipo
   decodificada + desvios decididos + etapas A1–A5 + mini-checklist); item 1
   do §4 atualizado. Commit: `A0: roadmap das telas de conta (§4.3)`.
-- [ ] **A1 — Estrutura + header**: criar `src/components/conta/MolduraConta.jsx`
-  (wrapper `position:relative` com `background:'var(--bg)'` da página inteira;
-  `SiteHeader` com `onHome`/`onGrafos` e o prompt de troca no slot — Login:
-  "Novo por aqui? *Criar conta*" → onSignup; Signup: "Já tem conta? *Entrar*"
-  → onLogin; `<main>` com `position:'relative', zIndex:1,
-  minHeight:'calc(100vh - 60px)', display:'flex', alignItems:'center',
-  justifyContent:'center', padding:'48px 24px'` e `pointerEvents:'none'`, com
-  os children embrulhados num div `pointerEvents:'auto'`; header e `<Footer>`
-  embrulhados em divs `position:'relative', zIndex:1`; footer abaixo da dobra
-  — opaco por ora). Reescrever a casca de [Login.jsx](src/pages/Login.jsx) e
-  [Signup.jsx](src/pages/Signup.jsx) para usar a moldura (a barra superior
-  própria antiga morre; o card atual permanece dentro, intocado nesta etapa).
-  [App.jsx](src/App.jsx): passar `onGrafos` às duas páginas. Verificar:
-  navegar Home ↔ Login ↔ Signup ↔ Grafos sem NENHUM deslocamento de
-  logo/nav/logos/toggle; prompt correto e clicável nas 2 telas; footer só
-  aparece ao rolar. Commit: `A1: estrutura e header das telas de conta`.
+- [x] **A1 — Estrutura + header** *(2026-07-12)*: criado
+  `src/components/conta/MolduraConta.jsx` — wrapper `position:relative` com
+  `background: var(--bg)`; SiteHeader único com o prompt de troca do protótipo
+  no slot fixo de conta (Login: "Novo por aqui? *Criar conta*" → onSignup;
+  Signup: "Já tem conta? *Entrar*" → onLogin; span 14px `--muted` + link
+  verde 700); `<main>` de `calc(100vh - 60px)` centrado com
+  `pointer-events:none` e o miolo do card reativando com
+  `pointer-events:auto` (`LARGURA_CARD = 430` — vira 400 na A3, a largura do
+  protótipo); header/main/footer em `zIndex 1` (o canvas da A2 entra em
+  `zIndex 0`); Footer abaixo da dobra (opaco até a A4).
+  [Login.jsx](src/pages/Login.jsx) e [Signup.jsx](src/pages/Signup.jsx)
+  perderam a barra superior própria e o fundo `--bg-soft` (o card antigo
+  segue dentro, intocado — só o `maxWidth` migrou para o miolo da moldura);
+  [App.jsx](src/App.jsx) passa `onGrafos` às duas páginas (e `onSignup` ao
+  Signup, para o "Criar conta" do footer da moldura). Verificado: lint 0/0,
+  build (bundle 274.88 → 274.48 kB, CSS idêntico), dev 200 nos 4 módulos.
+  Teste manual do autor: navegar Home ↔ Login ↔ Signup ↔ Grafos sem
+  deslocamento de logo/nav/logos/toggle; prompt correto e clicável nas 2
+  telas; footer só aparece ao rolar.
 - [ ] **A2 — Fundo de vértices**: tokens `--conta-aresta --conta-no-1
   --conta-no-2 --conta-no-3 --conta-no-4` no [index.css](src/index.css)
   (claro E escuro — inicialmente os mesmos hex do protótipo; ajustar o

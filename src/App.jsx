@@ -44,9 +44,23 @@ function App() {
 
   let pagina
   if (tela === 'login') {
-    pagina = <Login onHome={() => irPara('home')} onSignup={() => irPara('signup')} />
+    pagina = (
+      <Login
+        onHome={() => irPara('home')}
+        onSignup={() => irPara('signup')}
+        onGrafos={() => irPara('grafos')}
+      />
+    )
   } else if (tela === 'signup') {
-    pagina = <Signup onHome={() => irPara('home')} onLogin={() => irPara('login')} />
+    // onSignup: o footer da moldura tem "Criar conta" (na própria tela, rola ao topo)
+    pagina = (
+      <Signup
+        onHome={() => irPara('home')}
+        onLogin={() => irPara('login')}
+        onSignup={() => irPara('signup')}
+        onGrafos={() => irPara('grafos')}
+      />
+    )
   } else if (tela === 'grafos') {
     pagina = (
       <Grafos

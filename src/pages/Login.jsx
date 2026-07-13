@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import Logo from '../components/Logo'
-import ThemeToggle from '../components/ThemeToggle'
+import MolduraConta from '../components/conta/MolduraConta'
 
 // Estilos reutilizados nos rótulos e mensagens do formulário
 const estiloLabel = {
@@ -21,10 +20,13 @@ function emailValido(valor) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((valor || '').trim())
 }
 
-// Tela de Entrar — formulário centralizado sobre fundo suave.
-// A autenticação real (back-end) é trabalho futuro; por ora apenas
-// valida os campos e simula o envio.
-function Login({ onHome, onSignup }) {
+// Tela de Entrar — casca da A1 (ESTADO_ATUAL.md §4.3): a MolduraConta traz o
+// SiteHeader único (prompt "Novo por aqui? Criar conta" no slot fixo), a área
+// central de 1 viewport e o footer abaixo da dobra. O card abaixo ainda é o
+// layout antigo — o redesenho fiel ao protótipo (vidro + tokens novos) é a
+// etapa A3. A autenticação real (back-end) é trabalho futuro (D2); por ora
+// apenas valida os campos e simula o envio.
+function Login({ onHome, onSignup, onGrafos }) {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erroEmail, setErroEmail] = useState('')
@@ -47,168 +49,128 @@ function Login({ onHome, onSignup }) {
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'var(--bg-soft)',
-      }}
+    <MolduraConta
+      onHome={onHome}
+      onGrafos={onGrafos}
+      onSignup={onSignup}
+      trocaTexto="Novo por aqui?"
+      trocaAcao="Criar conta"
+      onTrocar={onSignup}
     >
-      {/* Barra superior: logo + toggle de tema + atalho para criar conta */}
+      {/* Card do formulário (layout antigo — vira vidro fiel ao protótipo na A3);
+          a largura máxima vem do miolo da moldura (LARGURA_CARD) */}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '18px 24px',
+          width: '100%',
           background: 'var(--card)',
-          borderBottom: '1px solid var(--line)',
+          border: '1px solid var(--line)',
+          borderRadius: 18,
+          padding: '40px 36px',
         }}
       >
-        <Logo onClick={onHome} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <ThemeToggle style={{ marginRight: 10 }} />
-          <span style={{ font: "400 14px/1 'Figtree', sans-serif", color: 'var(--mut)' }}>
-            Novo por aqui?
-          </span>
+        <h2
+          style={{
+            margin: 0,
+            font: "600 28px/1.1 'Figtree', sans-serif",
+            letterSpacing: '-0.025em',
+            color: 'var(--ink)',
+          }}
+        >
+          Entrar
+        </h2>
+        <p
+          style={{
+            margin: '8px 0 28px',
+            font: "400 15px/1.5 'Figtree', sans-serif",
+            color: 'var(--mut)',
+          }}
+        >
+          Acesse e continue de onde você parou nos seus grafos.
+        </p>
+
+        {/* Campo: e-mail */}
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ ...estiloLabel, display: 'block', marginBottom: 8 }}>E-mail</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              setErroEmail('')
+            }}
+            placeholder="voce@escola.edu.br"
+            className={`eg-input${erroEmail ? ' eg-input-erro' : ''}`}
+          />
+          {erroEmail && <div style={estiloErro}>{erroEmail}</div>}
+        </div>
+
+        {/* Campo: senha */}
+        <div style={{ marginBottom: 10 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 8,
+            }}
+          >
+            <label style={estiloLabel}>Senha</label>
+            <span
+              style={{
+                font: "400 13px/1 'Figtree', sans-serif",
+                color: 'var(--accent)',
+                cursor: 'pointer',
+              }}
+            >
+              Esqueceu?
+            </span>
+          </div>
+          <input
+            type="password"
+            value={senha}
+            onChange={(e) => {
+              setSenha(e.target.value)
+              setErroSenha('')
+            }}
+            placeholder="••••••••"
+            className={`eg-input${erroSenha ? ' eg-input-erro' : ''}`}
+          />
+          {erroSenha && <div style={estiloErro}>{erroSenha}</div>}
+        </div>
+
+        <button
+          onClick={enviar}
+          className="eg-btn-primario"
+          style={{ width: '100%', padding: 14, marginTop: 18, font: "600 16px/1 'Figtree', sans-serif" }}
+        >
+          {enviando ? 'Entrando…' : 'Entrar'}
+        </button>
+
+        {/* Divisor "ou" */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '24px 0' }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+          <span style={{ font: "400 12px/1 'Figtree', sans-serif", color: 'var(--faint)' }}>ou</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+        </div>
+
+        <p
+          style={{
+            margin: 0,
+            textAlign: 'center',
+            font: "400 14px/1 'Figtree', sans-serif",
+            color: 'var(--mut)',
+          }}
+        >
+          Ainda não tem conta?{' '}
           <span
             onClick={onSignup}
-            style={{
-              font: "600 14px/1 'Figtree', sans-serif",
-              color: 'var(--accent)',
-              cursor: 'pointer',
-            }}
+            style={{ fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}
           >
             Criar conta
           </span>
-        </div>
+        </p>
       </div>
-
-      {/* Card central do formulário */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '48px 24px',
-        }}
-      >
-        <div
-          style={{
-            width: '100%',
-            maxWidth: 430,
-            background: 'var(--card)',
-            border: '1px solid var(--line)',
-            borderRadius: 18,
-            padding: '40px 36px',
-          }}
-        >
-          <h2
-            style={{
-              margin: 0,
-              font: "600 28px/1.1 'Figtree', sans-serif",
-              letterSpacing: '-0.025em',
-              color: 'var(--ink)',
-            }}
-          >
-            Entrar
-          </h2>
-          <p
-            style={{
-              margin: '8px 0 28px',
-              font: "400 15px/1.5 'Figtree', sans-serif",
-              color: 'var(--mut)',
-            }}
-          >
-            Acesse e continue de onde você parou nos seus grafos.
-          </p>
-
-          {/* Campo: e-mail */}
-          <div style={{ marginBottom: 18 }}>
-            <label style={{ ...estiloLabel, display: 'block', marginBottom: 8 }}>E-mail</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value)
-                setErroEmail('')
-              }}
-              placeholder="voce@escola.edu.br"
-              className={`eg-input${erroEmail ? ' eg-input-erro' : ''}`}
-            />
-            {erroEmail && <div style={estiloErro}>{erroEmail}</div>}
-          </div>
-
-          {/* Campo: senha */}
-          <div style={{ marginBottom: 10 }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 8,
-              }}
-            >
-              <label style={estiloLabel}>Senha</label>
-              <span
-                style={{
-                  font: "400 13px/1 'Figtree', sans-serif",
-                  color: 'var(--accent)',
-                  cursor: 'pointer',
-                }}
-              >
-                Esqueceu?
-              </span>
-            </div>
-            <input
-              type="password"
-              value={senha}
-              onChange={(e) => {
-                setSenha(e.target.value)
-                setErroSenha('')
-              }}
-              placeholder="••••••••"
-              className={`eg-input${erroSenha ? ' eg-input-erro' : ''}`}
-            />
-            {erroSenha && <div style={estiloErro}>{erroSenha}</div>}
-          </div>
-
-          <button
-            onClick={enviar}
-            className="eg-btn-primario"
-            style={{ width: '100%', padding: 14, marginTop: 18, font: "600 16px/1 'Figtree', sans-serif" }}
-          >
-            {enviando ? 'Entrando…' : 'Entrar'}
-          </button>
-
-          {/* Divisor "ou" */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '24px 0' }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
-            <span style={{ font: "400 12px/1 'Figtree', sans-serif", color: 'var(--faint)' }}>ou</span>
-            <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
-          </div>
-
-          <p
-            style={{
-              margin: 0,
-              textAlign: 'center',
-              font: "400 14px/1 'Figtree', sans-serif",
-              color: 'var(--mut)',
-            }}
-          >
-            Ainda não tem conta?{' '}
-            <span
-              onClick={onSignup}
-              style={{ fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}
-            >
-              Criar conta
-            </span>
-          </p>
-        </div>
-      </div>
-    </div>
+    </MolduraConta>
   )
 }
 

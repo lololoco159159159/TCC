@@ -11,12 +11,14 @@ import LogosInstitucionais from './LogosInstitucionais'
 // O Logo leva à Home quando há onHome (na própria Home fica estático).
 // As laterais têm flex:1 e a nav fica no CENTRO GEOMÉTRICO do header: trocar
 // de página (slot direito mais largo/estreito) não desloca os itens do meio.
-// O slot de conta (children) tem LARGURA FIXA nas duas páginas: assim os
-// logos institucionais, o divisor e o ThemeToggle também não se movem — na
-// página de grafos o botão de perfil se estica para preencher o slot.
+// O slot de conta (children) tem LARGURA FIXA em todas as páginas: assim os
+// logos institucionais, o divisor e o ThemeToggle também não se movem — e o
+// conteúdo (par Entrar/Criar conta da Home, prompt de troca das telas de
+// conta, botão de perfil do Grafos) fica CENTRALIZADO dentro do slot
+// (ajuste de 2026-07-13; antes era alinhado à direita/esticado).
 
-// largura do par "Entrar + Criar conta" da Home (14px Figtree + paddings);
-// o botão de perfil ocupa o mesmo espaço via width:100%
+// largura do espaço reservado ao conteúdo de conta; cada página centraliza
+// seu conteúdo (de largura natural) no meio dele
 const LARGURA_SLOT_CONTA = 180
 
 function SiteHeader({ paginaAtiva, onHome, onGrafos, children }) {
@@ -70,7 +72,7 @@ function SiteHeader({ paginaAtiva, onHome, onGrafos, children }) {
             flex: 'none',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'flex-end',
+            justifyContent: 'center',
             gap: 14,
           }}
         >

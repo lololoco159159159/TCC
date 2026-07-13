@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import Logo from '../components/Logo'
-import ThemeToggle from '../components/ThemeToggle'
+import MolduraConta from '../components/conta/MolduraConta'
 
 // Estilos reutilizados nos rótulos e mensagens do formulário
 const estiloLabel = {
@@ -23,10 +22,13 @@ function emailValido(valor) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((valor || '').trim())
 }
 
-// Tela de Criar conta — mesmo layout do Login, com três campos.
-// O cadastro real (back-end) é trabalho futuro; por ora apenas
+// Tela de Criar conta — casca da A1 (ESTADO_ATUAL.md §4.3): a MolduraConta traz
+// o SiteHeader único (prompt "Já tem conta? Entrar" no slot fixo), a área
+// central de 1 viewport e o footer abaixo da dobra. O card abaixo ainda é o
+// layout antigo — o redesenho fiel ao protótipo (vidro + tokens novos) é a
+// etapa A3. O cadastro real (back-end) é trabalho futuro (D2); por ora apenas
 // valida os campos e simula o envio.
-function Signup({ onHome, onLogin }) {
+function Signup({ onHome, onLogin, onSignup, onGrafos }) {
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -54,154 +56,114 @@ function Signup({ onHome, onLogin }) {
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'var(--bg-soft)',
-      }}
+    <MolduraConta
+      onHome={onHome}
+      onGrafos={onGrafos}
+      onSignup={onSignup}
+      trocaTexto="Já tem conta?"
+      trocaAcao="Entrar"
+      onTrocar={onLogin}
     >
-      {/* Barra superior: logo + toggle de tema + atalho para entrar */}
+      {/* Card do formulário (layout antigo — vira vidro fiel ao protótipo na A3);
+          a largura máxima vem do miolo da moldura (LARGURA_CARD) */}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '18px 24px',
+          width: '100%',
           background: 'var(--card)',
-          borderBottom: '1px solid var(--line)',
+          border: '1px solid var(--line)',
+          borderRadius: 18,
+          padding: '40px 36px',
         }}
       >
-        <Logo onClick={onHome} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <ThemeToggle style={{ marginRight: 10 }} />
-          <span style={{ font: "400 14px/1 'Figtree', sans-serif", color: 'var(--mut)' }}>
-            Já tem conta?
-          </span>
-          <span
-            onClick={onLogin}
-            style={{
-              font: "600 14px/1 'Figtree', sans-serif",
-              color: 'var(--accent)',
-              cursor: 'pointer',
-            }}
-          >
-            Entrar
-          </span>
-        </div>
-      </div>
-
-      {/* Card central do formulário */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '48px 24px',
-        }}
-      >
-        <div
+        <h2
           style={{
-            width: '100%',
-            maxWidth: 430,
-            background: 'var(--card)',
-            border: '1px solid var(--line)',
-            borderRadius: 18,
-            padding: '40px 36px',
+            margin: 0,
+            font: "600 28px/1.1 'Figtree', sans-serif",
+            letterSpacing: '-0.025em',
+            color: 'var(--ink)',
           }}
         >
-          <h2
-            style={{
-              margin: 0,
-              font: "600 28px/1.1 'Figtree', sans-serif",
-              letterSpacing: '-0.025em',
-              color: 'var(--ink)',
+          Criar conta
+        </h2>
+        <p
+          style={{
+            margin: '8px 0 28px',
+            font: "400 15px/1.5 'Figtree', sans-serif",
+            color: 'var(--mut)',
+          }}
+        >
+          É gratuito para professores da educação básica.
+        </p>
+
+        {/* Campo: nome completo */}
+        <div style={{ marginBottom: 18 }}>
+          <label style={estiloLabel}>Nome completo</label>
+          <input
+            type="text"
+            value={nome}
+            onChange={(e) => {
+              setNome(e.target.value)
+              setErroNome('')
             }}
-          >
-            Criar conta
-          </h2>
-          <p
-            style={{
-              margin: '8px 0 28px',
-              font: "400 15px/1.5 'Figtree', sans-serif",
-              color: 'var(--mut)',
-            }}
-          >
-            É gratuito para professores da educação básica.
-          </p>
-
-          {/* Campo: nome completo */}
-          <div style={{ marginBottom: 18 }}>
-            <label style={estiloLabel}>Nome completo</label>
-            <input
-              type="text"
-              value={nome}
-              onChange={(e) => {
-                setNome(e.target.value)
-                setErroNome('')
-              }}
-              placeholder="Maria Oliveira"
-              className={`eg-input${erroNome ? ' eg-input-erro' : ''}`}
-            />
-            {erroNome && <div style={estiloErro}>{erroNome}</div>}
-          </div>
-
-          {/* Campo: e-mail institucional */}
-          <div style={{ marginBottom: 18 }}>
-            <label style={estiloLabel}>E-mail institucional</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value)
-                setErroEmail('')
-              }}
-              placeholder="voce@escola.edu.br"
-              className={`eg-input${erroEmail ? ' eg-input-erro' : ''}`}
-            />
-            {erroEmail && <div style={estiloErro}>{erroEmail}</div>}
-          </div>
-
-          {/* Campo: senha */}
-          <div style={{ marginBottom: 10 }}>
-            <label style={estiloLabel}>Senha</label>
-            <input
-              type="password"
-              value={senha}
-              onChange={(e) => {
-                setSenha(e.target.value)
-                setErroSenha('')
-              }}
-              placeholder="Mínimo de 8 caracteres"
-              className={`eg-input${erroSenha ? ' eg-input-erro' : ''}`}
-            />
-            {erroSenha && <div style={estiloErro}>{erroSenha}</div>}
-          </div>
-
-          <button
-            onClick={enviar}
-            className="eg-btn-primario"
-            style={{ width: '100%', padding: 14, marginTop: 18, font: "600 16px/1 'Figtree', sans-serif" }}
-          >
-            {enviando ? 'Criando conta…' : 'Criar conta'}
-          </button>
-
-          <p
-            style={{
-              margin: '18px 0 0',
-              textAlign: 'center',
-              font: "400 12px/1.5 'Figtree', sans-serif",
-              color: 'var(--faint)',
-            }}
-          >
-            Ao criar uma conta, você concorda com os Termos e a Política de Privacidade do
-            EduGraph.
-          </p>
+            placeholder="Maria Oliveira"
+            className={`eg-input${erroNome ? ' eg-input-erro' : ''}`}
+          />
+          {erroNome && <div style={estiloErro}>{erroNome}</div>}
         </div>
+
+        {/* Campo: e-mail institucional */}
+        <div style={{ marginBottom: 18 }}>
+          <label style={estiloLabel}>E-mail institucional</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              setErroEmail('')
+            }}
+            placeholder="voce@escola.edu.br"
+            className={`eg-input${erroEmail ? ' eg-input-erro' : ''}`}
+          />
+          {erroEmail && <div style={estiloErro}>{erroEmail}</div>}
+        </div>
+
+        {/* Campo: senha */}
+        <div style={{ marginBottom: 10 }}>
+          <label style={estiloLabel}>Senha</label>
+          <input
+            type="password"
+            value={senha}
+            onChange={(e) => {
+              setSenha(e.target.value)
+              setErroSenha('')
+            }}
+            placeholder="Mínimo de 8 caracteres"
+            className={`eg-input${erroSenha ? ' eg-input-erro' : ''}`}
+          />
+          {erroSenha && <div style={estiloErro}>{erroSenha}</div>}
+        </div>
+
+        <button
+          onClick={enviar}
+          className="eg-btn-primario"
+          style={{ width: '100%', padding: 14, marginTop: 18, font: "600 16px/1 'Figtree', sans-serif" }}
+        >
+          {enviando ? 'Criando conta…' : 'Criar conta'}
+        </button>
+
+        <p
+          style={{
+            margin: '18px 0 0',
+            textAlign: 'center',
+            font: "400 12px/1.5 'Figtree', sans-serif",
+            color: 'var(--faint)',
+          }}
+        >
+          Ao criar uma conta, você concorda com os Termos e a Política de Privacidade do
+          EduGraph.
+        </p>
       </div>
-    </div>
+    </MolduraConta>
   )
 }
 

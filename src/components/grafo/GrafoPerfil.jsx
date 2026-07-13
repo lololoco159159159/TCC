@@ -66,9 +66,8 @@ function GrafoPerfil({
           display: 'inline-flex',
           alignItems: 'center',
           gap: 9,
-          // width 100%: preenche o slot de conta do SiteHeader (mesma largura
-          // do par Entrar/Criar conta da Home — nada se desloca entre páginas)
-          width: '100%',
+          // largura natural: o slot de conta do SiteHeader centraliza o botão
+          // (padronizado com Entrar/Criar conta e o prompt das telas de conta)
           padding: '5px 12px 5px 5px',
           borderRadius: 999,
           border: `1px solid ${aberto ? 'var(--green)' : 'var(--pill-border)'}`,
@@ -93,7 +92,7 @@ function GrafoPerfil({
           P
         </span>
         <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
-          Perfil
+          Perfil exemplo
         </span>
         <svg
           width="11"
@@ -104,7 +103,7 @@ function GrafoPerfil({
           strokeWidth="2.6"
           strokeLinecap="round"
           strokeLinejoin="round"
-          style={{ marginLeft: 'auto', flex: 'none' }}
+          style={{ flex: 'none' }}
         >
           <path d="m6 9 6 6 6-6" />
         </svg>
