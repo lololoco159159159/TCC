@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import SiteHeader from '../SiteHeader'
 import Footer from '../Footer'
 import FundoVertices from './FundoVertices'
+import BotaoAcessibilidade from './BotaoAcessibilidade'
 
 // Moldura compartilhada das telas de conta — Entrar e Criar conta (A1 do
 // roadmap, ESTADO_ATUAL.md §4.3). Porte da estrutura do overlay de auth do
@@ -21,11 +23,43 @@ import FundoVertices from './FundoVertices'
 // overlay de auth; aplicada na A3)
 const LARGURA_CARD = 400
 
+// Preferência "desativar animações e física" (edugraphPrefs.semAnim — mesmo
+// contrato/validação da página de grafos, D6). Subida para cá (state-lift-
+// state) para o FundoVertices e o BotaoAcessibilidade serem irmãos.
+function lerSemAnim() {
+  try {
+    const p = JSON.parse(localStorage.getItem('edugraphPrefs') || '{}')
+    return typeof p.semAnim === 'boolean' ? p.semAnim : false
+  } catch {
+    return false
+  }
+}
+
+// Grava só o campo semAnim, preservando os demais (paleta/formas/turmas/painel)
+function gravarSemAnim(valor) {
+  try {
+    const p = JSON.parse(localStorage.getItem('edugraphPrefs') || '{}')
+    localStorage.setItem('edugraphPrefs', JSON.stringify({ ...p, semAnim: valor }))
+  } catch {
+    /* localStorage indisponível — a preferência vale só nesta sessão */
+  }
+}
+
 function MolduraConta({ onHome, onGrafos, onSignup, trocaTexto, trocaAcao, onTrocar, children }) {
+  const [semAnim, setSemAnim] = useState(lerSemAnim)
+
+  function alternarSemAnim() {
+    setSemAnim((v) => {
+      const novo = !v
+      gravarSemAnim(novo)
+      return novo
+    })
+  }
+
   return (
     <div style={{ position: 'relative', background: 'var(--bg)' }}>
-      {/* fundo de vértices atrás de tudo (zIndex 0) */}
-      <FundoVertices />
+      {/* fundo de vértices atrás de tudo (zIndex 0) — controlado pelo semAnim */}
+      <FundoVertices semAnim={semAnim} />
 
       {/* header acima do canvas */}
       <div style={{ position: 'relative', zIndex: 1 }}>
@@ -66,6 +100,9 @@ function MolduraConta({ onHome, onGrafos, onSignup, trocaTexto, trocaAcao, onTro
 
       {/* footer aparece ao rolar; vidro (blur sobre o fundo de vértices) */}
       <Footer onSignup={onSignup} onGrafos={onGrafos} vidro />
+
+      {/* botão de acessibilidade fixo (só o toggle de animação/física) */}
+      <BotaoAcessibilidade semAnim={semAnim} aoToggle={alternarSemAnim} />
     </div>
   )
 }

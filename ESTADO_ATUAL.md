@@ -742,6 +742,31 @@ aliases fora); sem dependência nova. **D12** já fora registrada na A3.
 **Falta do autor:** rodar o mini-checklist de regressão do §4.3 + spot-check
 de Home/Grafos no navegador; commit `A5: limpeza dos aliases + fechamento`.
 
+#### Adição (2026-07-16) — botão de acessibilidade nas telas de conta
+A pedido do autor (pós-roadmap): Login/Signup ganharam um **botão de
+acessibilidade** flutuante na **lateral direita, logo acima do widget A/A**
+(pilha de controles de acessibilidade; popover abre à esquerda), recorte do
+popover de acessibilidade da página de grafos reduzido a **um** controle —
+"Desativar animações e física" (as paletas/formas só valem para o grafo).
+Ligar deixa o fundo de vértices estático na hora e persiste em
+`edugraphPrefs.semAnim` (mesmo contrato da G10/D6).
+- **Composição** (skill vercel-composition-patterns): o switch `Chave` (34×20)
+  foi **extraído** de [GrafoOverlays.jsx](src/components/grafo/GrafoOverlays.jsx)
+  para **[src/components/Chave.jsx](src/components/Chave.jsx)** (primitivo
+  compartilhado, zero mudança visual no grafo); a preferência `semAnim` foi
+  **subida** para a [MolduraConta.jsx](src/components/conta/MolduraConta.jsx)
+  (*state-lift-state*), que a passa por prop ao `FundoVertices` (agora
+  **controlado**: `semAnim` entrou nas deps do efeito → toggle recria o campo
+  animado ↔ estático) e ao novo
+  **[BotaoAcessibilidade.jsx](src/components/conta/BotaoAcessibilidade.jsx)**
+  (controlado, sem estado de preferência próprio — só o abre/fecha do popover;
+  fecha no Esc e clique-fora; `aria-label`/`aria-expanded`/`aria-pressed`).
+- O `prefers-reduced-motion` do SO segue respeitado dentro do `FundoVertices`
+  (união com a prop). Verificado: lint 0/0, build (JS 280.18 → 282.98 kB, CSS
+  7.33 kB idêntico), dev 200. **Teste do autor:** abrir o botão, ligar/desligar
+  o toggle (fundo para/volta), recarregar (persiste), e conferir que o popover
+  de acessibilidade do grafo continua idêntico.
+
 ## 4. O que FALTA (próximas etapas)
 
 A landing (Home, Etapas 1–6) e a **página de grafos (G1–G11, Etapas 7–16)** estão
@@ -1318,9 +1343,11 @@ src/
 │   ├── GradeCard.jsx          # card de série da grade (abre o MateriaPopover; R7b)
 │   ├── LogosInstitucionais.jsx # par de <a> LabOtim/UFES dos headers (R6; o Footer tem variação própria)
 │   ├── FontSizeWidget.jsx     # controles A/A de acessibilidade
+│   ├── Chave.jsx              # switch 34×20 (primitivo compartilhado grafo + conta)
 │   ├── conta/                 # componentes exclusivos das telas de conta (A1–A5 — FEITO)
-│   │   ├── MolduraConta.jsx   # moldura: SiteHeader + <main> 1 viewport + Footer de vidro (A1/A4)
+│   │   ├── MolduraConta.jsx   # moldura: SiteHeader + <main> 1 viewport + Footer de vidro (A1/A4); dona do semAnim
 │   │   ├── FundoVertices.jsx  # canvas de partículas atrás do card (porte do particle-network; A2)
+│   │   ├── BotaoAcessibilidade.jsx # botão flutuante: toggle "desativar animações e física"
 │   │   └── estilos.js         # estilos inline compartilhados dos cards (CARD_VIDRO, ...; A3)
 │   └── grafo/                 # componentes exclusivos da página de grafos (R7a)
 │       ├── GrafoFiltros.jsx   # barra de busca/filtros (Etapa 9/G3 — FEITO)

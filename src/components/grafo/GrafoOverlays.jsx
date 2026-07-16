@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { PALETAS } from '../../data/paletas'
 import { MONO_LABEL } from './estilos'
+import Chave from '../Chave'
 
 // Overlays finais da página de grafos (G9) — porte fiel do protótipo
 // (design/prototipo_grafo.html). Três blocos pequenos e irmãos do palco num
@@ -254,37 +255,6 @@ export function GavetaSparql({ consulta, tempoMs, simErro, aoSimErro }) {
         <span>SPARQL</span>
       </button>
     </div>
-  )
-}
-
-// interruptor 34×20 do protótipo (verde ligado, --edge desligado)
-function Chave({ ligada }) {
-  return (
-    <span
-      style={{
-        width: 34,
-        height: 20,
-        borderRadius: 999,
-        background: ligada ? 'var(--green)' : 'var(--edge)',
-        position: 'relative',
-        flex: 'none',
-        transition: 'background .15s',
-      }}
-    >
-      <span
-        style={{
-          position: 'absolute',
-          top: 2,
-          left: ligada ? 16 : 2,
-          width: 16,
-          height: 16,
-          borderRadius: '50%',
-          background: '#fff',
-          boxShadow: '0 1px 3px rgba(0,0,0,.3)',
-          transition: 'left .15s',
-        }}
-      />
-    </span>
   )
 }
 

@@ -18,10 +18,11 @@ import { useTheme } from '../../context/useTheme'
 //   cliques com A/A ≠ 100%). O zoom não dispara o ResizeObserver (o box em
 //   px CSS não muda), então fontZoom é dependência do efeito: mudou, o campo
 //   é recriado — mesmo comportamento do resize.
-// - Campo ESTÁTICO quando edugraphPrefs.semAnim (D6) OU o SO pede
-//   prefers-reduced-motion (A5): partículas com opacity 1, frame único, sem
-//   nó-cursor nem spawn por clique; um MutationObserver repinta o frame na
-//   troca de tema (não há loop RAF).
+// - Campo ESTÁTICO quando a prop `semAnim` (pref da app, D6 — subida à
+//   MolduraConta) OU o SO pede prefers-reduced-motion: partículas com
+//   opacity 1, frame único, sem nó-cursor nem spawn por clique; um
+//   MutationObserver repinta o frame na troca de tema (não há loop RAF).
+//   Trocar a prop recria o campo (está nas dependências do efeito).
 // - No resize o protótipo recria só as partículas ambientes e o nó-cursor
 //   vira referência órfã fora do array; aqui ele é zerado (o mousemove
 //   seguinte o recria — sem partícula fantasma).
@@ -59,26 +60,22 @@ function lerCores() {
   }
 }
 
-// Campo estático quando a app OU o sistema pedem menos movimento. Une a
-// preferência persistida "desativar animações" (edugraphPrefs.semAnim — mesma
-// chave/validação da página de grafos, D6) com a media query
-// prefers-reduced-motion do SO (web-interface-guidelines, A5): esta é uma
-// animação decorativa, então o SO manda também. União = a mais restritiva
-// vence (nunca anima mais do que qualquer das duas preferências permite).
-function lerCampoEstatico() {
-  const osReduz =
+// prefers-reduced-motion do SO (web-interface-guidelines): esta é uma animação
+// decorativa, então o SO força o campo estático mesmo que a app não peça.
+function osPedeMenosMovimento() {
+  return (
     typeof window !== 'undefined' &&
-    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  if (osReduz) return true
-  try {
-    const p = JSON.parse(localStorage.getItem('edugraphPrefs') || '{}')
-    return typeof p.semAnim === 'boolean' ? p.semAnim : false
-  } catch {
-    return false
-  }
+    !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  )
 }
 
-function FundoVertices() {
+// A prop `semAnim` é a preferência da app ("desativar animações e física",
+// edugraphPrefs.semAnim — D6), SUBIDA para a MolduraConta (state-lift-state)
+// para o botão de acessibilidade e este canvas serem irmãos. O campo fica
+// ESTÁTICO quando a app OU o SO pedem menos movimento (união: a mais
+// restritiva vence). Trocar a prop re-roda o efeito (está nas dependências),
+// recriando o campo animado ↔ estático na hora.
+function FundoVertices({ semAnim = false }) {
   const wrapRef = useRef(null)
   const canvasRef = useRef(null)
   const { fontZoom } = useTheme() // zoom do widget A/A — muda o rect sem disparar o RO
@@ -87,8 +84,8 @@ function FundoVertices() {
     const wrap = wrapRef.current
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
-    const semAnim = lerCampoEstatico()
-    wrap.style.cursor = semAnim ? 'default' : 'crosshair'
+    const estatico = semAnim || osPedeMenosMovimento()
+    wrap.style.cursor = estatico ? 'default' : 'crosshair'
 
     let w = 0
     let h = 0
@@ -106,7 +103,7 @@ function FundoVertices() {
       return {
         idxCor: Math.floor(Math.random() * cores.nos.length),
         raio: rand(params.raioMin, params.raioMax),
-        opacidade: semAnim ? 1 : 0, // estático nasce visível (não há frames de fade)
+        opacidade: estatico ? 1 : 0, // estático nasce visível (não há frames de fade)
         x: x ?? Math.random() * w,
         y: y ?? Math.random() * h,
         vx: (Math.random() - 0.5) * VELOCIDADE,
@@ -267,12 +264,12 @@ function FundoVertices() {
     const ro = new ResizeObserver(() => {
       dimensionar()
       criarParticulas()
-      if (semAnim) pintar(false)
+      if (estatico) pintar(false)
     })
     ro.observe(wrap)
 
     let mo = null
-    if (semAnim) {
+    if (estatico) {
       // frame único; só a troca de tema repinta (pintar re-lê os tokens)
       pintar(false)
       mo = new MutationObserver(() => pintar(false))
@@ -293,7 +290,7 @@ function FundoVertices() {
       clearInterval(spawnId)
       ro.disconnect()
       if (mo) mo.disconnect()
-      if (!semAnim) {
+      if (!estatico) {
         wrap.removeEventListener('mousemove', aoMover)
         wrap.removeEventListener('mousedown', aoPressionar)
         wrap.removeEventListener('mouseleave', aoSair)
@@ -303,7 +300,7 @@ function FundoVertices() {
         wrap.removeEventListener('touchend', aoToqueFim)
       }
     }
-  }, [fontZoom])
+  }, [fontZoom, semAnim])
 
   return (
     <div
