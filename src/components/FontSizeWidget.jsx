@@ -4,9 +4,9 @@ import { useTheme } from '../context/useTheme'
 const estiloBotaoBase = {
   width: 46,
   height: 46,
-  border: '1px solid var(--line)',
-  background: 'var(--card)',
-  color: 'var(--ink)',
+  border: '1px solid var(--pill-border)',
+  background: 'var(--pill-bg)',
+  color: 'var(--text)',
   cursor: 'pointer',
   boxShadow: '0 6px 20px rgba(0,0,0,0.10)',
   display: 'flex',
@@ -44,7 +44,7 @@ function FontSizeWidget() {
         style={{
           font: "600 10px/1 'JetBrains Mono', monospace",
           letterSpacing: '0.05em',
-          color: 'var(--mut)',
+          color: 'var(--muted)',
         }}
       >
         {fontPct}

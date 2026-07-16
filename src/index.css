@@ -3,7 +3,7 @@
    paleta; ver ESTADO_ATUAL.md §6).
 
    SUMÁRIO (ordem dos blocos):
-     1. Tokens de tema — claro (:root), inclui aliases de compatibilidade
+     1. Tokens de tema — claro (:root)
      2. Tokens de tema — escuro (:root[data-theme='dark'])
      3. Reset e base (box-sizing, body, cross-fade de tema, ::selection…)
      4. Keyframes (egFadeUp · egPulsar · egGirar · egSurgir)
@@ -27,9 +27,10 @@
    Modo escuro: fundo preto com verde e âmbar.
    O tema é trocado pelo atributo data-theme no <html> (ver ThemeContext).
 
-   Os nomes de origem são os tokens do protótipo (--bg, --bg2, --text, --green,
-   --gold, ...). Os nomes antigos (--ink, --accent, --line-strong, ...) ficam
-   como ALIASES de compatibilidade enquanto Login/Signup não são migrados. */
+   Os nomes são os tokens do protótipo (--bg, --bg2, --text, --green, --gold,
+   ...). Os aliases antigos (--ink, --accent, --line, --card, ...) foram
+   removidos na A5, quando Login/Signup/FontSizeWidget migraram para os tokens
+   novos — não reintroduzir. */
 
 :root {
   /* tokens do protótipo */
@@ -83,17 +84,6 @@
   --conta-no-2: #8c3e18;
   --conta-no-3: #c9a23f;
   --conta-no-4: #a89d80;
-
-  /* aliases de compatibilidade (código ainda não migrado) */
-  --bg-soft: var(--bg2);
-  --card: var(--pill-bg);
-  --ink: var(--text);
-  --mut: var(--muted);
-  --line: var(--pill-border);
-  --line-strong: var(--edge);
-  --accent: var(--green);
-  --accent-hover: var(--green-deep);
-  --accent-rgb: 6, 73, 45;
 }
 
 /* ---- 2. Tokens de tema — escuro ---- */
@@ -148,9 +138,6 @@
   --conta-no-2: #8c3e18;
   --conta-no-3: #c9a23f;
   --conta-no-4: #a89d80;
-
-  /* aliases de compatibilidade */
-  --accent-rgb: 58, 167, 109;
 }
 
 /* ---- 3. Reset e base ---- */
@@ -186,7 +173,7 @@ body {
 }
 
 ::selection {
-  background: rgba(var(--accent-rgb), 0.18);
+  background: color-mix(in srgb, var(--green) 18%, transparent);
 }
 
 input::placeholder {
@@ -288,6 +275,12 @@ input::placeholder {
   transform: scale(0.96);
 }
 
+/* enquanto o envio simulado corre (disabled + aria-busy no botão, A5) */
+.eg-btn-primario:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
 /* ---- Widget A/A de tamanho de fonte ---- */
 
 /* wrapper do widget A/A — some (fade) enquanto o popover de paleta (grafos)
@@ -328,7 +321,7 @@ input::placeholder {
 }
 
 .eg-link-nav:hover {
-  color: var(--ink);
+  color: var(--text);
 }
 
 /* ---- Links do footer ---- */

@@ -18,9 +18,10 @@ import { useTheme } from '../../context/useTheme'
 //   cliques com A/A ≠ 100%). O zoom não dispara o ResizeObserver (o box em
 //   px CSS não muda), então fontZoom é dependência do efeito: mudou, o campo
 //   é recriado — mesmo comportamento do resize.
-// - edugraphPrefs.semAnim ligado → campo ESTÁTICO (D6): partículas com
-//   opacity 1, frame único, sem nó-cursor nem spawn por clique; um
-//   MutationObserver repinta o frame na troca de tema (não há loop RAF).
+// - Campo ESTÁTICO quando edugraphPrefs.semAnim (D6) OU o SO pede
+//   prefers-reduced-motion (A5): partículas com opacity 1, frame único, sem
+//   nó-cursor nem spawn por clique; um MutationObserver repinta o frame na
+//   troca de tema (não há loop RAF).
 // - No resize o protótipo recria só as partículas ambientes e o nó-cursor
 //   vira referência órfã fora do array; aqui ele é zerado (o mousemove
 //   seguinte o recria — sem partícula fantasma).
@@ -58,9 +59,17 @@ function lerCores() {
   }
 }
 
-// Preferência de acessibilidade "desativar animações" (mesma chave e validação
-// campo a campo da página de grafos — ver lerPrefs em Grafos.jsx)
-function lerSemAnim() {
+// Campo estático quando a app OU o sistema pedem menos movimento. Une a
+// preferência persistida "desativar animações" (edugraphPrefs.semAnim — mesma
+// chave/validação da página de grafos, D6) com a media query
+// prefers-reduced-motion do SO (web-interface-guidelines, A5): esta é uma
+// animação decorativa, então o SO manda também. União = a mais restritiva
+// vence (nunca anima mais do que qualquer das duas preferências permite).
+function lerCampoEstatico() {
+  const osReduz =
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  if (osReduz) return true
   try {
     const p = JSON.parse(localStorage.getItem('edugraphPrefs') || '{}')
     return typeof p.semAnim === 'boolean' ? p.semAnim : false
@@ -78,7 +87,7 @@ function FundoVertices() {
     const wrap = wrapRef.current
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
-    const semAnim = lerSemAnim()
+    const semAnim = lerCampoEstatico()
     wrap.style.cursor = semAnim ? 'default' : 'crosshair'
 
     let w = 0

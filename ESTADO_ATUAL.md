@@ -44,12 +44,15 @@ a autoridade da paleta**. Nomes dos tokens (do protótipo): `--bg --bg2 --text
 --muted --body --faint --green --green-deep --green-soft --gold --edge --pill-bg
 --pill-border`.
 
-### Aliases de compatibilidade (importante!)
-`index.css` ainda define aliases dos nomes **antigos** (`--ink --accent
---accent-hover --line --line-strong --card --bg-soft --mut --accent-rgb`) apontando para
-os novos tokens. Isso mantém **Login** e **Signup** funcionando com a paleta nova
-**antes** de serem migrados. Ao migrar essas telas para os tokens novos, remover os
-aliases que deixarem de ser usados.
+### Aliases de compatibilidade — REMOVIDOS (A5, 2026-07-16)
+`index.css` **não define mais** os aliases dos nomes antigos (`--ink --accent
+--accent-hover --line --line-strong --card --bg-soft --mut --accent-rgb`).
+Eles existiam só para manter Login/Signup/FontSizeWidget funcionando com a
+paleta nova antes da migração; na **A5** essas telas passaram a usar os tokens
+do protótipo direto e os aliases foram removidos dos dois temas (grep
+pré-remoção incluindo strings — nenhum uso restou). O único token "extra"
+mantido é `--green-soft` (documentado na tabela acima, da paleta do protótipo).
+**Não reintroduzir aliases** — use sempre os tokens novos.
 
 ## 3. O que JÁ foi feito (Etapa 1 — seção "Conhecimento conectado")
 
@@ -700,6 +703,45 @@ natural e centraliza no slot como os demais. O slot em si continua com os
 mesmos 180px — logo, nav, logos institucionais e ThemeToggle seguem imóveis
 entre páginas. Verificado: lint 0/0, build (274.45 kB), dev 200.
 
+### Etapa 18 (2026-07-16) — Telas de conta (A0–A5): fechamento + revisão de acessibilidade
+Roadmap §4.3 concluído — Login/Signup migrados do layout antigo para o
+protótipo final (moldura + fundo de vértices + card/footer de vidro), e o
+autor pediu, junto da A5, uma **revisão web-interface-guidelines** das telas.
+
+**Aliases removidos (A5):** os 9 aliases antigos (`--ink --accent --accent-hover
+--line --line-strong --card --bg-soft --mut --accent-rgb`) saíram dos dois
+temas do [index.css](src/index.css). Migrações antes da remoção:
+[FontSizeWidget.jsx](src/components/FontSizeWidget.jsx) (`--line/--card/--ink/
+--mut` → `--pill-border/--pill-bg/--text/--muted`), `::selection`
+(`rgba(--accent-rgb)` → `color-mix` sobre `--green`) e — **achado pelo grep
+obrigatório, fora do roadmap** — `.eg-link-nav:hover` (`--ink` → `--text`,
+nav do SiteHeader, site todo). `--green-soft` mantido (paleta do protótipo,
+§2). Grep pré-remoção incluindo strings/template literals: zero sobras
+(só o comentário do topo cita os nomes). **Lição da R1 confirmada de novo:**
+o roadmap tinha previsto 2 migrações; o grep no CSS achou a 3.ª.
+
+**Acessibilidade das telas de conta (guidelines):** Login/Signup ganharam
+`<form>` semântico (**Enter envia**), `label htmlFor`/`input id`,
+`autocomplete`/`name`/`inputmode`, `spellCheck={false}` no e-mail, **foco no
+1.º campo com erro** no submit, `aria-invalid` + `role="alert"` nas mensagens
+e botão `type="submit"` **desabilitado durante o envio** (regra `:disabled`
+nova). [FundoVertices.jsx](src/components/conta/FundoVertices.jsx) passou a
+honrar **`prefers-reduced-motion` do SO** além do `edugraphPrefs.semAnim`
+(a animação é decorativa). Tudo invisível: o layout do protótipo não mudou.
+
+**Achados reportados e NÃO alterados** (decisão documentada / fora de escopo):
+navegação por `<span onClick>` (padrão D8/D9 do site inteiro — trocar só
+nestas telas criaria inconsistência); placeholders sem `…` (são valores-exemplo
+fiéis ao protótipo, D4); `<img>` dos logos no [Footer.jsx](src/components/Footer.jsx)
+sem `width`/`height` (componente compartilhado — mexer arriscaria regressão em
+Home/Grafos, contra a regra do §4.3).
+
+**Bugs encontrados: nenhum.** **Números:** lint **0/0**; bundle JS 278.44 →
+**280.18 kB** (+1,7 kB do form acessível); **CSS 7.50 → 7.33 kB** (−2,3%, os
+aliases fora); sem dependência nova. **D12** já fora registrada na A3.
+**Falta do autor:** rodar o mini-checklist de regressão do §4.3 + spot-check
+de Home/Grafos no navegador; commit `A5: limpeza dos aliases + fechamento`.
+
 ## 4. O que FALTA (próximas etapas)
 
 A landing (Home, Etapas 1–6) e a **página de grafos (G1–G11, Etapas 7–16)** estão
@@ -707,11 +749,11 @@ completas. Restam:
 
 0. ~~Revisão e polimento do código~~ — **concluída** (roadmap §4.2, Etapa 17);
    falta só o autor rodar o checklist de regressão do §4.2 no navegador.
-1. **Telas de conta (Entrar / Criar conta)** — roadmap próprio no **§4.3**
-   (A0–A5): fundo de vértices do protótipo, header no SiteHeader (slot fixo),
-   card e footer de vidro, e a remoção dos aliases órfãos (incluindo
-   `--accent-hover/--accent-rgb/--line-strong`, que hoje servem às classes
-   `.eg-input`/`.eg-btn-primario` dessas telas — caem na A5). **Em andamento.**
+1. ~~**Telas de conta (Entrar / Criar conta)**~~ — **concluída** (roadmap
+   §4.3, A0–A5, Etapa 18): fundo de vértices do protótipo, header no
+   SiteHeader (slot fixo), card e footer de vidro, aliases órfãos removidos e
+   revisão de acessibilidade das telas. Falta só o autor rodar o
+   mini-checklist do §4.3 no navegador.
 2. **Back-end**: subir um Apache Jena Fuseki real e trocar o mock
    (`src/data/mockFuseki.js`, etapa G2) por `fetch` ao endpoint SPARQL — ver a
    receita no cabeçalho do próprio mock e a decisão D1 em [DECISOES.md](DECISOES.md).
@@ -1137,21 +1179,39 @@ strings/template literals (lição da R1).
   vértices borrados atrás do footer ao rolar as telas de conta; footer da
   Home e do Grafos inalterado (comparar claro+escuro). Commit:
   `A4: footer de vidro nas telas de conta`.
-- [ ] **A5 — Limpeza dos aliases + fechamento**:
-  [FontSizeWidget.jsx](src/components/FontSizeWidget.jsx) migra `--line →
+- [x] **A5 — Limpeza dos aliases + fechamento** *(2026-07-16)*:
+  [FontSizeWidget.jsx](src/components/FontSizeWidget.jsx) migrou `--line →
   --pill-border`, `--card → --pill-bg`, `--ink → --text`, `--mut → --muted`
-  (aliases apontam exatamente para esses — aparência idêntica). No
-  [index.css](src/index.css): `::selection` troca `rgba(var(--accent-rgb),
-  0.18)` por `color-mix(in srgb, var(--green) 18%, transparent)` (mesma cor
-  nos 2 temas). Depois, com **grep pré-remoção** (incluindo strings), remover
-  os aliases `--bg-soft --card --ink --mut --line --line-strong --accent
-  --accent-hover --accent-rgb` dos DOIS temas e atualizar o comentário do
-  topo do arquivo. `--green-soft` continua (token documentado da paleta do
-  protótipo, §2). ESTADO_ATUAL.md: apagar/encerrar a subseção "Aliases de
-  compatibilidade" do §2, atualizar o §7 (pasta `components/conta/`;
-  Login/Signup "FEITO") e marcar o item do §4. Rodar o mini-checklist de
-  regressão abaixo + spot-check de Home/Grafos; relatório curto no §3
-  (Etapa 18). Commit: `A5: limpeza dos aliases + fechamento`.
+  (aparência idêntica); `::selection` em [index.css](src/index.css) trocou
+  `rgba(var(--accent-rgb), 0.18)` por `color-mix(in srgb, var(--green) 18%,
+  transparent)`. **Uso extra achado pelo grep** (não estava no roadmap):
+  `.eg-link-nav:hover` usava `var(--ink)` (nav do SiteHeader, site todo) →
+  migrado para `var(--text)`. Com o grep pré-remoção (incluindo strings/
+  template literals; a única "sobra" foi o próprio comentário do topo do CSS
+  citando os nomes) removidos os aliases `--bg-soft --card --ink --mut --line
+  --line-strong --accent --accent-hover --accent-rgb` dos **dois** temas;
+  comentário do topo atualizado. `--green-soft` mantido (§2). **Revisão
+  web-interface-guidelines das telas de conta** (pedido do autor, junto):
+  Login/Signup ganharam `<form>` semântico (**Enter envia**), labels
+  associados (`htmlFor`/`id`), `autocomplete`/`name`/`inputmode`,
+  `spellCheck={false}` no e-mail, **foco no 1.º campo com erro**,
+  `aria-invalid` + `role="alert"` nas mensagens e botão `type="submit"`
+  **desabilitado durante o envio** (`:disabled` novo no CSS) — tudo
+  invisível, layout do protótipo intocado. [FundoVertices.jsx](src/components/conta/FundoVertices.jsx)
+  passou a respeitar **`prefers-reduced-motion` do SO** além do
+  `edugraphPrefs.semAnim` (união; anima decorativa deve honrar o SO).
+  Achados **reportados e não alterados** (fora do escopo / decisão
+  documentada): navegação por `<span onClick>` (padrão D8/D9 do site inteiro,
+  não só destas telas), placeholders sem `…` (valores-exemplo fiéis ao
+  protótipo, D4) e `<img>` dos logos do Footer sem width/height (compartilhado
+  — mexer arriscaria regressão em Home/Grafos). Verificado: `npm run lint`
+  (0/0), `npm run build` (278.44 → 280.18 kB; **CSS 7.50 → 7.33 kB** com os
+  aliases fora) e `npm run dev` (200 nos módulos alterados). **Teste manual
+  do autor:** mini-checklist abaixo + spot-check de Home/Grafos. Commit:
+  `A5: limpeza dos aliases + fechamento`.
+
+  **Com a A5, o roadmap §4.3 (A0–A5) está 100% concluído — as telas de conta
+  estão migradas para o protótipo final.**
 
 #### Mini-checklist de regressão das telas de conta (rodar na A5)
 
@@ -1258,6 +1318,10 @@ src/
 │   ├── GradeCard.jsx          # card de série da grade (abre o MateriaPopover; R7b)
 │   ├── LogosInstitucionais.jsx # par de <a> LabOtim/UFES dos headers (R6; o Footer tem variação própria)
 │   ├── FontSizeWidget.jsx     # controles A/A de acessibilidade
+│   ├── conta/                 # componentes exclusivos das telas de conta (A1–A5 — FEITO)
+│   │   ├── MolduraConta.jsx   # moldura: SiteHeader + <main> 1 viewport + Footer de vidro (A1/A4)
+│   │   ├── FundoVertices.jsx  # canvas de partículas atrás do card (porte do particle-network; A2)
+│   │   └── estilos.js         # estilos inline compartilhados dos cards (CARD_VIDRO, ...; A3)
 │   └── grafo/                 # componentes exclusivos da página de grafos (R7a)
 │       ├── GrafoFiltros.jsx   # barra de busca/filtros (Etapa 9/G3 — FEITO)
 │       ├── GrafoCanvas.jsx    # canvas 2D: render + física + interações (hover/seleção/drag/pan/zoom,
@@ -1277,8 +1341,8 @@ src/
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
 │   ├── Grafos.jsx             # página do grafo — filtros + estados + canvas + painel + expandir/desfazer + overlays + perfil/prefs (G1–G11 — COMPLETA contra o mock)
-│   ├── Login.jsx              # layout antigo; fontes/paleta já normalizadas (via aliases)
-│   └── Signup.jsx             # layout antigo; fontes/paleta já normalizadas (via aliases)
+│   ├── Login.jsx              # card de vidro na MolduraConta; form acessível (A1–A5 — FEITO)
+│   └── Signup.jsx             # card de vidro na MolduraConta; form acessível (A1–A5 — FEITO)
 ├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)
 ├── App.jsx                    # roteamento por estado
 ├── main.jsx                   # entrada React

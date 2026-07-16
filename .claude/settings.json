@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Edit(/.claude/skills/contexto/**)",
-      "Bash(python3 -)"
+      "Bash(python3 -)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(grep -rnE '\\\\-\\\\-\\\\$\\\\{|var\\\\\\(\\\\`|eg-no-\\\\$\\\\{' --include='*.jsx' --include='*.js' src)",
+      "Bash(grep -n 'Login.jsx\\\\|Signup.jsx\\\\|FontSizeWidget.jsx\\\\|components/$\\\\|├── data/\\\\|conta/' /home/lorerenzofiorot/tcc/site/ESTADO_ATUAL.md)"
     ]
   }
 }

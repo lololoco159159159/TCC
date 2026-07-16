@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import MolduraConta from '../components/conta/MolduraConta'
 import {
   CARD_VIDRO,
@@ -18,14 +18,19 @@ function emailValido(valor) {
 // foco verde, linha da senha com "Esqueceu?", botão primário DOURADO,
 // divisor "ou" e rodapé de troca. O vidro no lugar do fundo opaco do
 // protótipo é desvio consciente (D12) para o fundo de vértices aparecer.
-// A autenticação real (back-end) é trabalho futuro (D2); por ora apenas
-// valida os campos e simula o envio.
+// Acessibilidade (revisão A5, web-interface-guidelines): <form> semântico
+// (Enter envia), labels associados por htmlFor/id, autocomplete/name/
+// inputmode, spellCheck off no e-mail, foco no 1.º campo com erro e
+// aria-invalid/role=alert nas mensagens. A autenticação real (back-end) é
+// trabalho futuro (D2); por ora apenas valida os campos e simula o envio.
 function Login({ onHome, onSignup, onGrafos }) {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erroEmail, setErroEmail] = useState('')
   const [erroSenha, setErroSenha] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const emailRef = useRef(null)
+  const senhaRef = useRef(null)
 
   function enviar() {
     let ee = ''
@@ -35,6 +40,9 @@ function Login({ onHome, onSignup, onGrafos }) {
     if (ee || es) {
       setErroEmail(ee)
       setErroSenha(es)
+      // foca o primeiro campo com erro (guideline: focus first error on submit)
+      if (ee) emailRef.current?.focus()
+      else senhaRef.current?.focus()
       return
     }
     setEnviando(true)
@@ -56,55 +64,97 @@ function Login({ onHome, onSignup, onGrafos }) {
         <h1 style={TITULO_CARD}>Entrar</h1>
         <p style={SUBTITULO_CARD}>Acesse e continue de onde você parou nos seus grafos.</p>
 
-        {/* Campo: e-mail (mb 20, como no protótipo) */}
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ ...LABEL_CAMPO, display: 'block', marginBottom: 8 }}>E-mail</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value)
-              setErroEmail('')
-            }}
-            placeholder="voce@escola.edu.br"
-            className={`eg-input${erroEmail ? ' eg-input-erro' : ''}`}
-          />
-          {erroEmail ? <div style={MSG_ERRO}>{erroEmail}</div> : null}
-        </div>
-
-        {/* Campo: senha (mb 24) com o "Esqueceu?" na linha do rótulo */}
-        <div style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 8,
-            }}
-          >
-            <label style={LABEL_CAMPO}>Senha</label>
-            <span
-              style={{ font: "600 13px/1 'Figtree', sans-serif", color: 'var(--green)', cursor: 'pointer' }}
-            >
-              Esqueceu?
-            </span>
+        <form
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault()
+            enviar()
+          }}
+          style={{ margin: 0 }}
+        >
+          {/* Campo: e-mail (mb 20, como no protótipo) */}
+          <div style={{ marginBottom: 20 }}>
+            <label htmlFor="login-email" style={{ ...LABEL_CAMPO, display: 'block', marginBottom: 8 }}>
+              E-mail
+            </label>
+            <input
+              id="login-email"
+              ref={emailRef}
+              type="email"
+              name="email"
+              autoComplete="email"
+              inputMode="email"
+              autoCapitalize="none"
+              spellCheck={false}
+              aria-invalid={erroEmail ? true : undefined}
+              aria-describedby={erroEmail ? 'login-email-erro' : undefined}
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                setErroEmail('')
+              }}
+              placeholder="voce@escola.edu.br"
+              className={`eg-input${erroEmail ? ' eg-input-erro' : ''}`}
+            />
+            {erroEmail ? (
+              <div id="login-email-erro" role="alert" style={MSG_ERRO}>
+                {erroEmail}
+              </div>
+            ) : null}
           </div>
-          <input
-            type="password"
-            value={senha}
-            onChange={(e) => {
-              setSenha(e.target.value)
-              setErroSenha('')
-            }}
-            placeholder="••••••••"
-            className={`eg-input${erroSenha ? ' eg-input-erro' : ''}`}
-          />
-          {erroSenha ? <div style={MSG_ERRO}>{erroSenha}</div> : null}
-        </div>
 
-        <button onClick={enviar} className="eg-btn-primario" style={{ width: '100%', padding: 15 }}>
-          {enviando ? 'Entrando…' : 'Entrar'}
-        </button>
+          {/* Campo: senha (mb 24) com o "Esqueceu?" na linha do rótulo */}
+          <div style={{ marginBottom: 24 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 8,
+              }}
+            >
+              <label htmlFor="login-senha" style={LABEL_CAMPO}>
+                Senha
+              </label>
+              <span
+                style={{ font: "600 13px/1 'Figtree', sans-serif", color: 'var(--green)', cursor: 'pointer' }}
+              >
+                Esqueceu?
+              </span>
+            </div>
+            <input
+              id="login-senha"
+              ref={senhaRef}
+              type="password"
+              name="password"
+              autoComplete="current-password"
+              aria-invalid={erroSenha ? true : undefined}
+              aria-describedby={erroSenha ? 'login-senha-erro' : undefined}
+              value={senha}
+              onChange={(e) => {
+                setSenha(e.target.value)
+                setErroSenha('')
+              }}
+              placeholder="••••••••"
+              className={`eg-input${erroSenha ? ' eg-input-erro' : ''}`}
+            />
+            {erroSenha ? (
+              <div id="login-senha-erro" role="alert" style={MSG_ERRO}>
+                {erroSenha}
+              </div>
+            ) : null}
+          </div>
+
+          <button
+            type="submit"
+            disabled={enviando}
+            aria-busy={enviando}
+            className="eg-btn-primario"
+            style={{ width: '100%', padding: 15 }}
+          >
+            {enviando ? 'Entrando…' : 'Entrar'}
+          </button>
+        </form>
 
         {/* Divisor "ou" (mono uppercase, linhas --pill-border) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '24px 0' }}>
