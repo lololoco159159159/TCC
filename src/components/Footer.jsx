@@ -7,16 +7,35 @@ import ufes from '../assets/ufes.png'
 // legal. Reaproveita o <Logo> (grafo de 9 nós + "EduGraph") e os logos já
 // extraídos em src/assets. "Criar conta" leva ao cadastro via onSignup;
 // "Explorar grafos" leva à página de grafos via onGrafos.
-function Footer({ onSignup, onGrafos }) {
+//
+// Prop `vidro` (opt-in, default false — Home/Grafos ficam byte-idênticas):
+// nas telas de conta (A4), o footer flutua sobre o fundo de vértices e vira
+// translúcido com desfoque, fiel ao footer do overlay do protótipo
+// (`color-mix` 20% de --bg2 + blur 5px). Aplicar globalmente mudaria a cor
+// do footer na Home/Grafos (mix 20% sobre --bg2 ≠ --bg2 sólido) — por isso é
+// opt-in, não um novo padrão do componente.
+function Footer({ onSignup, onGrafos, vidro = false }) {
   const larguraMax = 1040
 
   return (
     <footer
-      style={{
-        background: 'var(--bg2)',
-        borderTop: '1px solid var(--pill-border)',
-        padding: '54px 32px',
-      }}
+      style={
+        vidro
+          ? {
+              position: 'relative',
+              zIndex: 1,
+              background: 'color-mix(in srgb, var(--bg2) 20%, transparent)',
+              backdropFilter: 'blur(5px)',
+              WebkitBackdropFilter: 'blur(5px)',
+              borderTop: '1px solid var(--pill-border)',
+              padding: '54px 32px',
+            }
+          : {
+              background: 'var(--bg2)',
+              borderTop: '1px solid var(--pill-border)',
+              padding: '54px 32px',
+            }
+      }
     >
       {/* ---- marca + colunas de links ---- */}
       <div

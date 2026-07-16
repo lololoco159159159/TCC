@@ -1122,13 +1122,20 @@ strings/template literals (lição da R1).
   módulos alterados). **Teste manual do autor:** lado a lado com o protótipo
   no navegador, claro E escuro; validações; troca login↔signup; vértices
   visíveis através do vidro. Commit: `A3: card de vidro fiel ao protótipo`.
-- [ ] **A4 — Footer de vidro**: prop `vidro` no
-  [Footer.jsx](src/components/Footer.jsx) (default false → byte-idêntico ao
-  atual): quando true, `background: 'color-mix(in srgb, var(--bg2) 20%,
-  transparent)'`, `backdropFilter/WebkitBackdropFilter: 'blur(5px)'` e
-  `position:'relative', zIndex:1` (substitui o div-wrapper da A1). Usar nas 2
-  telas de conta. Verificar: vértices borrados atrás do footer ao rolar;
-  footer da Home e do Grafos inalterado (comparar claro+escuro). Commit:
+- [x] **A4 — Footer de vidro** *(2026-07-16)*: prop `vidro` (default
+  `false`) no [Footer.jsx](src/components/Footer.jsx) — Home e Grafos
+  continuam sem a prop (estilo idêntico ao de antes: `background: var(--bg2)`,
+  sem blur/zIndex); quando `true`, o `<footer>` troca para
+  `background: 'color-mix(in srgb, var(--bg2) 20%, transparent)'`,
+  `backdropFilter/WebkitBackdropFilter: 'blur(5px)'` e
+  `position:'relative', zIndex:1`. **[MolduraConta.jsx](src/components/conta/MolduraConta.jsx)**
+  passa `vidro` ao `<Footer>` e perdeu o `div` wrapper de zIndex que existia
+  desde a A1 (o próprio Footer agora carrega o zIndex quando vidro). Sem
+  token novo (reusa `--bg2`/`--pill-border`). Verificado: `npm run lint`
+  (0/0), `npm run build` (278.27 → 278.44 kB, CSS 7.50 kB idêntico) e
+  `npm run dev` (200 nos 2 módulos alterados). **Teste manual do autor:**
+  vértices borrados atrás do footer ao rolar as telas de conta; footer da
+  Home e do Grafos inalterado (comparar claro+escuro). Commit:
   `A4: footer de vidro nas telas de conta`.
 - [ ] **A5 — Limpeza dos aliases + fechamento**:
   [FontSizeWidget.jsx](src/components/FontSizeWidget.jsx) migra `--line →

@@ -12,9 +12,10 @@ import FundoVertices from './FundoVertices'
 // outras páginas.
 // Fundo de vértices (A2): o wrapper é position:relative e header/main/footer
 // vivem em zIndex 1 porque o canvas (FundoVertices) fica em zIndex 0
-// (absolute, inset 0) atrás de tudo; o <main> tem pointer-events:none para os
-// cliques na área vazia atravessarem até o canvas — só o miolo do card
-// reativa com pointer-events:auto (o div que embrulha os children).
+// (absolute, inset 0) atrás de tudo — o footer já traz seu próprio zIndex 1
+// via prop `vidro` (A4); o <main> tem pointer-events:none para os cliques na
+// área vazia atravessarem até o canvas — só o miolo do card reativa com
+// pointer-events:auto (o div que embrulha os children).
 
 // Largura do miolo clicável = a do card do protótipo (max-width 400 do
 // overlay de auth; aplicada na A3)
@@ -63,10 +64,8 @@ function MolduraConta({ onHome, onGrafos, onSignup, trocaTexto, trocaAcao, onTro
         <div style={{ pointerEvents: 'auto', width: '100%', maxWidth: LARGURA_CARD }}>{children}</div>
       </main>
 
-      {/* footer aparece ao rolar; ganha o vidro na A4 */}
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <Footer onSignup={onSignup} onGrafos={onGrafos} />
-      </div>
+      {/* footer aparece ao rolar; vidro (blur sobre o fundo de vértices) */}
+      <Footer onSignup={onSignup} onGrafos={onGrafos} vidro />
     </div>
   )
 }
