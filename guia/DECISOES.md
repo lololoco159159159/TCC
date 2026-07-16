@@ -435,5 +435,64 @@ cada etapa — garantiu a equivalência funcional do resultado."
 
 ---
 
-*Última atualização: 2026-07-12. Novas decisões: adicionar ao fim da lista como
+## D12 — Telas de conta: páginas com header unificado e card/footer de vidro (desvios conscientes do overlay)
+
+**Quando:** roadmap A0–A5, consolidada na A3 (2026-07-16) · **Onde:**
+[src/components/conta/MolduraConta.jsx](src/components/conta/MolduraConta.jsx),
+[src/components/conta/FundoVertices.jsx](src/components/conta/FundoVertices.jsx),
+[src/components/conta/estilos.js](src/components/conta/estilos.js),
+[src/pages/Login.jsx](src/pages/Login.jsx), [src/pages/Signup.jsx](src/pages/Signup.jsx)
+
+**O problema.** No protótipo final, Entrar/Criar conta são um **overlay**
+full-screen sobre a landing, com header próprio (73px, o logo fecha o overlay)
+e card **opaco** sobre o fundo animado de vértices. O site real navega por
+**páginas** (roteamento por estado, D9) e tem um **header único** (SiteHeader,
+60px) compartilhado por todas as telas — copiar o overlay ao pé da letra
+criaria um segundo header divergente e esconderia o fundo animado atrás de um
+card opaco.
+
+**A decisão.** Três desvios conscientes, documentados no código e no
+ESTADO_ATUAL.md (§4.3): (1) **header unificado** — o prompt de troca do
+overlay ("Novo por aqui? Criar conta" / "Já tem conta? Entrar") entra no slot
+de conta de largura fixa do SiteHeader; logo, nav, logos institucionais e
+ThemeToggle ficam pixel-idênticos aos das demais telas; (2) **card de vidro**
+— o fundo opaco (`--pill-bg`) vira translúcido
+(`color-mix(in srgb, var(--pill-bg) 72%, transparent)` +
+`backdrop-filter: blur(14px) saturate(1.15)`, receita do painel da página de
+grafos), deixando o fundo de vértices visível através do card; geometria,
+cores e fontes internas seguem o protótipo à risca; (3) **footer de vidro
+opt-in** — prop `vidro` no Footer compartilhado (A4), para não alterar o
+footer da Home/Grafos.
+
+**Alternativas rejeitadas.** (a) Overlay literal sobre a Home: segundo header
+divergente do design system consolidado e conflito com o roteamento por
+estado (D9); (b) card opaco do protótipo: esconderia o fundo de vértices — o
+elemento mais vivo da tela; (c) vidro global no footer: mudaria a cor do
+footer nas outras páginas, quebrando a regra de zero regressão da revisão.
+
+**Para a banca.** *"As telas de conta seguem o protótipo aprovado com três
+desvios conscientes e documentados: o header é o componente único do site —
+consistência entre telas vale mais que os 13px de diferença do overlay —, e o
+card e o footer ganharam translucidez com desfoque para manter visível o fundo
+animado de vértices, que no protótipo ficava escondido atrás de superfícies
+opacas."*
+
+**Monografia** *(cap. de Implementação, seção das telas de conta — retoma D2
+e D4):*
+"Na implementação das telas de acesso e cadastro, o overlay do protótipo foi
+adaptado ao modelo de navegação por páginas da aplicação, com três desvios
+conscientes registrados em documentação versionada, conforme o método adotado
+(porte fiel com desvios justificados): o cabeçalho próprio do overlay foi
+substituído pelo componente único de cabeçalho do sistema, preservando a
+consistência visual entre telas; e o cartão do formulário e o rodapé — opacos
+no protótipo — receberam tratamento translúcido com desfoque de fundo
+(*backdrop blur*), mantendo perceptível a animação de fundo que remete ao
+grafo de conhecimento. As demais propriedades do cartão (geometria,
+tipografia, cores e estados de validação) seguem a especificação do protótipo,
+e o rodapé translúcido foi implementado como variação opcional (*opt-in*) do
+componente compartilhado, garantindo a não-regressão das demais páginas."
+
+---
+
+*Última atualização: 2026-07-16. Novas decisões: adicionar ao fim da lista como
 D<N+1>, seguindo o formato do cabeçalho — **sempre com o parágrafo de monografia**.*

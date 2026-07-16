@@ -1,33 +1,27 @@
 import { useState } from 'react'
 import MolduraConta from '../components/conta/MolduraConta'
+import {
+  CARD_VIDRO,
+  TITULO_CARD,
+  SUBTITULO_CARD,
+  LABEL_CAMPO,
+  MSG_ERRO,
+} from '../components/conta/estilos'
 
-// Estilos reutilizados nos rótulos e mensagens do formulário
-const estiloLabel = {
-  display: 'block',
-  marginBottom: 8,
-  font: "500 11px/1 'JetBrains Mono', monospace",
-  letterSpacing: '0.1em',
-  color: 'var(--mut)',
-  textTransform: 'uppercase',
-}
-
-const estiloErro = {
-  marginTop: 7,
-  font: "400 13px/1.3 'Figtree', sans-serif",
-  color: '#d1453b',
-}
+// Rótulo de campo em bloco (todos os labels do Signup são assim)
+const LABEL_BLOCO = { ...LABEL_CAMPO, display: 'block', marginBottom: 8 }
 
 // Validação simples de e-mail (mesma regra do protótipo de design)
 function emailValido(valor) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((valor || '').trim())
 }
 
-// Tela de Criar conta — casca da A1 (ESTADO_ATUAL.md §4.3): a MolduraConta traz
-// o SiteHeader único (prompt "Já tem conta? Entrar" no slot fixo), a área
-// central de 1 viewport e o footer abaixo da dobra. O card abaixo ainda é o
-// layout antigo — o redesenho fiel ao protótipo (vidro + tokens novos) é a
-// etapa A3. O cadastro real (back-end) é trabalho futuro (D2); por ora apenas
-// valida os campos e simula o envio.
+// Tela de Criar conta — card de vidro fiel ao overlay do protótipo (A3,
+// ESTADO_ATUAL.md §4.3): h1 Spectral 34, labels mono, inputs sobre --bg com
+// foco verde, botão primário DOURADO e o parágrafo dos termos. O vidro no
+// lugar do fundo opaco do protótipo é desvio consciente (D12) para o fundo
+// de vértices aparecer. O cadastro real (back-end) é trabalho futuro (D2);
+// por ora apenas valida os campos e simula o envio.
 function Signup({ onHome, onLogin, onSignup, onGrafos }) {
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
@@ -64,40 +58,14 @@ function Signup({ onHome, onLogin, onSignup, onGrafos }) {
       trocaAcao="Entrar"
       onTrocar={onLogin}
     >
-      {/* Card do formulário (layout antigo — vira vidro fiel ao protótipo na A3);
-          a largura máxima vem do miolo da moldura (LARGURA_CARD) */}
-      <div
-        style={{
-          width: '100%',
-          background: 'var(--card)',
-          border: '1px solid var(--line)',
-          borderRadius: 18,
-          padding: '40px 36px',
-        }}
-      >
-        <h2
-          style={{
-            margin: 0,
-            font: "600 28px/1.1 'Figtree', sans-serif",
-            letterSpacing: '-0.025em',
-            color: 'var(--ink)',
-          }}
-        >
-          Criar conta
-        </h2>
-        <p
-          style={{
-            margin: '8px 0 28px',
-            font: "400 15px/1.5 'Figtree', sans-serif",
-            color: 'var(--mut)',
-          }}
-        >
-          É gratuito para professores da educação básica.
-        </p>
+      {/* a largura máxima (400, a do protótipo) vem do miolo da moldura */}
+      <div style={CARD_VIDRO}>
+        <h1 style={TITULO_CARD}>Criar conta</h1>
+        <p style={SUBTITULO_CARD}>É gratuito para professores da educação básica.</p>
 
-        {/* Campo: nome completo */}
-        <div style={{ marginBottom: 18 }}>
-          <label style={estiloLabel}>Nome completo</label>
+        {/* Campo: nome completo (mb 20, como no protótipo) */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={LABEL_BLOCO}>Nome completo</label>
           <input
             type="text"
             value={nome}
@@ -108,12 +76,12 @@ function Signup({ onHome, onLogin, onSignup, onGrafos }) {
             placeholder="Maria Oliveira"
             className={`eg-input${erroNome ? ' eg-input-erro' : ''}`}
           />
-          {erroNome && <div style={estiloErro}>{erroNome}</div>}
+          {erroNome ? <div style={MSG_ERRO}>{erroNome}</div> : null}
         </div>
 
-        {/* Campo: e-mail institucional */}
-        <div style={{ marginBottom: 18 }}>
-          <label style={estiloLabel}>E-mail institucional</label>
+        {/* Campo: e-mail institucional (mb 20) */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={LABEL_BLOCO}>E-mail institucional</label>
           <input
             type="email"
             value={email}
@@ -124,12 +92,12 @@ function Signup({ onHome, onLogin, onSignup, onGrafos }) {
             placeholder="voce@escola.edu.br"
             className={`eg-input${erroEmail ? ' eg-input-erro' : ''}`}
           />
-          {erroEmail && <div style={estiloErro}>{erroEmail}</div>}
+          {erroEmail ? <div style={MSG_ERRO}>{erroEmail}</div> : null}
         </div>
 
-        {/* Campo: senha */}
-        <div style={{ marginBottom: 10 }}>
-          <label style={estiloLabel}>Senha</label>
+        {/* Campo: senha (mb 24) */}
+        <div style={{ marginBottom: 24 }}>
+          <label style={LABEL_BLOCO}>Senha</label>
           <input
             type="password"
             value={senha}
@@ -140,22 +108,18 @@ function Signup({ onHome, onLogin, onSignup, onGrafos }) {
             placeholder="Mínimo de 8 caracteres"
             className={`eg-input${erroSenha ? ' eg-input-erro' : ''}`}
           />
-          {erroSenha && <div style={estiloErro}>{erroSenha}</div>}
+          {erroSenha ? <div style={MSG_ERRO}>{erroSenha}</div> : null}
         </div>
 
-        <button
-          onClick={enviar}
-          className="eg-btn-primario"
-          style={{ width: '100%', padding: 14, marginTop: 18, font: "600 16px/1 'Figtree', sans-serif" }}
-        >
+        <button onClick={enviar} className="eg-btn-primario" style={{ width: '100%', padding: 15 }}>
           {enviando ? 'Criando conta…' : 'Criar conta'}
         </button>
 
         <p
           style={{
-            margin: '18px 0 0',
+            margin: '20px 0 0',
             textAlign: 'center',
-            font: "400 12px/1.5 'Figtree', sans-serif",
+            font: "400 12.5px/1.55 'Figtree', sans-serif",
             color: 'var(--faint)',
           }}
         >

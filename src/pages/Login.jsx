@@ -1,31 +1,25 @@
 import { useState } from 'react'
 import MolduraConta from '../components/conta/MolduraConta'
-
-// Estilos reutilizados nos rótulos e mensagens do formulário
-const estiloLabel = {
-  font: "500 11px/1 'JetBrains Mono', monospace",
-  letterSpacing: '0.1em',
-  color: 'var(--mut)',
-  textTransform: 'uppercase',
-}
-
-const estiloErro = {
-  marginTop: 7,
-  font: "400 13px/1.3 'Figtree', sans-serif",
-  color: '#d1453b',
-}
+import {
+  CARD_VIDRO,
+  TITULO_CARD,
+  SUBTITULO_CARD,
+  LABEL_CAMPO,
+  MSG_ERRO,
+} from '../components/conta/estilos'
 
 // Validação simples de e-mail (mesma regra do protótipo de design)
 function emailValido(valor) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((valor || '').trim())
 }
 
-// Tela de Entrar — casca da A1 (ESTADO_ATUAL.md §4.3): a MolduraConta traz o
-// SiteHeader único (prompt "Novo por aqui? Criar conta" no slot fixo), a área
-// central de 1 viewport e o footer abaixo da dobra. O card abaixo ainda é o
-// layout antigo — o redesenho fiel ao protótipo (vidro + tokens novos) é a
-// etapa A3. A autenticação real (back-end) é trabalho futuro (D2); por ora
-// apenas valida os campos e simula o envio.
+// Tela de Entrar — card de vidro fiel ao overlay do protótipo (A3,
+// ESTADO_ATUAL.md §4.3): h1 Spectral 34, labels mono, inputs sobre --bg com
+// foco verde, linha da senha com "Esqueceu?", botão primário DOURADO,
+// divisor "ou" e rodapé de troca. O vidro no lugar do fundo opaco do
+// protótipo é desvio consciente (D12) para o fundo de vértices aparecer.
+// A autenticação real (back-end) é trabalho futuro (D2); por ora apenas
+// valida os campos e simula o envio.
 function Login({ onHome, onSignup, onGrafos }) {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -57,40 +51,14 @@ function Login({ onHome, onSignup, onGrafos }) {
       trocaAcao="Criar conta"
       onTrocar={onSignup}
     >
-      {/* Card do formulário (layout antigo — vira vidro fiel ao protótipo na A3);
-          a largura máxima vem do miolo da moldura (LARGURA_CARD) */}
-      <div
-        style={{
-          width: '100%',
-          background: 'var(--card)',
-          border: '1px solid var(--line)',
-          borderRadius: 18,
-          padding: '40px 36px',
-        }}
-      >
-        <h2
-          style={{
-            margin: 0,
-            font: "600 28px/1.1 'Figtree', sans-serif",
-            letterSpacing: '-0.025em',
-            color: 'var(--ink)',
-          }}
-        >
-          Entrar
-        </h2>
-        <p
-          style={{
-            margin: '8px 0 28px',
-            font: "400 15px/1.5 'Figtree', sans-serif",
-            color: 'var(--mut)',
-          }}
-        >
-          Acesse e continue de onde você parou nos seus grafos.
-        </p>
+      {/* a largura máxima (400, a do protótipo) vem do miolo da moldura */}
+      <div style={CARD_VIDRO}>
+        <h1 style={TITULO_CARD}>Entrar</h1>
+        <p style={SUBTITULO_CARD}>Acesse e continue de onde você parou nos seus grafos.</p>
 
-        {/* Campo: e-mail */}
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ ...estiloLabel, display: 'block', marginBottom: 8 }}>E-mail</label>
+        {/* Campo: e-mail (mb 20, como no protótipo) */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ ...LABEL_CAMPO, display: 'block', marginBottom: 8 }}>E-mail</label>
           <input
             type="email"
             value={email}
@@ -101,11 +69,11 @@ function Login({ onHome, onSignup, onGrafos }) {
             placeholder="voce@escola.edu.br"
             className={`eg-input${erroEmail ? ' eg-input-erro' : ''}`}
           />
-          {erroEmail && <div style={estiloErro}>{erroEmail}</div>}
+          {erroEmail ? <div style={MSG_ERRO}>{erroEmail}</div> : null}
         </div>
 
-        {/* Campo: senha */}
-        <div style={{ marginBottom: 10 }}>
+        {/* Campo: senha (mb 24) com o "Esqueceu?" na linha do rótulo */}
+        <div style={{ marginBottom: 24 }}>
           <div
             style={{
               display: 'flex',
@@ -114,13 +82,9 @@ function Login({ onHome, onSignup, onGrafos }) {
               marginBottom: 8,
             }}
           >
-            <label style={estiloLabel}>Senha</label>
+            <label style={LABEL_CAMPO}>Senha</label>
             <span
-              style={{
-                font: "400 13px/1 'Figtree', sans-serif",
-                color: 'var(--accent)',
-                cursor: 'pointer',
-              }}
+              style={{ font: "600 13px/1 'Figtree', sans-serif", color: 'var(--green)', cursor: 'pointer' }}
             >
               Esqueceu?
             </span>
@@ -135,36 +99,41 @@ function Login({ onHome, onSignup, onGrafos }) {
             placeholder="••••••••"
             className={`eg-input${erroSenha ? ' eg-input-erro' : ''}`}
           />
-          {erroSenha && <div style={estiloErro}>{erroSenha}</div>}
+          {erroSenha ? <div style={MSG_ERRO}>{erroSenha}</div> : null}
         </div>
 
-        <button
-          onClick={enviar}
-          className="eg-btn-primario"
-          style={{ width: '100%', padding: 14, marginTop: 18, font: "600 16px/1 'Figtree', sans-serif" }}
-        >
+        <button onClick={enviar} className="eg-btn-primario" style={{ width: '100%', padding: 15 }}>
           {enviando ? 'Entrando…' : 'Entrar'}
         </button>
 
-        {/* Divisor "ou" */}
+        {/* Divisor "ou" (mono uppercase, linhas --pill-border) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '24px 0' }}>
-          <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
-          <span style={{ font: "400 12px/1 'Figtree', sans-serif", color: 'var(--faint)' }}>ou</span>
-          <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+          <div style={{ flex: 1, height: 1, background: 'var(--pill-border)' }} />
+          <span
+            style={{
+              font: "400 11px/1 'JetBrains Mono', monospace",
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase',
+              color: 'var(--faint)',
+            }}
+          >
+            ou
+          </span>
+          <div style={{ flex: 1, height: 1, background: 'var(--pill-border)' }} />
         </div>
 
         <p
           style={{
             margin: 0,
             textAlign: 'center',
-            font: "400 14px/1 'Figtree', sans-serif",
-            color: 'var(--mut)',
+            font: "400 14px/1.4 'Figtree', sans-serif",
+            color: 'var(--muted)',
           }}
         >
           Ainda não tem conta?{' '}
           <span
             onClick={onSignup}
-            style={{ fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}
+            style={{ fontWeight: 700, color: 'var(--green)', cursor: 'pointer' }}
           >
             Criar conta
           </span>

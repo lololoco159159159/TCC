@@ -17,8 +17,11 @@ skill — o objetivo é entender o estado do trabalho antes de qualquer tarefa.
    protótipos "bundled" da pasta `design/` (§5), as convenções do código (§6)
    e a estrutura de arquivos (§7). O arquivo passa de 1.000 linhas: leia TODO,
    em mais de uma chamada de Read se for preciso — não responda a partir de
-   leitura parcial.
-2. **DECISOES.md** (raiz do repo) — as decisões de projeto (D1, D2, D3…),
+   leitura parcial. **Como ler / decodificar os protótipos "bundled" da pasta
+   `design/`** (a receita com o script Python, a ordem das seções e as
+   particularidades do protótipo do grafo) está no **§5 do ESTADO_ATUAL.md** —
+   consulte-o sempre que precisar abrir um protótipo.
+2. **guia/DECISOES.md** — as decisões de projeto (D1, D2, D3…),
    cada uma com problema, decisão, alternativas rejeitadas, fala pronta para a
    banca e parágrafo de monografia. É o material de defesa e de escrita do
    TCC. Regra do projeto: decisão relevante nova ganha entrada lá na hora,
@@ -40,7 +43,7 @@ skill — o objetivo é entender o estado do trabalho antes de qualquer tarefa.
   acadêmica — ver D2): as telas de conta são especificação visual e o app é
   uma demonstração local para a banca.
 - O trabalho acontece em **duas máquinas**: tudo que importa para continuar
-  precisa estar nos arquivos versionados (ESTADO_ATUAL.md, DECISOES.md),
+  precisa estar nos arquivos versionados (ESTADO_ATUAL.md, guia/DECISOES.md),
   nunca apenas na conversa ou no CLAUDE.md.
 - Os commits são feitos **pelo autor** — implemente, verifique
   (`npm run lint` / `npm run build` / `npm run dev`), registre a etapa no

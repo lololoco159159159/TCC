@@ -13,7 +13,7 @@
 > formato do cabeçalho — inclusive o **parágrafo de monografia** (tom acadêmico,
 > com o capítulo onde encaixa).
 
-Última atualização: 2026-07-12.
+Última atualização: 2026-07-16.
 
 ---
 
@@ -1052,51 +1052,71 @@ strings/template literals (lição da R1).
   Teste manual do autor: navegar Home ↔ Login ↔ Signup ↔ Grafos sem
   deslocamento de logo/nav/logos/toggle; prompt correto e clicável nas 2
   telas; footer só aparece ao rolar.
-- [ ] **A2 — Fundo de vértices**: tokens `--conta-aresta --conta-no-1
-  --conta-no-2 --conta-no-3 --conta-no-4` no [index.css](src/index.css)
-  (claro E escuro — inicialmente os mesmos hex do protótipo; ajustar o
-  contraste do escuro só se necessário, documentando). Criar
-  `src/components/conta/FundoVertices.jsx`: porte verbatim da classe
-  (Particle, size com DPR cap 2, createParticles por densidade, update com
-  rejeição barata `min(|dx|,|dy|)` antes da euclidiana, nó-cursor,
-  startSpawn 3+gotejamento/50ms, ResizeObserver, cleanup completo de
-  RAF/interval/listeners — inclusive o `mouseup` na window) como componente
-  React (useRef/useEffect, canvas próprio). Cores resolvidas dos tokens via
-  `getComputedStyle`, re-lidas na troca de `data-theme` (padrão GrafoCanvas).
-  Usar `getBoundingClientRect()` para dimensões e coordenadas (o App aplica
-  `zoom: fontZoom` — offsetWidth é pré-zoom; testar com A/A ≠ 100%).
-  `edugraphPrefs.semAnim` ligado → campo ESTÁTICO: partículas com opacity 1,
-  frame único, sem nó-cursor nem spawn por clique (D6). Montar na
-  MolduraConta (`absolute inset:0, zIndex:0, cursor:'crosshair'`). Verificar:
-  fade-in ao abrir; arestas < 200px; nó segue o cursor e some ao sair; clique
-  = rajada de 3; segurar goteja; cliques no vazio funcionam e no card NÃO
-  disparam spawn; resize recria; tema escuro recolore na hora; semAnim
-  estático. Commit: `A2: fundo de vértices das telas de conta`.
-- [ ] **A3 — Card de vidro**: reescrever o miolo de Login/Signup fiel ao
-  protótipo — card `maxWidth 400 · borderRadius 22 · padding 40 · border 1px
-  var(--pill-border) · boxShadow '0 34px 80px -42px rgba(0,0,0,.45)'` com o
-  VIDRO acima; h1 Spectral 700 34px (−.01em) `--text`; subtítulo Figtree
-  15/1.5 `--muted` (mb 28); labels JetBrains Mono 11px uppercase ls .14em
-  `--muted` (mb 8); inputs `padding 13px 16px, borderRadius 12, background
-  var(--bg), border 1px var(--pill-border), 15px --text`, focus `--green`
-  (Login: e-mail mb 20, senha mb 24; Signup: nome/e-mail mb 20, senha mb 24);
-  Login: linha da senha com "Esqueceu?" (13px 600 `--green`), divisor "ou"
-  (JetBrains Mono 11px ls .16em `--faint`, linhas `--pill-border`, margin
-  24px 0) e rodapé "Ainda não tem conta? Criar conta" (14px `--muted`, link
-  verde 700); Signup: termos (12.5px/1.55 `--faint`, mt 20). **Botão primário
-  DOURADO** (`--gold`, #fff, radius 999, padding 15, Figtree 700 16px; sem
-  hover de cor no protótipo — manter só o :active atual; qualquer hover extra
-  é desvio a documentar). Placeholders/textos idênticos aos atuais (que já
-  batem com o protótipo). MANTER validações e fluxos atuais (D2): regras,
-  mensagens, `#d1453b` na borda de erro, envio simulado (850/950ms → onHome).
-  Atualizar `.eg-input`/`.eg-btn-primario` no index.css para os tokens/
-  estilos novos (ou substituí-las por classes novas, pelo menor diff), com
-  focus/hover via classe (D8). Registrar **D12** no
-  [DECISOES.md](DECISOES.md) (vidro no card e footer + header unificado como
-  desvios conscientes do overlay; com parágrafo de monografia). Verificar
-  lado a lado com o protótipo aberto no navegador, claro E escuro; validações
-  ok; troca login↔signup ok; vértices visíveis através do card. Commit:
-  `A3: card de vidro fiel ao protótipo`.
+- [x] **A2 — Fundo de vértices** *(2026-07-16)*: tokens `--conta-aresta
+  --conta-no-1..4` no [index.css](src/index.css) (claro E escuro — **mesmos
+  hex do protótipo nos 2 temas**, como no overlay; contraste no preto ficou
+  bom sem ajuste). Criado
+  [src/components/conta/FundoVertices.jsx](src/components/conta/FundoVertices.jsx):
+  porte verbatim da classe `particle-network` (constantes nomeadas —
+  velocity 0.6 · D 200 · fade +0.012 · rajada 3 + gotejamento/50ms ·
+  bounce ±100px · DPR cap 2;
+  rejeição barata `min(|dx|,|dy|)` antes da euclidiana; ResizeObserver
+  recria o campo; cleanup completo de RAF/interval/listeners, inclusive o
+  `mouseup` da window). **Desvios documentados no código:** (a) a partícula
+  guarda o **índice** da cor (não o hex) e a paleta é re-resolvida via
+  `getComputedStyle` na troca de `data-theme` (padrão GrafoCanvas) — o tema
+  recolore sem recriar o campo; (b) dimensões/coordenadas via
+  `getBoundingClientRect()` (zoom do A/A) e, como o zoom não dispara o RO,
+  `fontZoom` é dependência do efeito (mudou = recria, igual a um resize);
+  (c) no resize o nó-cursor é zerado (no protótipo virava referência órfã
+  fora do array); (d) `edugraphPrefs.semAnim` → campo ESTÁTICO (D6):
+  opacity 1, frame único, sem nó-cursor/spawn, cursor default, e um
+  MutationObserver repinta o frame na troca de tema (não há loop RAF);
+  (e) **parâmetros do campo POR TEMA** (`PARAMS_CAMPO`, decisão do autor no
+  mesmo dia): o modo **escuro** segue o protótipo **verbatim** (density
+  13000 · lineWidth 0.7 · raio 1.4–2.6) e o **claro** usa o ajuste do autor
+  (campo mais denso de nós menores: 7500 · 0.4 · raio 1); trocar o tema
+  recria o campo, pois a densidade muda.
+  Montado na MolduraConta (`absolute inset:0, zIndex 0`, crosshair);
+  header/main/footer seguem em zIndex 1 — o SiteHeader é opaco (`--bg`) e
+  cobre o canvas, como o header do overlay do protótipo. Verificado:
+  `npm run lint` (0/0), `npm run build` (274.45 → 278.50 kB, CSS 7.45 →
+  7.67 kB, sem dependência nova) e `npm run dev` (200 nos módulos
+  novos/alterados). **Teste manual do autor:** fade-in ao abrir; arestas
+  < 200px; nó segue o cursor e some ao sair; clique = rajada de 3; segurar
+  goteja; sem spawn sobre card/header/footer; resize recria; tema escuro
+  recolore na hora; A/A ≠ 100% não desalinha; semAnim estático. Commit:
+  `A2: fundo de vértices das telas de conta`.
+- [x] **A3 — Card de vidro** *(2026-07-16)*: miolo de
+  [Login.jsx](src/pages/Login.jsx) e [Signup.jsx](src/pages/Signup.jsx)
+  reescrito fiel ao overlay do protótipo — card `borderRadius 22 · padding
+  40 · border 1px var(--pill-border) · boxShadow '0 34px 80px -42px
+  rgba(0,0,0,.45)'` com o **VIDRO** (`color-mix` 72% de `--pill-bg` +
+  `blur(14px) saturate(1.15)` — o 72% da receita ficou legível nos 2 temas,
+  sem calibração extra); h1 **Spectral 700 34px** (−.01em); subtítulo 15/1.5
+  `--muted`; labels JetBrains Mono 11px uppercase .14em; margens do
+  protótipo (e-mail/nome mb 20, senha mb 24); Login com "Esqueceu?" (13px
+  600 verde), divisor "ou" mono e rodapé de troca (link verde 700); Signup
+  com termos (12.5px/1.55 `--faint`, mt 20). Estilos compartilhados dos 2
+  cards em **[src/components/conta/estilos.js](src/components/conta/estilos.js)**
+  (CARD_VIDRO/TITULO/SUBTITULO/LABEL/MSG_ERRO — padrão do grafo/estilos.js,
+  R6). No [index.css](src/index.css): `.eg-input` atualizada para os tokens
+  novos (padding 13px 16px, `--bg`/`--pill-border`/`--text`, focus só
+  borda `--green`, sem sombra — deixou de usar `--line-strong` e
+  `--accent-rgb`) e `.eg-btn-primario` virou o **botão DOURADO** do
+  protótipo (`--gold`, 700 16px; **:hover de cor removido** — o protótipo
+  não tem; ficou só o :active, desvio documentado; deixou de usar
+  `--accent`/`--accent-hover`). `LARGURA_CARD` 430 → **400** na
+  MolduraConta (largura do protótipo). Validações, mensagens, `#d1453b` e
+  envio simulado (850/950ms → onHome) **intocados** (D2). **D12 registrada
+  no [guia/DECISOES.md](guia/DECISOES.md)** (header unificado + card/footer
+  de vidro, com parágrafo de monografia). Boas práticas aplicadas no
+  reescrito: erros renderizados com ternário (não `&&`) e estilos estáticos
+  içados para módulo. Verificado: `npm run lint` (0/0), `npm run build`
+  (278.50 → 278.24 kB, CSS 7.67 → 7.50 kB) e `npm run dev` (200 nos 5
+  módulos alterados). **Teste manual do autor:** lado a lado com o protótipo
+  no navegador, claro E escuro; validações; troca login↔signup; vértices
+  visíveis através do vidro. Commit: `A3: card de vidro fiel ao protótipo`.
 - [ ] **A4 — Footer de vidro**: prop `vidro` no
   [Footer.jsx](src/components/Footer.jsx) (default false → byte-idêntico ao
   atual): quando true, `background: 'color-mix(in srgb, var(--bg2) 20%,
