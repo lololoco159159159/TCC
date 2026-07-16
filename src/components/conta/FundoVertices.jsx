@@ -40,8 +40,8 @@ const DPR_MAX = 2
 
 // Parâmetros por tema (densidade = px² por partícula → qtd = w·h/densidade)
 const PARAMS_CAMPO = {
-  light: { densidade: 7500, larguraAresta: 0.4, raioMin: 1, raioMax: 1.4 }, // ajuste do autor
-  dark: { densidade: 13000, larguraAresta: 0.7, raioMin: 1.4, raioMax: 2.6 }, // protótipo verbatim
+  light: { densidade: 7500, larguraAresta: 0.4, raioMin: 2, raioMax: 1.4 }, // ajuste do autor
+  dark: { densidade: 13000, larguraAresta: 0.7, raioMin: 2.4, raioMax: 2.6 }, // protótipo verbatim
 }
 
 function rand(min, max) {

@@ -1090,10 +1090,15 @@ strings/template literals (lição da R1).
 - [x] **A3 — Card de vidro** *(2026-07-16)*: miolo de
   [Login.jsx](src/pages/Login.jsx) e [Signup.jsx](src/pages/Signup.jsx)
   reescrito fiel ao overlay do protótipo — card `borderRadius 22 · padding
-  40 · border 1px var(--pill-border) · boxShadow '0 34px 80px -42px
-  rgba(0,0,0,.45)'` com o **VIDRO** (`color-mix` 72% de `--pill-bg` +
-  `blur(14px) saturate(1.15)` — o 72% da receita ficou legível nos 2 temas,
-  sem calibração extra); h1 **Spectral 700 34px** (−.01em); subtítulo 15/1.5
+  40` com a **superfície de vidro do GrafoPainel** (`color-mix` 72% de
+  `--pill-bg` + `blur(14px) saturate(1.15)` + borda `--edge 95%` + sombra
+  difusa `0 24px 60px rgba(28,38,32,.18)`; 72% legível nos 2 temas).
+  **Ajuste sobre o spec do roadmap** (pedido do autor): a borda sólida
+  `--pill-border` e a sombra escura/concentrada `0 34px 80px -42px
+  rgba(0,0,0,.45)` do card **opaco** do protótipo faziam o card ler como
+  painel sólido — trocadas pela borda/sombra do painel de grafos (que a D12
+  já cita como a receita de vidro), para ler como vidro fosco de fato.
+  h1 **Spectral 700 34px** (−.01em); subtítulo 15/1.5
   `--muted`; labels JetBrains Mono 11px uppercase .14em; margens do
   protótipo (e-mail/nome mb 20, senha mb 24); Login com "Esqueceu?" (13px
   600 verde), divisor "ou" mono e rodapé de troca (link verde 700); Signup
