@@ -26,7 +26,8 @@
       "Bash(git -C /home/lorenzo/tcc_implementacao/TCC log --oneline -12)",
       "Bash(python3 -)",
       "Bash(curl -s -o /dev/null -w \"GrafoCanvas.jsx -> HTTP %{http_code}\\\\n\" \"http://localhost:5173/src/components/grafo/GrafoCanvas.jsx\")",
-      "Bash(curl -s \"http://localhost:5173/src/components/grafo/GrafoCanvas.jsx\")"
+      "Bash(curl -s \"http://localhost:5173/src/components/grafo/GrafoCanvas.jsx\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"http://localhost:5173/src/components/grafo/GrafoCanvas.jsx\")"
     ],
     "additionalDirectories": [
       "/home/lorenzo/tcc_implementacao/TCC/.claude/skills"

@@ -1358,8 +1358,87 @@ o commit é do autor.
     sem dependência nova) e `npm run dev` (200). Nenhuma mudança de
     comportamento no motor: as únicas adições ao caminho quente são três
     `performance.now()` atrás da constante `MEDIR`.
-- [ ] **P2 — Loop sob demanda** *(o coração da mudança)*: trocar o `tick()`
-  perpétuo por um loop que **para quando não há o que fazer**.
+- [x] **P2 — Loop sob demanda** *(2026-07-29; o coração da mudança)*: o `tick()`
+  perpétuo virou um loop que **para quando não há o que fazer**.
+
+  **Resultado medido (mesma máquina e mesmo método da P1):**
+
+  | Cenário | Antes (P1) | Depois (P2) |
+  |---|---|---|
+  | Grafo **parado** | 59,0 desenhos/s · 3,87 ms | **0 desenhos/s · 0 ms** |
+  | **Arrastando um nó** | 52,6 · 2,58 ms | 58,9 · 3,53 ms |
+  | **Zoom** | 52,5 · 1,24 ms | 38,0 · 4,25 ms (pico 19 ms) |
+
+  **Como ler esses números.** O que a etapa promete é a **primeira linha**: com a
+  tela ociosa o motor deixou de gastar ~228 ms de desenho por segundo (~um quarto
+  de núcleo) e passou a gastar **zero**. As outras duas linhas continuam
+  desenhando **de propósito** — arrastar e dar zoom são exatamente os momentos em
+  que a tela precisa mudar. No zoom o número de desenhos caiu de 52,5 para 38,0
+  porque agora o motor desenha **uma vez por evento de roda** em vez de 60×/s
+  independentemente (o `aoRolar` já escrevia a câmera direto, sem interpolação).
+  Os **ms por desenho não são comparáveis entre amostras**: o custo do quadro
+  depende fortemente do nível de zoom (a densidade do grid é `w·h/(34·k)²`), e as
+  amostras não estão no mesmo `k`. O **pico de 19 ms** no zoom é a melhor pista
+  até agora de que o grid domina o quadro — alvo da P3(a).
+
+  **Implementação** em [GrafoCanvas.jsx](src/components/grafo/GrafoCanvas.jsx):
+  - `pedirFrame()` é o **único** ponto do arquivo que agenda `requestAnimationFrame`;
+    `rafRef` (0 = dormindo) e `sujo` (pedido pendente) controlam o estado.
+  - `precisaContinuar()` decide ao fim de cada quadro: física quente **ou**
+    arraste **ou** câmera interpolando **ou** pedido pendente; nada disso → dorme.
+  - Acordam o motor: `enquadrar`, `centrarEm`, `zoomCam`, `reaquecer`, `assentar`,
+    o efeito de recorte novo e os handlers de ponteiro (descer, arrastar, pan,
+    wheel, soltar).
+  - **Hover só acorda quando o nó sob o ponteiro muda** — passear o mouse pelo
+    vazio não desenha nada (era o caso mais comum).
+  - **Grafo vazio não conta como "quente"**: o `alpha = 1` do recorte novo
+    esquentava a simulação mesmo sem nós e manteria o loop girando ~6 s à toa —
+    agora a tela do card-convite fica em zero desenho.
+  - **Rede de segurança**: efeito em `[nos, arestas, selecionadoId, formas,
+    semAnim]` pedindo um quadro, para mudanças de prop que não passam pelo
+    reaquecimento da página (seleção e modo formas, por exemplo).
+  - **Antecipado da P3(b)/(c) por necessidade, não por otimização:**
+    `ResizeObserver` no canvas e `MutationObserver` em `<html>` (`data-theme` +
+    `style`) **só para acordar o motor**. Sem eles a P2 regrediria: com o loop
+    dormindo, redimensionar deixaria o canvas esticado (o backing store HiDPI só
+    é refeito dentro do quadro) e trocar tema/paleta manteria as cores antigas até
+    a próxima interação. A leitura da paleta segue **dentro do quadro**, com o
+    motivo documentado desde a G9; a P3(c) remove a sondagem por quadro.
+  - **Lacuna conhecida, fechada na P3(b):** trocar de monitor (muda o
+    `devicePixelRatio` sem mudar o tamanho em CSS) não acorda o motor. Antes se
+    auto-corrigia porque o loop rodava sempre.
+  - Uma diretiva `eslint-disable` nova (deps do efeito de interações): `pedirFrame`
+    só mexe em refs, e incluí-lo religaria todos os listeners a cada render.
+
+  **Revisão pelo skill `vercel-react-best-practices` (na mesma sessão, a pedido
+  do autor):**
+  - **Regressão encontrada e corrigida — zoom do widget A/A.** O App aplica
+    `zoom: fontZoom` no root, o que muda o `getBoundingClientRect()` (e portanto
+    o backing store HiDPI) **sem disparar o ResizeObserver**, porque o box em px
+    CSS não muda. Antes da P2 isso se auto-corrigia, já que o loop recalculava
+    todo quadro; com o motor dormindo, o canvas ficaria **borrado** até a
+    próxima interação. Corrigido com `fontZoom` (do `useTheme`) como dependência
+    do efeito de redesenho — dependência **primitiva**, como manda a regra
+    `rerender-dependencies`. **A mesma armadilha já estava documentada no
+    [FundoVertices.jsx](src/components/conta/FundoVertices.jsx) desde a A2**: o
+    precedente do próprio projeto é que confirmou o diagnóstico.
+  - **`rendering-hoist-jsx`**: o objeto de `style` do `<canvas>` é 100% estático
+    e era recriado a cada render — içado para o módulo (`ESTILO_CANVAS`). Não
+    realoca e o React pula o diff de style (mesma identidade).
+  - **Já em conformidade** (confirmado, sem mudança): `rerender-use-ref-transient-values`
+    (hover, arraste, câmera e medidor vivem em refs — nenhum re-render por
+    quadro) e `advanced-event-handler-refs` (`onSelecionar`/`onExpandir` em refs,
+    para não religar listeners).
+  - **Avaliado e mantido de propósito:** as deps do efeito de rede de segurança
+    usam `nos`/`arestas` (objetos, não primitivos). Trocar por `.size`/`.length`
+    perderia o caso de uma expansão que acrescenta arestas sem acrescentar nós;
+    e todo `setGrafo` da página cria identidades novas (conferido), então o
+    disparo é confiável. O custo de um disparo supérfluo é um único quadro.
+  - **Confirmado como escopo da P3, não da P2:** a sondagem de tema/paleta por
+    quadro ficou **redundante** com o `MutationObserver` — é a P3(c) que a
+    remove; e o `getBoundingClientRect()` por quadro é a P3(b).
+  - Verificado: `npm run lint` (**0/0**), `npm run build` (283,09 → **283,89 kB**,
+    sem dependência nova) e `npm run dev` (200).
   - `sujo` (ref) + `pedirFrame()`: liga o RAF se ele não estiver rodando e marca
     que é preciso desenhar; nenhum outro ponto do arquivo chama
     `requestAnimationFrame` direto.

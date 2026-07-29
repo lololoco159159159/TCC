@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
+import { useTheme } from '../../context/useTheme'
 import { RELACOES } from '../../data/mockFuseki'
 
 // Canvas 2D do grafo de conhecimento — porte fiel do motor do protótipo
@@ -16,8 +17,11 @@ import { RELACOES } from '../../data/mockFuseki'
 // 2×clique seleciona + expande (onExpandir); reaquecer(nivel) assenta a
 // expansão/desfazer sem re-enquadrar. As cores vêm dos tokens CSS
 // (claro/escuro), resolvidas por getComputedStyle. Etapa P1 (§4.4): medidor de
-// desempenho dev-only — a linha de base do "antes/depois" da renderização sob
-// demanda (P2), que ainda NÃO está implementada aqui.
+// desempenho dev-only. Etapa P2: o loop de desenho deixou de ser perpétuo —
+// RENDERIZAÇÃO SOB DEMANDA. O motor só fica acordado enquanto há movimento
+// (física quente, arraste, câmera interpolando) ou um pedido pendente; quando
+// não há, ele dorme e volta a zero desenho por segundo. Todo ponto que muda
+// algo visível chama pedirFrame(), o único lugar que agenda um rAF.
 
 // Limites do zoom da câmera (clamp do protótipo). Atenção: o fit-to-view do
 // enquadrar() usa a própria faixa 0.2–1.5 — é OUTRO limite, não unificar.
@@ -37,6 +41,18 @@ const ZOOM_MAX = 3
 // ---------------------------------------------------------------------------
 const MEDIR = import.meta.env.DEV
 const JANELA_RELATO_MS = 2000 // tamanho da janela de amostragem do relatório
+
+// Estilo do <canvas>: 100% estático, então vive fora do componente — não
+// realoca a cada render e o React pula o diff de style (mesma identidade).
+const ESTILO_CANVAS = {
+  position: 'absolute',
+  inset: 0,
+  width: '100%',
+  height: '100%',
+  display: 'block',
+  cursor: 'grab',
+  touchAction: 'none', // sem isto o navegador rouba o pointermove para rolar a página (touch)
+}
 
 // Lê os tokens do design system para uso no canvas (que não entende var()).
 function lerPaleta() {
@@ -75,6 +91,13 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
   },
   ref,
 ) {
+  // zoom do widget A/A: muda o rect (e o backing store HiDPI) SEM disparar o
+  // ResizeObserver — o box em px CSS não muda, porque o App aplica `zoom` no
+  // root. Mesma armadilha já documentada no FundoVertices (A2): aqui entra como
+  // dependência do efeito de redesenho, senão o canvas fica borrado até a
+  // próxima interação (regressão que a P2 introduziria ao deixar o loop dormir).
+  const { fontZoom } = useTheme()
+
   const canvasRef = useRef(null)
   const cam = useRef({ x: 0, y: 0, k: 1 })
   const alvoCam = useRef(null)
@@ -89,6 +112,12 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
   // re-render, ou a medida mudaria o que ela está medindo.
   const medida = useRef({ quadros: 0, somaDesenho: 0, somaFisica: 0, picoDesenho: 0, inicio: 0 })
   const janelaOciosaAnterior = useRef(false) // evita repetir "0 desenhos/s" no console
+
+  // Renderização SOB DEMANDA (P2): o loop não é perpétuo. `rafRef` guarda o
+  // handle do quadro agendado (0 = motor dormindo) e `sujo` marca que alguém
+  // pediu um redesenho. Quem mexe em qualquer coisa visível chama pedirFrame().
+  const rafRef = useRef(0)
+  const sujo = useRef(true) // o primeiro quadro sempre acontece (grid inicial)
 
   // dados/props sempre atuais para o loop de desenho (sem religar o RAF a cada render)
   const dados = useRef({ nos, arestas })
@@ -171,6 +200,7 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     alpha.current = 1
     for (let i = 0; i < iteracoes; i++) fisica()
     alpha.current = 0
+    pedirFrame() // as posições mudaram de uma vez: um quadro mostra o resultado
   }
 
   // recorte novo: reaquece a simulação (alpha = 1) e enquadra depois que o
@@ -183,6 +213,7 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       return undefined
     }
     alpha.current = 1
+    pedirFrame() // física quente: o loop se mantém acordado sozinho a partir daqui
     const t = setTimeout(enquadrar, 420)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -212,12 +243,14 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     const livre = Math.max(240, rt.width - L)
     const k = Math.min(1.5, Math.max(0.2, Math.min(livre / (x1 - x0 + 260), rt.height / (y1 - y0 + 260))))
     alvoCam.current = { x: (x0 + x1) / 2 - L / (2 * k), y: (y0 + y1) / 2, k }
+    pedirFrame()
   }
 
   // aproxima/afasta em passos (botões +/− da página), com os clamps do protótipo
   function zoomCam(fator) {
     const c = cam.current
     alvoCam.current = { x: c.x, y: c.y, k: Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, c.k * fator)) }
+    pedirFrame()
   }
 
   // leva a câmera até um nó (busca, painel da G7, deep-link da G11)
@@ -226,13 +259,17 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     if (!n) return
     const k = Math.max(cam.current.k, 1)
     alvoCam.current = { x: n.x - offsetPainel() / (2 * k), y: n.y, k }
+    pedirFrame()
   }
 
   // reaquece a simulação sem re-enquadrar (expansão 0.8 / desfazer 0.5, G8);
   // no modo sem animação assenta o layout de uma vez, como o protótipo
   function reaquecer(nivel) {
     if (semAnimRef.current) assentar(nivel >= 0.8 ? 160 : 120)
-    else alpha.current = Math.max(alpha.current, nivel)
+    else {
+      alpha.current = Math.max(alpha.current, nivel)
+      pedirFrame()
+    }
   }
 
   useImperativeHandle(ref, () => ({
@@ -433,68 +470,119 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     if (msDesenho > m.picoDesenho) m.picoDesenho = msDesenho
   }
 
-  // loop de desenho: HiDPI + câmera com aproximação suave (lerp 0.14/frame)
-  useEffect(() => {
-    let raf = 0
-    const tick = () => {
-      raf = requestAnimationFrame(tick)
-      const cv = canvasRef.current
-      if (!cv) return
-      // Re-resolve os tokens quando o data-theme do <html> troca. Lemos o
-      // atributo aqui (e não num efeito atrelado ao ThemeContext) porque o
-      // efeito do filho roda ANTES de o Provider aplicar o atributo — a
-      // paleta ficaria sempre um toggle atrasada (halo/grid do tema anterior).
-      // A chave inclui os overrides inline dos TRÊS tokens --no-* (paleta de
-      // daltonismo, G9): lê-se o VALOR escrito no <html>, e não uma prop,
-      // para o cache só virar quando os tokens novos já estão aplicados.
-      // Os três entram na chave porque paletas distintas compartilham cores
-      // (protanopia e deuteranopia diferem só na disciplina).
-      const tema = document.documentElement.getAttribute('data-theme') || 'light'
-      const estilo = document.documentElement.style
-      const chave = `${tema}|${estilo.getPropertyValue('--no-habilidade')}|${estilo.getPropertyValue('--no-conceito')}|${estilo.getPropertyValue('--no-disciplina')}`
-      if (!paleta.current || chave !== temaLido.current) {
-        temaLido.current = chave
-        paleta.current = lerPaleta()
-      }
-      const rt = cv.getBoundingClientRect()
-      const dpr = window.devicePixelRatio || 1
-      if (cv.width !== Math.round(rt.width * dpr) || cv.height !== Math.round(rt.height * dpr)) {
-        cv.width = Math.round(rt.width * dpr)
-        cv.height = Math.round(rt.height * dpr)
-      }
-      // física roda enquanto a simulação está quente (ou durante um arraste)
-      const t0 = MEDIR ? performance.now() : 0
-      if (!semAnimRef.current && (alpha.current > 0.012 || dragRef.current)) fisica()
-      const msFisica = MEDIR ? performance.now() - t0 : 0
-      const a = alvoCam.current
-      if (a) {
-        const c = cam.current
-        if (semAnimRef.current) {
-          c.x = a.x
-          c.y = a.y
-          c.k = a.k
-          alvoCam.current = null
-        } else {
-          c.x += (a.x - c.x) * 0.14
-          c.y += (a.y - c.y) * 0.14
-          c.k += (a.k - c.k) * 0.14
-          if (Math.abs(a.x - c.x) < 0.5 && Math.abs(a.k - c.k) < 0.004) alvoCam.current = null
-        }
-      }
-      const t1 = MEDIR ? performance.now() : 0
-      desenhar(cv, rt)
-      if (MEDIR) acumular(msFisica, performance.now() - t1)
+  // O motor continua acordado enquanto houver algo em movimento: física quente,
+  // arraste em curso, câmera interpolando — ou um pedido de redesenho pendente.
+  // Com o grafo vazio a física não conta (o alpha do recorte novo esquenta a
+  // simulação mesmo sem nós, e manteria o loop girando ~6s à toa).
+  function precisaContinuar() {
+    if (sujo.current) return true
+    if (alvoCam.current) return true
+    if (semAnimRef.current) return false // sem animação: nada evolui sozinho
+    if (dragRef.current) return true
+    return alpha.current > 0.012 && dados.current.nos.size > 0
+  }
+
+  // Pede um quadro. Se o motor estiver dormindo, acorda; se já estiver acordado,
+  // só marca que o próximo quadro tem trabalho a fazer. É o ÚNICO ponto do
+  // arquivo que agenda um requestAnimationFrame.
+  function pedirFrame() {
+    sujo.current = true
+    if (!rafRef.current) rafRef.current = requestAnimationFrame(quadro)
+  }
+
+  // um quadro: HiDPI + física + câmera com aproximação suave (lerp 0.14/frame)
+  function quadro() {
+    rafRef.current = 0
+    const cv = canvasRef.current
+    if (!cv) return // desmontado entre o agendamento e a execução: o motor dorme
+    sujo.current = false // o pedido está sendo atendido AGORA
+    // Re-resolve os tokens quando o data-theme do <html> troca. Lemos o
+    // atributo aqui (e não num efeito atrelado ao ThemeContext) porque o
+    // efeito do filho roda ANTES de o Provider aplicar o atributo — a
+    // paleta ficaria sempre um toggle atrasada (halo/grid do tema anterior).
+    // A chave inclui os overrides inline dos TRÊS tokens --no-* (paleta de
+    // daltonismo, G9): lê-se o VALOR escrito no <html>, e não uma prop,
+    // para o cache só virar quando os tokens novos já estão aplicados.
+    // Os três entram na chave porque paletas distintas compartilham cores
+    // (protanopia e deuteranopia diferem só na disciplina).
+    const tema = document.documentElement.getAttribute('data-theme') || 'light'
+    const estilo = document.documentElement.style
+    const chave = `${tema}|${estilo.getPropertyValue('--no-habilidade')}|${estilo.getPropertyValue('--no-conceito')}|${estilo.getPropertyValue('--no-disciplina')}`
+    if (!paleta.current || chave !== temaLido.current) {
+      temaLido.current = chave
+      paleta.current = lerPaleta()
     }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+    const rt = cv.getBoundingClientRect()
+    const dpr = window.devicePixelRatio || 1
+    if (cv.width !== Math.round(rt.width * dpr) || cv.height !== Math.round(rt.height * dpr)) {
+      cv.width = Math.round(rt.width * dpr)
+      cv.height = Math.round(rt.height * dpr)
+    }
+    // física roda enquanto a simulação está quente (ou durante um arraste)
+    const t0 = MEDIR ? performance.now() : 0
+    if (!semAnimRef.current && (alpha.current > 0.012 || dragRef.current)) fisica()
+    const msFisica = MEDIR ? performance.now() - t0 : 0
+    const a = alvoCam.current
+    if (a) {
+      const c = cam.current
+      if (semAnimRef.current) {
+        c.x = a.x
+        c.y = a.y
+        c.k = a.k
+        alvoCam.current = null
+      } else {
+        c.x += (a.x - c.x) * 0.14
+        c.y += (a.y - c.y) * 0.14
+        c.k += (a.k - c.k) * 0.14
+        if (Math.abs(a.x - c.x) < 0.5 && Math.abs(a.k - c.k) < 0.004) alvoCam.current = null
+      }
+    }
+    const t1 = MEDIR ? performance.now() : 0
+    desenhar(cv, rt)
+    if (MEDIR) acumular(msFisica, performance.now() - t1)
+    // fim do quadro: só reagenda se ainda houver movimento — senão, dorme
+    if (precisaContinuar()) rafRef.current = requestAnimationFrame(quadro)
+  }
+
+  // Montagem: primeiro quadro + os dois observadores que precisam ACORDAR o
+  // motor enquanto ele dorme. Antecipados da P3(b)/(c) porque sem eles a P2
+  // regride: com o loop dormindo, redimensionar a janela deixaria o canvas
+  // esticado (o backing store HiDPI só é refeito dentro do quadro) e trocar o
+  // tema/paleta manteria as cores antigas até a próxima interação.
+  useEffect(() => {
+    const cv = canvasRef.current
+    pedirFrame()
+
+    const ro = new ResizeObserver(() => pedirFrame())
+    if (cv) ro.observe(cv)
+
+    // dispara DEPOIS de o atributo estar aplicado no <html> — a leitura da
+    // paleta dentro do quadro já encontra os tokens novos (mesmo motivo
+    // documentado acima, agora sem precisar sondar a cada quadro)
+    const mo = new MutationObserver(() => pedirFrame())
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'style'] })
+
+    return () => {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = 0
+      ro.disconnect()
+      mo.disconnect()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Rede de segurança: qualquer mudança de dado ou de prop que altere o desenho
+  // pede um quadro. A página já reaquece a física ao expandir/desfazer, mas
+  // seleção, formas, recortes fundidos e o zoom A/A não passam por lá.
+  useEffect(() => {
+    pedirFrame()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nos, arestas, selecionadoId, formas, semAnim, fontZoom])
+
   // Relatório do medidor (P1): fecha uma janela a cada 2s, publica em
-  // window.__grafoPerf e loga uma linha. Hoje o loop desenha TODO quadro, então
-  // a janela nunca é ociosa; depois da P2 o esperado é ver "0 desenhos/s" com o
-  // grafo parado — daí a supressão das janelas ociosas repetidas (a primeira
-  // confirma que o motor dormiu; as seguintes só poluiriam o console).
+  // window.__grafoPerf e loga uma linha. Com a renderização sob demanda (P2), a
+  // janela ociosa marca "0 desenhos/s" — a primeira confirma que o motor
+  // dormiu e as seguintes são suprimidas para não poluir o console.
   useEffect(() => {
     if (!MEDIR) return undefined
     medida.current.inicio = performance.now()
@@ -572,6 +660,7 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       } else {
         pan = { sx: p.sx, sy: p.sy, cx: cam.current.x, cy: cam.current.y }
       }
+      pedirFrame()
     }
 
     const aoMover = (ev) => {
@@ -586,6 +675,7 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
         }
         if (!semAnimRef.current) alpha.current = Math.max(alpha.current, 0.25) // vizinhos acompanham
         moveu = true
+        pedirFrame()
         return
       }
       if (pan) {
@@ -593,18 +683,25 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
         cam.current.y = pan.cy - (p.sy - pan.sy) / cam.current.k
         if (Math.hypot(p.sx - pan.sx, p.sy - pan.sy) > 3) moveu = true
         alvoCam.current = null
+        pedirFrame()
         return
       }
       const n = acertar(p)
+      const anterior = hoverRef.current
       hoverRef.current = n ? n.id : null
       cv.style.cursor = n ? 'pointer' : 'grab'
+      // só redesenha se o nó sob o ponteiro MUDOU: passear o mouse pelo vazio
+      // não pode acordar o motor (é o caso mais comum de todos)
+      if (hoverRef.current !== anterior) pedirFrame()
     }
 
     const aoSoltar = () => {
       if (dragRef.current && !moveu) onSelecionarRef.current?.(dragRef.current.id)
       else if (pan && !moveu) onSelecionarRef.current?.(null)
+      const havia = dragRef.current || pan
       dragRef.current = null
       pan = null
+      if (havia) pedirFrame() // encerra o gesto; a física ainda pode estar quente
     }
 
     // 2×clique num nó: seleciona e expande as conexões dele (G8)
@@ -618,8 +715,10 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     // desvio do protótipo: limpa o hover ao sair do palco (senão o tooltip
     // e o destaque ficariam presos no último nó tocado)
     const aoSair = () => {
+      const tinhaHover = hoverRef.current !== null
       hoverRef.current = null
       cv.style.cursor = 'grab'
+      if (tinhaHover) pedirFrame() // apagar o destaque também é um desenho
     }
 
     // zoom ancorado no cursor: o ponto do mundo sob o ponteiro fica parado
@@ -632,6 +731,7 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       cam.current.y = p.y - (p.sy - p.h / 2) / k2
       cam.current.k = k2
       alvoCam.current = null
+      pedirFrame()
     }
 
     cv.addEventListener('pointerdown', aoDescer)
@@ -648,23 +748,12 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       cv.removeEventListener('dblclick', aoDuploClique)
       cv.removeEventListener('wheel', aoRolar)
     }
+    // pedirFrame() só mexe em refs: incluí-lo nas deps religaria todos os
+    // listeners a cada render, sem mudar comportamento nenhum
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  return (
-    <canvas
-      ref={canvasRef}
-      data-grafo-canvas="1"
-      style={{
-        position: 'absolute',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        display: 'block',
-        cursor: 'grab',
-        touchAction: 'none', // sem isto o navegador rouba o pointermove para rolar a página (touch)
-      }}
-    />
-  )
+  return <canvas ref={canvasRef} data-grafo-canvas="1" style={ESTILO_CANVAS} />
 })
 
 export default GrafoCanvas
