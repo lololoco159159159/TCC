@@ -15,12 +15,28 @@ import { RELACOES } from '../../data/mockFuseki'
 // zoomMais, zoomMenos } para os botões da página, a busca e o painel. Etapa G8:
 // 2×clique seleciona + expande (onExpandir); reaquecer(nivel) assenta a
 // expansão/desfazer sem re-enquadrar. As cores vêm dos tokens CSS
-// (claro/escuro), resolvidas por getComputedStyle.
+// (claro/escuro), resolvidas por getComputedStyle. Etapa P1 (§4.4): medidor de
+// desempenho dev-only — a linha de base do "antes/depois" da renderização sob
+// demanda (P2), que ainda NÃO está implementada aqui.
 
 // Limites do zoom da câmera (clamp do protótipo). Atenção: o fit-to-view do
 // enquadrar() usa a própria faixa 0.2–1.5 — é OUTRO limite, não unificar.
 const ZOOM_MIN = 0.18
 const ZOOM_MAX = 3
+
+// ---------------------------------------------------------------------------
+// Medidor de desempenho (P1 do §4.4) — SÓ em desenvolvimento.
+// `import.meta.env.DEV` vira a constante `false` no build de produção: a
+// cronometragem, o relatório, o log e a função acumular() saem do bundle por
+// eliminação de código morto (conferido no dist — zero ocorrências de
+// `__grafoPerf`). Sobra só o inicializador dos refs abaixo: +110 bytes
+// medidos, o preço de os hooks não poderem ser condicionais.
+// Mede o que a P2/P3 vão atacar: quantos DESENHOS por segundo o motor faz e
+// quanto custa cada um.
+// Leitura ao vivo no console do navegador: `window.__grafoPerf`.
+// ---------------------------------------------------------------------------
+const MEDIR = import.meta.env.DEV
+const JANELA_RELATO_MS = 2000 // tamanho da janela de amostragem do relatório
 
 // Lê os tokens do design system para uso no canvas (que não entende var()).
 function lerPaleta() {
@@ -68,6 +84,11 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
   const hoverRef = useRef(null) // nó sob o ponteiro (só o canvas precisa saber — não re-renderiza)
   const selecionadoRef = useRef(null) // espelho da prop para o loop de desenho
   const dragRef = useRef(null) // nó em arraste — a física não integra a posição dele
+
+  // Acumuladores do medidor (P1). São REFS, não estado: medir não pode causar
+  // re-render, ou a medida mudaria o que ela está medindo.
+  const medida = useRef({ quadros: 0, somaDesenho: 0, somaFisica: 0, picoDesenho: 0, inicio: 0 })
+  const janelaOciosaAnterior = useRef(false) // evita repetir "0 desenhos/s" no console
 
   // dados/props sempre atuais para o loop de desenho (sem religar o RAF a cada render)
   const dados = useRef({ nos, arestas })
@@ -403,6 +424,15 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     ctx.restore()
   }
 
+  // soma um quadro à janela corrente do medidor (P1; só roda com MEDIR)
+  function acumular(msFisica, msDesenho) {
+    const m = medida.current
+    m.quadros++
+    m.somaDesenho += msDesenho
+    m.somaFisica += msFisica
+    if (msDesenho > m.picoDesenho) m.picoDesenho = msDesenho
+  }
+
   // loop de desenho: HiDPI + câmera com aproximação suave (lerp 0.14/frame)
   useEffect(() => {
     let raf = 0
@@ -433,7 +463,9 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
         cv.height = Math.round(rt.height * dpr)
       }
       // física roda enquanto a simulação está quente (ou durante um arraste)
+      const t0 = MEDIR ? performance.now() : 0
       if (!semAnimRef.current && (alpha.current > 0.012 || dragRef.current)) fisica()
+      const msFisica = MEDIR ? performance.now() - t0 : 0
       const a = alvoCam.current
       if (a) {
         const c = cam.current
@@ -449,11 +481,47 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
           if (Math.abs(a.x - c.x) < 0.5 && Math.abs(a.k - c.k) < 0.004) alvoCam.current = null
         }
       }
+      const t1 = MEDIR ? performance.now() : 0
       desenhar(cv, rt)
+      if (MEDIR) acumular(msFisica, performance.now() - t1)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Relatório do medidor (P1): fecha uma janela a cada 2s, publica em
+  // window.__grafoPerf e loga uma linha. Hoje o loop desenha TODO quadro, então
+  // a janela nunca é ociosa; depois da P2 o esperado é ver "0 desenhos/s" com o
+  // grafo parado — daí a supressão das janelas ociosas repetidas (a primeira
+  // confirma que o motor dormiu; as seguintes só poluiriam o console).
+  useEffect(() => {
+    if (!MEDIR) return undefined
+    medida.current.inicio = performance.now()
+    const id = setInterval(() => {
+      const m = medida.current
+      const decorridoS = (performance.now() - m.inicio) / 1000
+      const relato = {
+        desenhosPorSegundo: +(m.quadros / decorridoS).toFixed(1),
+        desenharMs: m.quadros ? +(m.somaDesenho / m.quadros).toFixed(2) : 0,
+        picoDesenharMs: +m.picoDesenho.toFixed(2),
+        fisicaMs: m.quadros ? +(m.somaFisica / m.quadros).toFixed(2) : 0,
+        quadros: m.quadros,
+      }
+      window.__grafoPerf = relato
+      if (m.quadros || !janelaOciosaAnterior.current) {
+        console.info(
+          `[grafo] ${relato.desenhosPorSegundo} desenhos/s · desenhar ${relato.desenharMs}ms (pico ${relato.picoDesenharMs}ms) · física ${relato.fisicaMs}ms`,
+        )
+      }
+      janelaOciosaAnterior.current = m.quadros === 0
+      m.quadros = 0
+      m.somaDesenho = 0
+      m.somaFisica = 0
+      m.picoDesenho = 0
+      m.inicio = performance.now()
+    }, JANELA_RELATO_MS)
+    return () => clearInterval(id)
   }, [])
 
   // Interações de ponteiro (G6) — porte fiel dos handlers do protótipo.

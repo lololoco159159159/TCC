@@ -13,7 +13,31 @@
 > formato do cabeçalho — inclusive o **parágrafo de monografia** (tom acadêmico,
 > com o capítulo onde encaixa).
 
-Última atualização: 2026-07-16.
+Última atualização: 2026-07-29.
+
+---
+
+## 0. Regra permanente — autoria do repositório é 100% do autor
+
+**O assistente (Claude Code ou qualquer outra IA) NUNCA pode aparecer como
+contribuidor deste repositório.** Vale para toda sessão, sem exceção e sem
+precisar ser relembrado:
+
+- **Não commita, não faz push, não abre PR, não cria tag/release** e não executa
+  nenhum comando git que escreva no histórico (`commit`, `push`, `merge`,
+  `rebase`, `tag`, `cherry-pick`, `revert`).
+- **Nenhum rastro de autoria** nas mensagens de commit: nada de
+  `Co-Authored-By:`, `Generated with`, `Signed-off-by:`, `--author`, `--amend`
+  com outro nome, alteração de `git config user.name/user.email` ou qualquer
+  menção a IA no texto do commit.
+- **Fluxo correto:** o assistente implementa, verifica (`npm run lint` /
+  `npm run build` / `npm run dev`), registra a etapa neste arquivo e **sugere a
+  mensagem de commit em texto** — quem roda `git commit` / `git push` é sempre o
+  autor. Onde os roadmaps dizem "commitar" (§4.2, §4.3), o sujeito é **o autor**.
+
+**Motivo:** este é um TCC. A autoria do código precisa ser inequívoca no
+histórico do GitHub — para a banca, para a orientadora e para o registro
+acadêmico.
 
 ---
 
@@ -688,8 +712,7 @@ funcional.
 
 **Números finais:** lint **0 erros / 0 warnings**; bundle JS 275.86 → **274.88 kB**
 (−0,35%), CSS **7.45 kB idêntico**; sem dependência nova. Convenções novas
-registradas: **D11** no [DECISOES.md](DECISOES.md). Falta do autor: rodar o
-**checklist de regressão** do §4.2 no navegador.
+registradas: **D11** no [DECISOES.md](DECISOES.md).
 
 #### Ajuste de UX (2026-07-13) — conteúdo do slot de conta CENTRALIZADO
 A pedido do autor (durante a A1 do §4.3, mas vale para o site todo): o conteúdo
@@ -739,8 +762,6 @@ Home/Grafos, contra a regra do §4.3).
 **Bugs encontrados: nenhum.** **Números:** lint **0/0**; bundle JS 278.44 →
 **280.18 kB** (+1,7 kB do form acessível); **CSS 7.50 → 7.33 kB** (−2,3%, os
 aliases fora); sem dependência nova. **D12** já fora registrada na A3.
-**Falta do autor:** rodar o mini-checklist de regressão do §4.3 + spot-check
-de Home/Grafos no navegador; commit `A5: limpeza dos aliases + fechamento`.
 
 #### Adição (2026-07-16) — botão de acessibilidade nas telas de conta
 A pedido do autor (pós-roadmap): Login/Signup ganharam um **botão de
@@ -772,14 +793,15 @@ Ligar deixa o fundo de vértices estático na hora e persiste em
 A landing (Home, Etapas 1–6) e a **página de grafos (G1–G11, Etapas 7–16)** estão
 completas. Restam:
 
-0. ~~Revisão e polimento do código~~ — **concluída** (roadmap §4.2, Etapa 17);
-   falta só o autor rodar o checklist de regressão do §4.2 no navegador.
+0. ~~Revisão e polimento do código~~ — **concluída** (roadmap §4.2, Etapa 17).
 1. ~~**Telas de conta (Entrar / Criar conta)**~~ — **concluída** (roadmap
    §4.3, A0–A5, Etapa 18): fundo de vértices do protótipo, header no
    SiteHeader (slot fixo), card e footer de vidro, aliases órfãos removidos e
-   revisão de acessibilidade das telas. Falta só o autor rodar o
-   mini-checklist do §4.3 no navegador.
-2. **Back-end**: subir um Apache Jena Fuseki real e trocar o mock
+   revisão de acessibilidade das telas.
+2. **Desempenho do motor do grafo**: trocar o loop "sempre ligado" do canvas por
+   **renderização sob demanda** e tirar o arrasto do painel do ciclo de render do
+   React — roadmap §4.4 (P0–P5). Zero mudança visual ou de comportamento.
+3. **Back-end**: subir um Apache Jena Fuseki real e trocar o mock
    (`src/data/mockFuseki.js`, etapa G2) por `fetch` ao endpoint SPARQL — ver a
    receita no cabeçalho do próprio mock e a decisão D1 em [DECISOES.md](DECISOES.md).
 
@@ -887,15 +909,14 @@ marcar aqui antes da próxima.
 
 **Verificação por fase:** `npm run lint` (0 erros, nenhum warning novo; de R5 em
 diante 0 warnings), `npm run build` (bundle igual ou menor — anotar tamanho),
-`npm run dev` (200). Commit só com os três verdes. Ao final de tudo: rodar o
-checklist de regressão (abaixo) no navegador.
+`npm run dev` (200). Commit só com os três verdes.
 
 - [x] **Pré-passo — commit do trabalho pendente**: há mudanças não commitadas
   (G11 + ajustes do autor no GrafoPerfil + .gitignore). Commitar como estão, com
   mensagem própria (ex.: "G11: integração Home–Grafos + ajustes de perfil"), ANTES
   de qualquer limpeza — nenhuma fase pode misturar limpeza com trabalho anterior.
   Anotar o tamanho do bundle (`npm run build`) como baseline.
-- [x] **R0 — Este roadmap** *(2026-07-12)*: seção §4.2 + checklist de regressão.
+- [x] **R0 — Este roadmap** *(2026-07-12)*: seção §4.2 (fases R1–R7b + regras).
 - [x] **R1 — Código morto seguro** *(2026-07-12)*: removida a prop `onLogin`
   passada a `<Grafos>` em `App.jsx` (a página não a aceita desde a G10). **Os 3
   aliases apontados pelo inventário NÃO foram removidos** — o grep obrigatório
@@ -981,66 +1002,7 @@ checklist de regressão (abaixo) no navegador.
   `ao*` callbacks; z-index entrou na R3) e o §7 já estava sincronizado; **D11**
   registrada no DECISOES.md (convenções consolidadas, com parágrafo de
   monografia); bundle final **274.88 kB** × baseline 275.86 kB (−0,35%, CSS
-  idêntico), lint 0/0. **Pendente do autor:** rodar o checklist de regressão
-  abaixo no navegador.
-
-#### Checklist de regressão manual (rodar ao final da revisão, no navegador)
-
-Compilado das notas "Verificado/Teste manual" das Etapas 1–16. Tema claro E escuro
-onde fizer sentido.
-
-**Home:** hero renderiza (título Spectral, CTAs Criar conta/Entrar) · nav Grafos
-navega · globo da GraphSection gira com o scroll e hover realça vizinhos ·
-contadores da StatsBand contam 1 única vez ao entrar na tela · depoimentos desfilam
-e a cortina revela a grade · GradeCard abre popover (fecha no ×, clique fora, Esc);
-chips selecionam; **"Ver o grafo desta turma"** abre a página consultando
-`?serie=X(&disciplina=Y)` (pill de resumo confere) · "Ver todos os grafos →" e
-links do Footer navegam.
-
-**Grafos — fluxo básico:** card-convite no início · pills de série com 3 estados +
-selects + prévia "N vértices" + Filtrar (esmaecido sem mudança) + Limpar ·
-carregando mostra skeleton + spinner · vazio e erro mostram os cards (Tentar
-novamente/Voltar/Limpar funcionam) · resumo do recorte no topo confere nós/
-conexões/ms.
-
-**Grafos — busca:** autocomplete com bolinhas por tipo; Enter escolhe a 1ª; Esc
-fecha · matéria/conceito aplicam na hora · habilidade JÁ no grafo: seleciona e
-centra sem reconsultar · habilidade FORA: abre o recorte do ano dela e
-seleciona/centra ~0,8s depois.
-
-**Grafos — canvas:** hover mostra tooltip e esmaece não-vizinhos (rótulo da aresta
-aparece) · clique seleciona (anel); clique no vazio desseleciona; Esc limpa ·
-arrastar nó move com a física acompanhando · pan e wheel-zoom ancorado no cursor ·
-botões +/−/recentrar · 2×clique expande.
-
-**Grafos — painel:** cheat-sheet sem seleção · com seleção: código, texto
-normativo (spinner antes), pills, conexões navegam (item fora do recorte tem
-"+ expandir" e expande) · botão "Expandir conexões deste nó" · arrastar pela alça,
-redimensionar pela borda, esconder → aba "Painel" reabre · vistos por último
-navegam · a câmera enquadra à direita do painel.
-
-**Grafos — expandir/desfazer:** expansão NÃO re-enquadra a câmera · "Desfazer
-expansão ×N" volta passo a passo e some no zero · recorte novo zera o histórico.
-
-**Grafos — overlays:** legenda: Habilidades fixa (selo FIXO), Conceitos/Matérias
-alternam reconsultando (contagem vira "—") · gaveta SPARQL mostra a consulta real
-(com FILTER ao ocultar tipo) + ms; checkbox 503 faz o próximo Filtrar cair no erro
-(bolinha dourada) · paleta: 4 opções recolorem canvas E pontinhos DOM (testar
-protanopia↔deuteranopia, que compartilham 2 cores); Padrão volta · formas: conceito
-quadrado/matéria triângulo no canvas e nos pontinhos · sem animação: recorte novo
-assenta instantâneo.
-
-**Grafos — perfil/turmas/persistência:** perfil abre/fecha (backdrop, Esc);
-alterar senha mostra aviso · adicionar turma (dedupe), remover, Filtrar aplica
-recorte · botão Turmas na barra idem + "Gerenciar turmas no perfil" · **reload
-preserva** paleta/formas/semAnim/turmas/posição+largura+esc do painel · deep-link
-`?serie=7&disciplina=matematica` direto abre consultando · sair do grafo limpa a
-URL.
-
-**Global:** tema claro↔escuro em ambas as páginas (canvas acompanha na hora, sem
-cor do tema anterior) · widget A/A muda a fonte, persiste no reload e some com
-fade quando o popover de paleta abre · lint 0/0, build sem dependência nova,
-bundle ≤ baseline.
+  idêntico), lint 0/0.
 
 ### 4.3 Telas de conta (Entrar / Criar conta) — caminho por etapas (A0–A5)
 
@@ -1098,7 +1060,7 @@ conferir o header e o footer delas a cada etapa. Os aliases antigos (`--ink
 strings/template literals (lição da R1).
 
 - [x] **A0 — Este roadmap** *(2026-07-12)*: seção §4.3 (espec do protótipo
-  decodificada + desvios decididos + etapas A1–A5 + mini-checklist); item 1
+  decodificada + desvios decididos + etapas A1–A5); item 1
   do §4 atualizado. Commit: `A0: roadmap das telas de conta (§4.3)`.
 - [x] **A1 — Estrutura + header** *(2026-07-12)*: criado
   `src/components/conta/MolduraConta.jsx` — wrapper `position:relative` com
@@ -1231,23 +1193,249 @@ strings/template literals (lição da R1).
   protótipo, D4) e `<img>` dos logos do Footer sem width/height (compartilhado
   — mexer arriscaria regressão em Home/Grafos). Verificado: `npm run lint`
   (0/0), `npm run build` (278.44 → 280.18 kB; **CSS 7.50 → 7.33 kB** com os
-  aliases fora) e `npm run dev` (200 nos módulos alterados). **Teste manual
-  do autor:** mini-checklist abaixo + spot-check de Home/Grafos. Commit:
+  aliases fora) e `npm run dev` (200 nos módulos alterados). Commit:
   `A5: limpeza dos aliases + fechamento`.
 
   **Com a A5, o roadmap §4.3 (A0–A5) está 100% concluído — as telas de conta
   estão migradas para o protótipo final.**
 
-#### Mini-checklist de regressão das telas de conta (rodar na A5)
+### 4.4 Desempenho: renderização sob demanda do motor do grafo — etapas (P0–P5)
 
-Login e Signup, claro E escuro: header idêntico ao das outras telas (nada se
-move ao navegar) · prompt de troca navega · logo → Home · nav Grafos → página
-de grafos · vértices: fade-in, arestas, nó-cursor, clique (rajada + segurar),
-some no card/header/footer (sem spawn), crosshair só no vazio · card de vidro
-legível com vértices atrás · validações (e-mail inválido, senha < 8, nome
-vazio) e envio simulado → Home · footer só ao rolar, translúcido com blur ·
-A/A ≠ 100% não desalinha os cliques do canvas · semAnim → fundo estático ·
-Home/Grafos byte-idênticos (header, footer, ::selection, widget A/A).
+A página de grafos está pesada. O motor portado do protótipo (D3/D4) redesenha o
+canvas **60×/s para sempre** — grafo parado, sem hover e sem câmera em movimento
+custam o mesmo que um arraste. O objetivo é trocar o loop perpétuo por
+**renderização sob demanda** (desenha só quando algo mudou), reduzir o custo do
+quadro quando ele acontece e tirar o arrasto do painel do ciclo de render do
+React. **Zero mudança visual ou de comportamento**: mesma física, mesmas
+constantes, mesmos tempos, mesmo desenho pixel a pixel.
+
+#### Em linguagem simples — o que está sendo otimizado
+
+*(Seção didática, escrita para a defesa e para a escrita do TCC: explica a
+otimização sem jargão. O registro formal — com alternativas rejeitadas, fala
+para a banca e parágrafo de monografia — entra na **D13**, na P5.)*
+
+**Como o grafo é desenhado.** A tela do grafo não é feita de elementos HTML: é
+um `<canvas>`, uma folha em branco onde o programa desenha tudo à mão — os
+pontinhos do fundo, cada aresta, cada seta, cada bolinha, cada rótulo. Desenhar
+no canvas não "guarda" objetos: é pintura. Para mostrar qualquer mudança, apaga
+a folha e repinta tudo do zero.
+
+**O que o motor faz hoje.** Ele repinta a folha inteira **60 vezes por segundo,
+o tempo todo** — herança do protótipo. Faz isso enquanto você arrasta um nó
+(aí é necessário: as coisas se movem) e faz igual enquanto você só lê a tela sem
+tocar em nada (aí é desperdício: os 60 quadros daquele segundo são idênticos).
+É um pintor refazendo o mesmo quadro 60 vezes por minuto porque ninguém mandou
+parar.
+
+**Quanto custa esse desperdício.** Medido na P1: com o grafo parado, ~59
+repinturas por segundo, cada uma custando 3,87 ms — dá **~228 ms de desenho a
+cada segundo, quase um quarto de um núcleo do processador, para não mudar um
+pixel**. Em notebook isso é ventilador ligado e bateria indo embora.
+
+**A ideia central da mudança.** Trocar "pinta sempre" por **"pinta quando
+precisa"**. O motor ganha um aviso de "sujou": quem mexe em alguma coisa — o
+ponteiro passou por um nó, a câmera está se movendo, a física ainda está
+acomodando o layout, chegou um recorte novo — levanta a mão. O motor pinta e,
+quando ninguém mais levanta a mão, **ele dorme**. Nada desaparece da tela: o que
+já foi pintado continua lá, porque o canvas não se apaga sozinho.
+
+**O que NÃO muda.** Nada do que se vê ou se sente: mesmas cores, mesmas fontes,
+mesma física, mesmos tempos, mesmo comportamento de hover, clique, arraste e
+zoom. Se a otimização estiver correta, é **impossível perceber pela tela** — só
+pelo consumo de processador. Por isso a etapa foi planejada com medição
+antes/depois e lista de teste manual: o critério de sucesso é "nada mudou, e
+ficou barato".
+
+**As etapas, sem jargão:**
+- **P1 (feita)** — instalar um "velocímetro" que conta quantas repinturas
+  acontecem por segundo e quanto cada uma custa. Só funciona em desenvolvimento
+  e sai do site publicado. É o que permite *provar* o ganho em vez de afirmar.
+- **P2** — o coração: fazer o motor dormir quando não há o que mostrar.
+- **P3** — deixar cada repintura mais barata, para quando ela realmente
+  precisar acontecer. O maior item é o fundo pontilhado: hoje cada pontinho é um
+  comando de desenho separado (~1.800 por repintura) e passa a ser **um** comando
+  só, com o mesmo resultado na tela.
+- **P4** — o mesmo desperdício, do lado do React: hoje, arrastar o painel de
+  detalhes obriga a página inteira a se recalcular a cada milímetro do
+  movimento. Passa a mexer só no painel durante o gesto e a avisar o React uma
+  única vez, quando você solta.
+- **P5** — medir de novo, comparar com a P1 e registrar a decisão com os
+  números na mão.
+
+**Por que isso vale como trabalho de TCC, e não só "arrumar código".** A
+otimização não troca o algoritmo por um mais esperto: ela reconhece que a
+visualização é **dirigida por eventos**, não por tempo. Um grafo de conhecimento
+é um objeto que o professor *lê* — fica parado na tela a maior parte do tempo —,
+então o motor certo é o que gasta proporcionalmente ao que o usuário faz. É o
+mesmo raciocínio das decisões de acessibilidade (D6): a interface se ajusta ao
+uso real em vez de impor um custo fixo a todo mundo.
+
+**Diagnóstico (2026-07-29)** — o que custa hoje:
+
+| # | Custo | Onde |
+|---|---|---|
+| 1 | Loop RAF nunca ocioso: `desenhar()` roda todo quadro, para sempre | `GrafoCanvas.jsx` (efeito do loop) |
+| 2 | Grid pontilhado: `beginPath+arc+fill` por ponto (~1.800/quadro em tela cheia) | `desenhar()` |
+| 3 | `getBoundingClientRect()` por quadro (leitura de layout forçada) | loop |
+| 4 | Sondagem de tema/paleta por quadro (`getAttribute` + 3× `getPropertyValue`) | loop |
+| 5 | `[...mapa.values()]` a cada iteração da física; `Set` de vizinhos refeito por quadro | `fisica()`, `desenhar()` |
+| 6 | String de `ctx.font` montada por nó, por quadro (parse de fonte é caro) | `desenhar()` |
+| 7 | Arrasto/resize do painel: `setState` por `pointermove` → re-render da página toda | `GrafoPainel.jsx`, `Grafos.jsx` |
+| 8 | Digitar na busca re-renderiza o `GrafoPainel` (639 linhas) a cada tecla | `Grafos.jsx` |
+
+**Padrão a reusar (já existe no projeto):** o canvas das telas de conta
+([FundoVertices.jsx](src/components/conta/FundoVertices.jsx)) já faz a disciplina
+que falta aqui — `ResizeObserver` para dimensões, `MutationObserver` em
+`data-theme` para repintar e **nenhum loop RAF quando não há animação**. O canvas
+do grafo passa a seguir o mesmo padrão.
+
+**Decisões do autor (2026-07-29):** escopo = canvas **e** lado React; o grid vira
+**um único path** (pixel-idêntico, em vez de camada CSS, que seria desvio visual);
+**com instrumentação** dev-only para medir antes/depois (números vão para a D13 e
+para a monografia).
+
+**Restrições invioláveis (valem em TODAS as fases):**
+- **Nada de mudança visual ou de comportamento.** Constantes da física, molas por
+  relação, damping, esfriamento, clamps de zoom, `ATRASO_*` e o `enquadrar` a
+  420 ms ficam intocados (D3/D4 amarram esses valores ao protótipo).
+- Sem dependência nova; sem biblioteca de grafos (D3).
+- Não renomear contratos: API imperativa do canvas (`centrarEm`, `enquadrar`,
+  `reaquecer`, `assentar`, `zoomMais`, `zoomMenos`), props dos componentes,
+  chaves de localStorage (`edugraphPrefs`), parâmetros de URL.
+- Acessibilidade intacta: `semAnim`, modo formas e paletas CUD (D6).
+- Bug encontrado no caminho → **não corrigir**; anotar no relatório de fechamento
+  (mesma regra do §4.2).
+
+**Verificação por fase:** `npm run lint` (0/0), `npm run build` (sem dependência
+nova — anotar o tamanho) e `npm run dev` (200), mais o teste manual da fase.
+Regra de sempre: **uma etapa por sessão** — implementar, verificar, registrar aqui;
+o commit é do autor.
+
+- [x] **P0 — Este roadmap** *(2026-07-29)*: seção §4.4 (diagnóstico + decisões +
+  restrições + etapas P1–P5) e item 2 do §4. Sem código.
+- [x] **P1 — Instrumentação e linha de base** *(2026-07-29)*: medidor
+  **dev-only** em [GrafoCanvas.jsx](src/components/grafo/GrafoCanvas.jsx) —
+  desenhos por segundo e custo médio/de pico de `desenhar()`, publicado em
+  `window.__grafoPerf` e logado a cada 2 s. Acumuladores em **refs, não estado**
+  (medir não pode causar re-render, ou a medida alteraria o que mede).
+  `MEDIR = import.meta.env.DEV` vira `false` no build: cronometragem, relatório,
+  log e `acumular()` saem por eliminação de código morto (conferido no `dist` —
+  zero ocorrências de `__grafoPerf`); sobram só os inicializadores dos refs,
+  **+110 bytes**, porque hook não pode ser condicional. **Desvio do plano
+  (a favor):** `fisica()` é cronometrada à parte de `desenhar()` — é o que
+  decide a prioridade da P3.
+
+  **Linha de base (2026-07-29, máquina do autor, recorte de 1 série):**
+
+  | Cenário | Desenhos/s | `desenhar()` médio | Pico | `fisica()` médio |
+  |---|---|---|---|---|
+  | Grafo **parado** | 59,0 | 3,87 ms | 8 ms | 0,01 ms |
+  | **Arrastando o quadro** (pan) | 60,2 | 2,63 ms | 6 ms | 0 ms |
+  | **Arrastando um nó** | 52,6 | 2,58 ms | 7 ms | 0,06 ms |
+  | **Mexendo no zoom** | 52,5 | 1,24 ms | 4 ms | 0 ms |
+
+  **O que os números dizem:**
+  1. **O custo não depende da interação.** Com o grafo imóvel o motor desenha
+     ~59 quadros/s idênticos: **~228 ms de desenho por segundo (~23% de um
+     núcleo) para não mudar um pixel**. É a confirmação direta do diagnóstico e
+     o número-âncora do "antes/depois".
+  2. **A física é irrelevante** (≤ 0,06 ms/quadro com 56 nós): ~99% do quadro é
+     `desenhar()`. Confirma a exclusão do Web Worker e **rebaixa a P3(d)**
+     (cache do array de nós) a ganho marginal.
+  3. **O custo do quadro varia ~3× conforme o estado da câmera** — parado
+     3,87 ms, arrastando 2,6 ms, mexendo no zoom 1,24 ms — e o quadro sai mais
+     barato justamente **quando se está mexendo**. Ou seja, o pior caso do motor
+     é a tela ociosa. Isso aponta para trabalho de desenho que **depende da
+     câmera**, e há dois candidatos claros: (i) o **fundo pontilhado**, cujo
+     número de pontos é `w·h / (34·k)²` e que é **pulado inteiro** quando
+     `34·k < 13` — vai de milhares de pontos a zero conforme o zoom; e (ii) os
+     **rótulos**, que somem abaixo de `k < 0,55`. Soma-se a isso que o motor
+     **não faz culling**: as chamadas de desenho são emitidas para todo nó e
+     toda aresta, e só o rasterizador descarta o que cai fora da tela.
+     **Confirma grid e rótulos como alvo da P3(a)/(e).**
+  - Verificado: `npm run lint` (0/0), `npm run build` (282,98 → **283,09 kB**,
+    sem dependência nova) e `npm run dev` (200). Nenhuma mudança de
+    comportamento no motor: as únicas adições ao caminho quente são três
+    `performance.now()` atrás da constante `MEDIR`.
+- [ ] **P2 — Loop sob demanda** *(o coração da mudança)*: trocar o `tick()`
+  perpétuo por um loop que **para quando não há o que fazer**.
+  - `sujo` (ref) + `pedirFrame()`: liga o RAF se ele não estiver rodando e marca
+    que é preciso desenhar; nenhum outro ponto do arquivo chama
+    `requestAnimationFrame` direto.
+  - Condição de continuidade ao fim do quadro: `alpha > 0.012` (física quente)
+    **ou** `alvoCam.current` (câmera interpolando) **ou** `dragRef.current`
+    **ou** `sujo`. Falhou tudo → `cancelAnimationFrame` e o loop dorme.
+  - Chamam `pedirFrame()`: `enquadrar`, `centrarEm`, `zoomCam`, `reaquecer`,
+    `assentar`, o efeito de `versao`, os observers da P3 e os handlers de ponteiro
+    (pan, wheel, drag). No **hover**, só quando o **id muda** — passar o mouse no
+    vazio não pode acordar o loop.
+  - Efeito defensivo em `[nos, arestas, selecionadoId, formas]` chamando
+    `pedirFrame()`, para que mudança de dado/prop force um quadro mesmo que a
+    página esqueça de reaquecer.
+  - `semAnim` fica coerente de graça: sem física e com salto de câmera, desenha
+    1 quadro e dorme.
+  - **Critério de aceitação:** grafo parado sai de ~60 desenhos/s para **0**, e
+    toda interação da lista de teste volta a acordar o loop e a dormir depois.
+- [ ] **P3 — Custo por quadro**: tudo em `GrafoCanvas.jsx`, sem mudança visual.
+  - (a) **Grid num único path**: `beginPath()` uma vez, `moveTo`+`arc` por ponto,
+    um `fill()` no fim — mesmos pixels, ~1.800× menos chamadas de desenho.
+  - (b) **`ResizeObserver`** no canvas guardando `{ w, h }` num ref; o loop
+    consome o ref em vez de `getBoundingClientRect()`, e o redimensionamento do
+    backing store HiDPI passa para o observer. Os handlers de ponteiro continuam
+    lendo o rect no evento (são raros e precisam da posição na tela). Guarda para
+    troca de monitor: `matchMedia('(resolution: Xdppx)')` → `pedirFrame()`.
+  - (c) **`MutationObserver`** em `<html>` (`attributeFilter: ['data-theme',
+    'style']`) relendo a paleta e marcando sujo, no lugar da sondagem por quadro.
+    **Preserva o motivo documentado** no cabeçalho do loop: o observer dispara
+    *depois* de o atributo ser aplicado, então a paleta nunca fica um toggle
+    atrasada — e os **três** tokens `--no-*` continuam na chave (protanopia e
+    deuteranopia compartilham 2 cores).
+  - (d) **Caches invalidados por versão dos dados**: array de nós da física (mata
+    o `[...mapa.values()]` por iteração) e mapa de adjacência para o `Set` de
+    vizinhos do foco. **Rebaixado pela medição da P1** (física ≤ 0,06 ms/quadro):
+    fazer só o `Set` de vizinhos, que é custo de desenho; o array da física só se
+    sobrar tempo.
+  - (e) **Fontes pré-montadas**: as 3 strings de `ctx.font` (habilidade/conceito/
+    disciplina) recalculadas só quando `cam.k` muda, guardadas num ref.
+- [ ] **P4 — Lado React**:
+  - (a) **Arrasto e resize do painel saem do estado**: em `GrafoPainel.jsx` o
+    `move` escreve direto no nó (`aside.style.left` / `aside.style.width`) e o
+    commit em `aoMudarPainel` acontece **só no `pointerup`**. A largura do palco é
+    lida **uma vez** no início do gesto (hoje é um `getBoundingClientRect()` por
+    movimento — com escrita direta viraria *layout thrashing*). Clamps
+    (`MARGEM_PALCO`, `LARGURA_MIN`, `LARGURA_MAX`) idênticos. Seguro porque
+    `offsetEsquerda` só é consumido por `enquadrar()`/`centrarEm()`, que não
+    ocorrem durante o gesto.
+  - (b) **`memo()` no `GrafoPainel` e no `GrafoEstados`**, com os callbacks que os
+    alimentam estabilizados por `useCallback` em `Grafos.jsx` (`aoMudarPainel`,
+    `noGrafo`, `aoIr`, `aoFechar`, `aoExpandir`). Ganho concreto: digitar na busca
+    deixa de re-renderizar o subtree mais pesado da tela.
+  - (c) **`useMemo` nos derivados por render** de `Grafos.jsx`: `turmasUI`,
+    `acessibilidade` e `resumoRecorte`.
+  - **Fora de escopo:** Web Worker para a física (com 56 nós não é o gargalo) e
+    memoização geral dos demais componentes (re-render em ritmo humano — cerimônia
+    sem ganho, já que o projeto não usa React Compiler).
+- [ ] **P5 — Fechamento**: medir de novo os 3 cenários da P1 e registrar o
+  **antes/depois**; decidir se o medidor fica atrás do `DEV` ou sai; relatório da
+  **Etapa 19** no §3 (o que mudou, números, bugs encontrados); **D13** no
+  [guia/DECISOES.md](guia/DECISOES.md) — "renderização sob demanda no motor do
+  grafo", com problema, decisão, alternativas rejeitadas (loop perpétuo do
+  protótipo; camada CSS para o grid; Web Worker; biblioteca de grafos), fala para
+  a banca e **parágrafo de monografia** (cap. de Implementação, seção de
+  visualização, retomando D3 e D4 — é desvio consciente do porte fiel, justificado
+  por consumo de CPU/bateria).
+
+#### Lista de teste manual do motor (rodar na P2 e repetir na P5)
+
+Cada item precisa **acordar** o loop, redesenhar e **voltar a dormir**: hover
+(tooltip + esmaecer) · clique/Esc · arrastar nó · pan · wheel-zoom · botões
++/−/recentrar · 2×clique (expandir) · Desfazer expansão · busca por habilidade
+(seleciona e centra ~0,8 s depois) · recorte novo (enquadra a 420 ms) · troca de
+tema · troca de paleta (protanopia ↔ deuteranopia) · modo formas · modo sem
+animação · widget A/A · redimensionar a janela. **Painel:** arrastar e
+redimensionar suaves, posição persiste no reload (`edugraphPrefs.painel`) e a
+câmera segue enquadrando à direita dele.
 
 ## 5. Como ler o protótipo final (arquivo "bundled")
 
