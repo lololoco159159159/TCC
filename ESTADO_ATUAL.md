@@ -13,7 +13,7 @@
 > formato do cabeçalho — inclusive o **parágrafo de monografia** (tom acadêmico,
 > com o capítulo onde encaixa).
 
-Última atualização: 2026-07-29.
+Última atualização: 2026-10-09.
 
 ---
 
@@ -45,7 +45,8 @@ acadêmico.
 
 Front-end React + Vite do EduGraph (ver [README.md](README.md) para o contexto
 acadêmico completo). Sem back-end por enquanto — só as telas, com dados estáticos.
-A integração com o servidor de grafos (Apache Jena Fuseki / SPARQL) é etapa futura.
+A integração com o servidor de grafos — agora **Neo4j / Cypher** (decisão de
+2026-10-09, substitui o antigo plano Fuseki/SPARQL) — é o **foco atual** (§4.5).
 
 O código está sendo migrado **por partes** de um **protótipo inicial** para o
 **protótipo final aceito**, que vive em [design/prototipo_final.html](design/prototipo_final.html).
@@ -790,20 +791,21 @@ Ligar deixa o fundo de vértices estático na hora e persiste em
 
 ## 4. O que FALTA (próximas etapas)
 
+> **FOCO ATUAL (desde 2026-10-09): integração com o Neo4j — ver §4.5.** Todo o
+> resto fica **pendente** até a integração estar de pé.
+
 A landing (Home, Etapas 1–6) e a **página de grafos (G1–G11, Etapas 7–16)** estão
-completas. Restam:
+completas contra o mock. Restam:
 
 0. ~~Revisão e polimento do código~~ — **concluída** (roadmap §4.2, Etapa 17).
 1. ~~**Telas de conta (Entrar / Criar conta)**~~ — **concluída** (roadmap
    §4.3, A0–A5, Etapa 18): fundo de vértices do protótipo, header no
    SiteHeader (slot fixo), card e footer de vidro, aliases órfãos removidos e
    revisão de acessibilidade das telas.
-2. **Desempenho do motor do grafo**: trocar o loop "sempre ligado" do canvas por
-   **renderização sob demanda** e tirar o arrasto do painel do ciclo de render do
-   React — roadmap §4.4 (P0–P5). Zero mudança visual ou de comportamento.
-3. **Back-end**: subir um Apache Jena Fuseki real e trocar o mock
-   (`src/data/mockFuseki.js`, etapa G2) por `fetch` ao endpoint SPARQL — ver a
-   receita no cabeçalho do próprio mock e a decisão D1 em [DECISOES.md](DECISOES.md).
+2. **PENDENTE (pausado em 2026-10-09) — Desempenho do motor do grafo**: P0–P2
+   feitas; **P3, P4 e P5 pendentes** — roadmap §4.4. Retomar depois da integração.
+3. **FOCO ATUAL — Integração com o Neo4j** (substitui o antigo plano de Apache
+   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **Próxima etapa: N1.**
 
 ### 4.1 Página de grafos — caminho por etapas (G1–G11)
 
@@ -1456,6 +1458,9 @@ o commit é do autor.
     1 quadro e dorme.
   - **Critério de aceitação:** grafo parado sai de ~60 desenhos/s para **0**, e
     toda interação da lista de teste volta a acordar o loop e a dormir depois.
+> **P3–P5 PENDENTES** — pausadas em 2026-10-09 pela mudança de foco para a
+> integração com o Neo4j (§4.5).
+
 - [ ] **P3 — Custo por quadro**: tudo em `GrafoCanvas.jsx`, sem mudança visual.
   - (a) **Grid num único path**: `beginPath()` uma vez, `moveTo`+`arc` por ponto,
     um `fill()` no fim — mesmos pixels, ~1.800× menos chamadas de desenho.
@@ -1515,6 +1520,510 @@ tema · troca de paleta (protanopia ↔ deuteranopia) · modo formas · modo sem
 animação · widget A/A · redimensionar a janela. **Painel:** arrastar e
 redimensionar suaves, posição persiste no reload (`edugraphPrefs.painel`) e a
 câmera segue enquadrando à direita dele.
+
+### 4.5 Integração com o Neo4j — FOCO ATUAL (aberto em 2026-10-09)
+
+Depois de reuniões com a orientadora, o grafo de conhecimento passa a viver num
+**Neo4j** (consultas em **Cypher**), e não mais num Apache Jena Fuseki (SPARQL).
+O projeto inteiro muda de foco para essa integração; os inacabados (P3–P5 do §4.4)
+ficam pendentes.
+
+**Decisões do autor (2026-10-09):**
+- **Integração real, sem mock como plano B.** O site **vai para o ar**: nada de
+  dados locais como segundo plano/fallback. O `mockFuseki.js` deixa de ser fonte
+  de dados do app (a remoção/substituição é parte do trabalho desta seção).
+- **Mostrar o grafo como o Neo4j Browser mostra** ao rodar a consulta da árvore
+  (`neo4j/consultas`, "arvore completa"): nós `Ano → UnidadeTematica →
+  ObjetoConhecimento → Habilidade` e as arestas entre eles.
+- **O Ano é um nó** do grafo (não só um filtro).
+- **O grafo atual é uma versão resumida** do que a orientadora ainda está
+  construindo (hoje: só 1.º ano de Matemática), mas **respeita a estrutura final**
+  — a integração deve ser feita para o modelo definitivo, não para este recorte.
+- **Não haverá mais sistema de usuários/cadastro.** Login/Signup/perfil mock **não
+  devem ser alterados agora** — vão acabar deixando de existir, em etapa futura.
+
+**Material de origem:** [neo4j/exemplo_rosiane_alterado](neo4j/exemplo_rosiane_alterado)
+(script Cypher de carga) e [neo4j/consultas](neo4j/consultas) (consultas de teste).
+Neo4j local em `http://localhost:7474` (Browser em `/browser/`), banco `neo4j`.
+
+**Estado do banco (conferido em 2026-10-09):** Neo4j 2026.09 Community, Cypher 5/25.
+1 `Ano` · 5 `UnidadeTematica` · 17 `ObjetoConhecimento` · 22 `Habilidade`;
+relações `TEM_UNIDADE` (5) · `TEM_OBJETO` (17) · `DESENVOLVE` (22) ·
+`DESENVOLVE_HABILIDADE` (22, atalho Ano→Habilidade). Propriedades: `Ano{codigo,
+nome}`, `UnidadeTematica{nome}`, `ObjetoConhecimento{descricao}`,
+`Habilidade{codigo, descricao}`. Sem constraints/índices.
+
+**Direção técnica:** detalhada no roadmap abaixo (arquitetura, contrato, regras e
+etapas N0–N12). Em resumo: **Query API HTTP** com `fetch` (sem dependência nova),
+sempre através de um **proxy do lado servidor** que guarda a senha — a edição
+Community não tem usuário só-leitura e o site vai para o ar. A UI foi construída
+sobre o modelo do protótipo (habilidade/conceito/disciplina; `desenvolve`/
+`podeSerTrabalhadaEm`/`progrideDe`; eixos; 5.º–9.º) e é adaptada ao modelo novo ao
+longo das etapas. Decisões afetadas: **D1** (Fuseki/mock), **D7** (habilidades
+fixas), **D10** (recorte 5.º–9.º).
+
+**Pontos para levar à orientadora:**
+1. `MERGE (ut:UnidadeTematica {nome})` e `MERGE (oc:ObjetoConhecimento
+   {descricao})` não incluem o ano: ao carregar o 2.º ano, "Números" vira o mesmo
+   nó do 1.º e a árvore de um ano passa a trazer habilidades de outro.
+2. Sem constraint de unicidade (`Habilidade.codigo`) e sem id estável para
+   UnidadeTematica/ObjetoConhecimento.
+3. Não há nó de componente curricular (a matéria só aparece no código `MA`) nem
+   relação de progressão entre anos; descrições das habilidades estão truncadas.
+4. [neo4j/consultas:26](neo4j/consultas) tem erro de sintaxe (falta `)` depois de
+   `:UnidadeTematica`).
+
+#### Roadmap da integração — etapas N0–N12
+
+*Proposto em 2026-10-09.* A ordem segue um princípio simples: **primeiro provar que
+os dados chegam** (N1–N3), **depois provar que foram entendidos** (N4) e **só então
+desenhar** (N5) — se o grafo sair errado, já se sabe em qual camada procurar. Em
+seguida voltam, uma a uma, as funções que hoje dependem do mock (N6–N9), o mock sai
+(N10) e o site vai para o ar (N11). A barra de filtros **não** é adaptada: vai ser
+redesenhada depois, e até lá o lugar dela é de um **console Cypher** para testar a
+integração.
+
+- [x] **N0** — Este roadmap *(2026-10-09)*
+- [ ] **N1** — Conexão: proxy de desenvolvimento e senha fora do código (+ D14)
+- [ ] **N2** — Cliente Cypher `src/data/neo4j.js` (sem tela)
+- [ ] **N3** — Console Cypher na página de grafos: ver o que chega
+- [ ] **N4** — Do resultado ao grafo: extrair nós e relações (em texto)
+- [ ] **N5** — Desenhar o grafo no canvas
+- [ ] **N6** — Tipos novos: cores, formas, paletas e legenda
+- [ ] **N7** — Painel de detalhe com dados reais
+- [ ] **N8** — Expandir e desfazer com Cypher
+- [ ] **N9** — Home com dados do Neo4j
+- [ ] **N10** — Remoção do mock
+- [ ] **N11** — Produção (site no ar)
+- [ ] **N12** — Fechamento
+
+**Arquitetura**
+
+```
+navegador (React)               servidor do site                     Neo4j
+src/data/neo4j.js ──POST /api/cypher──► proxy ──POST /db/neo4j/query/v2──► Query API
+   (sem senha)                  (põe a senha, força leitura)          (porta 7474)
+
+desenvolvimento: proxy = Vite (vite.config.js, lê o .env.local)     → N1
+produção:        proxy = a definir (mesmo caminho /api/cypher)        → N11
+```
+
+**Contrato (vale para todas as etapas)**
+- O front só conhece `POST /api/cypher`, com o corpo da própria Query API
+  (`{ statement, parameters, accessMode: "READ" }`) e
+  `Accept: application/vnd.neo4j.query` (JSON **tipado**). A resposta passa sem
+  alteração.
+- **Por que JSON tipado** (os dois formatos foram testados em 2026-10-09): no JSON
+  simples um nó chega como `{elementId, labels, properties}` — indistinguível de um
+  mapa qualquer com essas chaves; no tipado cada valor vem marcado (`$type`: `Node`,
+  `Relationship`, `Path`, `Integer`, `List`…), o que permite achar nós e relações em
+  qualquer lugar do resultado, como o Browser faz. Inteiros e decimais chegam como
+  texto (`"_value": "1"`) e o cliente converte.
+- Erros: HTTP 4xx com `{ errors: [{ code, message }] }` (testado:
+  `Neo.ClientError.Statement.SyntaxError`, com linha e coluna). Campo desconhecido
+  no corpo → 400 `Neo.ClientError.Request.Invalid` — por isso o `accessMode` aceito
+  confirma que o campo existe.
+- Formato interno do grafo (a partir da N4), usado pela página e pelo canvas:
+  nó `{ id, tipo, rotulos, props, label, x, y, vx, vy, r }` · aresta
+  `{ id, a, b, rel, props }` — `id` = `elementId`; `tipo` = rótulo principal;
+  `rel` = tipo da relação.
+- O `elementId` é a chave **dentro da sessão** (desenho, seleção, expansão): serve a
+  qualquer resultado, inclusive UnidadeTematica e ObjetoConhecimento, que não têm
+  código. O que precisar **persistir** ou ir para a **URL** (filtros futuros) usa
+  chave de negócio (`Habilidade.codigo`…), porque o `elementId` muda se a base for
+  recarregada.
+
+**Regras (todas as etapas)**
+- **Uma etapa por sessão**: implementar → `npm run lint` (0/0) · `npm run build` ·
+  `npm run dev` → **teste do autor descrito na etapa** → registrar aqui. O commit é
+  sempre do autor (§0).
+- **Sem mock como plano B** (decisão de 2026-10-09). Durante a transição, partes da
+  página ainda leem o `mockFuseki.js` até a etapa delas chegar; na N10 ele sai.
+- **Sem dependência nova**: `fetch` + Query API (driver Bolt descartado); sem
+  biblioteca de grafos (D3).
+- **A senha nunca entra no código do front**: variáveis **sem** o prefixo `VITE_` (o
+  Vite só embute no bundle o que começa com `VITE_`), guardadas no `.env.local`, que
+  já é ignorado pelo `*.local` do `.gitignore`.
+- **Consultas montadas pelo site usam sempre `parameters`** — nunca concatenar texto
+  na Cypher. (O console é a exceção natural: lá quem escreve a consulta é a pessoa.)
+- **Somente leitura**: toda requisição leva `accessMode: "READ"`.
+- **Filtros antigos: não investir** — eles só saem de cena (o redesenho é trabalho
+  futuro).
+- **Contas: não mexer** em Login/Signup/`GrafoPerfil` (vão sair num roadmap
+  próprio). Quando a integração esbarrar nelas, a etapa registra o efeito e não
+  altera o componente.
+- Motor do canvas (D3/D4) intacto — física, câmera e tempos. Só a tabela de molas
+  por tipo de relação muda, porque os tipos mudaram. Acessibilidade (D6) preservada.
+- Bug fora do escopo da etapa → anotar aqui, não corrigir junto.
+
+**Números de referência** — base local de 2026-10-09 (1.º ano de Matemática),
+calculados direto no Neo4j. **Mudam quando a orientadora atualizar a base**:
+recalcular antes de usar como critério.
+
+| # | Consulta de [neo4j/consultas](neo4j/consultas) | Linhas | Nós | Relações | Relações com "conectar nós" |
+|---|---|---|---|---|---|
+| 1 | árvore completa | 22 | 45 | 44 | 66 |
+| 2 | geometria completa | 4 | 8 | 7 | 7 |
+| 3 | de onde vem a habilidade (EF01MA17) | 1 | 4 | 3 | 4 |
+| 4 | ano direto p/ habilidade | 22 | 23 | 22 | 22 |
+| 5 | caminho entre 2 habilidades | 1 | 7 | 6 | 8 |
+| 6 | habilidade irmã (EF01MA16) | 2 | 4 | 3 | 3 |
+| 7 | habilidades que o professor precisa ensinar | erro de sintaxe (linha 26); corrigida: 4 | 11 | 10 | 14 |
+
+*"Conectar nós":* o Neo4j Browser, por padrão, desenha também as relações que
+**existem entre os nós retornados**, mesmo que a consulta não as peça — é por isso
+que a árvore aparece lá com as setas `DESENVOLVE_HABILIDADE` do Ano para cada
+habilidade (66 relações, e não 44). No Browser clássico é a opção "Connect result
+nodes" das configurações; conferir como ela está antes de comparar.
+
+Conexões por nó (critério da N7): Ano `EF1` = 27 · UnidadeTematica "Números" = 7 ·
+Habilidade `EF01MA17` = 2.
+
+---
+
+#### N1 — Conexão: proxy de desenvolvimento e senha fora do código
+
+**Objetivo:** o servidor de desenvolvimento do site conversa com o Neo4j e guarda a
+senha do lado do servidor. **Nenhuma tela muda.**
+
+**O que fazer:**
+- `.env.local` (não versionado): `NEO4J_URL=http://localhost:7474`,
+  `NEO4J_DATABASE=neo4j`, `NEO4J_USER=neo4j`, `NEO4J_PASSWORD=…`.
+- `.env.example` (versionado, **sem** senha) com as mesmas variáveis — é por ele que
+  a outra máquina monta o seu `.env.local`. A outra máquina também precisa do Neo4j
+  com os mesmos dados (rodar [neo4j/exemplo_rosiane_alterado](neo4j/exemplo_rosiane_alterado)
+  no Browser dela).
+- [vite.config.js](vite.config.js): `loadEnv` + `server.proxy` **e** `preview.proxy`
+  de `/api/cypher` para `${NEO4J_URL}/db/${NEO4J_DATABASE}/query/v2`, com o
+  cabeçalho `Authorization: Basic …` montado das variáveis.
+- **D14** no [guia/DECISOES.md](guia/DECISOES.md): Neo4j/Cypher no lugar do
+  Fuseki/SPARQL, integração real sem mock, Query API atrás de proxy. A D14 supera a
+  D1, que fica como registro histórico.
+
+**Como testar (autor):**
+1. Com o `npm run dev` rodando, o mesmo teste que você fez no terminal, mas **sem
+   `-u`** e pela porta do site:
+   ```bash
+   curl -s -X POST http://localhost:5173/api/cypher -H 'Content-Type: application/json' \
+     -d '{"statement":"MATCH (h:Habilidade) RETURN h.codigo AS codigo LIMIT 3"}'
+   ```
+   Tem que vir `EF01MA01`, `EF01MA02`, `EF01MA03`, igual ao curl direto.
+2. Senha errada no `.env.local` (e reiniciar o `npm run dev`) → a resposta vira erro
+   de autenticação do Neo4j (401). Desfazer.
+3. Neo4j parado → o curl recebe erro na hora (não fica pendurado). Religar.
+4. `git status` não lista o `.env.local`; depois de `npm run build`, procurar a senha
+   dentro de `dist/` → nenhuma ocorrência.
+
+**Pronto quando:** os 4 testes passam e lint/build/dev estão verdes.
+
+---
+
+#### N2 — Cliente Cypher (`src/data/neo4j.js`), sem tela
+
+**Objetivo:** uma única função do front que executa Cypher e devolve o resultado já
+entendido — o transporte que todas as próximas etapas usam. **Nenhuma tela muda.**
+
+**O que fazer:**
+- `executarCypher(consulta, parametros = {})` → `fetch('/api/cypher')` no formato do
+  contrato. Devolve `{ campos, linhas, tempos, tipoConsulta }`; `tempos` traz o
+  `resultAvailableAfter` e o `resultConsumedAfter` do Neo4j e o tempo total medido
+  no navegador (rede incluída).
+- Decodificação do JSON tipado: texto/booleano/nulo → valor; `Integer`/`Float` →
+  número (inteiro além do limite seguro do JS continua texto); `List`/`Map` →
+  array/objeto; `Node`/`Relationship`/`Path` → objetos próprios (nó com `id`,
+  `rotulos`, `props`; relação com `id`, `rel`, `inicio`, `fim`, `props`; caminho com a
+  sequência nó–relação–nó); datas, pontos e bytes → texto.
+- Erros num formato só: `{ origem: 'rede' | 'http' | 'neo4j', codigo, mensagem }` —
+  rede (servidor do site fora do ar), HTTP (401 credencial, 5xx proxy sem Neo4j) e
+  Neo4j (`errors[]`: sintaxe, consulta inválida, modo de acesso).
+- Tempo-limite (`AbortController`, ~15 s) e cancelamento da consulta anterior quando
+  outra é disparada.
+
+**Como testar (autor)** — no console do DevTools, com o site aberto pelo `npm run dev`:
+```js
+const { executarCypher } = await import('/src/data/neo4j.js')
+await executarCypher('RETURN 1 AS um, "a" AS texto, [1.5, null, true] AS lista, {k: 2} AS mapa')
+await executarCypher('MATCH (h:Habilidade {codigo: $c}) RETURN h', { c: 'EF01MA17' })
+await executarCypher('MATCH (n RETURN n')               // erro: origem 'neo4j', SyntaxError
+await executarCypher('CREATE (:TesteEscrita) RETURN 1') // tem que FALHAR (modo leitura)
+```
+- Os tipos chegam convertidos (número é número, lista é array, o nó vem com
+  `rotulos` e `props`).
+- Se o `CREATE` **não** falhar: apagar no Browser (`MATCH (t:TesteEscrita) DELETE t`)
+  e anotar aqui — o bloqueio de escrita passa a ser obrigação do proxy (N11).
+- Neo4j parado → a função rejeita com mensagem clara, sem travar.
+
+**Pronto quando:** todos os casos se comportam como descrito.
+
+---
+
+#### N3 — Console Cypher na página de grafos: ver exatamente o que chega
+
+**Objetivo:** o lugar para escrever Cypher e conferir a resposta **crua** do Neo4j,
+antes de qualquer desenho. Ele toma o lugar da barra de filtros (provisoriamente —
+os filtros vão ser redesenhados).
+
+**O que fazer:**
+- `src/components/grafo/ConsoleCypher.jsx`: caixa de texto em fonte mono, botão
+  **Executar** (e Ctrl/Cmd+Enter), menu de **exemplos** com as consultas de
+  [neo4j/consultas](neo4j/consultas) — lidas do próprio arquivo (import `?raw`), para
+  acompanharem o que a orientadora mandar — e linha de status (linhas · tempos do
+  Neo4j · tempo total).
+- Resultado no palco, em abas: **Tabela** (uma coluna por campo; nó como
+  `(:Rotulo {props})`, relação como `[:TIPO]`, caminho resumido) e **JSON** (a
+  resposta exatamente como veio, formatada).
+- Erro mostra código + mensagem (no card de erro do palco, em fonte mono).
+- Na página: o `GrafoFiltros` deixa de ser renderizado (o arquivo fica até a N10) e
+  a barra do console herda o lugar e o z-index dele (40); os textos dos estados
+  (`GrafoEstados`) trocam "endpoint SPARQL / Apache Jena Fuseki / Filtrar" por
+  Neo4j / Cypher / Executar; a legenda e a gaveta SPARQL ficam ocultas até voltarem
+  adaptadas (N6 e N10). O canvas ainda **não** recebe dados.
+- **Efeitos colaterais aceitos (temporários):** o "Filtrar" das turmas no perfil e o
+  "Ver o grafo desta turma" da Home dependem do fluxo de filtros antigo e ficam sem
+  efeito — o `GrafoPerfil` não é alterado; a Home é tratada na N9.
+
+**Como testar (autor):**
+1. Rodar as 7 consultas de exemplo: nas 6 válidas, o nº de **linhas** bate com a
+   tabela de referência e com a aba de tabela do Neo4j Browser.
+2. A 7.ª mostra o erro de sintaxe com código e posição.
+3. `RETURN 1 AS um, "a" AS texto, [1.5, null, true] AS lista` aparece certo na Tabela.
+4. A aba JSON bate com a visão de código/JSON do resultado no Browser.
+5. Neo4j parado → card de erro legível; religado → Executar funciona de novo.
+
+**Pronto quando:** o que o site mostra bate com o Browser em todas as consultas.
+
+---
+
+#### N4 — Do resultado ao grafo: extrair nós e relações (ainda em texto)
+
+**Objetivo:** transformar qualquer resultado em "nós + relações", do jeito que o
+Browser faz, e **conferir os números antes de desenhar** — se depois o desenho sair
+errado, já se sabe que não é a extração.
+
+**O que fazer:**
+- `src/data/extrairGrafo.js` (função pura, sem React): percorre todas as linhas e
+  valores — inclusive dentro de listas, mapas e caminhos — e junta nós e relações
+  sem repetir (chave `elementId`).
+- **Relação sem as pontas no resultado** (ex.: `MATCH ()-[r]->() RETURN r`): busca os
+  nós que faltam numa consulta extra
+  (`MATCH (n) WHERE elementId(n) IN $ids RETURN n`), como o Browser.
+- **Conectar nós do resultado**: consulta extra que traz as relações existentes entre
+  os nós retornados. Ligado por padrão (igual ao Browser), com uma chave
+  liga/desliga no console.
+- Limite de nós exibidos (proposta: 300, o padrão do Browser clássico), com o aviso
+  "mostrando 300 de N".
+- Aba nova **Grafo (texto)** no resultado: contagem por rótulo e por tipo de relação
+  + a lista.
+
+**Como testar (autor):** nas 6 consultas válidas, nós e relações batem com a tabela
+de referência — com a chave ligada (última coluna) e desligada. Conferir também com
+o que o Browser exibe.
+
+**Pronto quando:** os números conferem nas duas posições da chave.
+
+---
+
+#### N5 — Desenhar o grafo no canvas
+
+**Objetivo:** o grafo do Neo4j aparece no canvas do site com a mesma estrutura que o
+Browser mostra.
+
+**O que fazer:**
+- O `montarGrafo` ([Grafos.jsx](src/pages/Grafos.jsx)) passa a receber o resultado da
+  N4 (formato interno do contrato), mantendo a espiral de ângulo áureo como semente,
+  a estabilidade de posição entre consultas e o enquadrar a 420 ms.
+- **Tabela de estilo** `src/data/estiloGrafo.js` (o equivalente ao estilo do
+  Browser): por rótulo → token de cor, raio e propriedade usada como legenda (Ano →
+  `nome`, UnidadeTematica → `nome`, ObjetoConhecimento → `descricao` encurtada,
+  Habilidade → `codigo`); por tipo de relação → comprimento da mola e tracejado.
+  Rótulo ou tipo **desconhecido** (a orientadora vai acrescentar outros) cai num
+  estilo padrão — o site nunca quebra por causa de um rótulo novo.
+- Tokens de cor `--no-*` para os 4 rótulos, claro **e** escuro.
+- Canvas: cor, raio, legenda e fonte vêm da tabela (saem os `tipo === 'habilidade'`
+  fixos); molas por tipo de relação; rótulo da aresta = tipo da relação (como no
+  Browser); tooltip com a legenda completa.
+- Pill de resumo: "N nós · M relações · X ms".
+- Ainda **não**: clique abrindo o painel (N7) e 2×clique expandindo (N8 — desligado
+  até lá, para não chamar o mock).
+- **Decidir com o autor na etapa:** o comprimento das molas dos 4 tipos de relação;
+  e se o atalho `DESENVOLVE_HABILIDADE` aparece mais discreto (fino ou tracejado)
+  para não poluir a árvore.
+
+**Como testar (autor):** a consulta 1 (árvore) lado a lado com o Browser: mesmos
+nós, mesmas setas e direções, mesma contagem. Depois: arrastar nó, pan, zoom, hover,
+tema escuro, widget A/A, modo sem animação, e rodar a mesma consulta duas vezes (os
+nós não "pulam").
+
+**Pronto quando:** as 6 consultas válidas desenham o mesmo grafo que o Browser.
+
+---
+
+#### N6 — Tipos novos: cores, formas, paletas e legenda
+
+**Objetivo:** a acessibilidade da D6 volta a valer para os rótulos do modelo novo.
+
+**O que fazer:**
+- [src/data/paletas.js](src/data/paletas.js): paletas CUD (Okabe & Ito) com uma cor
+  por rótulo — o conjunto tem 8 cores, sobra espaço para os 4 — em protanopia,
+  deuteranopia e tritanopia. O efeito da paleta e a chave do cache de cores do
+  canvas passam a cobrir **todos** os tokens `--no-*`.
+- Modo formas: uma forma por rótulo (ex.: círculo, quadrado, triângulo, losango) no
+  canvas e nas classes `.eg-no-*` com `data-formas`.
+- Legenda "Tipos de nó": lista os rótulos **presentes no resultado**, com contagem.
+  Ocultar um rótulo passa a ser feito no próprio canvas, sem reconsultar (uma
+  consulta Cypher qualquer não tem como ser refiltrada automaticamente). Rever a
+  **D7**: no modelo novo, ocultar Habilidade não esvazia o grafo.
+- O `OpcoesAcessibilidade` (compartilhado com o perfil) mostra os rótulos novos — o
+  `GrafoPerfil.jsx` em si não muda.
+
+**Como testar (autor):** cada paleta recolore canvas e legenda; as formas trocam no
+canvas e nos pontinhos; ocultar/mostrar cada rótulo pela legenda; tudo persiste ao
+recarregar.
+
+**Pronto quando:** paletas, formas, sem-animação e legenda funcionam com os 4
+rótulos.
+
+---
+
+#### N7 — Painel de detalhe com dados reais
+
+**Objetivo:** clicar num nó abre o painel com o que o Neo4j sabe dele — como o
+inspetor do Browser.
+
+**O que fazer:**
+- `selecionar(id)` usa o nó do grafo atual (sai o `NOS.get` do mock): rótulo,
+  legenda e **todas as propriedades** (genérico — o modelo ainda vai crescer).
+- Conexões por Cypher (`MATCH (n)-[r]-(m) WHERE elementId(n) = $id RETURN r, m`),
+  agrupadas por tipo e direção, com contagem; item que está no grafo → seleciona e
+  centra; fora → "+ expandir" (passa a funcionar na N8).
+- "Vistos por último" guardam id + legenda + rótulo (o nó pode sair do grafo).
+- Saem os blocos específicos do mock (pills ano/eixo/área, "Texto normativo — BNCC
+  Computação"). Os links de fonte oficial e o texto do assistente ("consulta
+  SPARQL") ficam para o autor decidir na etapa.
+
+**Como testar (autor):** com a árvore na tela, o Ano `EF1` mostra 27 conexões,
+"Números" 7 e `EF01MA17` 2; as propriedades são iguais às do Browser; clicar numa
+conexão navega; arrastar, redimensionar e esconder o painel continuam funcionando.
+
+**Pronto quando:** o painel mostra dados reais nos 4 rótulos.
+
+---
+
+#### N8 — Expandir e desfazer com Cypher
+
+**Objetivo:** o grafo volta a crescer a partir de um nó (2×clique, botão do painel,
+"+ expandir"), agora pelo Neo4j.
+
+**O que fazer:**
+- `expandir(id)`: `MATCH (n)-[r]-(m) WHERE elementId(n) = $id RETURN r, m`, com
+  limite de vizinhos (o Browser clássico usa 100); o resultado é fundido pela
+  extração da N4 (sem repetir), os nós novos nascem a 90 px da origem,
+  `reaquecer(0.8)` sem re-enquadrar, e o histórico do Desfazer continua como hoje.
+- Com "conectar nós" ligado, aparecem também as relações entre os nós novos e os
+  que já estavam na tela (como no Browser).
+
+**Como testar (autor):** rodar `MATCH (h:Habilidade {codigo:'EF01MA17'}) RETURN h`
+(1 nó) → o 2×clique traz o objeto de conhecimento "Medidas de tempo" e o Ano (+2
+nós) → expandir o objeto traz a unidade temática e as habilidades irmãs `EF01MA16` e
+`EF01MA18`, já ligadas ao Ano → "Desfazer ×N" volta cada passo; uma nova consulta
+zera o histórico; a câmera não re-enquadra ao expandir.
+
+**Pronto quando:** os 3 caminhos de expansão e o desfazer funcionam com dados reais.
+
+---
+
+#### N9 — Home com dados do Neo4j
+
+**Objetivo:** os números e a grade da Home deixam de vir do mock.
+
+**O que fazer:**
+- Banda de estatísticas ([StatsBand.jsx](src/components/StatsBand.jsx)): consultas
+  de agregação (ex.: `MATCH (h:Habilidade) RETURN count(h)`) carregadas de forma
+  assíncrona; a contagem animada só começa quando o dado chega; Neo4j fora do ar →
+  estado discreto ("—"), sem quebrar a página.
+- Grade "Encontre as habilidades da sua turma": habilidades por `Ano`, via Cypher.
+- **Decisões do autor na etapa** (o modelo atual não tem componente curricular):
+  - o 2.º número da banda ("componentes curriculares conectados") vira outra
+    métrica do modelo ou espera o nó de componente;
+  - o balão de matérias (`MateriaPopover`) e o "Ver o grafo desta turma" dependem de
+    componente curricular **e** dos filtros novos → esconder até lá, ou abrir a
+    página de grafos com uma consulta do ano já preenchida no console.
+- O `depoimentos.js` é conteúdo editorial, não dado do grafo — fica.
+
+**Como testar (autor):** a banda mostra 22 habilidades e o 1.º ano; a grade mostra o
+1.º ano com 22 habilidades; com o Neo4j parado, a Home abre normalmente.
+
+**Pronto quando:** nenhum número da Home vem do mock.
+
+---
+
+#### N10 — Remoção do mock
+
+**Objetivo:** o site deixa de ter dados locais do grafo.
+
+**Decisões do autor antes da etapa:**
+- `GrafoFiltros.jsx`: apagar (o desenho continua no protótipo e no histórico do git)
+  ou guardar como referência para o redesenho dos filtros;
+- `GrafoPerfil.jsx` importa anos e matérias do mock: remover as contas antes
+  (roadmap próprio) ou adiar a remoção do mock até lá.
+
+**O que fazer:**
+- `grep` de `mockFuseki` até zerar; apagar `src/data/mockFuseki.js`.
+- A gaveta "SPARQL" vira gaveta **Cypher**: mostra a última consulta que o site
+  executou por conta própria (conectar nós, conexões, expansão), com parâmetros e
+  tempos. Sai o "Simular falha (HTTP 503)" — era recurso do mock; as falhas agora são
+  reais.
+- Sai o fluxo de filtros antigo que ficou sem uso (seleção pendente, prévia de
+  vértices, `?serie=` na URL, busca do mock) e o deep-link correspondente no
+  [App.jsx](src/App.jsx).
+
+**Como testar (autor):** `grep -r mockFuseki src` vazio; `npm run build` sem erro;
+repetir os testes da N3, N5, N7, N8 e N9.
+
+**Pronto quando:** zero referências ao mock e todas as telas funcionando.
+
+---
+
+#### N11 — Produção (site no ar)
+
+**Objetivo:** o mesmo `POST /api/cypher` funcionando fora da máquina do autor, com a
+senha protegida.
+
+**Decisão antes da etapa (com a orientadora):** onde o Neo4j definitivo vai rodar
+(servidor da UFES/LabOtim, Neo4j Aura, outro) e onde o site vai ser publicado. Isso
+escolhe o proxy de produção: função serverless (exige o Neo4j acessível por HTTPS),
+servidor Node pequeno na mesma máquina do Neo4j (o Neo4j nem precisa ficar exposto
+à internet) ou proxy reverso (nginx).
+
+**Obrigatório em qualquer opção:** senha só em variável de ambiente do servidor; o
+proxy **força** `accessMode: "READ"` (sobrescreve o que vier do navegador) e/ou a
+base de produção fica somente leitura; tempo-limite de transação no Neo4j (uma
+consulta pesada não derruba o servidor); HTTPS.
+
+**Decidir também:** se o console Cypher continua visível no site publicado.
+
+**Como testar (autor):** o site publicado roda as consultas de exemplo; a senha não
+aparece no código publicado; `CREATE` pelo console falha; uma consulta
+propositalmente pesada termina em erro legível.
+
+**Pronto quando:** o site publicado funciona integrado e os testes de segurança
+passam.
+
+---
+
+#### N12 — Fechamento
+
+- Relatório no §3 (próximo número de Etapa): o que mudou, números, bugs encontrados.
+- Entradas novas no DECISOES.md para o que mudou no caminho (revisão da D7 e da
+  D10, desenho genérico no estilo do Browser, arquitetura de produção) — todas com
+  parágrafo de monografia.
+- §1, §6 e §7 sincronizados (arquivos novos, mock fora).
+- Retomar o §4.4 (P3–P5). A linha de base da P1 foi medida com o mock: medir de novo
+  antes da P3.
+
+**Fora deste roadmap** (registrado para não se perder): o redesenho dos filtros, da
+busca e do deep-link sobre o modelo novo (depois da N10); a remoção do sistema de
+contas (roadmap próprio); os pontos de modelagem para a orientadora (lista acima).
 
 ## 5. Como ler o protótipo final (arquivo "bundled")
 

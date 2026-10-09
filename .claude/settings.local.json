@@ -27,7 +27,16 @@
       "Bash(python3 -)",
       "Bash(curl -s -o /dev/null -w \"GrafoCanvas.jsx -> HTTP %{http_code}\\\\n\" \"http://localhost:5173/src/components/grafo/GrafoCanvas.jsx\")",
       "Bash(curl -s \"http://localhost:5173/src/components/grafo/GrafoCanvas.jsx\")",
-      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"http://localhost:5173/src/components/grafo/GrafoCanvas.jsx\")"
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"http://localhost:5173/src/components/grafo/GrafoCanvas.jsx\")",
+      "Bash(curl -s -i -X OPTIONS http://localhost:7474/db/neo4j/query/v2 -H 'Origin: http://localhost:5173' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: authorization,content-type')",
+      "Bash(curl -s -u neo4j:159159159lo -H 'Content-Type: application/json' -H 'Accept: application/vnd.neo4j.query' -d '{\"statement\":\"MATCH \\(a:Ano\\)-[r:DESENVOLVE_HABILIDADE]->\\(h:Habilidade {codigo:$c}\\) RETURN a, r, h\",\"parameters\":{\"c\":\"EF01MA01\"}}' http://localhost:7474/db/neo4j/query/v2)",
+      "Bash(curl -s -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"MATCH p = \\(:Ano\\)-[:TEM_UNIDADE]->\\(:UnidadeTematica\\)-[:TEM_OBJETO]->\\(:ObjetoConhecimento\\)-[:DESENVOLVE]->\\(:Habilidade\\) UNWIND nodes\\(p\\) AS n WITH collect\\(DISTINCT n\\) AS ns, collect\\(DISTINCT p\\) AS ps UNWIND ps AS p UNWIND relationships\\(p\\) AS r WITH ns, collect\\(DISTINCT r\\) AS rs RETURN size\\(ns\\) AS nos, size\\(rs\\) AS rels, COUNT { MATCH \\(a\\)-[x]->\\(b\\) WHERE a IN ns AND b IN ns } AS relsConectadas\"}' http://localhost:7474/db/neo4j/query/v2)",
+      "Bash(curl -s -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"MATCH p = \\(:Ano\\)-[:TEM_UNIDADE]->\\(:UnidadeTematica\\) RETURN p, 1 AS um LIMIT 1\"}' http://localhost:7474/db/neo4j/query/v2)",
+      "Bash(curl -s -u neo4j:159159159lo -H 'Content-Type: application/json' -H 'Accept: application/vnd.neo4j.query' -d '{\"statement\":\"MATCH p = \\(:Ano\\)-[:TEM_UNIDADE]->\\(:UnidadeTematica\\) RETURN p, 1 AS um, [1.5, null, true] AS l LIMIT 1\"}' http://localhost:7474/db/neo4j/query/v2)",
+      "Bash(curl -s -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"RETURN 1 AS x\",\"accessMode\":\"READ\"}' http://localhost:7474/db/neo4j/query/v2)",
+      "Bash(curl -s -w ' [HTTP %{http_code}]' -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"MATCH \\(n RETURN n\"}' http://localhost:7474/db/neo4j/query/v2)",
+      "Bash(curl -s -w ' [HTTP %{http_code}]' -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"RETURN 1 AS x\",\"campoQueNaoExiste\":1}' http://localhost:7474/db/neo4j/query/v2)",
+      "Bash(curl -s -w ' [HTTP %{http_code}]' -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"RETURN 1 AS x\",\"accessMode\":\"XYZ\"}' http://localhost:7474/db/neo4j/query/v2)"
     ],
     "additionalDirectories": [
       "/home/lorenzo/tcc_implementacao/TCC/.claude/skills"

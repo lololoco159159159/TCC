@@ -1,0 +1,28 @@
+// arvore completa 
+MATCH p = (:Ano)-[:TEM_UNIDADE]->(:UnidadeTematica)-[:TEM_OBJETO]->(:ObjetoConhecimento)-[:DESENVOLVE]->(:Habilidade)
+RETURN p
+
+// geometria completa 
+MATCH p = (ut:UnidadeTematica {nome:"Geometria"})-[:TEM_OBJETO]->(:ObjetoConhecimento)-[:DESENVOLVE]->(:Habilidade)
+RETURN p
+
+//de onde vem a habilidade
+MATCH p = (:Ano)-[:TEM_UNIDADE]->(:UnidadeTematica)-[:TEM_OBJETO]->(:ObjetoConhecimento)-[:DESENVOLVE]->(:Habilidade {codigo:"EF01MA17"})
+RETURN p
+
+// ano direto p habilidade
+MATCH p = (:Ano)-[:DESENVOLVE_HABILIDADE]->(:Habilidade)
+RETURN p
+
+// caminho entre 2 habilidades 
+MATCH p = shortestPath((h1:Habilidade {codigo:"EF01MA01"})-[:DESENVOLVE|TEM_OBJETO|TEM_UNIDADE*..10]-(h2:Habilidade {codigo:"EF01MA21"}))
+RETURN p
+
+// habiludade irma 
+MATCH p = (:Habilidade {codigo:"EF01MA16"})<-[:DESENVOLVE]-(:ObjetoConhecimento)-[:DESENVOLVE]->(:Habilidade)
+RETURN p
+
+//professor colocar as habilidades que precisa ensinar no ano
+MATCH p = (:Ano)-[:TEM_UNIDADE]->(:UnidadeTematica-[:TEM_OBJETO]->(:ObjetoConhecimento)-[:DESENVOLVE]->(h:Habilidade)
+WHERE h.codigo IN ["EF01MA06", "EF01MA07", "EF01MA08", "EF01MA19"]
+RETURN p
