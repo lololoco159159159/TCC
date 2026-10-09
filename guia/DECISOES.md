@@ -28,6 +28,10 @@
 
 **Quando:** início do projeto / Etapa 8 (G2) · **Onde:** [src/data/mockFuseki.js](src/data/mockFuseki.js)
 
+> **Superada pela D14 (2026-10-09):** o servidor passou a ser um Neo4j (Cypher), e o
+> dublê é aposentado ao fim da integração. O raciocínio abaixo continua valendo
+> como registro de como as telas foram construídas antes de os dados existirem.
+
 **O problema.** O TCC precisa de um servidor de grafos (Apache Jena Fuseki) para
 responder consultas SPARQL, mas construir front-end e back-end ao mesmo tempo
 dispersaria o esforço e atrasaria a parte visível do trabalho.
@@ -494,5 +498,80 @@ componente compartilhado, garantindo a não-regressão das demais páginas."
 
 ---
 
-*Última atualização: 2026-07-16. Novas decisões: adicionar ao fim da lista como
+> *D13 — reservada para a decisão de desempenho do motor do grafo (renderização sob
+> demanda, ESTADO_ATUAL.md §4.4), registrada quando a P5 for concluída.*
+
+---
+
+## D14 — Neo4j (Cypher) no lugar do Fuseki (SPARQL): integração real, atrás de um proxy
+
+**Quando:** 2026-10-09 (decisão do autor com a orientadora; implementação a partir
+da N1 do roadmap — ESTADO_ATUAL.md §4.5) · **Onde:** [vite.config.js](vite.config.js)
+(proxy `/api/cypher`), [.env.example](.env.example) (variáveis de conexão)
+
+**O problema.** Todo o front-end foi construído sobre um dublê fiel do Apache Jena
+Fuseki (D1), na expectativa de um triplestore consultado em SPARQL. Nas reuniões
+com a orientadora, o grafo de conhecimento passou a ser construído num **Neo4j** —
+banco de grafos de propriedades, consultado em **Cypher** —, com um modelo próprio
+(Ano → Unidade Temática → Objeto de Conhecimento → Habilidade). Além disso, o site
+vai ser **publicado**: o mock não pode continuar como plano B (mostraria dados
+fictícios como se fossem reais), e a senha do banco não pode chegar ao navegador —
+na edição Community do Neo4j não existe usuário só-leitura, então quem tivesse a
+senha teria acesso total de escrita ao grafo.
+
+**A decisão.** (1) O Neo4j substitui o Fuseki como fonte de dados, e as consultas
+passam a ser Cypher; (2) integração **real**, sem mock como plano B — ele é
+removido ao fim da integração (N10); (3) transporte pela **Query API HTTP** do
+próprio Neo4j (`POST /db/<banco>/query/v2`) com `fetch`, sem dependência nova;
+(4) o navegador **nunca fala direto com o Neo4j**: chama `POST /api/cypher` no
+servidor do próprio site, e um **proxy** acrescenta a credencial — lida de
+variáveis de ambiente do servidor, sem o prefixo `VITE_`, portanto fora do bundle —
+e repassa a consulta. Em desenvolvimento é o proxy do Vite (N1); no site
+publicado, outro proxy no mesmo caminho (N11); (5) toda consulta em **modo somente
+leitura** — o cliente pede (N2) e o proxy de produção impõe (N11); (6) respostas no
+**JSON tipado** da Query API, em que cada valor declara o próprio tipo (nó,
+relação, caminho, inteiro…), o que permite remontar o grafo a partir de qualquer
+consulta, como o Neo4j Browser faz. A D14 **supera a D1**, que fica como registro
+histórico: o dublê cumpriu o papel de permitir construir as telas antes dos dados.
+
+**Alternativas rejeitadas.** (a) *Driver oficial (Bolt via WebSocket):* dependência
+pesada para uma aplicação que só lê, e ainda exigiria credencial no navegador ou a
+porta Bolt exposta; (b) *navegador chamando a Query API direto, com a senha no
+código:* qualquer visitante leria a senha no bundle e, sem usuário só-leitura na
+edição Community, poderia apagar o grafo; (c) *manter o mock como plano B:* o site
+publicado poderia exibir dados fictícios em silêncio — inaceitável numa ferramenta
+educacional; (d) *back-end próprio (Express etc.) já no desenvolvimento:*
+infraestrutura além do necessário — o proxy do Vite resolve o desenvolvimento em
+poucas linhas, e a hospedagem de produção ainda será decidida (N11); (e)
+*permanecer no Fuseki:* os dados agora são produzidos no Neo4j pelo grupo da
+orientadora.
+
+**Para a banca.** *"O grafo da orientadora vive num Neo4j e é consultado em Cypher
+pela API HTTP do próprio banco, sem biblioteca nova. O navegador nunca vê a senha:
+ele chama um endereço do próprio site, e um proxy do lado do servidor acrescenta a
+credencial e restringe as consultas à leitura. O dublê que permitiu construir as
+telas antes dos dados foi aposentado — o site publicado mostra apenas dados
+reais."*
+
+**Monografia** *(cap. de Arquitetura — atualiza o parágrafo da D1; retomar na
+seção de implementação da integração):*
+"A fonte de dados do sistema é um banco de grafos de propriedades Neo4j, mantido
+pelo grupo de pesquisa e consultado na linguagem Cypher por meio da Query API HTTP
+do próprio servidor de banco de dados. Por razões de segurança, a aplicação
+cliente não se comunica diretamente com o banco: as consultas são enviadas a um
+*endpoint* do servidor da aplicação, que atua como intermediário (*proxy*
+reverso), acrescenta as credenciais de acesso — armazenadas exclusivamente em
+variáveis de ambiente do servidor — e restringe as transações ao modo somente
+leitura. A opção pela API HTTP, em detrimento do *driver* oficial baseado no
+protocolo Bolt, dispensou dependências adicionais no cliente, uma vez que a
+aplicação apenas consulta o grafo. As respostas são solicitadas no formato JSON
+tipado da Query API, no qual cada valor declara seu tipo (nó, relação, caminho,
+inteiro, entre outros), o que permite reconstruir a estrutura do grafo a partir de
+resultados arbitrários de consulta. O simulador do servidor empregado nas fases
+iniciais do desenvolvimento foi descontinuado com a integração, de modo que a
+versão publicada exibe exclusivamente dados do repositório definitivo."
+
+---
+
+*Última atualização: 2026-10-09. Novas decisões: adicionar ao fim da lista como
 D<N+1>, seguindo o formato do cabeçalho — **sempre com o parágrafo de monografia**.*

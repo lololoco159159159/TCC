@@ -805,7 +805,7 @@ completas contra o mock. Restam:
 2. **PENDENTE (pausado em 2026-10-09) — Desempenho do motor do grafo**: P0–P2
    feitas; **P3, P4 e P5 pendentes** — roadmap §4.4. Retomar depois da integração.
 3. **FOCO ATUAL — Integração com o Neo4j** (substitui o antigo plano de Apache
-   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **Próxima etapa: N1.**
+   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1 feita; próxima etapa: N2.**
 
 ### 4.1 Página de grafos — caminho por etapas (G1–G11)
 
@@ -1584,7 +1584,7 @@ redesenhada depois, e até lá o lugar dela é de um **console Cypher** para tes
 integração.
 
 - [x] **N0** — Este roadmap *(2026-10-09)*
-- [ ] **N1** — Conexão: proxy de desenvolvimento e senha fora do código (+ D14)
+- [x] **N1** — Conexão: proxy de desenvolvimento e senha fora do código (+ D14) *(2026-10-09)*
 - [ ] **N2** — Cliente Cypher `src/data/neo4j.js` (sem tela)
 - [ ] **N3** — Console Cypher na página de grafos: ver o que chega
 - [ ] **N4** — Do resultado ao grafo: extrair nós e relações (em texto)
@@ -1715,6 +1715,50 @@ senha do lado do servidor. **Nenhuma tela muda.**
    dentro de `dist/` → nenhuma ocorrência.
 
 **Pronto quando:** os 4 testes passam e lint/build/dev estão verdes.
+
+**Feito (2026-10-09).** Arquivos: [vite.config.js](vite.config.js) (função
+`proxyNeo4j(env)` + `loadEnv` com prefixo `''`; o mesmo objeto de proxy em
+`server.proxy` e `preview.proxy`), [.env.example](.env.example) (versionado, senha
+em branco) e `.env.local` (não versionado — conferido com `git check-ignore`). D14
+registrada no [guia/DECISOES.md](guia/DECISOES.md); a D1 ganhou a nota "superada
+pela D14" e a D13 ficou marcada como reservada para a P5.
+
+Detalhes e desvios do plano (todos a favor):
+- **Erro do proxy no formato da Query API.** Com o Neo4j fora do ar, o padrão do
+  Vite responde `500` com corpo vazio. O proxy agora responde **`502`** com
+  `{ errors: [{ code: 'EduGraph.Proxy.Neo4jIndisponivel', message }] }` — o mesmo
+  formato dos erros do próprio Neo4j, para o cliente da N2 tratar tudo de um jeito
+  só; o prefixo `EduGraph.Proxy.` separa falha do proxy de erro do banco (`Neo.*`).
+  O listener entra pelo `configure` e roda antes do listener do Vite (conferido no
+  código do Vite 5.4.21), que então só loga a falha no terminal.
+- **A credencial do servidor sempre vence**: o `headers` do proxy sobrescreve
+  qualquer `Authorization` vindo do navegador (testado com um Basic falso — a
+  consulta continua passando com a credencial do `.env.local`).
+- **Sem senha configurada** (ex.: outra máquina sem `.env.local`): o terminal do
+  `npm run dev` avisa "NEO4J_PASSWORD não definida — copie .env.example para
+  .env.local…" e nenhuma credencial é enviada (o Neo4j responde 401 "No
+  authentication header supplied").
+- `NEO4J_URL`, `NEO4J_DATABASE` e `NEO4J_USER` têm os padrões locais
+  (`http://localhost:7474`, `neo4j`, `neo4j`); só a senha é obrigatória.
+- `Buffer` e `process` importados de `node:buffer`/`node:process`: o ESLint do
+  projeto aplica só globais de navegador a todo `.js`, e o import explícito evita
+  mexer na config do lint.
+- **Achado para a N2:** a Query API responde **`202 Accepted`** (não `200`) quando a
+  consulta dá certo — o cliente tem que aceitar qualquer 2xx.
+
+Verificado: `npm run lint` (0/0), `npm run build` (**283,89 kB, idêntico** — a
+config não toca o bundle) e `npm run dev` (200). Os testes da etapa foram rodados
+pelo assistente em servidores temporários (portas 5196–5199, encerrados no fim):
+(1) curl sem `-u` em `/api/cypher` → `EF01MA01/02/03` (HTTP 202); (2) senha errada
+(passada por variável de ambiente, sem editar o `.env.local`) → 401 `Invalid
+credential.`; (3) Neo4j inalcançável (URL com porta fechada, sem derrubar o Neo4j
+do autor) → 502 JSON em ~3 ms; (4) `.env.local` ignorado pelo git; a senha e o texto
+`NEO4J` com zero ocorrências em `dist/`. **Falta o teste do autor** (os 4 itens
+acima, no `npm run dev` dele — no teste 3, parando o Neo4j de verdade).
+
+**Na outra máquina:** copiar `.env.example` para `.env.local` e preencher a senha;
+ter o Neo4j rodando com os mesmos dados (script
+[neo4j/exemplo_rosiane_alterado](neo4j/exemplo_rosiane_alterado) no Browser dela).
 
 ---
 
@@ -2093,6 +2137,10 @@ Particularidades:
   `30` painel de contexto/popovers do palco/balão de matérias · `32` overlays de
   estado · `40` barra de filtros · `60` dropdowns da barra · `120` widget A/A ·
   `190/200` backdrop/dropdown do perfil.
+- **Segredos** (senha do Neo4j): só no `.env.local` (não versionado; modelo em
+  [.env.example](.env.example)), sempre **sem** o prefixo `VITE_` — o Vite só embute
+  no bundle as variáveis `VITE_*`. Quem lê é o proxy `/api/cypher` do
+  [vite.config.js](vite.config.js) (N1/D14).
 - **Decisões importantes → [DECISOES.md](DECISOES.md)**: toda escolha relevante de
   escopo/arquitetura/biblioteca/dados/acessibilidade ganha uma entrada didática lá
   (problema → decisão → alternativas rejeitadas → fala pronta para a banca →

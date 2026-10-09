@@ -36,7 +36,12 @@
       "Bash(curl -s -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"RETURN 1 AS x\",\"accessMode\":\"READ\"}' http://localhost:7474/db/neo4j/query/v2)",
       "Bash(curl -s -w ' [HTTP %{http_code}]' -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"MATCH \\(n RETURN n\"}' http://localhost:7474/db/neo4j/query/v2)",
       "Bash(curl -s -w ' [HTTP %{http_code}]' -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"RETURN 1 AS x\",\"campoQueNaoExiste\":1}' http://localhost:7474/db/neo4j/query/v2)",
-      "Bash(curl -s -w ' [HTTP %{http_code}]' -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"RETURN 1 AS x\",\"accessMode\":\"XYZ\"}' http://localhost:7474/db/neo4j/query/v2)"
+      "Bash(curl -s -w ' [HTTP %{http_code}]' -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"RETURN 1 AS x\",\"accessMode\":\"XYZ\"}' http://localhost:7474/db/neo4j/query/v2)",
+      "Bash(node -p \"require\\('./node_modules/vite/package.json'\\).version\")",
+      "Bash(git check-ignore *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(curl -s -w '  [HTTP %{http_code}]\\\\n' -X POST http://localhost:5173/api/cypher -H 'Content-Type: application/json' -d '{\"statement\":\"MATCH \\(h:Habilidade\\) RETURN h.codigo AS codigo LIMIT 3\"}')",
+      "Bash(curl -s -o /dev/null -w '[HTTP %{http_code}, %{content_type}]\\\\n' http://localhost:5173/neo4j/)"
     ],
     "additionalDirectories": [
       "/home/lorenzo/tcc_implementacao/TCC/.claude/skills"
