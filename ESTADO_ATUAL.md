@@ -805,7 +805,7 @@ completas contra o mock. Restam:
 2. **PENDENTE (pausado em 2026-10-09) — Desempenho do motor do grafo**: P0–P2
    feitas; **P3, P4 e P5 pendentes** — roadmap §4.4. Retomar depois da integração.
 3. **FOCO ATUAL — Integração com o Neo4j** (substitui o antigo plano de Apache
-   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1 e N2 feitas; próxima etapa: N3.**
+   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N3 feitas; próxima etapa: N4.**
 
 ### 4.1 Página de grafos — caminho por etapas (G1–G11)
 
@@ -1586,7 +1586,7 @@ integração.
 - [x] **N0** — Este roadmap *(2026-10-09)*
 - [x] **N1** — Conexão: proxy de desenvolvimento e senha fora do código (+ D14) *(2026-10-09)*
 - [x] **N2** — Cliente Cypher `src/data/neo4j.js` (sem tela) *(2026-10-12)*
-- [ ] **N3** — Console Cypher na página de grafos: ver o que chega
+- [x] **N3** — Console Cypher na página de grafos: ver o que chega *(2026-10-12)*
 - [ ] **N4** — Do resultado ao grafo: extrair nós e relações (em texto)
 - [ ] **N5** — Desenhar o grafo no canvas
 - [ ] **N6** — Tipos novos: cores, formas, paletas e legenda
@@ -1866,7 +1866,12 @@ solta; inteiros grandes e decimais especiais; datas/duração/ponto; mapa que im
 lista de nós; aviso de rótulo inexistente; sintaxe (400); escrita bloqueada (banco
 conferido: 0 nós); erro de execução com 202; tempo esgotado; canal; concorrentes sem
 canal; `signal` externo; parâmetro não serializável; 404; 401; 502; servidor fora do
-ar. **Falta o teste do autor** no DevTools (comandos acima).
+ar. **Teste do autor (2026-10-12, Firefox):** feito; os dois tropeços vieram do console
+do navegador, não do cliente — colar o import duas vezes (`redeclaration of let`) e
+testar depois de um F5 sem recarregar o cliente (`ReferenceError`); as instruções acima
+foram ajustadas (`var` + aviso do F5). Um `ECONNREFUSED` com o Neo4j "ligado" era o
+intervalo entre o `systemctl start` e a porta 7474 abrir (~9 s, conferido nos
+registros do serviço).
 
 ---
 
@@ -1904,6 +1909,68 @@ os filtros vão ser redesenhados).
 5. Neo4j parado → card de erro legível; religado → Executar funciona de novo.
 
 **Pronto quando:** o que o site mostra bate com o Browser em todas as consultas.
+
+**Feito (2026-10-12).** Arquivos novos:
+[src/components/grafo/ConsoleCypher.jsx](src/components/grafo/ConsoleCypher.jsx)
+(barra) e [src/components/grafo/ResultadoCypher.jsx](src/components/grafo/ResultadoCypher.jsx)
+(Tabela/JSON). Alterados: [Grafos.jsx](src/pages/Grafos.jsx),
+[GrafoEstados.jsx](src/components/grafo/GrafoEstados.jsx) e [index.css](src/index.css)
+(classes `.eg-console-cypher`, `.eg-resultado-aba`, `.eg-resultado-tabela` e o
+`:disabled` do botão verde). Sem token novo.
+
+Como ficou:
+- **Barra (z-index 40, no lugar da de filtros):** rótulo "CYPHER", caixa de texto em
+  fonte mono que cresce até 8 linhas, menu **Exemplos…** e botão **Executar**
+  (desabilitado sem texto ou durante a consulta). Ctrl/Cmd+Enter executa; Enter quebra
+  a linha. Linha de status: `linhas · Neo4j: pronto em X ms, lido em Y ms · total no
+  navegador: Z ms` (+ `avisos: N`); antes da 1.ª execução, "Ctrl+Enter executa ·
+  somente leitura".
+- **Exemplos** lidos do próprio [neo4j/consultas](neo4j/consultas) (import `?raw`):
+  cada `// título` abre um exemplo. Os títulos aparecem como estão no arquivo
+  (inclusive "habiludade irma"); se a orientadora trocar o arquivo, o menu acompanha.
+- **Resultado** (vidro do painel, mais opaco — 92%, para a tabela ler firme; z-index
+  30, à direita do painel de contexto): abas Tabela/JSON e `linhas · campos` no
+  cabeçalho; os **avisos** do Neo4j aparecem no topo (ex.: rótulo inexistente).
+  Tabela com coluna **#** (nº da linha, para conferir com o Browser), textos entre
+  aspas (o tipo fica visível: `1` × `"1"`), nó como `(:Rotulo {props})`, relação como
+  `[:TIPO]` e caminho resumido com o 1.º valor de cada nó e o sentido real das setas.
+  Limites: 500 linhas desenhadas e 1.000.000 de caracteres no JSON (avisa quando corta).
+- **Card de erro:** título conforme a origem ("O Neo4j recusou a consulta" / "Não foi
+  possível falar com o Neo4j" / "Sem resposta do servidor do site"), código em dourado
+  e a mensagem — a de sintaxe traz a consulta e o `^` num bloco que não quebra linha,
+  para o `^` ficar sob a posição certa. Erro **da consulta** não oferece "Tentar
+  novamente" (repetir não adianta); mostra "Corrija a consulta na barra acima".
+- **Desempenho** (skill `vercel-react-best-practices`): o texto digitado vive no
+  ConsoleCypher — digitar não re-renderiza a página; Tabela e JSON são `memo()` —
+  arrastar o painel não refaz a tabela.
+
+Desvios do plano:
+- **O fluxo de filtros do mock saiu já na N3, não na N10.** Sem a barra, ele ficou
+  sem nenhum chamador, e o lint do projeto (0/0) não aceita código morto. Saíram:
+  `aplicarFiltros`, `montarGrafo`, `contarVertices`, `sincronizarURL`, o efeito de
+  deep-link `?serie=`, busca/sugestões, seleção pendente, a simulação de falha 503 e a
+  constante `ATRASO_SELECAO_BUSCA` (770 ms). **A N5 reescreve o `montarGrafo`** para o
+  formato novo — referência no git (commit da N2): espiral áurea (ângulo 2.399963),
+  distâncias `70 + (idx % 5)·38` / 230 / 330 por tipo, raios 11/14/17, ±15 px de
+  ruído e a posição mantida para nós que já estavam na tela. Continuam no repo, sem
+  uso: `GrafoFiltros.jsx` (decisão na N10) e `LegendaTipos`/`GavetaSparql` em
+  `GrafoOverlays.jsx` (voltam adaptados na N6/N10). Grafos.jsx: 799 → 568 linhas.
+- O estado `vazio` ficou sem uso (consulta sem linhas aparece na própria tabela); o
+  texto do card foi adaptado e marcado "sem uso desde a N3 — a N5 decide".
+- Zoom, paleta e resumo só aparecem com nós no canvas (`temGrafo`): ocultos na N3.
+- "Filtrar" de turma no perfil: só fecha o perfil (efeito aceito no plano; o
+  `GrafoPerfil` não mudou). O "Ver o grafo desta turma" da Home abre a página no
+  convite (tratado na N9).
+
+Verificado: `npm run lint` (0/0), `npm run build` (JS **283,89 → 276,37 kB** — saíram
+a barra de filtros e o fluxo morto, entraram o cliente e o console; CSS 7,33 → 8,81
+kB) e `npm run dev`. O assistente chegou a conferir parte do teste num navegador
+automatizado instalado numa pasta temporária **sem pedir permissão** — erro dele; tudo
+foi removido a pedido do autor, inclusive do cache do npm. O que essa conferência
+cobriu: os 7 exemplos (22/4/1/22/1/2 linhas e o erro de sintaxe com `^`, sem "Tentar
+novamente"), a aba JSON tipada, o Ctrl+Enter e os tipos na tabela. **Falta o teste
+do autor** (itens acima), que também cobre o que ficou sem conferência: avisos,
+"Voltar ao início", tema escuro e Neo4j fora do ar.
 
 ---
 
@@ -2203,8 +2270,9 @@ Particularidades:
   porque os tokens estão definidos globalmente.
 - **Escala de z-index** (documentada no topo do `index.css`; não criar valores
   intermediários novos): `1–8` camadas internas da landing · `20` GradeCard aberto ·
-  `30` painel de contexto/popovers do palco/balão de matérias · `32` overlays de
-  estado · `40` barra de filtros · `60` dropdowns da barra · `120` widget A/A ·
+  `30` painel de contexto/resultado do console/popovers do palco/balão de matérias ·
+  `32` overlays de estado · `40` barra do console Cypher (era a de filtros até a N3) ·
+  `60` dropdowns da barra · `120` widget A/A ·
   `190/200` backdrop/dropdown do perfil.
 - **Segredos** (senha do Neo4j): só no `.env.local` (não versionado; modelo em
   [.env.example](.env.example)), sempre **sem** o prefixo `VITE_` — o Vite só embute
@@ -2243,14 +2311,16 @@ src/
 │   │   ├── BotaoAcessibilidade.jsx # botão flutuante: toggle "desativar animações e física"
 │   │   └── estilos.js         # estilos inline compartilhados dos cards (CARD_VIDRO, ...; A3)
 │   └── grafo/                 # componentes exclusivos da página de grafos (R7a)
-│       ├── GrafoFiltros.jsx   # barra de busca/filtros (Etapa 9/G3 — FEITO)
+│       ├── ConsoleCypher.jsx  # barra do console Cypher: consulta, exemplos de neo4j/consultas, Executar (N3)
+│       ├── ResultadoCypher.jsx # resultado do console no palco: abas Tabela/JSON + avisos do Neo4j (N3)
+│       ├── GrafoFiltros.jsx   # barra de busca/filtros do mock (G3) — SEM USO desde a N3 (decisão na N10)
 │       ├── GrafoCanvas.jsx    # canvas 2D: render + física + interações (hover/seleção/drag/pan/zoom,
 │       │                      #   2×clique expande; API centrarEm/enquadrar/reaquecer/assentar/zoom± via ref)
 │       ├── GrafoPainel.jsx    # painel de contexto "de vidro": detalhe, conexões, expandir, vistos (G7–G8)
 │       ├── GrafoOverlays.jsx  # legenda "Tipos de nó", gaveta SPARQL, popover de paleta,
 │       │                      #   OpcoesAcessibilidade (G9–G10)
 │       ├── GrafoPerfil.jsx    # perfil mock: identidade, turmas, acessibilidade (G10)
-│       ├── GrafoEstados.jsx   # overlays de estado do palco: convite/carregando/erro/vazio (R7b)
+│       ├── GrafoEstados.jsx   # overlays de estado do palco: convite/carregando/erro (código + ^)/vazio (R7b; N3)
 │       └── estilos.js         # estilos inline compartilhados do domínio (MONO_LABEL, R6)
 ├── data/
 │   ├── neo4j.js               # cliente Cypher do Neo4j: executarCypher() via proxy /api/cypher (N2)
@@ -2261,7 +2331,7 @@ src/
 │                              #   e a grade de séries (Etapa 8/G2 — FEITO)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
-│   ├── Grafos.jsx             # página do grafo — filtros + estados + canvas + painel + expandir/desfazer + overlays + perfil/prefs (G1–G11 — COMPLETA contra o mock)
+│   ├── Grafos.jsx             # página do grafo — console Cypher (N3) + estados + canvas + painel + expandir/desfazer + perfil/prefs (em transição para o Neo4j, §4.5)
 │   ├── Login.jsx              # card de vidro na MolduraConta; form acessível (A1–A5 — FEITO)
 │   └── Signup.jsx             # card de vidro na MolduraConta; form acessível (A1–A5 — FEITO)
 ├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)

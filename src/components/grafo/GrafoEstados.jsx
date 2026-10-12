@@ -1,9 +1,14 @@
 // Overlays de ESTADO do palco da página de grafos (G3; extraídos da página na
 // R7b — movimento puro de JSX): card-convite (início), skeleton de nós pulsando
 // + spinner (carregando), card de erro (Tentar novamente / Voltar ao início) e
-// card de vazio (Limpar filtros). Carregando/erro/vazio cobrem o palco com
-// zIndex 32 (acima do painel de contexto, 30 — ver a escala no index.css);
-// o convite fica sem z-index, acima do canvas só pela ordem no DOM.
+// card de vazio. Carregando/erro/vazio cobrem o palco com zIndex 32 (acima do
+// painel de contexto, 30 — ver a escala no index.css); o convite fica sem
+// z-index, acima do canvas só pela ordem no DOM.
+// N3 (integração com o Neo4j): textos trocados de SPARQL/Fuseki/Filtrar para
+// Neo4j/Cypher/Executar, e o card de erro mostra o código do erro + a mensagem
+// (a de sintaxe traz a consulta e um ^ na posição — por isso o resto da
+// mensagem vai num bloco que não quebra linha). O card de vazio ficou sem uso
+// na N3 (consulta sem linhas aparece na própria tabela do resultado).
 
 // pontos do skeleton de carregamento (verbatim do protótipo)
 const SKELETON = [
@@ -23,7 +28,19 @@ const SKELETON = [
   { l: 88, t: 66, d: 10, delay: 0.12 },
 ]
 
-function GrafoEstados({ status, msgErro, aoTentarNovamente, aoLimpar }) {
+// título do card de erro conforme a origem do ErroCypher (src/data/neo4j.js)
+const TITULO_ERRO = {
+  neo4j: 'O Neo4j recusou a consulta',
+  http: 'Não foi possível falar com o Neo4j',
+  rede: 'Sem resposta do servidor do site',
+}
+
+function GrafoEstados({ status, erro, aoTentarNovamente, aoLimpar }) {
+  // 1.ª linha da mensagem = explicação (quebra normal); o resto, quando existe,
+  // é a consulta + o ^ apontando a posição — sem quebra, para o ^ alinhar
+  const [explicacao, ...resto] = (erro?.mensagem || '').split('\n')
+  const erroDaConsulta = erro?.origem === 'neo4j' // sintaxe etc.: repetir não adianta
+
   return (
     <>
       {/* estado início: card-convite */}
@@ -69,12 +86,13 @@ function GrafoEstados({ status, msgErro, aoTentarNovamente, aoLimpar }) {
                 marginBottom: 16,
               }}
             >
-              Monte um recorte e explore o grafo.
+              Consulte o grafo em Cypher.
             </h1>
             <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.65, color: 'var(--muted)' }}>
-              Use a barra acima: escolha série, matéria ou conceito e clique em{' '}
-              <strong style={{ color: 'var(--text)' }}>Filtrar</strong> para consultar o endpoint e ver
-              as habilidades da BNCC Computação conectadas ao currículo que você já ensina.
+              Use a barra acima: escreva uma consulta — ou escolha um dos{' '}
+              <strong style={{ color: 'var(--text)' }}>Exemplos</strong> — e clique em{' '}
+              <strong style={{ color: 'var(--text)' }}>Executar</strong> (ou Ctrl+Enter) para consultar o
+              Neo4j. Por enquanto, a resposta aparece em tabela e em JSON.
             </p>
           </div>
         </div>
@@ -139,9 +157,9 @@ function GrafoEstados({ status, msgErro, aoTentarNovamente, aoLimpar }) {
                 textTransform: 'uppercase',
               }}
             >
-              Consultando endpoint SPARQL…
+              Consultando o Neo4j…
             </span>
-            <span style={{ fontSize: 11, color: 'var(--faint)' }}>Apache Jena Fuseki</span>
+            <span style={{ fontSize: 11, color: 'var(--faint)' }}>Cypher · Query API</span>
           </div>
         </div>
       )}
@@ -161,7 +179,7 @@ function GrafoEstados({ status, msgErro, aoTentarNovamente, aoLimpar }) {
         >
           <div
             style={{
-              width: 460,
+              width: 560,
               maxWidth: '92%',
               background: 'var(--pill-bg)',
               border: '1px solid var(--gold)',
@@ -185,9 +203,9 @@ function GrafoEstados({ status, msgErro, aoTentarNovamente, aoLimpar }) {
               </span>
             </div>
             <h2 style={{ font: "700 22px/1.2 'Spectral', serif", margin: '0 0 8px', color: 'var(--text)' }}>
-              Não foi possível consultar o grafo
+              {TITULO_ERRO[erro?.origem] || 'Não foi possível consultar o grafo'}
             </h2>
-            <p
+            <div
               style={{
                 font: "11.5px/1.6 'JetBrains Mono', monospace",
                 color: 'var(--muted)',
@@ -198,25 +216,42 @@ function GrafoEstados({ status, msgErro, aoTentarNovamente, aoLimpar }) {
                 padding: '10px 12px',
               }}
             >
-              {msgErro}
-            </p>
+              {erro?.codigo ? (
+                <div style={{ color: 'var(--gold)', fontWeight: 600, marginBottom: 6, overflowWrap: 'anywhere' }}>
+                  {erro.codigo}
+                </div>
+              ) : null}
+              <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{explicacao}</div>
+              {resto.length ? (
+                <pre style={{ margin: '8px 0 0', font: 'inherit', whiteSpace: 'pre', overflowX: 'auto' }}>
+                  {resto.join('\n')}
+                </pre>
+              ) : null}
+            </div>
+            {erroDaConsulta ? (
+              <p style={{ margin: '-8px 0 18px', fontSize: 13.5, lineHeight: 1.5, color: 'var(--muted)' }}>
+                Corrija a consulta na barra acima e execute de novo.
+              </p>
+            ) : null}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                type="button"
-                className="eg-grafo-filtrar"
-                onClick={aoTentarNovamente}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: 999,
-                  border: 'none',
-                  background: 'var(--green)',
-                  color: '#fff',
-                  font: "600 14px/1 'Figtree', sans-serif",
-                  cursor: 'pointer',
-                }}
-              >
-                Tentar novamente
-              </button>
+              {erroDaConsulta ? null : (
+                <button
+                  type="button"
+                  className="eg-grafo-filtrar"
+                  onClick={aoTentarNovamente}
+                  style={{
+                    padding: '10px 20px',
+                    borderRadius: 999,
+                    border: 'none',
+                    background: 'var(--green)',
+                    color: '#fff',
+                    font: "600 14px/1 'Figtree', sans-serif",
+                    cursor: 'pointer',
+                  }}
+                >
+                  Tentar novamente
+                </button>
+              )}
               <button
                 type="button"
                 onClick={aoLimpar}
@@ -237,7 +272,7 @@ function GrafoEstados({ status, msgErro, aoTentarNovamente, aoLimpar }) {
         </div>
       )}
 
-      {/* estado vazio */}
+      {/* estado vazio (sem uso desde a N3 — a N5 decide se volta) */}
       {status === 'vazio' && (
         <div
           style={{
@@ -276,11 +311,11 @@ function GrafoEstados({ status, msgErro, aoTentarNovamente, aoLimpar }) {
               </span>
             </div>
             <h2 style={{ font: "700 22px/1.2 'Spectral', serif", margin: '0 0 8px', color: 'var(--text)' }}>
-              Nenhuma conexão neste recorte
+              A consulta não trouxe nós
             </h2>
             <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--muted)', margin: '0 0 20px' }}>
-              A combinação de série e matéria não retornou habilidades. Tente ampliar o recorte —
-              trocar a matéria ou liberar a série.
+              A consulta foi executada, mas não retornou nenhum nó para desenhar. Ajuste-a na barra
+              acima e execute de novo.
             </p>
             <button
               type="button"
@@ -296,7 +331,7 @@ function GrafoEstados({ status, msgErro, aoTentarNovamente, aoLimpar }) {
                 cursor: 'pointer',
               }}
             >
-              Limpar filtros
+              Voltar ao início
             </button>
           </div>
         </div>

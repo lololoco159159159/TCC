@@ -9,14 +9,16 @@
      4. Keyframes (egFadeUp · egPulsar · egGirar · egSurgir)
      5. Classes .eg-* por área: formulários (Login/Signup) → botões → widget
         A/A → navegação/footer → popover de matérias (Home) → página de
-        grafos (barra, zoom, painel, overlays, perfil/turmas/formas)
+        grafos (barra, zoom, painel, console Cypher/resultado, overlays,
+        perfil/turmas/formas)
 
    ESCALA DE Z-INDEX do app (valores em uso; não criar intermediários novos):
       1–8  camadas internas da landing (linhas/cards/legenda das seções)
        20  GradeCard com popover aberto (Home)
-       30  painel de contexto e popovers do palco (grafos) + balão de matérias
+       30  painel de contexto, resultado do console e popovers do palco
+           (grafos) + balão de matérias
        32  overlays de estado do palco (carregando/erro/vazio)
-       40  barra de busca/filtros (grafos)
+       40  barra do console Cypher (grafos; era a de busca/filtros até a N3)
        60  dropdowns da barra (sugestões, turmas)
       120  widget A/A (fixo, site inteiro — definido neste arquivo)
   190/200  backdrop / dropdown do perfil (grafos)
@@ -507,6 +509,100 @@ input::placeholder {
 .eg-grafo-desfazer:hover {
   border-color: var(--gold) !important;
   color: var(--gold) !important;
+}
+
+/* ---- Página de grafos: console Cypher e resultado (N3) ---- */
+
+/* caixa de texto da consulta (mesma linguagem da busca antiga, em fonte mono) */
+.eg-console-cypher {
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 13px;
+  border: 1px solid var(--pill-border);
+  border-radius: 12px;
+  background: var(--bg);
+  font: 400 13px/1.55 'JetBrains Mono', monospace;
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+}
+
+.eg-console-cypher:focus {
+  border-color: var(--green);
+  background: var(--pill-bg);
+}
+
+/* Executar desabilitado (sem texto ou consulta em andamento): sem o hover
+   escuro do .eg-grafo-filtrar */
+.eg-grafo-filtrar:disabled {
+  opacity: 0.45;
+  cursor: default !important;
+}
+
+.eg-grafo-filtrar:disabled:hover {
+  background: var(--green) !important;
+}
+
+/* abas Tabela / JSON do resultado */
+.eg-resultado-aba {
+  padding: 13px 2px 11px;
+  margin-right: 18px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  font: 600 13px/1 'Figtree', system-ui, sans-serif;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.eg-resultado-aba:hover {
+  color: var(--text);
+}
+
+.eg-resultado-aba[aria-selected='true'] {
+  color: var(--green);
+  border-bottom-color: var(--green);
+}
+
+/* tabela do resultado: cabeçalho fixo no topo da rolagem; células longas
+   quebram em qualquer ponto (as colunas se ajustam à largura do palco) */
+.eg-resultado-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font: 400 12px/1.55 'JetBrains Mono', monospace;
+  color: var(--text);
+}
+
+.eg-resultado-tabela th {
+  position: sticky;
+  top: 0;
+  padding: 9px 14px;
+  background: var(--pill-bg);
+  border-bottom: 1px solid var(--pill-border);
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.eg-resultado-tabela td {
+  padding: 7px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--pill-border) 55%, transparent);
+  vertical-align: top;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.eg-resultado-tabela tbody tr:hover {
+  background: color-mix(in srgb, var(--green) 7%, transparent);
+}
+
+/* coluna "#" (nº da linha, para conferir a contagem com o Neo4j Browser) */
+.eg-resultado-tabela .eg-resultado-num {
+  width: 1%;
+  color: var(--faint);
+  text-align: right;
+  white-space: nowrap;
 }
 
 /* ---- Página de grafos: overlays finais (G9) ---- */

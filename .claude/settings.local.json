@@ -50,7 +50,16 @@
       "Read(//var/log/neo4j/**)",
       "Bash(curl -s -o /dev/null -w '%{http_code}\\\\n' -X POST http://localhost:5173/api/cypher -H 'Content-Type: application/json' -H 'Accept: application/vnd.neo4j.query' -d '{\"statement\":\"MATCH \\(n RETURN n\",\"accessMode\":\"READ\"}')",
       "Bash(getent ahosts *)",
-      "Bash(awk '{print $1}')"
+      "Bash(awk '{print $1}')",
+      "Bash(grep -v \"^--$\")",
+      "Read(//home/lorenzo/.cache/**)",
+      "Bash(npm ls *)",
+      "Bash(mkdir -p /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/6bb6fcf0-7e99-408c-be70-54562c28719e/scratchpad/pw-pkg /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/6bb6fcf0-7e99-408c-be70-54562c28719e/scratchpad/roteiros)",
+      "Read(//tmp/**)",
+      "Bash(S=/tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/6bb6fcf0-7e99-408c-be70-54562c28719e/scratchpad *)",
+      "Read(//home/lorenzo/.npm/_cacache/index-v5/**)",
+      "Bash(grep -rl 'playwright' ~/.npm/_cacache/index-v5 2>/dev/null | wc -l; du -sh ~/.npm/_cacache 2>/dev/null)",
+      "Bash(grep -n \"N1 e N2 feitas\\\\|^- \\\\[ \\\\] \\\\*\\\\*N3\\\\|ar. \\\\*\\\\*Falta o teste do autor\\\\*\\\\* no DevTools\\\\|o que o site mostra bate com o Browser em todas\\\\|estado · \\\\`40\\\\` barra de filtros\\\\|\\\\`30\\\\` painel de contexto/popovers\\\\|GrafoFiltros.jsx   # barra\\\\|GrafoEstados.jsx   # overlays\\\\|Grafos.jsx             # página do grafo\" ESTADO_ATUAL.md)"
     ],
     "additionalDirectories": [
       "/home/lorenzo/tcc_implementacao/TCC/.claude/skills"
