@@ -41,7 +41,16 @@
       "Bash(git check-ignore *)",
       "Bash(echo \"exit: $?\")",
       "Bash(curl -s -w '  [HTTP %{http_code}]\\\\n' -X POST http://localhost:5173/api/cypher -H 'Content-Type: application/json' -d '{\"statement\":\"MATCH \\(h:Habilidade\\) RETURN h.codigo AS codigo LIMIT 3\"}')",
-      "Bash(curl -s -o /dev/null -w '[HTTP %{http_code}, %{content_type}]\\\\n' http://localhost:5173/neo4j/)"
+      "Bash(curl -s -o /dev/null -w '[HTTP %{http_code}, %{content_type}]\\\\n' http://localhost:5173/neo4j/)",
+      "Bash(systemctl is-active *)",
+      "Bash(echo \"servico: $\\(systemctl is-active neo4j\\)\")",
+      "Bash(curl -s -o /dev/null -w 'porta 7474: HTTP %{http_code}\\\\n' http://localhost:7474/)",
+      "Bash(curl -s -w '  [HTTP %{http_code}]\\\\n' -X POST http://localhost:5173/api/cypher -H 'Content-Type: application/json' -d '{\"statement\":\"RETURN 1 AS ok\",\"accessMode\":\"READ\"}')",
+      "Bash(journalctl -u neo4j --since \"today\" --no-pager)",
+      "Read(//var/log/neo4j/**)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}\\\\n' -X POST http://localhost:5173/api/cypher -H 'Content-Type: application/json' -H 'Accept: application/vnd.neo4j.query' -d '{\"statement\":\"MATCH \\(n RETURN n\",\"accessMode\":\"READ\"}')",
+      "Bash(getent ahosts *)",
+      "Bash(awk '{print $1}')"
     ],
     "additionalDirectories": [
       "/home/lorenzo/tcc_implementacao/TCC/.claude/skills"

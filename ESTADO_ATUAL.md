@@ -805,7 +805,7 @@ completas contra o mock. Restam:
 2. **PENDENTE (pausado em 2026-10-09) — Desempenho do motor do grafo**: P0–P2
    feitas; **P3, P4 e P5 pendentes** — roadmap §4.4. Retomar depois da integração.
 3. **FOCO ATUAL — Integração com o Neo4j** (substitui o antigo plano de Apache
-   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1 feita; próxima etapa: N2.**
+   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1 e N2 feitas; próxima etapa: N3.**
 
 ### 4.1 Página de grafos — caminho por etapas (G1–G11)
 
@@ -1585,7 +1585,7 @@ integração.
 
 - [x] **N0** — Este roadmap *(2026-10-09)*
 - [x] **N1** — Conexão: proxy de desenvolvimento e senha fora do código (+ D14) *(2026-10-09)*
-- [ ] **N2** — Cliente Cypher `src/data/neo4j.js` (sem tela)
+- [x] **N2** — Cliente Cypher `src/data/neo4j.js` (sem tela) *(2026-10-12)*
 - [ ] **N3** — Console Cypher na página de grafos: ver o que chega
 - [ ] **N4** — Do resultado ao grafo: extrair nós e relações (em texto)
 - [ ] **N5** — Desenhar o grafo no canvas
@@ -1619,10 +1619,17 @@ produção:        proxy = a definir (mesmo caminho /api/cypher)        → N11
   `Relationship`, `Path`, `Integer`, `List`…), o que permite achar nós e relações em
   qualquer lugar do resultado, como o Browser faz. Inteiros e decimais chegam como
   texto (`"_value": "1"`) e o cliente converte.
-- Erros: HTTP 4xx com `{ errors: [{ code, message }] }` (testado:
-  `Neo.ClientError.Statement.SyntaxError`, com linha e coluna). Campo desconhecido
-  no corpo → 400 `Neo.ClientError.Request.Invalid` — por isso o `accessMode` aceito
-  confirma que o campo existe.
+- Erros: `{ errors: [{ code, message }] }` no corpo. Sintaxe e escrita em modo
+  leitura chegam com HTTP 400 (`Neo.ClientError.Statement.SyntaxError`, com linha e
+  coluna; `…Statement.AccessMode`), mas **erro em tempo de execução chega com 202**,
+  o mesmo status do sucesso (ex.: `RETURN 1/0` → `…Statement.ArithmeticError`) —
+  quem decide é a presença de `errors`, não o status (achado da N2). Campo
+  desconhecido no corpo → 400 `Neo.ClientError.Request.Invalid` — por isso o
+  `accessMode` aceito confirma que o campo existe.
+- Do lado do front, quem fala com a Query API é só o
+  [src/data/neo4j.js](src/data/neo4j.js) (N2): devolve as linhas já convertidas, com
+  nós, relações e caminhos como as classes `No`, `Relacao` e `Caminho`, e toda falha
+  como `ErroCypher` (`origem` · `codigo` · `status` · `message`).
 - Formato interno do grafo (a partir da N4), usado pela página e pelo canvas:
   nó `{ id, tipo, rotulos, props, label, x, y, vx, vy, r }` · aresta
   `{ id, a, b, rel, props }` — `id` = `elementId`; `tipo` = rótulo principal;
@@ -1783,21 +1790,83 @@ entendido — o transporte que todas as próximas etapas usam. **Nenhuma tela mu
 - Tempo-limite (`AbortController`, ~15 s) e cancelamento da consulta anterior quando
   outra é disparada.
 
-**Como testar (autor)** — no console do DevTools, com o site aberto pelo `npm run dev`:
+**Como testar (autor)** — no console do DevTools, com o site aberto pelo `npm run dev`
+(nos casos de erro, o `.catch` devolve `[origem, código, mensagem]` em vez de estourar
+no console). As duas primeiras linhas carregam o cliente: **depois de qualquer F5** (ou
+reinício do `npm run dev`, que recarrega a página) é preciso colá-las de novo — senão
+vem `ReferenceError: executarCypher is not defined`. São `var` de propósito: no
+Firefox, colar um `const` duas vezes na mesma página dá `redeclaration of let`.
 ```js
-const { executarCypher } = await import('/src/data/neo4j.js')
+var { executarCypher } = await import('/src/data/neo4j.js')
+var erro = (e) => [e.origem, e.codigo, e.message]
 await executarCypher('RETURN 1 AS um, "a" AS texto, [1.5, null, true] AS lista, {k: 2} AS mapa')
 await executarCypher('MATCH (h:Habilidade {codigo: $c}) RETURN h', { c: 'EF01MA17' })
-await executarCypher('MATCH (n RETURN n')               // erro: origem 'neo4j', SyntaxError
-await executarCypher('CREATE (:TesteEscrita) RETURN 1') // tem que FALHAR (modo leitura)
+await executarCypher('MATCH (n RETURN n').catch(erro)               // 'neo4j', …SyntaxError
+await executarCypher('CREATE (:TesteEscrita) RETURN 1').catch(erro) // 'neo4j', …AccessMode
 ```
-- Os tipos chegam convertidos (número é número, lista é array, o nó vem com
-  `rotulos` e `props`).
+- 1.ª: `linhas` = `[{ um: 1, texto: 'a', lista: [1.5, null, true], mapa: { k: 2 } }]`
+  (número é número, lista é array).
+- 2.ª: `linhas[0].h` é um `No` com `id`, `rotulos: ['Habilidade']` e `props`
+  (`codigo`, `descricao`).
 - Se o `CREATE` **não** falhar: apagar no Browser (`MATCH (t:TesteEscrita) DELETE t`)
   e anotar aqui — o bloqueio de escrita passa a ser obrigação do proxy (N11).
-- Neo4j parado → a função rejeita com mensagem clara, sem travar.
+- Neo4j parado → `.catch(erro)` devolve `['http', 'EduGraph.Proxy.Neo4jIndisponivel',
+  'Não foi possível conectar ao Neo4j…']` na hora, sem travar.
 
 **Pronto quando:** todos os casos se comportam como descrito.
+
+**Feito (2026-10-12).** [src/data/neo4j.js](src/data/neo4j.js):
+`executarCypher(consulta, parametros, opcoes)` + as classes `No`, `Relacao`, `Caminho`
+e `ErroCypher`. Nenhuma tela importa o módulo ainda — bundle **idêntico** (283,89 kB,
+mesmo hash).
+
+Achados no Neo4j antes de escrever (testados direto na Query API):
+- **Erro em tempo de execução chega com HTTP 202**, o mesmo status do sucesso, com
+  `errors` no corpo (`RETURN 1/0` → `ArithmeticError`). O cliente decide pelo corpo.
+- **O modo leitura é imposto pelo próprio Neo4j**: `CREATE` com `accessMode: "READ"`
+  → `Neo.ClientError.Statement.AccessMode` ("Writing in read access mode not
+  allowed"). O primeiro teste foi feito dentro de uma transação explícita desfeita no
+  fim, para garantir que nada fosse gravado; o banco seguiu com 0 nós `TesteEscrita`
+  e sem o rótulo criado. Na N11 o proxy de produção força o modo mesmo assim (o
+  código do navegador pode ser alterado por quem visita o site).
+
+Detalhes e desvios do plano (todos a favor):
+- **`linhas` são objetos chaveados pelo nome do campo** (`linhas[0].codigo`), na ordem
+  de `campos` — mais legível no teste e nas agregações da N9. A resposta crua continua
+  disponível em **`bruto`** (é o que a aba JSON da N3 vai mostrar).
+- **`avisos`** (não estava no plano): as notificações do Neo4j — ex.: rótulo que não
+  existe no banco (`UnknownLabelWarning`), útil para pegar erro de digitação nas
+  consultas da N3.
+- **Nós, relações e caminhos são classes** (`No`, `Relacao`, `Caminho`): `instanceof`
+  os separa sem ambiguidade de um mapa Cypher que tenha as mesmas chaves (testado). O
+  caminho guarda `nos` e `relacoes` em ordem: `nos[i] —relacoes[i]— nos[i + 1]`.
+- **Cancelamento por `canal`, não global.** O plano dizia "cancelar a consulta anterior
+  quando outra é disparada"; um cancelamento global derrubaria consultas paralelas
+  legítimas (ex.: as conexões do painel durante uma expansão). Só se cancelam consultas
+  do **mesmo canal** (o console vai usar `canal: 'console'`); também há `signal`
+  externo. Cancelar não é falha: vira a 4.ª origem, **`'cancelada'`**, que quem chama
+  só ignora.
+- A mensagem fica em `err.message` (padrão do `Error`), não num campo `mensagem`. Os
+  códigos do cliente seguem o padrão do proxy: `EduGraph.Cliente.SemConexao`,
+  `.TempoEsgotado` e `.Cancelada`.
+- Classificação: código `Neo.*` → `'neo4j'`, exceto `Neo.ClientError.Security.*`
+  (credencial é configuração → `'http'`); `EduGraph.Proxy.*` e respostas sem JSON →
+  `'http'`.
+- Inteiro além do limite seguro do JS (2^53) fica texto; `NaN`/`Infinity` viram
+  número; datas, durações e pontos ficam no texto que a Query API manda (ISO 8601/WKT).
+- Parâmetro que não vira JSON (ex.: `BigInt`) estoura como `TypeError` — é erro de
+  programação, não "falha de rede".
+
+Verificado: `npm run lint` (0/0), `npm run build` (283,89 kB, idêntico) e
+`npm run dev` (o módulo é servido em `/src/data/neo4j.js` com HTTP 200 — o caminho do
+teste no DevTools). Bateria de **21 casos** rodada pelo assistente com o cliente real
+no Node, contra servidores temporários (senha certa, senha errada, Neo4j inalcançável
+e porta fechada), todos passando: tipos simples; nó com parâmetro; caminho; relação
+solta; inteiros grandes e decimais especiais; datas/duração/ponto; mapa que imita nó;
+lista de nós; aviso de rótulo inexistente; sintaxe (400); escrita bloqueada (banco
+conferido: 0 nós); erro de execução com 202; tempo esgotado; canal; concorrentes sem
+canal; `signal` externo; parâmetro não serializável; 404; 401; 502; servidor fora do
+ar. **Falta o teste do autor** no DevTools (comandos acima).
 
 ---
 
@@ -2184,6 +2253,7 @@ src/
 │       ├── GrafoEstados.jsx   # overlays de estado do palco: convite/carregando/erro/vazio (R7b)
 │       └── estilos.js         # estilos inline compartilhados do domínio (MONO_LABEL, R6)
 ├── data/
+│   ├── neo4j.js               # cliente Cypher do Neo4j: executarCypher() via proxy /api/cypher (N2)
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
 │   ├── paletas.js             # paletas de daltonismo (protan/deuteran/tritanopia) da página de grafos (G9)
 │   └── mockFuseki.js          # endpoint SPARQL simulado: 56 nós, 136 arestas (5.º–9.º), consultas reais,
