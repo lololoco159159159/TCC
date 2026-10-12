@@ -10,6 +10,7 @@ import { PaletaPopover } from '../components/grafo/GrafoOverlays'
 import GrafoEstados from '../components/grafo/GrafoEstados'
 import { PALETAS } from '../data/paletas'
 import { executarCypher } from '../data/neo4j'
+import { completarGrafo, extrairGrafo } from '../data/extrairGrafo'
 import { ANOS, NOS, conexoesDe, consultarFuseki } from '../data/mockFuseki'
 
 // Página "Grafos" — a tela que exibe o grafo de conhecimento. Protótipo:
@@ -65,8 +66,10 @@ const URI_PARA_ID = new Map([...NOS.values()].map((n) => [n.uri, n.id]))
 
 function Grafos({ onHome, onSignup, onGrafos }) {
   const [status, setStatus] = useState('inicio') // inicio | carregando | pronto | erro (vazio: sem uso desde a N3)
-  const [resultado, setResultado] = useState(null) // última resposta do console Cypher (N3)
+  const [resultado, setResultado] = useState(null) // última resposta do console Cypher (N3) + `grafo` (N4)
   const [erro, setErro] = useState(null) // falha da última consulta: { origem, codigo, mensagem }
+  const [conectarNos, setConectarNos] = useState(true) // "Conectar nós do resultado", ligado como no Browser (N4)
+  const [abaResultado, setAbaResultado] = useState('tabela') // tabela | grafo | json — sobrevive às execuções
   const [grafo, setGrafo] = useState({ nos: new Map(), arestas: [], versao: 0 })
   const [contagens, setContagens] = useState({ habilidade: 0, conceito: 0, disciplina: 0, conexoes: 0 })
   const [tempoMs, setTempoMs] = useState(0)
@@ -239,22 +242,38 @@ function Grafos({ onHome, onSignup, onGrafos }) {
   // Console Cypher (N3): executa a consulta no Neo4j e mostra a resposta no
   // palco (Tabela/JSON). Canal 'console': uma execução nova cancela a anterior
   // ainda em voo — o cancelamento chega como origem 'cancelada' e é ignorado.
-  // O canvas ainda não recebe os dados (N4/N5).
-  async function executarConsulta(consulta) {
+  // N4: a resposta vira "nós + relações" (extrairGrafo) e é completada com as
+  // consultas extras do Browser (completarGrafo: pontas que faltam, limite de
+  // nós e, se a chave estiver ligada, as relações entre os nós do resultado);
+  // o grafo aparece em texto na aba "Grafo". O canvas ainda não o recebe (N5).
+  // `conectar` vem por parâmetro porque a chave refaz a consulta logo depois de
+  // mudar o estado (o valor novo ainda não chegou a este closure).
+  async function executarConsulta(consulta, conectar = conectarNos) {
+    const meuSeq = ++seq.current // as consultas extras rodam fora do canal: a guarda descarta resposta velha
     ultimaConsulta.current = consulta
     setStatus('carregando')
     setErro(null)
     try {
       const r = await executarCypher(consulta, {}, { canal: 'console' })
-      setResultado(r)
+      const grafoDoResultado = await completarGrafo(extrairGrafo(r.linhas), { conectar })
+      if (meuSeq !== seq.current) return
+      setResultado({ ...r, grafo: grafoDoResultado })
       setTempoMs(r.tempos.totalMs)
       setStatus('pronto')
     } catch (e) {
-      if (e?.origem === 'cancelada') return
+      if (meuSeq !== seq.current || e?.origem === 'cancelada') return
       setResultado(null)
       setErro({ origem: e?.origem, codigo: e?.codigo, mensagem: String(e?.message || e) })
       setStatus('erro')
     }
+  }
+
+  // Chave "Conectar nós do resultado" (N4): com um resultado na tela, refaz a
+  // última consulta já com a opção nova — os números mudam na hora.
+  function alternarConectar() {
+    const novo = !conectarNos
+    setConectarNos(novo)
+    if (status === 'pronto' && ultimaConsulta.current) executarConsulta(ultimaConsulta.current, novo)
   }
 
   function voltarAoInicio() {
@@ -388,7 +407,14 @@ function Grafos({ onHome, onSignup, onGrafos }) {
         </SiteHeader>
 
         {/* ============ CONSOLE CYPHER (N3; no lugar da barra de filtros) ============ */}
-        <ConsoleCypher status={status} resultado={resultado} erro={erro} aoExecutar={executarConsulta} />
+        <ConsoleCypher
+          status={status}
+          resultado={resultado}
+          erro={erro}
+          aoExecutar={executarConsulta}
+          conectar={conectarNos}
+          aoAlternarConectar={alternarConectar}
+        />
 
         {/* ============ ÁREA DE TRABALHO: canvas + overlays de estado ============ */}
         <main style={{ flex: 1, position: 'relative', background: 'var(--grafo-bg)', overflow: 'hidden', minHeight: 0 }}>
@@ -532,7 +558,12 @@ function Grafos({ onHome, onSignup, onGrafos }) {
 
           {/* resposta do console Cypher (N3): Tabela/JSON à direita do painel */}
           {status === 'pronto' && resultado ? (
-            <ResultadoCypher resultado={resultado} offsetEsquerda={offsetPainel} />
+            <ResultadoCypher
+              resultado={resultado}
+              offsetEsquerda={offsetPainel}
+              aba={abaResultado}
+              aoTrocarAba={setAbaResultado}
+            />
           ) : null}
 
           {/* overlays de estado do palco (início/carregando/erro — R7b) */}

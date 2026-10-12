@@ -805,7 +805,7 @@ completas contra o mock. Restam:
 2. **PENDENTE (pausado em 2026-10-09) — Desempenho do motor do grafo**: P0–P2
    feitas; **P3, P4 e P5 pendentes** — roadmap §4.4. Retomar depois da integração.
 3. **FOCO ATUAL — Integração com o Neo4j** (substitui o antigo plano de Apache
-   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N3 feitas; próxima etapa: N4.**
+   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N4 feitas; próxima etapa: N5.**
 
 ### 4.1 Página de grafos — caminho por etapas (G1–G11)
 
@@ -1587,7 +1587,7 @@ integração.
 - [x] **N1** — Conexão: proxy de desenvolvimento e senha fora do código (+ D14) *(2026-10-09)*
 - [x] **N2** — Cliente Cypher `src/data/neo4j.js` (sem tela) *(2026-10-12)*
 - [x] **N3** — Console Cypher na página de grafos: ver o que chega *(2026-10-12)*
-- [ ] **N4** — Do resultado ao grafo: extrair nós e relações (em texto)
+- [x] **N4** — Do resultado ao grafo: extrair nós e relações (em texto) *(2026-10-12)*
 - [ ] **N5** — Desenhar o grafo no canvas
 - [ ] **N6** — Tipos novos: cores, formas, paletas e legenda
 - [ ] **N7** — Painel de detalhe com dados reais
@@ -2001,6 +2001,60 @@ o que o Browser exibe.
 
 **Pronto quando:** os números conferem nas duas posições da chave.
 
+**Feito (2026-10-12).** Arquivo novo [src/data/extrairGrafo.js](src/data/extrairGrafo.js);
+alterados [Grafos.jsx](src/pages/Grafos.jsx),
+[ConsoleCypher.jsx](src/components/grafo/ConsoleCypher.jsx) e
+[ResultadoCypher.jsx](src/components/grafo/ResultadoCypher.jsx). Sem CSS nem token
+novo (reusa `Chave`, as classes da N3 e `MONO_LABEL`).
+
+Como ficou:
+- **`extrairGrafo(linhas)`** (pura, sem rede): percorre colunas, listas, mapas e
+  caminhos e junta nós e relações sem repetir (chave `elementId`), na ordem em que
+  aparecem. Um mapa que imita um nó continua sendo mapa (as classes da N2 resolvem).
+- **`completarGrafo(grafo, { conectar, limite })`** — as consultas extras do Browser,
+  todas em modo leitura: (1) **pontas que faltam** — relação cujas pontas não vieram
+  no resultado busca esses nós (`MATCH (n) WHERE elementId(n) IN $ids RETURN n`), só os
+  que vão ser exibidos; (2) **limite** `LIMITE_NOS = 300` — os nós do resultado
+  primeiro, depois as pontas; relação com ponta de fora também sai; (3) **conectar**
+  — traz as relações que existem entre os nós exibidos
+  (`MATCH (a)-[r]->(b) WHERE elementId(a) IN $ids AND elementId(b) IN $ids RETURN r`).
+  Devolve também `total` (nós antes do limite) e `extras` (cada consulta extra: o que
+  trouxe e quanto demorou).
+- **Console:** a linha de status ganhou `grafo: N nós, M relações` (os números do
+  teste ficam à vista sem trocar de aba) e, à direita, a chave **"Conectar nós do
+  resultado"** (ligada por padrão, como no Browser; desabilitada durante a consulta).
+- **Aba "Grafo"** (entre Tabela e JSON): totais; aviso "Mostrando 300 de N nós" quando
+  corta; as consultas extras feitas ("pontas que faltavam: +k nós", "conectar nós do
+  resultado: ligado — +k relações" ou "desligado", com os ms); contagem por **rótulo**
+  e por **tipo de relação**; e as listas de nós (`(:Rotulo {props})`) e de relações
+  (`(:A "x")-[:TIPO]->(:B "y")`, até 1.000 linhas).
+
+Desvios do plano (a favor):
+- **A chave refaz a consulta na hora** (com um resultado na tela) em vez de valer só
+  "na próxima execução": os números mudam ao alternar, como se espera de um
+  interruptor. Refaz a última consulta *executada* (não o texto que estiver sendo
+  editado). O estado da chave mora na **página**, não no console: a N8 (expansão)
+  também vai precisar dele.
+- **A aba escolhida passou a morar na página**: antes ela voltava para "Tabela" a cada
+  execução (o resultado desmonta enquanto carrega); agora dá para conferir as 6
+  consultas sem sair da aba Grafo.
+- As consultas extras rodam **fora do canal** do console; a guarda `seq` da página
+  descarta a resposta velha se outra execução começar no meio.
+
+Verificado: `npm run lint` (0/0), `npm run build` (JS 276,37 → **282,02 kB**; CSS
+8,81 kB idêntico) e `npm run dev`. Testes do assistente **sem instalar nada** — o Vite
+e o React do próprio projeto, no Node, contra um servidor temporário: (a) **dados**,
+14 casos: as 7 consultas da tabela de referência nas **duas posições da chave**
+(45/44 → 45/66, 8/7 → 8/7, 4/3 → 4/4, 23/22 → 23/22, 7/6 → 7/8, 4/3 → 4/3 e, a 7.ª
+corrigida, 11/10 → 11/14 — todos batendo), só relações (busca 6 pontas), limite (10 de
+22; 5 de 23 cortando as relações de fora), nós dentro de lista e de mapa, nó repetido,
+resultado sem nós (nenhuma consulta extra) e mapa que imita nó; (b) **renderização**
+dos componentes em HTML (`react-dom/server`, sem navegador), 6 casos: aba Grafo com a
+chave ligada/desligada, limite, pontas, sem nós, Tabela/JSON intactas e a linha de
+status + chave do console. **Falta o teste do autor** no navegador (itens acima): os
+números de cada consulta aparecem na linha de status (`grafo: N nós, M relações`) e na
+aba Grafo; alternar a chave refaz a consulta.
+
 ---
 
 #### N5 — Desenhar o grafo no canvas
@@ -2324,6 +2378,8 @@ src/
 │       └── estilos.js         # estilos inline compartilhados do domínio (MONO_LABEL, R6)
 ├── data/
 │   ├── neo4j.js               # cliente Cypher do Neo4j: executarCypher() via proxy /api/cypher (N2)
+│   ├── extrairGrafo.js        # resultado → nós + relações (puro) e as consultas extras do Browser:
+│                              #   pontas que faltam, limite de 300 nós, "conectar nós" (N4)
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
 │   ├── paletas.js             # paletas de daltonismo (protan/deuteran/tritanopia) da página de grafos (G9)
 │   └── mockFuseki.js          # endpoint SPARQL simulado: 56 nós, 136 arestas (5.º–9.º), consultas reais,

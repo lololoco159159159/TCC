@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import textoConsultas from '../../../neo4j/consultas?raw'
+import Chave from '../Chave'
 import { MONO_LABEL } from './estilos'
 
 // Console Cypher da página de grafos (N3 — ESTADO_ATUAL.md §4.5): o lugar
@@ -9,6 +10,9 @@ import { MONO_LABEL } from './estilos'
 // re-renderiza a página inteira (o mesmo cuidado da P4). A página só recebe a
 // consulta no Executar (botão ou Ctrl/Cmd+Enter) e devolve o estado da
 // execução para a linha de status.
+// N4: a linha de status mostra também o tamanho do grafo extraído, e a chave
+// "Conectar nós do resultado" (o "Connect result nodes" do Neo4j Browser) fica
+// à direita dela — o estado mora na página, que refaz a consulta ao mudar.
 
 // Exemplos do menu = as consultas de neo4j/consultas, lidas do próprio arquivo
 // (import ?raw do Vite) para acompanharem o que a orientadora mandar. Formato
@@ -64,14 +68,28 @@ const BOTAO = {
   cursor: 'pointer',
   flex: 'none',
 }
+const LINHA_STATUS = { display: 'flex', alignItems: 'flex-start', gap: 14, marginTop: 6 }
 const STATUS = {
+  flex: 1,
+  minWidth: 0,
   minHeight: 15,
-  marginTop: 6,
   font: "10.5px/1.4 'JetBrains Mono', monospace",
   color: 'var(--muted)',
 }
+const BOTAO_CHAVE = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
+  flex: 'none',
+  padding: 0,
+  border: 'none',
+  background: 'transparent',
+  font: "600 11.5px/1 'Figtree', sans-serif",
+  color: 'var(--body)',
+  cursor: 'pointer',
+}
 
-function ConsoleCypher({ status, resultado, erro, aoExecutar }) {
+function ConsoleCypher({ status, resultado, erro, aoExecutar, conectar, aoAlternarConectar }) {
   const [texto, setTexto] = useState('')
   const campo = useRef(null)
   const executando = status === 'carregando'
@@ -101,10 +119,11 @@ function ConsoleCypher({ status, resultado, erro, aoExecutar }) {
     linhaStatus = <span style={{ color: 'var(--gold)' }}>erro · {erro.codigo || 'sem código'}</span>
   } else if (status === 'pronto' && resultado) {
     const t = resultado.tempos
+    const g = resultado.grafo
     linhaStatus = (
       <>
-        linhas: {resultado.linhas.length} · Neo4j: pronto em {t.disponivelApos} ms, lido em {t.consumidoApos} ms ·
-        total no navegador: {t.totalMs} ms
+        linhas: {resultado.linhas.length} · grafo: {g.nos.size} nós, {g.relacoes.size} relações · Neo4j: pronto
+        em {t.disponivelApos} ms, lido em {t.consumidoApos} ms · total no navegador: {t.totalMs} ms
         {resultado.avisos.length ? (
           <span style={{ color: 'var(--gold)' }}> · avisos: {resultado.avisos.length}</span>
         ) : null}
@@ -131,8 +150,21 @@ function ConsoleCypher({ status, resultado, erro, aoExecutar }) {
             aria-label="Consulta Cypher"
             placeholder="MATCH (h:Habilidade) RETURN h LIMIT 25"
           />
-          <div aria-live="polite" style={STATUS}>
-            {linhaStatus}
+          <div style={LINHA_STATUS}>
+            <div aria-live="polite" style={STATUS}>
+              {linhaStatus}
+            </div>
+            <button
+              type="button"
+              onClick={aoAlternarConectar}
+              disabled={executando}
+              aria-pressed={conectar}
+              title="Como no Neo4j Browser: desenha também as relações que existem entre os nós retornados, mesmo que a consulta não as peça. Com um resultado na tela, refaz a consulta."
+              style={executando ? { ...BOTAO_CHAVE, opacity: 0.5, cursor: 'default' } : BOTAO_CHAVE}
+            >
+              <span>Conectar nós do resultado</span>
+              <Chave ligada={conectar} />
+            </button>
           </div>
         </div>
         {/* value fixo em '': depois de escolher, o menu volta ao rótulo, e o

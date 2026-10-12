@@ -1,19 +1,24 @@
-import { memo, useState } from 'react'
+import { memo } from 'react'
 import { Caminho, No, Relacao } from '../../data/neo4j'
 import { MONO_LABEL } from './estilos'
 
 // Resultado da última consulta do console Cypher (N3 — ESTADO_ATUAL.md §4.5),
-// sobre o palco, à direita do painel de contexto. Duas abas:
+// sobre o palco, à direita do painel de contexto. Três abas:
 //  - Tabela: uma coluna por campo do RETURN, com os valores já convertidos pelo
 //    cliente (src/data/neo4j.js) — nó como (:Rotulo {props}), relação como
 //    [:TIPO], caminho resumido com o sentido real de cada relação;
+//  - Grafo (N4): o grafo extraído do resultado (src/data/extrairGrafo.js), em
+//    texto — totais, consultas extras feitas, contagem por rótulo e por tipo
+//    de relação e as listas. É o que o canvas vai desenhar na N5;
 //  - JSON: a resposta EXATAMENTE como chegou do Neo4j (JSON tipado da Query
 //    API), formatada — é a aba de conferência com o Neo4j Browser.
-// As duas abas são memo(): o contêiner re-renderiza a cada movimento quando o
+// As abas são memo(): o contêiner re-renderiza a cada movimento quando o
 // painel é arrastado (offsetEsquerda muda), mas a tabela — o trecho caro — só
-// quando chega um resultado novo.
+// quando chega um resultado novo. A aba escolhida mora na página (sobrevive às
+// execuções, que desmontam este componente enquanto carregam).
 
 const LIMITE_LINHAS = 500 // linhas desenhadas na Tabela
+const LIMITE_RELACOES = 1000 // relações listadas na aba Grafo
 const LIMITE_JSON = 1_000_000 // caracteres exibidos no JSON (respostas gigantes travariam a aba)
 const TAM_RESUMO = 28 // caracteres do valor que identifica cada nó no resumo de um caminho
 
@@ -108,6 +113,19 @@ const NOTA = {
   color: 'var(--gold)',
 }
 const VAZIO = { margin: 0, padding: '22px 16px', fontSize: 14, color: 'var(--muted)' }
+const RESUMO = { padding: '14px 16px 12px', borderBottom: '1px solid var(--pill-border)' }
+const TOTAIS = { font: "600 15px/1.3 'JetBrains Mono', monospace", color: 'var(--text)' }
+const DETALHE = { marginTop: 5, font: "10.5px/1.5 'JetBrains Mono', monospace", color: 'var(--muted)' }
+const CHIPS = { display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }
+const CHIP = {
+  padding: '4px 9px',
+  border: '1px solid var(--pill-border)',
+  borderRadius: 999,
+  background: 'var(--bg)',
+  font: "11.5px/1.2 'JetBrains Mono', monospace",
+  color: 'var(--body)',
+}
+const SUBTITULO = { ...MONO_LABEL, display: 'block', padding: '14px 16px 6px', color: 'var(--muted)' }
 // bloco "terminal": as mesmas cores fixas da gaveta SPARQL (escuro nos 2 temas)
 const TERMINAL = {
   margin: 12,
@@ -157,6 +175,116 @@ const Tabela = memo(function Tabela({ campos, linhas }) {
   )
 })
 
+// contagem por chave, da maior para a menor (empate: ordem alfabética)
+function contarPor(itens, chavesDe) {
+  const contagem = new Map()
+  for (const item of itens) for (const k of chavesDe(item)) contagem.set(k, (contagem.get(k) || 0) + 1)
+  return [...contagem].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+}
+
+function Contagem({ titulo, itens }) {
+  return (
+    <div style={{ marginTop: 12 }}>
+      <span style={MONO_LABEL}>{titulo}</span>
+      <div style={CHIPS}>
+        {itens.length ? (
+          itens.map(([nome, n]) => (
+            <span key={nome} style={CHIP}>
+              {nome} <strong style={{ color: 'var(--green)' }}>{n}</strong>
+            </span>
+          ))
+        ) : (
+          <span style={{ ...CHIP, color: 'var(--faint)' }}>nenhum</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const GrafoTexto = memo(function GrafoTexto({ grafo }) {
+  const nos = [...grafo.nos.values()]
+  const relacoes = [...grafo.relacoes.values()]
+  if (!nos.length) return <p style={VAZIO}>A consulta não trouxe nós nem relações — nada para desenhar.</p>
+  const porRotulo = contarPor(nos, (n) => (n.rotulos.length ? n.rotulos : ['(sem rótulo)']))
+  const porTipo = contarPor(relacoes, (r) => [r.rel])
+  const pontas = grafo.extras.find((e) => e.tipo === 'pontas')
+  const conectar = grafo.extras.find((e) => e.tipo === 'conectar')
+  const listadas = relacoes.length > LIMITE_RELACOES ? relacoes.slice(0, LIMITE_RELACOES) : relacoes
+  return (
+    <>
+      <div style={RESUMO}>
+        <div style={TOTAIS}>
+          {nos.length} nós · {relacoes.length} relações
+        </div>
+        {grafo.total > nos.length ? (
+          <div style={{ ...DETALHE, color: 'var(--gold)' }}>
+            Mostrando {nos.length} de {grafo.total} nós (o limite do Neo4j Browser); relações com ponta de
+            fora também ficaram de fora.
+          </div>
+        ) : null}
+        <div style={DETALHE}>
+          {pontas ? `pontas que faltavam: +${pontas.adicionados} nós (consulta extra, ${pontas.ms} ms) · ` : ''}
+          conectar nós do resultado:{' '}
+          {conectar ? `ligado — +${conectar.adicionados} relações (consulta extra, ${conectar.ms} ms)` : 'desligado'}
+        </div>
+        <Contagem titulo="Rótulos" itens={porRotulo} />
+        <Contagem titulo="Tipos de relação" itens={porTipo} />
+      </div>
+
+      <span style={SUBTITULO}>Nós</span>
+      <table className="eg-resultado-tabela">
+        <thead>
+          <tr>
+            <th scope="col" className="eg-resultado-num">
+              #
+            </th>
+            <th scope="col">nó</th>
+          </tr>
+        </thead>
+        <tbody>
+          {nos.map((n, i) => (
+            <tr key={n.id}>
+              <td className="eg-resultado-num">{i + 1}</td>
+              <td>{formatar(n)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <span style={SUBTITULO}>Relações</span>
+      {listadas.length ? (
+        <table className="eg-resultado-tabela">
+          <thead>
+            <tr>
+              <th scope="col" className="eg-resultado-num">
+                #
+              </th>
+              <th scope="col">relação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {listadas.map((r, i) => (
+              <tr key={r.id}>
+                <td className="eg-resultado-num">{i + 1}</td>
+                <td>
+                  {noResumido(grafo.nos.get(r.inicio))}-{formatar(r)}-&gt;{noResumido(grafo.nos.get(r.fim))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p style={{ ...VAZIO, paddingTop: 4 }}>Nenhuma relação entre esses nós.</p>
+      )}
+      {relacoes.length > LIMITE_RELACOES ? (
+        <p style={NOTA}>
+          Listando as primeiras {LIMITE_RELACOES} de {relacoes.length} relações.
+        </p>
+      ) : null}
+    </>
+  )
+})
+
 const Json = memo(function Json({ bruto }) {
   const texto = JSON.stringify(bruto, null, 2)
   const cortado = texto.length > LIMITE_JSON
@@ -173,31 +301,30 @@ const Json = memo(function Json({ bruto }) {
   )
 })
 
-function ResultadoCypher({ resultado, offsetEsquerda }) {
-  const [aba, setAba] = useState('tabela')
-  const { campos, linhas, avisos, bruto } = resultado
+const ABAS = [
+  { id: 'tabela', rotulo: 'Tabela' },
+  { id: 'grafo', rotulo: 'Grafo' },
+  { id: 'json', rotulo: 'JSON' },
+]
+
+function ResultadoCypher({ resultado, offsetEsquerda, aba, aoTrocarAba }) {
+  const { campos, linhas, avisos, bruto, grafo } = resultado
   return (
     <section aria-label="Resultado da consulta Cypher" style={{ ...CAIXA, left: offsetEsquerda + 12 }}>
       <div style={CABECALHO}>
         <div role="tablist" aria-label="Formato do resultado">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={aba === 'tabela'}
-            className="eg-resultado-aba"
-            onClick={() => setAba('tabela')}
-          >
-            Tabela
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={aba === 'json'}
-            className="eg-resultado-aba"
-            onClick={() => setAba('json')}
-          >
-            JSON
-          </button>
+          {ABAS.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              role="tab"
+              aria-selected={aba === a.id}
+              className="eg-resultado-aba"
+              onClick={() => aoTrocarAba(a.id)}
+            >
+              {a.rotulo}
+            </button>
+          ))}
         </div>
         <span style={{ flex: 1 }} />
         <span style={INFO}>
@@ -215,7 +342,9 @@ function ResultadoCypher({ resultado, offsetEsquerda }) {
       ))}
 
       <div role="tabpanel" style={CORPO}>
-        {aba === 'tabela' ? <Tabela campos={campos} linhas={linhas} /> : <Json bruto={bruto} />}
+        {aba === 'tabela' ? <Tabela campos={campos} linhas={linhas} /> : null}
+        {aba === 'grafo' ? <GrafoTexto grafo={grafo} /> : null}
+        {aba === 'json' ? <Json bruto={bruto} /> : null}
       </div>
     </section>
   )
