@@ -3,13 +3,16 @@ import { Caminho, No, Relacao } from '../../data/neo4j'
 import { MONO_LABEL } from './estilos'
 
 // Resultado da última consulta do console Cypher (N3 — ESTADO_ATUAL.md §4.5),
-// sobre o palco, à direita do painel de contexto. Três abas:
+// sobre o palco, à direita do painel de contexto. A 1.ª aba, "Grafo", é o próprio
+// desenho do canvas (fecha o painel — ver o comentário do componente); as de
+// conteúdo:
 //  - Tabela: uma coluna por campo do RETURN, com os valores já convertidos pelo
 //    cliente (src/data/neo4j.js) — nó como (:Rotulo {props}), relação como
 //    [:TIPO], caminho resumido com o sentido real de cada relação;
-//  - Grafo (N4): o grafo extraído do resultado (src/data/extrairGrafo.js), em
+//  - Relações (N4; chamada "Grafo" até um ajuste da N5): o grafo extraído do
+//    resultado (src/data/extrairGrafo.js), em
 //    texto — totais, consultas extras feitas, contagem por rótulo e por tipo
-//    de relação e as listas. É o que o canvas vai desenhar na N5;
+//    de relação e as listas. É exatamente o que o canvas desenha (N5);
 //  - JSON: a resposta EXATAMENTE como chegou do Neo4j (JSON tipado da Query
 //    API), formatada — é a aba de conferência com o Neo4j Browser.
 // As abas são memo(): o contêiner re-renderiza a cada movimento quando o
@@ -18,7 +21,7 @@ import { MONO_LABEL } from './estilos'
 // execuções, que desmontam este componente enquanto carregam).
 
 const LIMITE_LINHAS = 500 // linhas desenhadas na Tabela
-const LIMITE_RELACOES = 1000 // relações listadas na aba Grafo
+const LIMITE_RELACOES = 1000 // relações listadas na aba Relações
 const LIMITE_JSON = 1_000_000 // caracteres exibidos no JSON (respostas gigantes travariam a aba)
 const TAM_RESUMO = 28 // caracteres do valor que identifica cada nó no resumo de um caminho
 
@@ -66,11 +69,11 @@ function resumirCaminho(c) {
   return s
 }
 
+const ALTURA_CABECALHO = 40 // altura fixa da barra de abas: o painel fechado mede isto + as 2 bordas
 const CAIXA = {
   position: 'absolute',
   top: 12,
   right: 12,
-  bottom: 12,
   zIndex: 30,
   display: 'flex',
   flexDirection: 'column',
@@ -86,6 +89,7 @@ const CAIXA = {
 }
 const CABECALHO = {
   flex: 'none',
+  height: ALTURA_CABECALHO,
   display: 'flex',
   alignItems: 'center',
   padding: '0 16px',
@@ -301,26 +305,52 @@ const Json = memo(function Json({ bruto }) {
   )
 })
 
+// abas de conteúdo; "Grafo" (a 1.ª) não tem conteúdo: é o próprio desenho do
+// canvas — escolhê-la fecha o painel
 const ABAS = [
   { id: 'tabela', rotulo: 'Tabela' },
-  { id: 'grafo', rotulo: 'Grafo' },
+  { id: 'relacoes', rotulo: 'Relações' },
   { id: 'json', rotulo: 'JSON' },
 ]
+const CONTEUDO = { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }
 
-function ResultadoCypher({ resultado, offsetEsquerda, aba, aoTrocarAba }) {
+// N5: o painel fica no TOPO do palco (logo abaixo do console). A 1.ª aba,
+// "Grafo", é o próprio desenho do canvas: com ela escolhida o painel fica
+// FECHADO — só a barra de abas, sem cobrir o grafo. As outras abas o abrem.
+// Abrir e fechar são animados pela altura (classe .eg-resultado-caixa): o
+// painel desce a partir da barra e sobe de volta até ela; por isso o conteúdo
+// continua montado enquanto fecha (o overflow do painel o corta). Sem animação
+// no modo "Desativar animações" (`semAnim`, D6) e com prefers-reduced-motion.
+// `aba` é a última aba de CONTEÚDO escolhida (a que aparece ao abrir).
+function ResultadoCypher({ resultado, offsetEsquerda, aba, aberto, aoAbrirAba, aoFechar, semAnim }) {
   const { campos, linhas, avisos, bruto, grafo } = resultado
+  const altura = aberto ? 'calc(100% - 24px)' : ALTURA_CABECALHO + 2
   return (
-    <section aria-label="Resultado da consulta Cypher" style={{ ...CAIXA, left: offsetEsquerda + 12 }}>
+    <section
+      aria-label="Resultado da consulta Cypher"
+      className={semAnim ? 'eg-resultado-caixa eg-resultado-caixa--sem-anim' : 'eg-resultado-caixa'}
+      style={{ ...CAIXA, left: offsetEsquerda + 12, height: altura }}
+    >
       <div style={CABECALHO}>
         <div role="tablist" aria-label="Formato do resultado">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={!aberto}
+            className="eg-resultado-aba"
+            title="O grafo desenhado no palco (fecha o painel)"
+            onClick={aoFechar}
+          >
+            Grafo
+          </button>
           {ABAS.map((a) => (
             <button
               key={a.id}
               type="button"
               role="tab"
-              aria-selected={aba === a.id}
+              aria-selected={aberto && aba === a.id}
               className="eg-resultado-aba"
-              onClick={() => aoTrocarAba(a.id)}
+              onClick={() => aoAbrirAba(a.id)}
             >
               {a.rotulo}
             </button>
@@ -332,19 +362,21 @@ function ResultadoCypher({ resultado, offsetEsquerda, aba, aoTrocarAba }) {
         </span>
       </div>
 
-      {/* notificações do Neo4j (ex.: rótulo que não existe no banco) */}
-      {avisos.map((a, i) => (
-        <div key={i} style={AVISO}>
-          <span style={{ ...MONO_LABEL, color: 'var(--gold)' }}>{a.severity || 'aviso'}</span>
-          <strong style={{ fontWeight: 600, color: 'var(--text)' }}>{a.title || a.code}</strong>
-          <span>{a.description}</span>
-        </div>
-      ))}
+      <div style={CONTEUDO} aria-hidden={!aberto}>
+        {/* notificações do Neo4j (ex.: rótulo que não existe no banco) */}
+        {avisos.map((a, i) => (
+          <div key={i} style={AVISO}>
+            <span style={{ ...MONO_LABEL, color: 'var(--gold)' }}>{a.severity || 'aviso'}</span>
+            <strong style={{ fontWeight: 600, color: 'var(--text)' }}>{a.title || a.code}</strong>
+            <span>{a.description}</span>
+          </div>
+        ))}
 
-      <div role="tabpanel" style={CORPO}>
-        {aba === 'tabela' ? <Tabela campos={campos} linhas={linhas} /> : null}
-        {aba === 'grafo' ? <GrafoTexto grafo={grafo} /> : null}
-        {aba === 'json' ? <Json bruto={bruto} /> : null}
+        <div role="tabpanel" style={CORPO}>
+          {aba === 'tabela' ? <Tabela campos={campos} linhas={linhas} /> : null}
+          {aba === 'relacoes' ? <GrafoTexto grafo={grafo} /> : null}
+          {aba === 'json' ? <Json bruto={bruto} /> : null}
+        </div>
       </div>
     </section>
   )

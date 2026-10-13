@@ -71,6 +71,13 @@
   --no-habilidade: #1b9e77;
   --no-conceito: #7c4dff;
   --no-disciplina: #e11d48;
+  /* N5 (Neo4j): um token por rótulo da tabela de estilo (src/data/estiloGrafo.js)
+     + o do rótulo sem estilo; --no-conceito/--no-disciplina são do modelo do
+     mock e ficam até a N6 (paletas de daltonismo) */
+  --no-ano: #c2410c;
+  --no-unidade: #7c4dff;
+  --no-objeto: #2563eb;
+  --no-outro: #6b7280;
   --grafo-aresta: #b4a98d;
   --grafo-aresta-destaque: #5c6660;
   --grafo-anel: rgba(255, 255, 255, 0.85);
@@ -126,6 +133,10 @@
   --no-habilidade: #2fbf93;
   --no-conceito: #9d85ff;
   --no-disciplina: #f25c78;
+  --no-ano: #f97316;
+  --no-unidade: #9d85ff;
+  --no-objeto: #60a5fa;
+  --no-outro: #9ca3af;
   --grafo-aresta: #47524b;
   --grafo-aresta-destaque: #b7c0b8;
   --grafo-anel: rgba(0, 0, 0, 0.55);
@@ -543,7 +554,24 @@ input::placeholder {
   background: var(--green) !important;
 }
 
-/* abas Tabela / JSON do resultado */
+/* painel do resultado: abre descendo a partir da barra e fecha subindo para
+   ela (aba "Grafo"); sem animação no modo "Desativar animações" (D6) e quando o
+   sistema pede menos movimento */
+.eg-resultado-caixa {
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.eg-resultado-caixa--sem-anim {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eg-resultado-caixa {
+    transition: none;
+  }
+}
+
+/* abas Grafo / Tabela / Relações / JSON do resultado */
 .eg-resultado-aba {
   padding: 13px 2px 11px;
   margin-right: 18px;

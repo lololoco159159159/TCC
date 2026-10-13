@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import { useTheme } from '../../context/useTheme'
-import { RELACOES } from '../../data/mockFuseki'
+import { TOKENS_COR_NO, estiloRelacao } from '../../data/estiloGrafo'
 
 // Canvas 2D do grafo de conhecimento — porte fiel do motor do protótipo
 // (design/prototipo_grafo.html). Etapas G4+G5: render (grid pontilhado com
@@ -22,6 +22,13 @@ import { RELACOES } from '../../data/mockFuseki'
 // (física quente, arraste, câmera interpolando) ou um pedido pendente; quando
 // não há, ele dorme e volta a zero desenho por segundo. Todo ponto que muda
 // algo visível chama pedirFrame(), o único lugar que agenda um rAF.
+// Etapa N5 (integração com o Neo4j, §4.5): o canvas desenha o grafo de QUALQUER
+// consulta. Cor, raio, forma, fonte e legenda de cada nó vêm da tabela de estilo
+// (src/data/estiloGrafo.js), já resolvidos no nó pela página (montarGrafo);
+// a mola de cada aresta e o tracejado vêm do tipo da relação; o rótulo da
+// aresta em destaque é o próprio tipo (como no Neo4j Browser) e o tooltip
+// mostra o texto completo do nó (quebrado em até 4 linhas). Física, câmera,
+// tempos e a renderização sob demanda ficaram intocados (D3/D4).
 
 // Limites do zoom da câmera (clamp do protótipo). Atenção: o fit-to-view do
 // enquadrar() usa a própria faixa 0.2–1.5 — é OUTRO limite, não unificar.
@@ -55,13 +62,12 @@ const ESTILO_CANVAS = {
 }
 
 // Lê os tokens do design system para uso no canvas (que não entende var()).
+// `no`: as cores por rótulo, indexadas pelo nome do token (o `cor` de cada nó).
 function lerPaleta() {
   const css = getComputedStyle(document.documentElement)
   const v = (nome) => css.getPropertyValue(nome).trim()
   return {
-    habilidade: v('--no-habilidade'),
-    conceito: v('--no-conceito'),
-    disciplina: v('--no-disciplina'),
+    no: Object.fromEntries(TOKENS_COR_NO.map((t) => [t, v(t)])),
     grid: v('--dot-color'),
     aresta: v('--grafo-aresta'),
     arestaDestaque: v('--grafo-aresta-destaque'),
@@ -75,6 +81,26 @@ function lerPaleta() {
     chipBorda: v('--edge'),
     chipTexto: v('--muted'),
   }
+}
+
+// Quebra o texto do tooltip em linhas que caibam em `largura` (medida com a
+// fonte já aplicada no ctx), até `maxLinhas` — a última ganha "…" se sobrar.
+function quebrarLinhas(ctx, texto, largura, maxLinhas) {
+  const linhas = []
+  let atual = ''
+  for (const palavra of texto.split(/\s+/)) {
+    const tentativa = atual ? `${atual} ${palavra}` : palavra
+    if (!atual || ctx.measureText(tentativa).width <= largura) atual = tentativa
+    else {
+      linhas.push(atual)
+      atual = palavra
+    }
+  }
+  if (atual) linhas.push(atual)
+  if (linhas.length <= maxLinhas) return linhas
+  const cortadas = linhas.slice(0, maxLinhas)
+  cortadas[maxLinhas - 1] += '…'
+  return cortadas
 }
 
 const GrafoCanvas = forwardRef(function GrafoCanvas(
@@ -139,11 +165,11 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
   // molas por aresta com comprimento de repouso por relação, gravidade ao
   // centro, damping e esfriamento (alpha). Muta os nós do Map em `dados` — os
   // mesmos objetos do estado da página; o React não re-renderiza por isso, e
-  // não precisa: só o canvas lê x/y, a cada frame.
+  // não precisa: só o canvas lê x/y, a cada frame. N5: o comprimento de repouso
+  // vem da tabela de estilo (tipo sem estilo: 150, o padrão do protótipo).
   function fisica() {
     const { nos: mapa, arestas: ars } = dados.current
     const ns = [...mapa.values()]
-    const L = { desenvolve: 130, podeSerTrabalhadaEm: 175, progrideDe: 205 }
     for (let i = 0; i < ns.length; i++) {
       for (let j = i + 1; j < ns.length; j++) {
         const a = ns[i]
@@ -175,7 +201,7 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       let dx = b.x - a.x
       let dy = b.y - a.y
       const d = Math.hypot(dx, dy) || 1
-      const f = (d - (L[ar.rel] || 150)) * 0.028 * alpha.current
+      const f = (d - estiloRelacao(ar.rel).mola) * 0.028 * alpha.current
       dx /= d
       dy /= d
       a.vx += dx * f
@@ -281,20 +307,29 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     zoomMenos: () => zoomCam(1 / 1.35),
   }))
 
-  // forma do nó por tipo — modo "formas em vez de cores" (G10, daltonismo
-  // total): habilidade continua círculo; conceito vira quadrado; disciplina
-  // vira triângulo. Constantes do protótipo.
+  // forma do nó — modo "formas em vez de cores" (G10, daltonismo total). N5: a
+  // forma de cada rótulo vem da tabela de estilo (n.forma). Quadrado e
+  // triângulo com as constantes do protótipo; o losango é novo (4.º rótulo).
   function tracarNo(ctx, n, r) {
-    if (!formasRef.current || n.tipo === 'habilidade') {
+    if (!formasRef.current || n.forma === 'circulo') {
       ctx.arc(n.x, n.y, r, 0, 7)
       return
     }
-    if (n.tipo === 'conceito') {
+    if (n.forma === 'quadrado') {
       const s = r * 0.92
       ctx.rect(n.x - s, n.y - s, s * 2, s * 2)
       return
     }
-    const s = r * 1.22 // disciplina: triângulo
+    if (n.forma === 'losango') {
+      const s = r * 1.18
+      ctx.moveTo(n.x, n.y - s)
+      ctx.lineTo(n.x + s, n.y)
+      ctx.lineTo(n.x, n.y + s)
+      ctx.lineTo(n.x - s, n.y)
+      ctx.closePath()
+      return
+    }
+    const s = r * 1.22 // triângulo
     ctx.moveTo(n.x, n.y - s)
     ctx.lineTo(n.x + s * 0.866, n.y + s * 0.5)
     ctx.lineTo(n.x - s * 0.866, n.y + s * 0.5)
@@ -341,7 +376,7 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     }
     const k = cam.current.k
 
-    // ---- arestas (com seta; tracejada na progressão entre anos) ----
+    // ---- arestas (com seta; tracejada se o tipo pedir, na tabela de estilo) ----
     ars.forEach((ar) => {
       const a = ns.get(ar.a)
       const b = ns.get(ar.b)
@@ -350,7 +385,7 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       ctx.globalAlpha = foco ? (destaque ? 0.95 : 0.1) : 0.55
       ctx.strokeStyle = destaque ? C.arestaDestaque : C.aresta
       ctx.lineWidth = (destaque ? 2 : 1.2) / k
-      ctx.setLineDash(ar.rel === 'progrideDe' ? [6 / k, 5 / k] : [])
+      ctx.setLineDash(estiloRelacao(ar.rel).tracejado ? [6 / k, 5 / k] : [])
       ctx.beginPath()
       ctx.moveTo(a.x, a.y)
       ctx.lineTo(b.x, b.y)
@@ -371,11 +406,11 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
         ctx.closePath()
         ctx.fill()
       }
-      // chip com o rótulo da relação, só na aresta em destaque
+      // chip com o tipo da relação (como o Neo4j Browser), só na aresta em destaque
       if (destaque && k > 0.5) {
         const mx = (a.x + b.x) / 2
         const my = (a.y + b.y) / 2
-        const rot = RELACOES[ar.rel] ? RELACOES[ar.rel].saida : ar.rel
+        const rot = ar.rel
         ctx.font = `500 ${10 / k}px "JetBrains Mono", monospace`
         const tw = ctx.measureText(rot).width
         ctx.fillStyle = C.chipBg
@@ -398,17 +433,18 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     })
     ctx.globalAlpha = 1
 
-    // ---- nós (cor por tipo, anel de seleção, rótulo com halo) ----
+    // ---- nós (cor por rótulo, anel de seleção, rótulo com halo) ----
     ns.forEach((n) => {
       const apagado = foco && !viz.has(n.id)
       const ehFoco = n.id === foco
       const ehSel = n.id === selecionadoRef.current
+      const cor = C.no[n.cor] || C.no['--no-outro']
       ctx.globalAlpha = apagado ? 0.18 : 1
       const r = n.r + (n.id === hoverRef.current ? 2 : 0)
       if (ehSel) {
         ctx.beginPath()
         tracarNo(ctx, n, r + 5.5)
-        ctx.strokeStyle = C[n.tipo]
+        ctx.strokeStyle = cor
         ctx.globalAlpha = apagado ? 0.18 : 0.45
         ctx.lineWidth = 2.5 / Math.sqrt(k)
         ctx.stroke()
@@ -416,7 +452,7 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       }
       ctx.beginPath()
       tracarNo(ctx, n, r)
-      ctx.fillStyle = C[n.tipo]
+      ctx.fillStyle = cor
       ctx.fill()
       ctx.lineWidth = 2 / Math.sqrt(k)
       ctx.strokeStyle = C.anel
@@ -424,10 +460,8 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
 
       const mostrarRotulo = k > 0.55 || ehFoco || ehSel || viz.has(n.id)
       if (mostrarRotulo) {
-        ctx.font =
-          n.tipo === 'habilidade'
-            ? `600 ${10.5 / Math.sqrt(k)}px "JetBrains Mono", monospace`
-            : `${n.tipo === 'disciplina' ? 700 : 600} ${(n.tipo === 'disciplina' ? 12.5 : 11.5) / Math.sqrt(k)}px "Figtree", sans-serif`
+        const f = n.fonte
+        ctx.font = `${f.peso} ${f.tamanho / Math.sqrt(k)}px ${f.mono ? '"JetBrains Mono", monospace' : '"Figtree", sans-serif'}`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'top'
         ctx.lineWidth = 4 / Math.sqrt(k)
@@ -439,15 +473,20 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     })
     ctx.globalAlpha = 1
 
-    // tooltip do hover em habilidade
+    // tooltip do hover: o texto completo do nó (n.dica), quando ele diz mais do
+    // que a legenda — ex.: "EF01MA17 — Reconhecer…", ou a descrição inteira de
+    // um objeto de conhecimento. Mesmo visual do protótipo (1 linha = 22px);
+    // textos longos quebram em até 4 linhas de no máximo 300px.
     const hv = hoverRef.current ? ns.get(hoverRef.current) : null
-    if (hv && hv.tipo === 'habilidade' && hv.resumo) {
+    if (hv && hv.dica && hv.dica !== hv.label) {
       ctx.font = `600 ${11.5 / k}px "Figtree", sans-serif`
-      const tw = ctx.measureText(hv.resumo).width
-      const bx = hv.x - tw / 2 - 9 / k
-      const by = hv.y - hv.r - 34 / k
+      const linhas = quebrarLinhas(ctx, hv.dica, 300 / k, 4)
+      const lh = 15 / k
+      const tw = Math.max(...linhas.map((l) => ctx.measureText(l).width))
       const bw = tw + 18 / k
-      const bh = 22 / k
+      const bh = linhas.length * lh + 7 / k
+      const bx = hv.x - bw / 2
+      const by = hv.y - hv.r - 12 / k - bh
       ctx.fillStyle = C.tooltipBg
       ctx.beginPath()
       if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 7 / k)
@@ -456,7 +495,7 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       ctx.fillStyle = C.tooltipFg
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText(hv.resumo, hv.x, by + bh / 2)
+      linhas.forEach((l, i) => ctx.fillText(l, hv.x, by + 3.5 / k + lh * (i + 0.5)))
     }
     ctx.restore()
   }
@@ -500,14 +539,14 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     // atributo aqui (e não num efeito atrelado ao ThemeContext) porque o
     // efeito do filho roda ANTES de o Provider aplicar o atributo — a
     // paleta ficaria sempre um toggle atrasada (halo/grid do tema anterior).
-    // A chave inclui os overrides inline dos TRÊS tokens --no-* (paleta de
-    // daltonismo, G9): lê-se o VALOR escrito no <html>, e não uma prop,
-    // para o cache só virar quando os tokens novos já estão aplicados.
-    // Os três entram na chave porque paletas distintas compartilham cores
-    // (protanopia e deuteranopia diferem só na disciplina).
+    // A chave inclui os overrides inline de TODOS os tokens --no-* que o canvas
+    // usa (paleta de daltonismo, G9): lê-se o VALOR escrito no <html>, e não
+    // uma prop, para o cache só virar quando os tokens novos já estão
+    // aplicados. Todos entram na chave porque paletas distintas compartilham
+    // cores (protanopia e deuteranopia diferem num único token).
     const tema = document.documentElement.getAttribute('data-theme') || 'light'
     const estilo = document.documentElement.style
-    const chave = `${tema}|${estilo.getPropertyValue('--no-habilidade')}|${estilo.getPropertyValue('--no-conceito')}|${estilo.getPropertyValue('--no-disciplina')}`
+    const chave = `${tema}|${TOKENS_COR_NO.map((t) => estilo.getPropertyValue(t)).join('|')}`
     if (!paleta.current || chave !== temaLido.current) {
       temaLido.current = chave
       paleta.current = lerPaleta()

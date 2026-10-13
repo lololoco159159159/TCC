@@ -11,6 +11,7 @@ import GrafoEstados from '../components/grafo/GrafoEstados'
 import { PALETAS } from '../data/paletas'
 import { executarCypher } from '../data/neo4j'
 import { completarGrafo, extrairGrafo } from '../data/extrairGrafo'
+import { visualDoNo } from '../data/estiloGrafo'
 import { ANOS, NOS, conexoesDe, consultarFuseki } from '../data/mockFuseki'
 
 // Página "Grafos" — a tela que exibe o grafo de conhecimento. Protótipo:
@@ -21,7 +22,11 @@ import { ANOS, NOS, conexoesDe, consultarFuseki } from '../data/mockFuseki'
 //    busca, ?serie= na URL, legenda que reconsultava, gaveta SPARQL). No lugar,
 //    o CONSOLE CYPHER (ConsoleCypher) executa consultas no Neo4j via
 //    executarCypher() e a resposta aparece no palco em Tabela/JSON
-//    (ResultadoCypher). O canvas ainda não recebe esses dados (N4/N5).
+//    (ResultadoCypher). N4: a resposta vira "nós + relações" (extrairGrafo +
+//    completarGrafo). N5: esse grafo vai para o CANVAS (montarGrafo, abaixo),
+//    desenhado com a tabela de estilo (src/data/estiloGrafo.js). A 1.ª aba do
+//    resultado, "Grafo", é o próprio desenho: o painel fica fechado (só a
+//    barra) e abre/fecha com animação nas abas Tabela/Relações/JSON.
 //  - Do porte do protótipo continuam o canvas com física e interações
 //    (G4–G6: seleção, Esc, +/−/recentrar), o painel de contexto (G7; sua
 //    largura é descontada do palco), expandir/desfazer com histórico de
@@ -64,14 +69,45 @@ const PREFS = lerPrefs()
 // (só a expansão ainda o usa, até a N8)
 const URI_PARA_ID = new Map([...NOS.values()].map((n) => [n.uri, n.id]))
 
+// Monta o grafo do CANVAS a partir do grafo do resultado (N4/N5) — porte do
+// montarGrafo da G3: posição inicial em espiral de ângulo áureo (2.399963 rad
+// entre nós consecutivos), à distância do anel do rótulo (tabela de estilo: o
+// Ano no meio, as habilidades por fora) mais uma variação de 0–96px, com
+// ±15px de ruído; e o nó que já estava na tela MANTÉM a posição (repetir a
+// consulta ou alternar "conectar nós" não faz o grafo pular). Cor, raio,
+// forma, fonte, legenda e tooltip saem prontos de visualDoNo(); a aresta
+// guarda o tipo da relação (mola e tracejado vêm dele no canvas).
+function montarGrafo({ nos, relacoes }, antigos) {
+  const novos = new Map()
+  let idx = 0
+  nos.forEach((no) => {
+    const visual = visualDoNo(no)
+    const velho = antigos.get(no.id)
+    const angulo = idx++ * 2.399963
+    const dist = visual.anel + (idx % 5) * 24
+    novos.set(no.id, {
+      id: no.id,
+      rotulos: no.rotulos,
+      props: no.props,
+      ...visual,
+      x: velho ? velho.x : Math.cos(angulo) * dist + (Math.random() - 0.5) * 30,
+      y: velho ? velho.y : Math.sin(angulo) * dist + (Math.random() - 0.5) * 30,
+      vx: 0,
+      vy: 0,
+    })
+  })
+  const arestas = [...relacoes.values()].map((r) => ({ id: r.id, a: r.inicio, b: r.fim, rel: r.rel, props: r.props }))
+  return { nos: novos, arestas }
+}
+
 function Grafos({ onHome, onSignup, onGrafos }) {
-  const [status, setStatus] = useState('inicio') // inicio | carregando | pronto | erro (vazio: sem uso desde a N3)
+  const [status, setStatus] = useState('inicio') // inicio | carregando | pronto | erro
   const [resultado, setResultado] = useState(null) // última resposta do console Cypher (N3) + `grafo` (N4)
   const [erro, setErro] = useState(null) // falha da última consulta: { origem, codigo, mensagem }
   const [conectarNos, setConectarNos] = useState(true) // "Conectar nós do resultado", ligado como no Browser (N4)
-  const [abaResultado, setAbaResultado] = useState('tabela') // tabela | grafo | json — sobrevive às execuções
+  const [abaResultado, setAbaResultado] = useState('tabela') // última aba de conteúdo: tabela | relacoes | json
+  const [resultadoAberto, setResultadoAberto] = useState(false) // fechado = aba "Grafo" (o desenho); sobrevive às execuções
   const [grafo, setGrafo] = useState({ nos: new Map(), arestas: [], versao: 0 })
-  const [contagens, setContagens] = useState({ habilidade: 0, conceito: 0, disciplina: 0, conexoes: 0 })
   const [tempoMs, setTempoMs] = useState(0)
   const [selecionadoId, setSelecionadoId] = useState(null) // nó selecionado (anel no canvas + painel)
   const [detalhe, setDetalhe] = useState(null) // { id, carregando, texto, grupos } do painel (G7)
@@ -182,9 +218,6 @@ function Grafos({ onHome, onSignup, onGrafos }) {
           setDesfaziveis(histExp.current.length)
         }
         nosRef.current = novosNos
-        const cont = { habilidade: 0, conceito: 0, disciplina: 0, conexoes: novasArestas.length }
-        novosNos.forEach((n) => cont[n.tipo]++)
-        setContagens(cont)
         setTempoMs(ms)
         setGrafo((g) => ({ ...g, nos: novosNos, arestas: novasArestas }))
         setStatus('pronto')
@@ -209,9 +242,6 @@ function Grafos({ onHome, onSignup, onGrafos }) {
     const nos = new Map(foto.nos.map((n) => [n.id, { ...n }]))
     const arestas = foto.arestas.map((a) => ({ ...a }))
     nosRef.current = nos
-    const cont = { habilidade: 0, conceito: 0, disciplina: 0, conexoes: arestas.length }
-    nos.forEach((n) => cont[n.tipo]++)
-    setContagens(cont)
     setGrafo((g) => ({ ...g, nos, arestas }))
     if (!(selRef.current && nos.has(selRef.current))) desselecionar()
     canvasApi.current?.reaquecer(0.5)
@@ -245,7 +275,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
   // N4: a resposta vira "nós + relações" (extrairGrafo) e é completada com as
   // consultas extras do Browser (completarGrafo: pontas que faltam, limite de
   // nós e, se a chave estiver ligada, as relações entre os nós do resultado);
-  // o grafo aparece em texto na aba "Grafo". O canvas ainda não o recebe (N5).
+  // o grafo aparece em texto na aba "Relações" e desenhado no canvas (N5).
   // `conectar` vem por parâmetro porque a chave refaz a consulta logo depois de
   // mudar o estado (o valor novo ainda não chegou a este closure).
   async function executarConsulta(consulta, conectar = conectarNos) {
@@ -257,7 +287,18 @@ function Grafos({ onHome, onSignup, onGrafos }) {
       const r = await executarCypher(consulta, {}, { canal: 'console' })
       const grafoDoResultado = await completarGrafo(extrairGrafo(r.linhas), { conectar })
       if (meuSeq !== seq.current) return
+      // N5: o grafo do resultado vai para o canvas (versao nova → reaquece a
+      // física e enquadra a 420ms); resultado novo zera o histórico de
+      // expansões, como o recorte novo da G8
+      const montado = montarGrafo(grafoDoResultado, nosRef.current)
+      nosRef.current = montado.nos
+      histExp.current = []
+      setDesfaziveis(0)
+      setExpandindo(false)
+      if (!(selRef.current && montado.nos.has(selRef.current))) desselecionar()
+      setGrafo((g) => ({ ...montado, versao: g.versao + 1 }))
       setResultado({ ...r, grafo: grafoDoResultado })
+      if (montado.nos.size === 0) setResultadoAberto(true) // sem nada para desenhar, a aba "Grafo" não serve: abre
       setTempoMs(r.tempos.totalMs)
       setStatus('pronto')
     } catch (e) {
@@ -276,7 +317,13 @@ function Grafos({ onHome, onSignup, onGrafos }) {
     if (status === 'pronto' && ultimaConsulta.current) executarConsulta(ultimaConsulta.current, novo)
   }
 
+  // "Voltar ao início" (card de erro): limpa o palco — resultado e desenho
   function voltarAoInicio() {
+    nosRef.current = new Map()
+    histExp.current = []
+    setDesfaziveis(0)
+    desselecionar()
+    setGrafo((g) => ({ nos: new Map(), arestas: [], versao: g.versao + 1 }))
     setResultado(null)
     setErro(null)
     setStatus('inicio')
@@ -381,9 +428,11 @@ function Grafos({ onHome, onSignup, onGrafos }) {
   }
 
   // resumo do grafo em cena (pill topo-centro; só aparece com nós no canvas)
-  const totalNos = contagens.habilidade + contagens.conceito + contagens.disciplina
-  const resumoRecorte = `${totalNos} nós · ${contagens.conexoes} conexões · ${tempoMs} ms`
+  const resumoRecorte = `${grafo.nos.size} nós · ${grafo.arestas.length} relações · ${tempoMs} ms`
   const temGrafo = grafo.nos.size > 0 // sem nós (toda a N3), zoom/paleta/resumo ficam ocultos
+  // a barra do resultado (Tabela/Relações/JSON) ocupa o topo do palco: zoom,
+  // resumo e "Desfazer" descem para baixo dela (barra: top 12 + ~42px de altura)
+  const topoOverlays = status === 'pronto' && resultado ? 66 : 14
   const offsetPainel = painel.esc ? 0 : painel.x + painel.w // largura ocupada pelo painel no palco
 
   return (
@@ -425,7 +474,9 @@ function Grafos({ onHome, onSignup, onGrafos }) {
             versao={grafo.versao}
             selecionadoId={selecionadoId}
             onSelecionar={(id) => (id ? selecionar(id) : desselecionar())}
-            onExpandir={expandir}
+            // onExpandir (2×clique) volta na N8, com a expansão pelo Neo4j — até
+            // lá ele chamaria o mock; e o clique num nó ainda não abre o painel
+            // (selecionar() só conhece os nós do mock; volta na N7)
             offsetEsquerda={offsetPainel}
             semAnim={semAnim}
             formas={formas}
@@ -436,7 +487,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
             <div
               style={{
                 position: 'absolute',
-                top: 14,
+                top: topoOverlays,
                 right: 14,
                 display: 'flex',
                 flexDirection: 'column',
@@ -497,7 +548,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
               onClick={desfazerExpansao}
               style={{
                 position: 'absolute',
-                top: 52,
+                top: topoOverlays + 38,
                 left: '50%',
                 transform: 'translateX(-50%)',
                 display: 'inline-flex',
@@ -532,7 +583,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
             <div
               style={{
                 position: 'absolute',
-                top: 14,
+                top: topoOverlays,
                 left: '50%',
                 transform: 'translateX(-50%)',
                 display: 'flex',
@@ -562,7 +613,13 @@ function Grafos({ onHome, onSignup, onGrafos }) {
               resultado={resultado}
               offsetEsquerda={offsetPainel}
               aba={abaResultado}
-              aoTrocarAba={setAbaResultado}
+              aberto={resultadoAberto}
+              aoAbrirAba={(id) => {
+                setAbaResultado(id)
+                setResultadoAberto(true)
+              }}
+              aoFechar={() => setResultadoAberto(false)}
+              semAnim={semAnim}
             />
           ) : null}
 
@@ -575,7 +632,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
           />
 
           {/* painel de contexto (G7) — zIndex 30: acima do card-convite,
-              abaixo dos overlays de carregando/erro/vazio (32) */}
+              abaixo dos overlays de carregando/erro (32) */}
           <GrafoPainel
             painel={painel}
             aoMudarPainel={(patch) => setPainel((p) => ({ ...p, ...patch }))}

@@ -6,8 +6,8 @@ import { Caminho, No, Relacao, executarCypher } from './neo4j'
 //  - extrairGrafo(): pura (sem rede) — junta o que veio no resultado;
 //  - completarGrafo(): as consultas extras do Browser — busca as pontas que
 //    faltam, aplica o limite de nós e (opcional) "conecta os nós do resultado".
-// O canvas ainda não usa isto (N5): por ora o grafo aparece em texto, na aba
-// "Grafo" do resultado, para os números serem conferidos antes do desenho.
+// O grafo aparece em texto na aba "Relações" do resultado (para conferir os
+// números) e é o que o canvas desenha (N5).
 
 export const LIMITE_NOS = 300 // nós exibidos no máximo (o padrão do Browser clássico)
 

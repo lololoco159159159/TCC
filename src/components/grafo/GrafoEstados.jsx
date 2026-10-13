@@ -1,14 +1,15 @@
 // Overlays de ESTADO do palco da página de grafos (G3; extraídos da página na
 // R7b — movimento puro de JSX): card-convite (início), skeleton de nós pulsando
 // + spinner (carregando), card de erro (Tentar novamente / Voltar ao início) e
-// card de vazio. Carregando/erro/vazio cobrem o palco com zIndex 32 (acima do
+// card de vazio (até a N5). Carregando/erro cobrem o palco com zIndex 32 (acima do
 // painel de contexto, 30 — ver a escala no index.css); o convite fica sem
 // z-index, acima do canvas só pela ordem no DOM.
 // N3 (integração com o Neo4j): textos trocados de SPARQL/Fuseki/Filtrar para
 // Neo4j/Cypher/Executar, e o card de erro mostra o código do erro + a mensagem
 // (a de sintaxe traz a consulta e um ^ na posição — por isso o resto da
-// mensagem vai num bloco que não quebra linha). O card de vazio ficou sem uso
-// na N3 (consulta sem linhas aparece na própria tabela do resultado).
+// mensagem vai num bloco que não quebra linha). N5: o card de vazio saiu —
+// nenhum estado o aciona mais (consulta sem nós aparece na própria tabela do
+// resultado, aberto).
 
 // pontos do skeleton de carregamento (verbatim do protótipo)
 const SKELETON = [
@@ -92,7 +93,7 @@ function GrafoEstados({ status, erro, aoTentarNovamente, aoLimpar }) {
               Use a barra acima: escreva uma consulta — ou escolha um dos{' '}
               <strong style={{ color: 'var(--text)' }}>Exemplos</strong> — e clique em{' '}
               <strong style={{ color: 'var(--text)' }}>Executar</strong> (ou Ctrl+Enter) para consultar o
-              Neo4j. Por enquanto, a resposta aparece em tabela e em JSON.
+              Neo4j. Os nós e as relações da resposta aparecem desenhados aqui, como no Neo4j Browser.
             </p>
           </div>
         </div>
@@ -268,71 +269,6 @@ function GrafoEstados({ status, erro, aoTentarNovamente, aoLimpar }) {
                 Voltar ao início
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* estado vazio (sem uso desde a N3 — a N5 decide se volta) */}
-      {status === 'vazio' && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 24,
-            zIndex: 32,
-          }}
-        >
-          <div
-            style={{
-              width: 440,
-              maxWidth: '92%',
-              background: 'var(--pill-bg)',
-              border: '1px solid var(--pill-border)',
-              borderRadius: 18,
-              padding: '28px 30px',
-              boxShadow: '0 24px 60px rgba(28,38,32,.12)',
-              animation: 'egSurgir .18s ease',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--gold)' }} />
-              <span
-                style={{
-                  font: "10px/1 'JetBrains Mono', monospace",
-                  letterSpacing: '0.16em',
-                  color: 'var(--muted)',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Sem resultados
-              </span>
-            </div>
-            <h2 style={{ font: "700 22px/1.2 'Spectral', serif", margin: '0 0 8px', color: 'var(--text)' }}>
-              A consulta não trouxe nós
-            </h2>
-            <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--muted)', margin: '0 0 20px' }}>
-              A consulta foi executada, mas não retornou nenhum nó para desenhar. Ajuste-a na barra
-              acima e execute de novo.
-            </p>
-            <button
-              type="button"
-              className="eg-grafo-filtrar"
-              onClick={aoLimpar}
-              style={{
-                padding: '10px 20px',
-                borderRadius: 999,
-                border: 'none',
-                background: 'var(--green)',
-                color: '#fff',
-                font: "600 14px/1 'Figtree', sans-serif",
-                cursor: 'pointer',
-              }}
-            >
-              Voltar ao início
-            </button>
           </div>
         </div>
       )}

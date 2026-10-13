@@ -805,7 +805,7 @@ completas contra o mock. Restam:
 2. **PENDENTE (pausado em 2026-10-09) — Desempenho do motor do grafo**: P0–P2
    feitas; **P3, P4 e P5 pendentes** — roadmap §4.4. Retomar depois da integração.
 3. **FOCO ATUAL — Integração com o Neo4j** (substitui o antigo plano de Apache
-   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N4 feitas; próxima etapa: N5.**
+   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N5 feitas; próxima etapa: N6.**
 
 ### 4.1 Página de grafos — caminho por etapas (G1–G11)
 
@@ -1588,7 +1588,7 @@ integração.
 - [x] **N2** — Cliente Cypher `src/data/neo4j.js` (sem tela) *(2026-10-12)*
 - [x] **N3** — Console Cypher na página de grafos: ver o que chega *(2026-10-12)*
 - [x] **N4** — Do resultado ao grafo: extrair nós e relações (em texto) *(2026-10-12)*
-- [ ] **N5** — Desenhar o grafo no canvas
+- [x] **N5** — Desenhar o grafo no canvas *(2026-10-12)*
 - [ ] **N6** — Tipos novos: cores, formas, paletas e legenda
 - [ ] **N7** — Painel de detalhe com dados reais
 - [ ] **N8** — Expandir e desfazer com Cypher
@@ -2090,6 +2090,91 @@ nós não "pulam").
 
 **Pronto quando:** as 6 consultas válidas desenham o mesmo grafo que o Browser.
 
+**Feito (2026-10-12).** Arquivo novo [src/data/estiloGrafo.js](src/data/estiloGrafo.js);
+alterados [GrafoCanvas.jsx](src/components/grafo/GrafoCanvas.jsx),
+[Grafos.jsx](src/pages/Grafos.jsx), [ResultadoCypher.jsx](src/components/grafo/ResultadoCypher.jsx),
+[GrafoEstados.jsx](src/components/grafo/GrafoEstados.jsx) e [index.css](src/index.css).
+
+Como ficou:
+- **Tabela de estilo** (`estiloGrafo.js`), por rótulo:
+
+  | Rótulo | Cor (token) | Raio | Forma | Legenda | Tooltip | Anel da semente |
+  |---|---|---|---|---|---|---|
+  | Ano | `--no-ano` (laranja) | 19 | losango | `nome` | — | 0 (centro) |
+  | UnidadeTematica | `--no-unidade` (violeta) | 16 | quadrado | `nome` | — | 150 |
+  | ObjetoConhecimento | `--no-objeto` (azul) | 13 | triângulo | `descricao` (28 car.) | descrição inteira | 280 |
+  | Habilidade | `--no-habilidade` (verde) | 11 | círculo | `codigo` (mono) | `codigo — descricao` | 400 |
+  | *sem estilo* | `--no-outro` (cinza) | 12 | círculo | 1.ª de nome/name/titulo/title/codigo/code/descricao/description | — | 220 |
+
+  e por tipo de relação (comprimento de repouso da mola): `TEM_UNIDADE` 150 ·
+  `TEM_OBJETO` 130 · `DESENVOLVE` 120 · `DESENVOLVE_HABILIDADE` 280 · *sem estilo*
+  150 (o padrão do protótipo); nenhum tracejado. O rótulo principal de um nó é o 1.º
+  que tiver estilo (um nó com dois rótulos usa o conhecido). Rótulo novo da
+  orientadora aparece em cinza com a legenda pela 1.ª propriedade "de nome" — o site
+  não quebra. Tokens novos `--no-ano --no-unidade --no-objeto --no-outro` com
+  contraparte escura.
+- **`montarGrafo`** (porte do da G3): espiral de ângulo áureo (2.399963) a partir do
+  anel do rótulo + 0–96 px + ±15 px de ruído; nó que já estava na tela mantém a
+  posição (repetir a consulta ou alternar "conectar nós" não faz o grafo pular).
+  Resultado novo reaquece a física, enquadra a 420 ms e zera o histórico de
+  expansões, como o recorte novo da G8.
+- **Canvas**: cor, raio, forma (modo formas), fonte e legenda vêm prontos no nó; a mola
+  e o tracejado vêm do tipo da relação; o chip da aresta em destaque mostra o **tipo**
+  (como o Browser); o **tooltip** mostra o texto completo do nó quando ele diz mais que
+  a legenda (Habilidade e ObjetoConhecimento), quebrado em até 4 linhas de 300 px —
+  uma linha tem o mesmo visual de antes. A chave do cache de cores passou a incluir
+  todos os tokens `--no-*` que o canvas usa. **Física, câmera, tempos e a
+  renderização sob demanda: intocados** (só a tabela de molas mudou, D3/D4).
+- **Pill de resumo**: `N nós · M relações · X ms`. Zoom/paleta/resumo aparecem quando
+  há nós (a guarda `temGrafo` da N3).
+- **Painel do resultado recolhível**: com nós para desenhar, ele abre **recolhido** —
+  só a barra de abas no rodapé do palco, para não cobrir o desenho; clicar numa aba
+  ou em "Abrir" abre. Sem nós (ex.: `RETURN 1`), abre aberto, na tabela.
+- **"Voltar ao início"** limpa o palco (resultado e desenho).
+- **Ajuste pedido pelo autor (mesmo dia):** a barra Tabela/Relações/JSON fica no
+  **topo** do palco (logo abaixo do console), não no rodapé — recolhida é só a barra;
+  aberto, o painel desce a partir dela. Com a barra lá, zoom, resumo e "Desfazer"
+  descem para baixo dela (`topoOverlays`: 66 px em vez de 14). E a aba **"Grafo"
+  passou a se chamar "Relações"** (id `relacoes`).
+- **2.º ajuste do autor:** a 1.ª aba agora é **"Grafo" = o próprio desenho do canvas**
+  (Grafo · Tabela · Relações · JSON). Com ela escolhida o painel fica fechado (só a
+  barra); as outras abas o abrem. Abrir e fechar são **animados pela altura** (0,3 s;
+  classe `.eg-resultado-caixa`): o painel desce a partir da barra e sobe de volta até
+  ela — o conteúdo continua montado enquanto fecha (o painel o corta) e fica
+  `aria-hidden` fechado. Sem animação no modo "Desativar animações" (`semAnim`, D6) e
+  com `prefers-reduced-motion`. Saiu o botão "Recolher/Abrir" (a aba Grafo faz o
+  papel). A escolha **sobrevive às execuções** (começa em Grafo); só uma consulta sem
+  nós abre o painel sozinha, na última aba de conteúdo usada.
+
+Desvios do plano:
+- **Formas no canvas antecipadas da N6**: como `tracarNo` decidia a forma pelo tipo do
+  mock, com os rótulos novos o modo formas viraria "tudo triângulo"; a forma já entra
+  na tabela de estilo (com o **losango**, novo, para o 4.º rótulo). Continuam na N6:
+  paletas CUD para os 4 rótulos (hoje a paleta de daltonismo só recolore a
+  Habilidade), as formas nos pontinhos DOM (`.eg-no-*`) e a legenda.
+- O card **"vazio"** saiu do `GrafoEstados` (nenhum estado o aciona; consulta sem nós
+  abre o resultado na tabela). Sai também o estado `contagens` da página (contava os 3
+  tipos do mock; o resumo usa o tamanho do grafo).
+- Clique num nó ainda **não** seleciona nem abre o painel (o `selecionar` só conhece
+  nós do mock — N7) e o **2×clique não expande** (a prop `onExpandir` não é passada até
+  a N8, para não chamar o mock).
+
+**Decisões para o autor** (previstas no plano; valores atuais escolhidos pelo
+assistente, ajustáveis numa linha da tabela de estilo depois de ver o desenho): os
+comprimentos de mola acima; e o atalho `DESENVOLVE_HABILIDADE` desenhado **igual às
+outras setas**, fiel ao Browser (alternativa: `tracejado: true` para ficar discreto).
+
+Verificado: `npm run lint` (0/0), `npm run build` (JS 282,02 → **283,29 kB**; CSS 8,81 →
+8,97 kB) e `npm run dev` (os 5 módulos alterados servidos com 200). Testes do assistente
+**sem instalar nada** (Vite e React do projeto, no Node, contra servidor temporário), 14
+casos: estilo dos 4 rótulos com nós reais (forma, raio, anel, legenda, tooltip — a
+descrição de objeto de conhecimento encurtada em 28 caracteres), rótulo desconhecido,
+nó sem rótulo nem propriedades, nó com dois rótulos, molas e padrão de 150, tokens nos
+**dois temas**, árvore inteira sem nenhum nó caindo no padrão, painel recolhido/aberto
+e estados do palco sem o card vazio. **O desenho no canvas só roda no navegador —
+falta o teste do autor** (itens acima: a árvore lado a lado com o Browser, arrastar,
+pan, zoom, hover/tooltip, tema escuro, A/A, sem animação, repetir a consulta).
+
 ---
 
 #### N6 — Tipos novos: cores, formas, paletas e legenda
@@ -2374,10 +2459,12 @@ src/
 │       ├── GrafoOverlays.jsx  # legenda "Tipos de nó", gaveta SPARQL, popover de paleta,
 │       │                      #   OpcoesAcessibilidade (G9–G10)
 │       ├── GrafoPerfil.jsx    # perfil mock: identidade, turmas, acessibilidade (G10)
-│       ├── GrafoEstados.jsx   # overlays de estado do palco: convite/carregando/erro (código + ^)/vazio (R7b; N3)
+│       ├── GrafoEstados.jsx   # overlays de estado do palco: convite/carregando/erro (código + ^) (R7b; N3; vazio saiu na N5)
 │       └── estilos.js         # estilos inline compartilhados do domínio (MONO_LABEL, R6)
 ├── data/
 │   ├── neo4j.js               # cliente Cypher do Neo4j: executarCypher() via proxy /api/cypher (N2)
+│   ├── estiloGrafo.js         # tabela de estilo: por rótulo (cor, raio, forma, legenda, tooltip, semente)
+│   │                          #   e por tipo de relação (mola, tracejado); padrão p/ rótulo novo (N5)
 │   ├── extrairGrafo.js        # resultado → nós + relações (puro) e as consultas extras do Browser:
 │                              #   pontas que faltam, limite de 300 nós, "conectar nós" (N4)
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
@@ -2387,7 +2474,7 @@ src/
 │                              #   e a grade de séries (Etapa 8/G2 — FEITO)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
-│   ├── Grafos.jsx             # página do grafo — console Cypher (N3) + estados + canvas + painel + expandir/desfazer + perfil/prefs (em transição para o Neo4j, §4.5)
+│   ├── Grafos.jsx             # página do grafo — console Cypher (N3) + grafo do Neo4j no canvas (N5) + estados + painel + expandir/desfazer + perfil/prefs (em transição, §4.5)
 │   ├── Login.jsx              # card de vidro na MolduraConta; form acessível (A1–A5 — FEITO)
 │   └── Signup.jsx             # card de vidro na MolduraConta; form acessível (A1–A5 — FEITO)
 ├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)
