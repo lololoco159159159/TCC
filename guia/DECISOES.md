@@ -264,6 +264,10 @@ de fonte e o tema escuro."
 **Quando:** ajuste de 2026-07-11, sobre a G9 · **Onde:**
 [src/components/GrafoOverlays.jsx](src/components/GrafoOverlays.jsx) (`LegendaTipos`)
 
+> **Revista pela D15 (2026-10-13):** no modelo do Neo4j nem toda aresta passa por uma
+> habilidade, então todos os rótulos voltaram a ser alternáveis na legenda (que agora
+> oculta só no desenho). O raciocínio abaixo continua válido para o modelo do mock.
+
 **O problema.** O protótipo permite ocultar qualquer tipo de nó pela legenda. Mas na
 ontologia **toda aresta passa por uma habilidade** (`desenvolve`, `podeSerTrabalhadaEm`
 e `progrideDe` são centradas nelas) — ocultá-las esvaziava o grafo em 100% dos casos.
@@ -573,5 +577,78 @@ versão publicada exibe exclusivamente dados do repositório definitivo."
 
 ---
 
-*Última atualização: 2026-10-09. Novas decisões: adicionar ao fim da lista como
+## D15 — Acessibilidade no modelo do Neo4j: paletas escolhidas por simulação de daltonismo, forma por rótulo e legenda que oculta só no desenho (revê D6 e D7)
+
+**Quando:** 2026-10-13, N6 do roadmap (ESTADO_ATUAL.md §4.5) · **Onde:**
+[src/data/paletas.js](src/data/paletas.js), [src/data/estiloGrafo.js](src/data/estiloGrafo.js)
+(forma por rótulo), [src/components/grafo/GrafoOverlays.jsx](src/components/grafo/GrafoOverlays.jsx)
+(`LegendaTipos`, `OpcoesAcessibilidade`), [src/index.css](src/index.css) (tokens
+`--no-X-padrao`, classes `.eg-forma-*`)
+
+**O problema.** As camadas de acessibilidade da D6 (paletas CUD, formas, modo sem
+animação) e a legenda com filtro da D7 foram feitas para os 3 tipos do mock
+(habilidade, conceito, disciplina). O grafo da orientadora tem 4 rótulos (Ano,
+UnidadeTematica, ObjetoConhecimento, Habilidade) e vai ganhar outros. Três
+problemas apareceram: (a) com 4 cores, escolher "a olho" dentro do CUD não garante
+distinção — o CUD é um conjunto acessível de 8 cores, mas nem todo grupo de 4 delas
+é bem distinguível sob cada tipo de daltonismo (os piores grupos ficam entre 16 e 21
+de ΔE na simulação); (b) a legenda reconsultava o servidor com um filtro por tipo,
+algo que não existe para uma consulta Cypher qualquer; (c) a D7 travava Habilidade
+porque, no mock, toda aresta passava por uma habilidade — no modelo novo isso não é
+mais verdade.
+
+**A decisão.** (1) **Paletas por simulação:** para cada deficiência (protanopia,
+deuteranopia, tritanopia), a paleta é o grupo de 4 cores do CUD com a **maior
+diferença perceptual mínima** entre pares (ΔE CIE76, em CIELAB) depois de simular a
+deficiência pelo modelo de Machado, Oliveira e Fernandes (2009, severidade 1). O
+preto e o amarelo saem da disputa (somem no fundo escuro e no creme claro,
+respectivamente); empates são desfeitos pelo maior contraste com o fundo claro.
+Resultado: ΔE mínimo simulado de **25,2** (protanopia), **24,9** (deuteranopia) e
+**24,8** (tritanopia), e pelo menos 19,8 contra o cinza dos rótulos sem estilo.
+(2) **Forma por rótulo** na tabela de estilo — círculo, quadrado, triângulo e o
+**losango** (novo, para o 4.º rótulo) —, a mesma no canvas e nos pontinhos da
+interface; as classes CSS são por forma, não por tipo, e servem a rótulos futuros.
+(3) **Legenda** com os rótulos presentes no grafo da tela, que oculta/mostra **só no
+desenho**: a página entrega ao canvas o grafo filtrado, nada é reconsultado, e o nó
+que volta reaparece no mesmo lugar. (4) **Todos os rótulos são alternáveis** — revê a
+D7, cuja justificativa era uma propriedade do modelo do mock. (5) A cor de fábrica de
+cada rótulo ganhou um token próprio (`--no-X-padrao`), para a amostra "Padrão" do
+popover mostrá-la mesmo com outra paleta ativa — sem repetir hexadecimais no código.
+
+**Alternativas rejeitadas.** (a) *4 cores do CUD escolhidas a olho:* nada garantiria
+que o grupo escolhido não fosse um dos ruins (ΔE 16–21); (b) *uma paleta única para
+as três deficiências:* o melhor grupo comum fica em ΔE 20,7, abaixo dos três grupos
+dedicados (≈ 25); (c) *reconsultar o Neo4j ao ocultar um rótulo:* uma consulta Cypher
+arbitrária não aceita um filtro automático sem ser reescrita; (d) *manter Habilidade
+fixa na legenda:* sem a justificativa do modelo antigo, seria só uma restrição.
+
+**Para a banca.** *"As paletas para daltonismo não foram escolhidas a olho: para cada
+tipo de daltonismo simulei como as cores do Color Universal Design são percebidas,
+pelo modelo de Machado e colegas, e escolhi o grupo de quatro cores com a maior
+diferença perceptual mínima — cerca de 25 unidades de ΔE, folga grande para as cores
+não se confundirem. Cada rótulo também tem uma forma própria, e a legenda oculta
+rótulos só no desenho, porque uma consulta Cypher qualquer não tem como ser
+refiltrada automaticamente."*
+
+**Monografia** *(cap. de Implementação, seção de Acessibilidade — retoma a D6; citar
+Okabe & Ito, 2008, e Machado, Oliveira & Fernandes, 2009):*
+"Com a adoção do modelo de dados definitivo, que distingue quatro categorias de
+vértices, as paletas alternativas para daltonismo foram redefinidas por um
+procedimento objetivo. Para cada tipo de deficiência — protanopia, deuteranopia e
+tritanopia —, simulou-se a percepção das cores do conjunto *Color Universal Design*
+(OKABE; ITO, 2008) por meio do modelo de Machado, Oliveira e Fernandes (2009) e
+selecionou-se, entre as combinações de quatro cores, aquela que maximiza a menor
+diferença perceptual (ΔE CIE76, no espaço CIELAB) entre pares de cores simuladas,
+excluídas previamente as cores de baixo contraste com algum dos fundos da interface.
+As paletas resultantes apresentam diferença mínima entre 24,8 e 25,2 unidades de ΔE
+sob a deficiência correspondente, contra valores de 16 a 21 nas piores combinações
+do mesmo conjunto. A codificação redundante por forma geométrica foi estendida a
+quatro formas (círculo, quadrado, triângulo e losango), associadas às categorias por
+uma tabela de estilo que também acomoda categorias futuras, e a legenda passou a
+ocultar categorias apenas na visualização, uma vez que consultas Cypher arbitrárias
+não admitem refiltragem automática no servidor."
+
+---
+
+*Última atualização: 2026-10-13. Novas decisões: adicionar ao fim da lista como
 D<N+1>, seguindo o formato do cabeçalho — **sempre com o parágrafo de monografia**.*

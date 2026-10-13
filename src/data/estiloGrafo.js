@@ -69,6 +69,10 @@ const ESTILO_RELACAO_PADRAO = { mola: 150, tracejado: false } // 150 = o padrão
 // tokens de cor que o canvas resolve via getComputedStyle (ele não entende var())
 export const TOKENS_COR_NO = [...new Set([...Object.values(ESTILO_NO).map((e) => e.cor), ESTILO_NO_PADRAO.cor])]
 
+// estilo de um rótulo (o padrão, se ele não estiver na tabela) — usado pela
+// legenda e pelas amostras de paleta (N6), que mostram cor e forma por rótulo
+export const estiloNo = (rotulo) => ESTILO_NO[rotulo] || ESTILO_NO_PADRAO
+
 export const estiloRelacao = (rel) => ESTILO_RELACAO[rel] || ESTILO_RELACAO_PADRAO
 
 const LEGENDA_MAX = 28 // caracteres da legenda sob o nó (o texto inteiro vai no tooltip)
@@ -86,7 +90,7 @@ const encurtar = (s) => (s.length > LEGENDA_MAX ? `${s.slice(0, LEGENDA_MAX - 1)
 // semente, legenda curta e o texto completo do tooltip (`dica`).
 export function visualDoNo(no) {
   const tipo = no.rotulos.find((r) => ESTILO_NO[r]) || no.rotulos[0] || '(sem rótulo)'
-  const e = ESTILO_NO[tipo] || ESTILO_NO_PADRAO
+  const e = estiloNo(tipo)
   const prop = e.legenda ?? PROPS_LEGENDA.find((p) => no.props[p] !== undefined && no.props[p] !== null)
   const completo = texto(prop !== undefined ? no.props[prop] : Object.values(no.props)[0]) || tipo
   const dica = (e.dica || [])

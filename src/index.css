@@ -67,17 +67,26 @@
   /* página de grafos (fundo da área de trabalho / canvas) */
   --grafo-bg: #f3eddf;
 
-  /* página de grafos — cores por tipo de nó e traços do canvas */
-  --no-habilidade: #1b9e77;
+  /* página de grafos — cores por rótulo de nó (N5/N6; um por rótulo da tabela de
+     estilo, src/data/estiloGrafo.js). A cor de fábrica fica em --no-X-padrao
+     (com contraparte escura); --no-X aponta para ela e é o que a paleta de
+     daltonismo sobrescreve no <html> — assim a amostra "Padrão" do popover
+     mostra as cores de fábrica mesmo com outra paleta ativa. --no-outro: rótulo
+     sem estilo (as paletas não o trocam). */
+  --no-ano-padrao: #c2410c;
+  --no-unidade-padrao: #7c4dff;
+  --no-objeto-padrao: #2563eb;
+  --no-habilidade-padrao: #1b9e77;
+  --no-ano: var(--no-ano-padrao);
+  --no-unidade: var(--no-unidade-padrao);
+  --no-objeto: var(--no-objeto-padrao);
+  --no-habilidade: var(--no-habilidade-padrao);
+  --no-outro: #6b7280;
+  /* modelo do mock: ficam enquanto o painel (até a N7) e a barra de filtros
+     antiga (até a N10) ainda os citam */
   --no-conceito: #7c4dff;
   --no-disciplina: #e11d48;
-  /* N5 (Neo4j): um token por rótulo da tabela de estilo (src/data/estiloGrafo.js)
-     + o do rótulo sem estilo; --no-conceito/--no-disciplina são do modelo do
-     mock e ficam até a N6 (paletas de daltonismo) */
-  --no-ano: #c2410c;
-  --no-unidade: #7c4dff;
-  --no-objeto: #2563eb;
-  --no-outro: #6b7280;
+  /* traços do canvas */
   --grafo-aresta: #b4a98d;
   --grafo-aresta-destaque: #5c6660;
   --grafo-anel: rgba(255, 255, 255, 0.85);
@@ -129,14 +138,15 @@
   /* página de grafos */
   --grafo-bg: #0c110e;
 
-  /* página de grafos — cores por tipo de nó e traços do canvas */
-  --no-habilidade: #2fbf93;
+  /* página de grafos — cores de fábrica por rótulo (os --no-X apontam para
+     estes, definidos uma vez no tema claro) e traços do canvas */
+  --no-ano-padrao: #f97316;
+  --no-unidade-padrao: #9d85ff;
+  --no-objeto-padrao: #60a5fa;
+  --no-habilidade-padrao: #2fbf93;
+  --no-outro: #9ca3af;
   --no-conceito: #9d85ff;
   --no-disciplina: #f25c78;
-  --no-ano: #f97316;
-  --no-unidade: #9d85ff;
-  --no-objeto: #60a5fa;
-  --no-outro: #9ca3af;
   --grafo-aresta: #47524b;
   --grafo-aresta-destaque: #b7c0b8;
   --grafo-anel: rgba(0, 0, 0, 0.55);
@@ -661,9 +671,32 @@ input::placeholder {
 
 /* ---- Página de grafos: perfil, turmas e formas (G10) ---- */
 
-/* pontinhos de tipo de nó (sugestões, legenda, painel, paleta): a FORMA vem
-   daqui — no modo "formas em vez de cores" (data-formas no <html>), conceito
-   vira quadrado e disciplina vira triângulo, como no canvas */
+/* pontinhos de rótulo (legenda, opções de paleta): a FORMA vem da tabela de
+   estilo (N6) pela classe .eg-forma-<forma>; no modo "formas em vez de cores"
+   (data-formas no <html>) cada uma vira a mesma forma do canvas */
+.eg-forma-circulo,
+.eg-forma-quadrado,
+.eg-forma-triangulo,
+.eg-forma-losango {
+  border-radius: 50%;
+}
+
+:root[data-formas='1'] .eg-forma-quadrado {
+  border-radius: 2px;
+}
+
+:root[data-formas='1'] .eg-forma-triangulo {
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+:root[data-formas='1'] .eg-forma-losango {
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+/* pontinhos do modelo do mock (painel até a N7, barra de filtros antiga até a
+   N10): conceito vira quadrado e disciplina vira triângulo */
 .eg-no-habilidade,
 .eg-no-conceito,
 .eg-no-disciplina {

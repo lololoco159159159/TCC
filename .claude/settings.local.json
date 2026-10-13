@@ -63,7 +63,9 @@
       "Bash(grep -n \"^      </div>$\\\\|<span style={INFO}>\\\\|avisos.map\\\\|role=\\\\\"tabpanel\\\\\"\" src/components/grafo/ResultadoCypher.jsx)",
       "Bash(grep -n \"^      \\)}$\\\\|^    </>$\" src/components/grafo/GrafoEstados.jsx)",
       "Bash(grep -n -A1 \"na aba$\" src/data/extrairGrafo.js)",
-      "Bash(grep -n \"com nós na$\\\\|painel do resultado abre recolhido\\\\|recolhido\" src/pages/Grafos.jsx)"
+      "Bash(grep -n \"com nós na$\\\\|painel do resultado abre recolhido\\\\|recolhido\" src/pages/Grafos.jsx)",
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/6bb6fcf0-7e99-408c-be70-54562c28719e/scratchpad/escolher-paletas.mjs)",
+      "Bash(RAIZ=__TRACKED_VAR__ node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/6bb6fcf0-7e99-408c-be70-54562c28719e/scratchpad/testar-n6.mjs)"
     ],
     "additionalDirectories": [
       "/home/lorenzo/tcc_implementacao/TCC/.claude/skills"

@@ -1,39 +1,48 @@
 import { useState } from 'react'
+import { ESTILO_NO } from '../../data/estiloGrafo'
 import { PALETAS } from '../../data/paletas'
 import { MONO_LABEL } from './estilos'
 import Chave from '../Chave'
 
 // Overlays finais da página de grafos (G9) — porte fiel do protótipo
-// (design/prototipo_grafo.html). Três blocos pequenos e irmãos do palco num
-// único módulo (exports nomeados):
-//   • LegendaTipos — "Tipos de nó" (canto inferior direito): contagem por tipo
-//     e TOGGLE que oculta/mostra o tipo reconsultando o endpoint (o filtro
-//     `tipos` entra na consulta SPARQL gerada).
-//   • GavetaSparql — botão "SPARQL" (ao lado da legenda) que abre a gaveta com
-//     a última consulta real enviada + tempo + checkbox "Simular falha do
-//     endpoint (HTTP 503)" (liga o modo erro do mock via setConfig).
+// (design/prototipo_grafo.html). Blocos pequenos e irmãos do palco num único
+// módulo (exports nomeados):
+//   • LegendaTipos — "Tipos de nó" (canto inferior direito). N6: lista os
+//     rótulos do Neo4j presentes no grafo da tela, com contagem, cor e forma da
+//     tabela de estilo; clicar oculta/mostra os nós do rótulo SÓ NO DESENHO.
+//   • GavetaSparql — botão "SPARQL" que abre a gaveta com a última consulta
+//     enviada ao mock + "Simular falha (HTTP 503)". Fora da tela desde a N3;
+//     volta como gaveta Cypher na N10.
 //   • PaletaPopover — botão-swatch na coluna de zoom que abre o popover
 //     "Cores do grafo · daltonismo" (Padrão/Protanopia/Deuteranopia/
 //     Tritanopia, de src/data/paletas.js). A troca escreve os tokens --no-*
 //     no <html> (efeito na página).
 //   • OpcoesAcessibilidade (G10) — o miolo do popover, compartilhado com o
 //     dropdown de perfil (GrafoPerfil): linhas de paleta + toggles "formas em
-//     vez de cores" e "desativar animações e física". As formas dos pontinhos
-//     DOM vêm das classes .eg-no-* + data-formas no <html> (index.css).
+//     vez de cores" e "desativar animações e física". N6: as amostras mostram
+//     os 4 rótulos da tabela de estilo; a forma dos pontinhos DOM vem das
+//     classes .eg-forma-* + data-formas no <html> (index.css).
 
-const NOMES_TIPO = { habilidade: 'Habilidades', conceito: 'Conceitos', disciplina: 'Matérias' }
+// pontinho de rótulo: cor do token e forma da tabela de estilo (a forma só
+// aparece no modo "formas em vez de cores"; fora dele, todos são círculos)
+function Ponto({ forma, cor, tamanho = 11 }) {
+  return <span className={`eg-forma-${forma}`} style={{ width: tamanho, height: tamanho, background: cor, flex: 'none' }} />
+}
 
-// ---- Legenda "Tipos de nó" + filtro por tipo ----
-// Habilidades NÃO são alternáveis (desvio do protótipo): toda aresta do grafo
-// passa por uma habilidade, então ocultá-las esvazia o recorte sempre.
-export function LegendaTipos({ tipos, contagens, aoAlternar }) {
+// ---- Legenda "Tipos de nó" + ocultar por rótulo (N6) ----
+// Lista os rótulos PRESENTES no grafo da tela (`rotulos`: { tipo, cor, forma,
+// quantidade, oculto }). Ocultar acontece só no desenho — a página filtra o que
+// entrega ao canvas; uma consulta Cypher qualquer não tem como ser refiltrada
+// automaticamente, então NÃO se reconsulta. Todos os rótulos são alternáveis:
+// no modelo do Neo4j, ocultar Habilidade não esvazia o grafo (revê a D7 — D15).
+export function LegendaTipos({ rotulos, tiposTracejados, aoAlternar }) {
   return (
     <div
       style={{
         position: 'absolute',
         bottom: 14,
         right: 14,
-        width: 196,
+        width: 228,
         background: 'var(--pill-bg)',
         border: '1px solid var(--pill-border)',
         borderRadius: 14,
@@ -43,88 +52,49 @@ export function LegendaTipos({ tipos, contagens, aoAlternar }) {
     >
       <div style={{ ...MONO_LABEL, marginBottom: 9 }}>Tipos de nó</div>
 
-      {/* Habilidades: linha-selo fixa, visivelmente NÃO clicável, apartada dos toggles */}
-      <div
-        title="Habilidades são a espinha do grafo — sempre visíveis"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 9,
-          padding: '6px 8px',
-          background: 'color-mix(in srgb, var(--bg2) 70%, transparent)',
-          border: '1px dashed var(--edge)',
-          borderRadius: 8,
-          cursor: 'default',
-          marginBottom: 8,
-        }}
-      >
-        <span className="eg-no-habilidade" style={{ width: 11, height: 11, background: 'var(--no-habilidade)', flex: 'none' }} />
-        <span style={{ flex: 1, textAlign: 'left', font: "600 12.5px/1.4 'Figtree', sans-serif", color: 'var(--body)' }}>
-          {NOMES_TIPO.habilidade}
-        </span>
-        <span style={{ font: "10.5px/1 'JetBrains Mono', monospace", color: 'var(--faint)' }}>
-          {String(contagens.habilidade)}
-        </span>
-        <span
-          style={{
-            font: "8.5px/1.4 'JetBrains Mono', monospace",
-            letterSpacing: '0.08em',
-            color: 'var(--faint)',
-            border: '1px solid var(--pill-border)',
-            borderRadius: 6,
-            padding: '1px 5px',
-            textTransform: 'uppercase',
-            flex: 'none',
-          }}
-        >
-          fixo
-        </span>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {['conceito', 'disciplina'].map((t) => {
-          const oculto = tipos[t] === false
-          return (
-            <button
-              key={t}
-              type="button"
-              className="eg-legenda-item"
-              title="Mostrar/ocultar este tipo (reconsulta o endpoint)"
-              onClick={() => aoAlternar(t)}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {rotulos.map((r) => (
+          <button
+            key={r.tipo}
+            type="button"
+            className="eg-legenda-item"
+            aria-pressed={!r.oculto}
+            title={r.oculto ? 'Mostrar estes nós no desenho' : 'Ocultar estes nós do desenho (não refaz a consulta)'}
+            onClick={() => aoAlternar(r.tipo)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 9,
+              padding: '5px 7px',
+              margin: '0 -7px',
+              border: 'none',
+              background: 'transparent',
+              borderRadius: 8,
+              cursor: 'pointer',
+              opacity: r.oculto ? 0.45 : 1,
+            }}
+          >
+            <Ponto forma={r.forma} cor={`var(${r.cor})`} />
+            <span
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 9,
-                padding: '5px 7px',
-                margin: '0 -7px',
-                border: 'none',
-                background: 'transparent',
-                borderRadius: 8,
-                cursor: 'pointer',
-                opacity: oculto ? 0.45 : 1,
+                flex: 1,
+                minWidth: 0,
+                textAlign: 'left',
+                font: "600 12.5px/1.4 'Figtree', sans-serif",
+                color: 'var(--body)',
+                textDecoration: r.oculto ? 'line-through' : 'none',
+                overflowWrap: 'anywhere',
               }}
             >
-              <span className={`eg-no-${t}`} style={{ width: 11, height: 11, background: `var(--no-${t})`, flex: 'none' }} />
-              <span
-                style={{
-                  flex: 1,
-                  textAlign: 'left',
-                  font: "600 12.5px/1.4 'Figtree', sans-serif",
-                  color: 'var(--body)',
-                  textDecoration: oculto ? 'line-through' : 'none',
-                }}
-              >
-                {NOMES_TIPO[t]}
-              </span>
-              <span style={{ font: "10.5px/1 'JetBrains Mono', monospace", color: 'var(--faint)' }}>
-                {oculto ? '—' : String(contagens[t])}
-              </span>
-            </button>
-          )
-        })}
+              {r.tipo}
+            </span>
+            <span style={{ font: "10.5px/1 'JetBrains Mono', monospace", color: 'var(--faint)' }}>{r.quantidade}</span>
+          </button>
+        ))}
       </div>
 
-      {/* chave de leitura das arestas: contínua (relação direta) × tracejada (progressão) */}
+      {/* chave de leitura das arestas: contínua; tracejada só se algum tipo da
+          tela pedir (tabela de estilo) */}
       <div
         style={{
           borderTop: '1px dashed var(--pill-border)',
@@ -136,17 +106,19 @@ export function LegendaTipos({ tipos, contagens, aoAlternar }) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <svg width="20" height="8" viewBox="0 0 20 8">
+          <svg width="20" height="8" viewBox="0 0 20 8" aria-hidden="true">
             <line x1="0" y1="4" x2="20" y2="4" stroke="var(--faint)" strokeWidth="1.4" />
           </svg>
-          <span style={{ fontSize: 11, color: 'var(--faint)' }}>conexão direta no recorte</span>
+          <span style={{ fontSize: 11, color: 'var(--faint)' }}>relação (a seta mostra o sentido)</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <svg width="20" height="8" viewBox="0 0 20 8">
-            <line x1="0" y1="4" x2="20" y2="4" stroke="var(--faint)" strokeWidth="1.4" strokeDasharray="4 3" />
-          </svg>
-          <span style={{ fontSize: 11, color: 'var(--faint)' }}>progressão entre anos</span>
-        </div>
+        {tiposTracejados.length ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <svg width="20" height="8" viewBox="0 0 20 8" aria-hidden="true">
+              <line x1="0" y1="4" x2="20" y2="4" stroke="var(--faint)" strokeWidth="1.4" strokeDasharray="4 3" />
+            </svg>
+            <span style={{ fontSize: 11, color: 'var(--faint)' }}>{tiposTracejados.join(', ')}</span>
+          </div>
+        ) : null}
       </div>
     </div>
   )
@@ -261,10 +233,11 @@ export function GavetaSparql({ consulta, tempoMs, simErro, aoSimErro }) {
 // ---- Miolo de acessibilidade (paletas + formas + sem animação) ----
 // Compartilhado entre o PaletaPopover e o dropdown de perfil (GrafoPerfil).
 export function OpcoesAcessibilidade({ paleta, aoEscolherPaleta, formas, aoToggleFormas, semAnim, aoToggleSemAnim }) {
-  // a linha "Padrão" mostra as cores de fábrica (hex do tema claro, como o
-  // protótipo) — os swatches das outras linhas são as cores das paletas CUD
+  // amostras: um pontinho por rótulo da tabela de estilo (cor + forma). A
+  // linha "Padrão" lê os tokens de FÁBRICA (--no-X-padrao, do tema atual) —
+  // não os --no-X, que estão sobrescritos quando outra paleta está ativa
   const opcoes = [
-    { id: 'padrao', nome: 'Padrão', sub: 'cores do sistema', c: { habilidade: '#1b9e77', conceito: '#7c4dff', disciplina: '#e11d48' } },
+    { id: 'padrao', nome: 'Padrão', sub: 'cores do sistema', c: {} },
     { id: 'protanopia', nome: 'Protanopia', sub: 'dificuldade com vermelho', c: PALETAS.protanopia },
     { id: 'deuteranopia', nome: 'Deuteranopia', sub: 'dificuldade com verde', c: PALETAS.deuteranopia },
     { id: 'tritanopia', nome: 'Tritanopia', sub: 'dificuldade com azul', c: PALETAS.tritanopia },
@@ -272,7 +245,7 @@ export function OpcoesAcessibilidade({ paleta, aoEscolherPaleta, formas, aoToggl
   const toggles = [
     {
       titulo: 'Formas em vez de cores',
-      sub: 'daltonismo total: bola, quadrado e triângulo',
+      sub: 'daltonismo total: círculo, quadrado, triângulo e losango',
       ligada: formas,
       ao: aoToggleFormas,
     },
@@ -308,8 +281,8 @@ export function OpcoesAcessibilidade({ paleta, aoEscolherPaleta, formas, aoToggl
               }}
             >
               <span style={{ display: 'inline-flex', gap: 3, flex: 'none' }}>
-                {['habilidade', 'conceito', 'disciplina'].map((t) => (
-                  <span key={t} className={`eg-no-${t}`} style={{ width: 10, height: 10, background: pl.c[t] }} />
+                {Object.entries(ESTILO_NO).map(([rotulo, e]) => (
+                  <Ponto key={rotulo} forma={e.forma} cor={pl.c[e.cor] || `var(${e.cor}-padrao)`} tamanho={10} />
                 ))}
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>
@@ -374,11 +347,12 @@ export function PaletaPopover({ aberta, aoAlternar, paleta, formas, semAnim, ...
           borderColor: custom ? 'var(--green)' : undefined,
         }}
       >
-        {/* swatch com as cores ATUAIS (tokens --no-*, já com override da paleta) */}
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <circle cx="9" cy="9" r="4.6" fill="var(--no-habilidade)" opacity="0.9" />
-          <circle cx="15.5" cy="9.6" r="4.6" fill="var(--no-conceito)" opacity="0.82" />
-          <circle cx="12" cy="15.4" r="4.6" fill="var(--no-disciplina)" opacity="0.82" />
+        {/* swatch com as cores ATUAIS dos 4 rótulos (tokens --no-*, já com o
+            override da paleta), um em cada canto */}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          {Object.values(ESTILO_NO).map((e, i) => (
+            <circle key={e.cor} cx={i % 2 ? 15.6 : 8.4} cy={i < 2 ? 8.4 : 15.6} r="4.4" fill={`var(${e.cor})`} opacity="0.9" />
+          ))}
         </svg>
       </button>
       {aberta && (

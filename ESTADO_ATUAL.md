@@ -805,7 +805,7 @@ completas contra o mock. Restam:
 2. **PENDENTE (pausado em 2026-10-09) — Desempenho do motor do grafo**: P0–P2
    feitas; **P3, P4 e P5 pendentes** — roadmap §4.4. Retomar depois da integração.
 3. **FOCO ATUAL — Integração com o Neo4j** (substitui o antigo plano de Apache
-   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N5 feitas; próxima etapa: N6.**
+   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N6 feitas; próxima etapa: N7.**
 
 ### 4.1 Página de grafos — caminho por etapas (G1–G11)
 
@@ -1589,7 +1589,7 @@ integração.
 - [x] **N3** — Console Cypher na página de grafos: ver o que chega *(2026-10-12)*
 - [x] **N4** — Do resultado ao grafo: extrair nós e relações (em texto) *(2026-10-12)*
 - [x] **N5** — Desenhar o grafo no canvas *(2026-10-12)*
-- [ ] **N6** — Tipos novos: cores, formas, paletas e legenda
+- [x] **N6** — Tipos novos: cores, formas, paletas e legenda *(2026-10-13)*
 - [ ] **N7** — Painel de detalhe com dados reais
 - [ ] **N8** — Expandir e desfazer com Cypher
 - [ ] **N9** — Home com dados do Neo4j
@@ -2202,6 +2202,63 @@ recarregar.
 **Pronto quando:** paletas, formas, sem-animação e legenda funcionam com os 4
 rótulos.
 
+**Feito (2026-10-13).** Alterados [src/data/paletas.js](src/data/paletas.js),
+[src/data/estiloGrafo.js](src/data/estiloGrafo.js) (`estiloNo()`),
+[GrafoOverlays.jsx](src/components/grafo/GrafoOverlays.jsx),
+[Grafos.jsx](src/pages/Grafos.jsx) e [index.css](src/index.css). **D15** registrada no
+[guia/DECISOES.md](guia/DECISOES.md) (a D7 ganhou a nota "revista pela D15").
+`GrafoPerfil.jsx` não mudou (ele só repassa as props do `OpcoesAcessibilidade`).
+
+Como ficou:
+- **Paletas** indexadas pelo token de cada rótulo e **escolhidas por simulação**: para
+  cada deficiência, o grupo de 4 cores do CUD com a maior diferença perceptual
+  mínima (ΔE CIE76 em CIELAB) depois de simular a deficiência (Machado, Oliveira e
+  Fernandes, 2009); preto e amarelo fora da disputa (somem no escuro e no creme).
+
+  | Paleta | Ano | UnidadeTematica | ObjetoConhecimento | Habilidade | ΔE mín. simulado |
+  |---|---|---|---|---|---|
+  | Protanopia | vermelhão `#D55E00` | laranja `#E69F00` | verde-azulado `#009E73` | azul `#0072B2` | 25,2 |
+  | Deuteranopia | vermelhão `#D55E00` | azul-céu `#56B4E9` | verde-azulado `#009E73` | azul `#0072B2` | 24,9 |
+  | Tritanopia | roxo-avermelhado `#CC79A7` | azul-céu `#56B4E9` | azul `#0072B2` | vermelhão `#D55E00` | 24,8 |
+
+  Os piores grupos de 4 do mesmo conjunto ficam em 16–21; uma paleta única para as 3
+  deficiências chegaria a 20,7. Todas ficam ≥ 19,8 contra o cinza dos rótulos sem
+  estilo (que as paletas não trocam). O efeito da página escreve e limpa exatamente os
+  tokens da paleta.
+- **Tokens de fábrica**: cada rótulo tem `--no-X-padrao` (claro e escuro) e o `--no-X`
+  aponta para ele; a paleta sobrescreve o `--no-X` no `<html>`, e a amostra "Padrão"
+  lê o `-padrao` — mostra as cores de fábrica (do tema atual) mesmo com outra paleta
+  ativa, sem hexadecimal repetido no JS.
+- **Formas nos pontinhos DOM**: classes **por forma** (`.eg-forma-circulo/quadrado/
+  triangulo/losango` + `data-formas`), não por tipo — servem a rótulos futuros. As
+  `.eg-no-*` do mock ficam enquanto o painel (N7) e a barra antiga (N10) as citam.
+- **Legenda "Tipos de nó"** (canto inferior direito, com nós na tela): os rótulos
+  **presentes no grafo**, na ordem em que aparecem, com cor, forma e contagem; clicar
+  oculta/mostra **só no desenho** (`aria-pressed`; oculto fica riscado e esmaecido).
+  A página entrega ao canvas o `grafoVisivel` (`useMemo`): mesmos objetos de nó, sem
+  os ocultos e sem as relações que tocam neles — nada é reconsultado, a física segue
+  com os mesmos nós e quem volta reaparece no mesmo lugar. **Todos os rótulos são
+  alternáveis** (revê a D7). A chave das arestas mostra a linha contínua e, se algum
+  tipo da tela for tracejado na tabela de estilo, a tracejada com os nomes.
+- O resumo mostra os números **visíveis** (`… · N ocultos` quando há). Os ocultos
+  valem na sessão (sobrevivem a novas consultas; "Voltar ao início" limpa); não vão
+  para o `edugraphPrefs` — são estado de visualização, não preferência.
+- **Amostras** do popover/perfil: 4 pontinhos por paleta (cor + forma de cada
+  rótulo); o botão-swatch da coluna de zoom virou 4 círculos com as cores atuais;
+  texto do toggle: "círculo, quadrado, triângulo e losango".
+
+Verificado: `npm run lint` (0/0), `npm run build` (JS 283,22 → **286,09 kB**; CSS
+9,16 → 9,73 kB) e `npm run dev`. Testes do assistente sem instalar nada (Vite e React
+do projeto, no Node), 6 casos: legenda com os 4 rótulos (cor, forma, contagem,
+Habilidade oculta e alternável, sem o selo "fixo"), chave tracejada só quando algum
+tipo pede, 16 amostras de paleta com o "Padrão" lendo os tokens de fábrica, botão com
+4 círculos, cada paleta cobrindo os 4 rótulos com 4 cores distintas, e tokens de
+fábrica nos dois temas + regras de forma no CSS. A escolha das paletas veio de um
+script de simulação (as contas estão na D15 e no cabeçalho do `paletas.js`). **Falta o
+teste do autor** (itens acima: cada paleta recolore canvas, legenda e amostras; formas
+no canvas e nos pontinhos; ocultar/mostrar cada rótulo; recarregar mantém paleta,
+formas e sem-animação).
+
 ---
 
 #### N7 — Painel de detalhe com dados reais
@@ -2333,9 +2390,9 @@ passam.
 #### N12 — Fechamento
 
 - Relatório no §3 (próximo número de Etapa): o que mudou, números, bugs encontrados.
-- Entradas novas no DECISOES.md para o que mudou no caminho (revisão da D7 e da
-  D10, desenho genérico no estilo do Browser, arquitetura de produção) — todas com
-  parágrafo de monografia.
+- Entradas novas no DECISOES.md para o que mudou no caminho (revisão da D10, desenho
+  genérico no estilo do Browser, arquitetura de produção) — todas com parágrafo de
+  monografia. (A revisão da D7 já entrou na **D15**, na N6.)
 - §1, §6 e §7 sincronizados (arquivos novos, mock fora).
 - Retomar o §4.4 (P3–P5). A linha de base da P1 foi medida com o mock: medir de novo
   antes da P3.
@@ -2456,8 +2513,8 @@ src/
 │       ├── GrafoCanvas.jsx    # canvas 2D: render + física + interações (hover/seleção/drag/pan/zoom,
 │       │                      #   2×clique expande; API centrarEm/enquadrar/reaquecer/assentar/zoom± via ref)
 │       ├── GrafoPainel.jsx    # painel de contexto "de vidro": detalhe, conexões, expandir, vistos (G7–G8)
-│       ├── GrafoOverlays.jsx  # legenda "Tipos de nó", gaveta SPARQL, popover de paleta,
-│       │                      #   OpcoesAcessibilidade (G9–G10)
+│       ├── GrafoOverlays.jsx  # legenda "Tipos de nó" (rótulos do Neo4j, oculta no desenho — N6), gaveta
+│       │                      #   SPARQL (fora da tela até a N10), popover de paleta, OpcoesAcessibilidade (G9–G10)
 │       ├── GrafoPerfil.jsx    # perfil mock: identidade, turmas, acessibilidade (G10)
 │       ├── GrafoEstados.jsx   # overlays de estado do palco: convite/carregando/erro (código + ^) (R7b; N3; vazio saiu na N5)
 │       └── estilos.js         # estilos inline compartilhados do domínio (MONO_LABEL, R6)
@@ -2468,7 +2525,7 @@ src/
 │   ├── extrairGrafo.js        # resultado → nós + relações (puro) e as consultas extras do Browser:
 │                              #   pontas que faltam, limite de 300 nós, "conectar nós" (N4)
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
-│   ├── paletas.js             # paletas de daltonismo (protan/deuteran/tritanopia) da página de grafos (G9)
+│   ├── paletas.js             # paletas de daltonismo por rótulo, escolhidas por simulação (G9; refeitas na N6 — D15)
 │   └── mockFuseki.js          # endpoint SPARQL simulado: 56 nós, 136 arestas (5.º–9.º), consultas reais,
 │                              #   estatisticas() e habilidadesPorAno(); alimenta StatsBand, MateriaPopover
 │                              #   e a grade de séries (Etapa 8/G2 — FEITO)

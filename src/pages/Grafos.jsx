@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import SiteHeader from '../components/SiteHeader'
 import Footer from '../components/Footer'
 import ConsoleCypher from '../components/grafo/ConsoleCypher'
@@ -6,12 +6,12 @@ import ResultadoCypher from '../components/grafo/ResultadoCypher'
 import GrafoCanvas from '../components/grafo/GrafoCanvas'
 import GrafoPainel from '../components/grafo/GrafoPainel'
 import GrafoPerfil from '../components/grafo/GrafoPerfil'
-import { PaletaPopover } from '../components/grafo/GrafoOverlays'
+import { LegendaTipos, PaletaPopover } from '../components/grafo/GrafoOverlays'
 import GrafoEstados from '../components/grafo/GrafoEstados'
 import { PALETAS } from '../data/paletas'
 import { executarCypher } from '../data/neo4j'
 import { completarGrafo, extrairGrafo } from '../data/extrairGrafo'
-import { visualDoNo } from '../data/estiloGrafo'
+import { estiloRelacao, visualDoNo } from '../data/estiloGrafo'
 import { ANOS, NOS, conexoesDe, consultarFuseki } from '../data/mockFuseki'
 
 // Página "Grafos" — a tela que exibe o grafo de conhecimento. Protótipo:
@@ -107,6 +107,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
   const [conectarNos, setConectarNos] = useState(true) // "Conectar nós do resultado", ligado como no Browser (N4)
   const [abaResultado, setAbaResultado] = useState('tabela') // última aba de conteúdo: tabela | relacoes | json
   const [resultadoAberto, setResultadoAberto] = useState(false) // fechado = aba "Grafo" (o desenho); sobrevive às execuções
+  const [ocultos, setOcultos] = useState(() => new Set()) // rótulos ocultos no desenho pela legenda (N6; só na sessão)
   const [grafo, setGrafo] = useState({ nos: new Map(), arestas: [], versao: 0 })
   const [tempoMs, setTempoMs] = useState(0)
   const [selecionadoId, setSelecionadoId] = useState(null) // nó selecionado (anel no canvas + painel)
@@ -319,6 +320,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
 
   // "Voltar ao início" (card de erro): limpa o palco — resultado e desenho
   function voltarAoInicio() {
+    setOcultos(new Set())
     nosRef.current = new Map()
     histExp.current = []
     setDesfaziveis(0)
@@ -374,24 +376,14 @@ function Grafos({ onHome, onSignup, onGrafos }) {
     return () => el.removeAttribute('data-paleta-aberta')
   }, [paletaAberta])
 
-  // paleta para daltonismo: sobrescreve os tokens --no-* no <html> (vale para
-  // o canvas e todos os pontinhos DOM de uma vez); 'padrao' remove o override
+  // paleta para daltonismo: sobrescreve no <html> os tokens --no-* de cada
+  // rótulo (vale para o canvas e todos os pontinhos DOM de uma vez); a limpeza
+  // remove exatamente os que a paleta escreveu, e 'padrao' não escreve nenhum
   useEffect(() => {
     const raiz = document.documentElement.style
-    const cores = PALETAS[paleta]
-    const aplicar = (c) => {
-      if (c) {
-        raiz.setProperty('--no-habilidade', c.habilidade)
-        raiz.setProperty('--no-conceito', c.conceito)
-        raiz.setProperty('--no-disciplina', c.disciplina)
-      } else {
-        raiz.removeProperty('--no-habilidade')
-        raiz.removeProperty('--no-conceito')
-        raiz.removeProperty('--no-disciplina')
-      }
-    }
-    aplicar(cores)
-    return () => aplicar(null)
+    const cores = PALETAS[paleta] || {}
+    Object.entries(cores).forEach(([token, cor]) => raiz.setProperty(token, cor))
+    return () => Object.keys(cores).forEach((token) => raiz.removeProperty(token))
   }, [paleta])
 
   // ---- turmas do perfil mock (G10) ----
@@ -428,8 +420,53 @@ function Grafos({ onHome, onSignup, onGrafos }) {
   }
 
   // resumo do grafo em cena (pill topo-centro; só aparece com nós no canvas)
-  const resumoRecorte = `${grafo.nos.size} nós · ${grafo.arestas.length} relações · ${tempoMs} ms`
-  const temGrafo = grafo.nos.size > 0 // sem nós (toda a N3), zoom/paleta/resumo ficam ocultos
+  // ---- legenda "Tipos de nó" e grafo visível (N6) ----
+  // O canvas recebe o grafo SEM os nós dos rótulos ocultos (e sem as relações
+  // que tocam neles): são os MESMOS objetos de nó — a física segue mutando as
+  // posições deles, e quem volta a aparecer volta ao mesmo lugar. Nada é
+  // reconsultado. useMemo mantém a identidade enquanto nada muda (o canvas pede
+  // um quadro a cada Map novo).
+  const grafoVisivel = useMemo(() => {
+    if (!ocultos.size) return grafo
+    const nos = new Map([...grafo.nos].filter(([, n]) => !ocultos.has(n.tipo)))
+    return { ...grafo, nos, arestas: grafo.arestas.filter((a) => nos.has(a.a) && nos.has(a.b)) }
+  }, [grafo, ocultos])
+
+  // rótulos presentes no grafo (inclusive os ocultos, para poder reexibi-los),
+  // na ordem em que aparecem, com a cor e a forma da tabela de estilo
+  const rotulosLegenda = useMemo(() => {
+    const porTipo = new Map()
+    grafo.nos.forEach((n) => {
+      const r = porTipo.get(n.tipo)
+      if (r) r.quantidade++
+      else porTipo.set(n.tipo, { tipo: n.tipo, cor: n.cor, forma: n.forma, quantidade: 1 })
+    })
+    return [...porTipo.values()].map((r) => ({ ...r, oculto: ocultos.has(r.tipo) }))
+  }, [grafo, ocultos])
+
+  // tipos de relação na tela que a tabela de estilo desenha tracejados (chave da legenda)
+  const tiposTracejados = useMemo(
+    () => [...new Set(grafoVisivel.arestas.map((a) => a.rel))].filter((rel) => estiloRelacao(rel).tracejado),
+    [grafoVisivel],
+  )
+
+  // ocultar/mostrar um rótulo pela legenda; a seleção não sobrevive se o nó sumir
+  function alternarOculto(tipo) {
+    const ocultando = !ocultos.has(tipo)
+    setOcultos((o) => {
+      const novo = new Set(o)
+      if (novo.has(tipo)) novo.delete(tipo)
+      else novo.add(tipo)
+      return novo
+    })
+    if (ocultando && selRef.current && grafo.nos.get(selRef.current)?.tipo === tipo) desselecionar()
+  }
+
+  const temGrafo = grafo.nos.size > 0 // sem nós, zoom/paleta/legenda/resumo ficam ocultos
+  const nOcultos = grafo.nos.size - grafoVisivel.nos.size
+  const resumoRecorte =
+    `${grafoVisivel.nos.size} nós · ${grafoVisivel.arestas.length} relações · ${tempoMs} ms` +
+    (nOcultos ? ` · ${nOcultos} ocultos` : '')
   // a barra do resultado (Tabela/Relações/JSON) ocupa o topo do palco: zoom,
   // resumo e "Desfazer" descem para baixo dela (barra: top 12 + ~42px de altura)
   const topoOverlays = status === 'pronto' && resultado ? 66 : 14
@@ -469,8 +506,8 @@ function Grafos({ onHome, onSignup, onGrafos }) {
         <main style={{ flex: 1, position: 'relative', background: 'var(--grafo-bg)', overflow: 'hidden', minHeight: 0 }}>
           <GrafoCanvas
             ref={canvasApi}
-            nos={grafo.nos}
-            arestas={grafo.arestas}
+            nos={grafoVisivel.nos}
+            arestas={grafoVisivel.arestas}
             versao={grafo.versao}
             selecionadoId={selecionadoId}
             onSelecionar={(id) => (id ? selecionar(id) : desselecionar())}
@@ -536,8 +573,11 @@ function Grafos({ onHome, onSignup, onGrafos }) {
             </div>
           )}
 
-          {/* legenda "Tipos de nó" e gaveta SPARQL (G9) saíram da tela na N3:
-              dependiam do modelo do mock e voltam adaptadas (N6 e N10) */}
+          {/* legenda "Tipos de nó" (N6): os rótulos do grafo da tela; ocultar é
+              só no desenho. A gaveta SPARQL (G9) volta como gaveta Cypher na N10 */}
+          {status === 'pronto' && temGrafo ? (
+            <LegendaTipos rotulos={rotulosLegenda} tiposTracejados={tiposTracejados} aoAlternar={alternarOculto} />
+          ) : null}
 
           {/* desfazer expansão (pill abaixo do resumo, G8) */}
           {status === 'pronto' && desfaziveis > 0 && (
