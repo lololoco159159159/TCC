@@ -3,6 +3,7 @@ import { ESTILO_NO } from '../../data/estiloGrafo'
 import { PALETAS } from '../../data/paletas'
 import { MONO_LABEL } from './estilos'
 import Chave from '../Chave'
+import PontoNo from './PontoNo'
 
 // Overlays finais da página de grafos (G9) — porte fiel do protótipo
 // (design/prototipo_grafo.html). Blocos pequenos e irmãos do palco num único
@@ -22,12 +23,6 @@ import Chave from '../Chave'
 //     vez de cores" e "desativar animações e física". N6: as amostras mostram
 //     os 4 rótulos da tabela de estilo; a forma dos pontinhos DOM vem das
 //     classes .eg-forma-* + data-formas no <html> (index.css).
-
-// pontinho de rótulo: cor do token e forma da tabela de estilo (a forma só
-// aparece no modo "formas em vez de cores"; fora dele, todos são círculos)
-function Ponto({ forma, cor, tamanho = 11 }) {
-  return <span className={`eg-forma-${forma}`} style={{ width: tamanho, height: tamanho, background: cor, flex: 'none' }} />
-}
 
 // ---- Legenda "Tipos de nó" + ocultar por rótulo (N6) ----
 // Lista os rótulos PRESENTES no grafo da tela (`rotulos`: { tipo, cor, forma,
@@ -74,7 +69,7 @@ export function LegendaTipos({ rotulos, tiposTracejados, aoAlternar }) {
               opacity: r.oculto ? 0.45 : 1,
             }}
           >
-            <Ponto forma={r.forma} cor={`var(${r.cor})`} />
+            <PontoNo forma={r.forma} cor={`var(${r.cor})`} />
             <span
               style={{
                 flex: 1,
@@ -282,7 +277,7 @@ export function OpcoesAcessibilidade({ paleta, aoEscolherPaleta, formas, aoToggl
             >
               <span style={{ display: 'inline-flex', gap: 3, flex: 'none' }}>
                 {Object.entries(ESTILO_NO).map(([rotulo, e]) => (
-                  <Ponto key={rotulo} forma={e.forma} cor={pl.c[e.cor] || `var(${e.cor}-padrao)`} tamanho={10} />
+                  <PontoNo key={rotulo} forma={e.forma} cor={pl.c[e.cor] || `var(${e.cor}-padrao)`} tamanho={10} />
                 ))}
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>

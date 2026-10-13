@@ -12,7 +12,8 @@ import { PALETAS } from '../data/paletas'
 import { executarCypher } from '../data/neo4j'
 import { completarGrafo, extrairGrafo } from '../data/extrairGrafo'
 import { estiloRelacao, visualDoNo } from '../data/estiloGrafo'
-import { ANOS, NOS, conexoesDe, consultarFuseki } from '../data/mockFuseki'
+import { conexoesDoNo, retratoDoNo } from '../data/vizinhanca'
+import { ANOS, NOS } from '../data/mockFuseki'
 
 // Página "Grafos" — a tela que exibe o grafo de conhecimento. Protótipo:
 // design/prototipo_grafo.html. Está em transição para o Neo4j (integração,
@@ -27,24 +28,24 @@ import { ANOS, NOS, conexoesDe, consultarFuseki } from '../data/mockFuseki'
 //    desenhado com a tabela de estilo (src/data/estiloGrafo.js). A 1.ª aba do
 //    resultado, "Grafo", é o próprio desenho: o painel fica fechado (só a
 //    barra) e abre/fecha com animação nas abas Tabela/Relações/JSON.
+//  - N7: clicar num nó abre o PAINEL com o que o Neo4j sabe dele (rótulos,
+//    todas as propriedades e as conexões consultadas no banco —
+//    src/data/vizinhanca.js); o painel também mostra nós fora do desenho.
 //  - Do porte do protótipo continuam o canvas com física e interações
 //    (G4–G6: seleção, Esc, +/−/recentrar), o painel de contexto (G7; sua
-//    largura é descontada do palco), expandir/desfazer com histórico de
-//    snapshots (G8), paleta para daltonismo, modo formas, sem animação e a
-//    PERSISTÊNCIA das preferências em localStorage['edugraphPrefs'] (G9–G10).
-//    selecionar/expandir ainda leem o mock: sem nós no canvas, nada os aciona
-//    até voltarem com dados reais (N7/N8).
+//    largura é descontada do palco), o desfazer com histórico de snapshots
+//    (G8), paleta para daltonismo, modo formas, sem animação e a PERSISTÊNCIA
+//    das preferências em localStorage['edugraphPrefs'] (G9–G10). A expansão
+//    (2×clique, botão do painel) volta na N8, já pelo Neo4j.
 //  - Perfil mock no header (GrafoPerfil, G10) intocado: as contas vão sair do
 //    site em roadmap próprio.
 
 const PAINEL_PADRAO = { x: 12, w: 392, esc: false }
 
 // Tempos e limites da interação (valores do protótipo — não alterar)
-const ATRASO_POS_EXPANSAO = 250 // espera o layout abrir antes de ir ao nó recém-chegado
 const ATRASO_ASSENTAR = 30 // a prop semAnim precisa chegar ao canvas antes do salto
 const DEBOUNCE_PREFS_MS = 150 // o arrasto do painel muda o estado a cada pointermove
 const VISTOS_MAX = 5 // chips "Vistos por último" no painel
-const HISTORICO_EXPANSAO_MAX = 10 // snapshots do Desfazer
 
 // Lê localStorage['edugraphPrefs'] com validação campo a campo (prefs
 // corrompidas viram padrão). Roda uma vez, na carga do módulo (só browser).
@@ -64,10 +65,6 @@ function lerPrefs() {
   }
 }
 const PREFS = lerPrefs()
-
-// mapa reverso uri -> id para ler os bindings sparql-results+json do mock
-// (só a expansão ainda o usa, até a N8)
-const URI_PARA_ID = new Map([...NOS.values()].map((n) => [n.uri, n.id]))
 
 // Monta o grafo do CANVAS a partir do grafo do resultado (N4/N5) — porte do
 // montarGrafo da G3: posição inicial em espiral de ângulo áureo (2.399963 rad
@@ -110,9 +107,9 @@ function Grafos({ onHome, onSignup, onGrafos }) {
   const [ocultos, setOcultos] = useState(() => new Set()) // rótulos ocultos no desenho pela legenda (N6; só na sessão)
   const [grafo, setGrafo] = useState({ nos: new Map(), arestas: [], versao: 0 })
   const [tempoMs, setTempoMs] = useState(0)
-  const [selecionadoId, setSelecionadoId] = useState(null) // nó selecionado (anel no canvas + painel)
-  const [detalhe, setDetalhe] = useState(null) // { id, carregando, texto, grupos } do painel (G7)
-  const [vistos, setVistos] = useState([]) // últimos 5 nós selecionados (chips do painel)
+  const [selecionadoId, setSelecionadoId] = useState(null) // nó do painel (o canvas só marca se estiver visível)
+  const [detalhe, setDetalhe] = useState(null) // { no, carregando, grupos, total, mais, erro } do painel (N7)
+  const [vistos, setVistos] = useState([]) // retratos dos últimos 5 nós selecionados (chips do painel)
   const [painel, setPainel] = useState(PREFS.painel) // posição/largura persistem (G10)
   const [expandindo, setExpandindo] = useState(false) // consulta de expansão em voo (G8)
   const [desfaziveis, setDesfaziveis] = useState(0) // tamanho do histórico de expansões
@@ -124,35 +121,31 @@ function Grafos({ onHome, onSignup, onGrafos }) {
   const [perfilAberto, setPerfilAberto] = useState(false)
   const seq = useRef(0) // descarta respostas fora de ordem
   const nosRef = useRef(new Map()) // nós do grafo ATUAL (estabilidade de posição + closures assíncronas)
-  const histExp = useRef([]) // snapshots pré-expansão (máx. 10, G8)
+  const histExp = useRef([]) // snapshots pré-expansão (G8; volta a encher com a expansão da N8)
   const selRef = useRef(null) // espelho de selecionadoId para closures assíncronas
   const canvasApi = useRef(null) // API do canvas: { centrarEm, enquadrar, reaquecer, assentar, zoomMais, zoomMenos }
   const ultimaConsulta = useRef('') // texto da última execução do console (o "Tentar novamente" do erro)
 
-  // Seleciona um nó: registra nos "vistos", abre o painel com as conexões
-  // (síncronas, do mock) e consulta o texto normativo/definição no endpoint —
-  // com fallback local se a consulta falhar (fiel ao protótipo).
-  function selecionar(id) {
-    const base = NOS.get(id)
-    if (!base) return
-    selRef.current = id
-    setSelecionadoId(id)
-    setVistos((v) => [id, ...v.filter((x) => x !== id)].slice(0, VISTOS_MAX))
-    setDetalhe({ id, carregando: true, texto: '', grupos: conexoesDe(id) })
-    consultarFuseki('detalhe', { id })
-      .then(({ json }) => {
-        if (selRef.current !== id) return // seleção mudou enquanto consultava
-        let texto = ''
-        json.results.bindings.forEach((b) => {
-          if (b.propriedade.value === 'edu:textoNormativo' || b.propriedade.value === 'edu:definicao')
-            texto = b.valor.value
-        })
-        setDetalhe((d) => (d && d.id === id ? { ...d, carregando: false, texto } : d))
-      })
-      .catch(() => {
-        if (selRef.current !== id) return
-        setDetalhe((d) => (d && d.id === id ? { ...d, carregando: false, texto: base.texto || base.def || '' } : d))
-      })
+  // Seleciona um nó (N7): registra nos "vistos", abre o painel com o retrato do
+  // nó (rótulos e TODAS as propriedades, como o inspetor do Neo4j Browser) e
+  // consulta as conexões dele no Neo4j. O nó pode estar no desenho ou fora dele
+  // (vindo de uma conexão ou dos vistos): o canvas só recebe a seleção se o nó
+  // estiver visível — senão esmaeceria o grafo inteiro em volta de um nó que
+  // não está lá. Canal 'painel': clicar em outro nó cancela a consulta anterior.
+  async function selecionar(no) {
+    const retrato = retratoDoNo(no)
+    selRef.current = no.id
+    setSelecionadoId(no.id)
+    setVistos((v) => [retrato, ...v.filter((x) => x.id !== no.id)].slice(0, VISTOS_MAX))
+    setDetalhe({ no: retrato, carregando: true, grupos: [], total: 0, mais: false, erro: null })
+    try {
+      const conexoes = await conexoesDoNo(no.id, { canal: 'painel' })
+      if (selRef.current !== no.id) return // a seleção mudou enquanto consultava
+      setDetalhe((d) => (d && d.no.id === no.id ? { ...d, ...conexoes, carregando: false } : d))
+    } catch (e) {
+      if (e?.origem === 'cancelada' || selRef.current !== no.id) return
+      setDetalhe((d) => (d && d.no.id === no.id ? { ...d, carregando: false, erro: String(e?.message || e) } : d))
+    }
   }
 
   function desselecionar() {
@@ -160,78 +153,6 @@ function Grafos({ onHome, onSignup, onGrafos }) {
     setSelecionadoId(null)
     setDetalhe(null)
     setPaletaAberta(false) // clicar no vazio também fecha os popovers (protótipo)
-  }
-
-  // Expande as conexões de um nó (G8): consultarFuseki('expansao') traz os
-  // vizinhos de fora do recorte e os funde ao grafo — nós novos nascem num
-  // círculo de 90px ao redor da origem e a física os assenta (reaquecer 0.8,
-  // SEM re-enquadrar: `versao` não muda). Antes de fundir, tira um snapshot
-  // para o Desfazer (histórico de até 10). Fiel ao protótipo.
-  function expandir(id, aposExpandir) {
-    if (!nosRef.current.has(id) || expandindo) return
-    const meuSeq = ++seq.current
-    setExpandindo(true)
-    consultarFuseki('expansao', { id })
-      .then(({ json, ms }) => {
-        if (meuSeq !== seq.current) return
-        const foto = {
-          nos: [...nosRef.current.values()].map((n) => ({ ...n })),
-          arestas: grafo.arestas.map((a) => ({ ...a })),
-        }
-        const origem = nosRef.current.get(id)
-        const novosNos = new Map(nosRef.current)
-        const novasArestas = [...grafo.arestas]
-        const vistas = new Set(novasArestas.map((ar) => `${ar.a}|${ar.rel}|${ar.b}`))
-        let mudou = false
-        json.results.bindings.forEach((b) => {
-          const a = URI_PARA_ID.get(b.origem.value)
-          const c = URI_PARA_ID.get(b.destino.value)
-          if (!a || !c) return
-          const rel = b.relacao.value.replace('edu:', '')
-          ;[a, c].forEach((nid) => {
-            if (novosNos.has(nid)) return
-            const base = NOS.get(nid)
-            const ang = Math.random() * Math.PI * 2
-            novosNos.set(nid, {
-              id: nid,
-              tipo: base.tipo,
-              label: base.label,
-              resumo: base.resumo || '',
-              ano: base.ano || '',
-              x: origem.x + Math.cos(ang) * 90,
-              y: origem.y + Math.sin(ang) * 90,
-              vx: 0,
-              vy: 0,
-              r: base.tipo === 'disciplina' ? 17 : base.tipo === 'conceito' ? 14 : 11,
-            })
-            mudou = true
-          })
-          const chave = `${a}|${rel}|${c}`
-          if (!vistas.has(chave)) {
-            vistas.add(chave)
-            novasArestas.push({ a, b: c, rel })
-            mudou = true
-          }
-        })
-        if (mudou) {
-          histExp.current.push(foto)
-          if (histExp.current.length > HISTORICO_EXPANSAO_MAX) histExp.current.shift()
-          setDesfaziveis(histExp.current.length)
-        }
-        nosRef.current = novosNos
-        setTempoMs(ms)
-        setGrafo((g) => ({ ...g, nos: novosNos, arestas: novasArestas }))
-        setStatus('pronto')
-        setExpandindo(false)
-        canvasApi.current?.reaquecer(0.8)
-        if (aposExpandir) setTimeout(aposExpandir, ATRASO_POS_EXPANSAO)
-      })
-      .catch((err) => {
-        if (meuSeq !== seq.current) return
-        setExpandindo(false)
-        setErro({ mensagem: String(err.message || err) })
-        setStatus('erro')
-      })
   }
 
   // Desfaz a última expansão: restaura o snapshot (posições inclusas) e
@@ -248,26 +169,14 @@ function Grafos({ onHome, onSignup, onGrafos }) {
     canvasApi.current?.reaquecer(0.5)
   }
 
-  // Vai até um nó a partir do painel (conexões / vistos), como no protótipo:
-  // presente no grafo → seleciona e centra; fora do recorte com um nó
-  // selecionado → expande o selecionado e então vai ao alvo se ele chegou;
-  // fora e sem seleção → só seleciona (o painel mostra o detalhe).
-  function irPara(id) {
-    if (grafo.nos.has(id)) {
-      selecionar(id)
-      canvasApi.current?.centrarEm(id)
-      return
-    }
-    if (selRef.current) {
-      expandir(selRef.current, () => {
-        if (nosRef.current.has(id)) {
-          selecionar(id)
-          canvasApi.current?.centrarEm(id)
-        }
-      })
-    } else {
-      selecionar(id)
-    }
+  // Vai até um nó a partir do painel (conexões / vistos): no desenho →
+  // seleciona e centra; oculto pela legenda ou fora do desenho → abre o
+  // detalhe dele no painel. (A N8 troca o "fora do desenho" por expandir o nó
+  // selecionado até o alvo, como no protótipo.)
+  function irPara(no) {
+    const doDesenho = grafoVisivel.nos.get(no.id)
+    selecionar(doDesenho || no)
+    if (doDesenho) canvasApi.current?.centrarEm(no.id)
   }
 
   // Console Cypher (N3): executa a consulta no Neo4j e mostra a resposta no
@@ -359,7 +268,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
   }, [paleta, formas, semAnim, turmas, painel])
 
   // modo "formas em vez de cores": o atributo no <html> troca a forma dos
-  // pontinhos DOM (classes .eg-no-* no index.css); o canvas recebe via prop
+  // pontinhos DOM (classes .eg-forma-* no index.css); o canvas recebe via prop
   useEffect(() => {
     const el = document.documentElement
     if (formas) el.setAttribute('data-formas', '1')
@@ -450,17 +359,23 @@ function Grafos({ onHome, onSignup, onGrafos }) {
     [grafoVisivel],
   )
 
-  // ocultar/mostrar um rótulo pela legenda; a seleção não sobrevive se o nó sumir
+  // ocultar/mostrar um rótulo pela legenda. Se o nó do painel for desse
+  // rótulo, o painel continua aberto e só o anel some (a seleção que o canvas
+  // recebe é filtrada pelo que está visível — ver selecionadoNoDesenho)
   function alternarOculto(tipo) {
-    const ocultando = !ocultos.has(tipo)
     setOcultos((o) => {
       const novo = new Set(o)
       if (novo.has(tipo)) novo.delete(tipo)
       else novo.add(tipo)
       return novo
     })
-    if (ocultando && selRef.current && grafo.nos.get(selRef.current)?.tipo === tipo) desselecionar()
   }
+
+  // estado de um nó para o painel: no desenho, oculto pela legenda ou fora do desenho
+  const estadoNo = (id) => (grafoVisivel.nos.has(id) ? 'visivel' : grafo.nos.has(id) ? 'oculto' : 'fora')
+  // seleção que o canvas recebe: só se o nó estiver visível (um id que não está
+  // no desenho faria o canvas esmaecer todo o resto em volta de nada)
+  const selecionadoNoDesenho = selecionadoId && grafoVisivel.nos.has(selecionadoId) ? selecionadoId : null
 
   const temGrafo = grafo.nos.size > 0 // sem nós, zoom/paleta/legenda/resumo ficam ocultos
   const nOcultos = grafo.nos.size - grafoVisivel.nos.size
@@ -509,8 +424,12 @@ function Grafos({ onHome, onSignup, onGrafos }) {
             nos={grafoVisivel.nos}
             arestas={grafoVisivel.arestas}
             versao={grafo.versao}
-            selecionadoId={selecionadoId}
-            onSelecionar={(id) => (id ? selecionar(id) : desselecionar())}
+            selecionadoId={selecionadoNoDesenho}
+            onSelecionar={(id) => {
+              const no = id ? grafoVisivel.nos.get(id) : null
+              if (no) selecionar(no)
+              else desselecionar()
+            }}
             // onExpandir (2×clique) volta na N8, com a expansão pelo Neo4j — até
             // lá ele chamaria o mock; e o clique num nó ainda não abre o painel
             // (selecionar() só conhece os nós do mock; volta na N7)
@@ -677,11 +596,11 @@ function Grafos({ onHome, onSignup, onGrafos }) {
             painel={painel}
             aoMudarPainel={(patch) => setPainel((p) => ({ ...p, ...patch }))}
             detalhe={detalhe}
-            noGrafo={(id) => grafo.nos.has(id)}
+            estadoNo={estadoNo}
             vistos={vistos}
             aoIr={irPara}
             aoFechar={desselecionar}
-            aoExpandir={() => selecionadoId && expandir(selecionadoId)}
+            // aoExpandir (botão "Expandir conexões deste nó") volta na N8
             expandindo={expandindo}
           />
         </main>

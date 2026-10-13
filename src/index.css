@@ -82,8 +82,8 @@
   --no-objeto: var(--no-objeto-padrao);
   --no-habilidade: var(--no-habilidade-padrao);
   --no-outro: #6b7280;
-  /* modelo do mock: ficam enquanto o painel (até a N7) e a barra de filtros
-     antiga (até a N10) ainda os citam */
+  /* modelo do mock: ficam enquanto a barra de filtros antiga (GrafoFiltros,
+     sem uso até a decisão da N10) ainda os cita */
   --no-conceito: #7c4dff;
   --no-disciplina: #e11d48;
   /* traços do canvas */
@@ -695,8 +695,8 @@ input::placeholder {
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
 }
 
-/* pontinhos do modelo do mock (painel até a N7, barra de filtros antiga até a
-   N10): conceito vira quadrado e disciplina vira triângulo */
+/* pontinhos do modelo do mock (só a barra de filtros antiga, sem uso, até a
+   decisão da N10): conceito vira quadrado e disciplina vira triângulo */
 .eg-no-habilidade,
 .eg-no-conceito,
 .eg-no-disciplina {

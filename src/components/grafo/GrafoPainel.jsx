@@ -1,34 +1,23 @@
-import { useRef, useState } from 'react'
-import { ANOS, EIXOS, NOS } from '../../data/mockFuseki'
+import { Fragment, useRef, useState } from 'react'
+import { ESTILO_NO } from '../../data/estiloGrafo'
 import { MONO_LABEL } from './estilos'
+import PontoNo from './PontoNo'
 
 // Painel de contexto da página de grafos (G7) — porte fiel do aside "de vidro"
 // do protótipo (design/prototipo_grafo.html): flutua à esquerda do palco,
 // ARRASTÁVEL pela alça superior e REDIMENSIONÁVEL pela borda direita (clamps do
 // protótipo: x ∈ [8, W−w−8], w ∈ [320, min(620, W−x−8)]), com botão de esconder
 // (vira a aba "Painel" no topo-esquerda). Sem seleção mostra o cheat-sheet de
-// interações; com seleção mostra tipo, código, título, pills (ano/eixo/área),
-// texto normativo/definição (spinner enquanto consulta o endpoint), as
-// CONEXÕES agrupadas por relação — item fora do recorte ganha o chip
-// "+ expandir" e o clique expande via aoIr (G8) — e o botão "Expandir
-// conexões deste nó" (aoExpandir/expandindo). Rodapé: "Vistos por último" +
-// placeholder do assistente. Posição/largura/escondido vivem no estado da
-// página e persistem em localStorage['edugraphPrefs'] (G10). Hovers via
-// classes .eg-painel-* (CSS).
-
-// cores por tipo de nó — mesmos tokens do canvas; a FORMA vem das classes
-// .eg-no-* (quadrado/triângulo no modo "formas em vez de cores" da G10)
-const COR = {
-  habilidade: 'var(--no-habilidade)',
-  conceito: 'var(--no-conceito)',
-  disciplina: 'var(--no-disciplina)',
-}
-
-function Bolinha({ tipo, tamanho }) {
-  return (
-    <span className={`eg-no-${tipo}`} style={{ width: tamanho, height: tamanho, background: COR[tipo], flex: 'none' }} />
-  )
-}
+// interações. Rodapé: "Vistos por último" + placeholder do assistente.
+// Posição/largura/escondido vivem no estado da página e persistem em
+// localStorage['edugraphPrefs'] (G10). Hovers via classes .eg-painel-* (CSS).
+// N7 (integração com o Neo4j): o detalhe é o do Neo4j, genérico como o
+// inspetor do Neo4j Browser — rótulos, o texto completo do nó como título, TODAS
+// as propriedades (o modelo ainda vai crescer) e as CONEXÕES consultadas no
+// banco, agrupadas por tipo de relação e sentido (src/data/vizinhanca.js). Item
+// no desenho → seleciona e centra; oculto pela legenda ou fora do desenho → abre
+// o detalhe dele aqui (aoIr decide). O botão "Expandir conexões deste nó" só
+// aparece quando a página passa aoExpandir (volta na N8).
 
 // Limites de arrasto/redimensionamento do painel (clamps do protótipo)
 const MARGEM_PALCO = 8 // folga mínima até as bordas do palco
@@ -43,7 +32,30 @@ const ATALHOS = [
   ['arrastar', 'move nós ou o quadro; roda = zoom'],
 ]
 
-function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, aoFechar, aoExpandir, expandindo }) {
+// valor de propriedade como texto (listas e mapas do Neo4j também cabem aqui)
+function formatarValor(v) {
+  if (v === null || v === undefined) return 'null'
+  if (Array.isArray(v)) return `[${v.map(formatarValor).join(', ')}]`
+  return typeof v === 'object' ? JSON.stringify(v) : String(v)
+}
+
+// chip discreto (outros rótulos do nó; "oculto" / "fora do desenho")
+const CHIP = {
+  font: "9px/1.4 'JetBrains Mono', monospace",
+  color: 'var(--gold)',
+  border: '1px dashed color-mix(in srgb, var(--gold) 45%, transparent)',
+  borderRadius: 6,
+  padding: '1px 5px',
+  flex: 'none',
+}
+
+const DICA_ITEM = {
+  visivel: 'Ver este nó no grafo',
+  oculto: 'Oculto pela legenda — clique para ver os detalhes aqui',
+  fora: 'Fora do desenho — clique para ver os detalhes aqui',
+}
+
+function GrafoPainel({ painel, aoMudarPainel, detalhe, estadoNo, vistos, aoIr, aoFechar, aoExpandir, expandindo }) {
   const asideRef = useRef(null)
   const atual = useRef(painel) // x/w correntes para os handlers de arrasto/resize
   atual.current = painel
@@ -136,17 +148,8 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
     )
   }
 
-  // nó selecionado (o detalhe é a fonte; sem detalhe → cheat-sheet)
-  const base = detalhe ? NOS.get(detalhe.id) : null
-  const pills = []
-  if (base) {
-    if (base.ano) pills.push((ANOS.find((a) => a.id === base.ano) || {}).label)
-    if (base.eixo) pills.push(EIXOS[base.eixo].label)
-    if (base.area) pills.push(`Área: ${base.area}`)
-  }
-  const totalConex = base ? detalhe.grupos.reduce((s, g) => s + g.itens.length, 0) : 0
-
-  const vistosUI = vistos.filter((id) => NOS.has(id)).map((id) => NOS.get(id))
+  // nó do detalhe (sem detalhe → cheat-sheet)
+  const no = detalhe ? detalhe.no : null
 
   return (
     <aside
@@ -222,7 +225,7 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
       </div>
 
       {/* conteúdo: cheat-sheet (sem seleção) ou detalhe do nó */}
-      {!base ? (
+      {!no ? (
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '24px 26px 18px', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <svg width="40" height="40" viewBox="0 0 52 52" fill="none" style={{ opacity: 0.65, flex: 'none' }}>
@@ -238,8 +241,8 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
             </h2>
           </div>
           <p style={{ fontSize: 14.5, lineHeight: 1.65, color: 'var(--body)', margin: 0 }}>
-            Clique em um nó do grafo para ver aqui o <strong>texto oficial da habilidade</strong>, suas
-            conexões agrupadas por relação e a fonte normativa.
+            Clique em um nó do grafo para ver aqui <strong>tudo o que o Neo4j sabe dele</strong> — rótulos
+            e propriedades, como no Neo4j Browser — e as conexões agrupadas por tipo de relação.
           </p>
           <div
             style={{
@@ -266,12 +269,17 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
         </div>
       ) : (
         <div style={{ flex: 1, overflowY: 'auto', padding: '18px 22px 16px' }}>
-          {/* tipo + fechar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 13 }}>
-            <Bolinha tipo={base.tipo} tamanho={10} />
-            <span style={{ ...MONO_LABEL, fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)' }}>
-              {base.tipo === 'habilidade' ? 'Habilidade' : base.tipo === 'conceito' ? 'Conceito de computação' : 'Matéria'}
-            </span>
+          {/* rótulo principal (+ outros rótulos do nó) + fechar */}
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 9, marginBottom: 13 }}>
+            <PontoNo forma={no.forma} cor={`var(${no.cor})`} tamanho={10} />
+            <span style={{ ...MONO_LABEL, fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)' }}>{no.tipo}</span>
+            {no.rotulos
+              .filter((r) => r !== no.tipo)
+              .map((r) => (
+                <span key={r} style={CHIP}>
+                  :{r}
+                </span>
+              ))}
             <span style={{ flex: 1 }} />
             <button
               type="button"
@@ -294,113 +302,105 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
             </button>
           </div>
 
-          {/* código EFxxCOxx (só habilidade) */}
-          {base.tipo === 'habilidade' && (
-            <div
-              style={{
-                display: 'inline-block',
-                font: "600 12px/1.4 'JetBrains Mono', monospace",
-                letterSpacing: '0.06em',
-                color: 'var(--green)',
-                background: 'color-mix(in srgb, var(--grafo-previa-bg) 90%, transparent)',
-                border: '1px solid var(--grafo-previa-borda)',
-                borderRadius: 7,
-                padding: '3px 9px',
-                marginBottom: 10,
-              }}
-            >
-              {base.codigo}
-            </div>
-          )}
-
-          <h2 style={{ font: "700 23px/1.16 'Spectral', serif", letterSpacing: '-0.015em', margin: '0 0 12px', color: 'var(--text)' }}>
-            {base.tipo === 'habilidade' ? base.resumo : base.label}
+          {/* título: o texto completo do nó (ex.: "EF01MA17 — Reconhecer…") */}
+          <h2
+            style={{
+              font: "700 23px/1.16 'Spectral', serif",
+              letterSpacing: '-0.015em',
+              margin: '0 0 16px',
+              color: 'var(--text)',
+              overflowWrap: 'anywhere',
+            }}
+          >
+            {no.dica}
           </h2>
 
-          {/* pills ano / eixo / área */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 18 }}>
-            {pills.map((p) => (
-              <span
-                key={p}
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: 'var(--body)',
-                  background: 'color-mix(in srgb, var(--bg2) 90%, transparent)',
-                  borderRadius: 999,
-                  padding: '4px 11px',
-                }}
-              >
-                {p}
-              </span>
-            ))}
-          </div>
-
-          {/* texto normativo / definição */}
-          {base.tipo !== 'disciplina' && (
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ ...MONO_LABEL, marginBottom: 8 }}>
-                {base.tipo === 'habilidade' ? 'Texto normativo — BNCC Computação' : 'Definição'}
-              </div>
-              {detalhe.carregando ? (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '16px 14px',
-                    background: 'color-mix(in srgb, var(--bg) 80%, transparent)',
-                    borderLeft: '3px solid var(--green)',
-                    borderRadius: '0 10px 10px 0',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: '50%',
-                      border: '2.5px solid var(--pill-border)',
-                      borderTopColor: 'var(--green)',
-                      animation: 'egGirar .8s linear infinite',
-                      flex: 'none',
-                    }}
-                  />
-                  <span style={{ font: "10.5px/1 'JetBrains Mono', monospace", color: 'var(--faint)' }}>
-                    consultando o endpoint…
-                  </span>
-                </div>
-              ) : (
-                detalhe.texto && (
-                  <blockquote
+          {/* propriedades — todas, como o inspetor do Neo4j Browser */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ ...MONO_LABEL, marginBottom: 8 }}>Propriedades</div>
+            <dl
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'minmax(64px, auto) 1fr',
+                gap: '7px 12px',
+                margin: 0,
+                padding: '12px 14px',
+                background: 'color-mix(in srgb, var(--bg) 80%, transparent)',
+                borderLeft: '3px solid var(--green)',
+                borderRadius: '0 10px 10px 0',
+              }}
+            >
+              {Object.entries(no.props).map(([chave, valor]) => (
+                <Fragment key={chave}>
+                  <dt style={{ font: "10.5px/1.6 'JetBrains Mono', monospace", color: 'var(--faint)' }}>{chave}</dt>
+                  <dd
                     style={{
                       margin: 0,
-                      padding: '14px 16px',
-                      background: 'color-mix(in srgb, var(--bg) 80%, transparent)',
-                      borderLeft: '3px solid var(--green)',
-                      borderRadius: '0 10px 10px 0',
-                      fontSize: 14,
-                      lineHeight: 1.68,
+                      fontSize: 13.5,
+                      lineHeight: 1.55,
                       color: 'var(--body)',
+                      whiteSpace: 'pre-wrap',
+                      overflowWrap: 'anywhere',
                     }}
                   >
-                    “{detalhe.texto}”
-                  </blockquote>
-                )
-              )}
-            </div>
-          )}
+                    {formatarValor(valor)}
+                  </dd>
+                </Fragment>
+              ))}
+              <dt style={{ font: "10.5px/1.6 'JetBrains Mono', monospace", color: 'var(--faint)' }}>elementId</dt>
+              <dd style={{ margin: 0, font: "10.5px/1.6 'JetBrains Mono', monospace", color: 'var(--faint)', overflowWrap: 'anywhere' }}>
+                {no.id}
+              </dd>
+            </dl>
+          </div>
 
-          {/* conexões agrupadas por relação */}
+          {/* conexões consultadas no Neo4j, agrupadas por tipo de relação e sentido */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
               <div style={MONO_LABEL}>Conexões</div>
-              <div style={{ font: "10.5px/1 'JetBrains Mono', monospace", color: 'var(--muted)' }}>({totalConex})</div>
+              {detalhe.carregando || detalhe.erro ? null : (
+                <div style={{ font: "10.5px/1 'JetBrains Mono', monospace", color: 'var(--muted)' }}>
+                  ({detalhe.total}
+                  {detalhe.mais ? '+' : ''})
+                </div>
+              )}
             </div>
+            {detalhe.carregando ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
+                <div
+                  style={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    border: '2.5px solid var(--pill-border)',
+                    borderTopColor: 'var(--green)',
+                    animation: 'egGirar .8s linear infinite',
+                    flex: 'none',
+                  }}
+                />
+                <span style={{ font: "10.5px/1 'JetBrains Mono', monospace", color: 'var(--faint)' }}>
+                  consultando o Neo4j…
+                </span>
+              </div>
+            ) : null}
+            {detalhe.erro ? (
+              <p style={{ margin: 0, font: "11.5px/1.5 'JetBrains Mono', monospace", color: 'var(--gold)', overflowWrap: 'anywhere' }}>
+                Não foi possível carregar as conexões: {detalhe.erro}
+              </p>
+            ) : null}
+            {!detalhe.carregando && !detalhe.erro && !detalhe.grupos.length ? (
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)' }}>Este nó não tem conexões.</p>
+            ) : null}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
               {detalhe.grupos.map((g) => (
-                <div key={g.rotulo}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{g.rotulo}</span>
+                <div key={g.chave}>
+                  <div
+                    title={g.sentido === 'saida' ? `Relações ${g.rel} que saem deste nó` : `Relações ${g.rel} que chegam a este nó`}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}
+                  >
+                    <span style={{ font: "600 12px/1.3 'JetBrains Mono', monospace", color: 'var(--text)', overflowWrap: 'anywhere' }}>
+                      {g.sentido === 'saida' ? '→' : '←'} {g.rel}
+                    </span>
                     <span
                       style={{
                         font: "10px/1.4 'JetBrains Mono', monospace",
@@ -415,14 +415,14 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                     {g.itens.map((it) => {
-                      const fora = !noGrafo(it.id)
+                      const estado = estadoNo(it.id)
                       return (
                         <button
-                          key={it.id}
+                          key={it.relId}
                           type="button"
                           className="eg-painel-item"
-                          title={fora ? 'Fora do recorte atual — clique para expandir o grafo até este nó' : 'Ver este nó no grafo'}
-                          onClick={() => aoIr(it.id)}
+                          title={DICA_ITEM[estado]}
+                          onClick={() => aoIr(it)}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -435,10 +435,10 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
                             borderRadius: 9,
                             cursor: 'pointer',
                             textAlign: 'left',
-                            opacity: fora ? 0.62 : 1,
+                            opacity: estado === 'visivel' ? 1 : 0.62,
                           }}
                         >
-                          <Bolinha tipo={it.tipo} tamanho={8} />
+                          <PontoNo forma={it.forma} cor={`var(${it.cor})`} tamanho={8} />
                           <span
                             style={{
                               flex: 1,
@@ -451,24 +451,10 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
                               whiteSpace: 'nowrap',
                             }}
                           >
-                            {it.tipo === 'habilidade' ? `${it.codigo} — ${it.resumo}` : it.label}
+                            {it.dica}
                           </span>
-                          <span style={{ font: "9.5px/1 'JetBrains Mono', monospace", color: 'var(--faint)', flex: 'none' }}>
-                            {it.tipo === 'habilidade' ? (ANOS.find((a) => a.id === it.ano) || {}).label || '' : ''}
-                          </span>
-                          {fora && (
-                            <span
-                              style={{
-                                font: "9px/1.4 'JetBrains Mono', monospace",
-                                color: 'var(--gold)',
-                                border: '1px dashed color-mix(in srgb, var(--gold) 45%, transparent)',
-                                borderRadius: 6,
-                                padding: '1px 5px',
-                                flex: 'none',
-                              }}
-                            >
-                              + expandir
-                            </span>
+                          {estado === 'visivel' ? null : (
+                            <span style={CHIP}>{estado === 'oculto' ? 'oculto' : 'fora do desenho'}</span>
                           )}
                         </button>
                       )
@@ -479,69 +465,62 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
             </div>
           </div>
 
-          {/* expandir conexões (G8) — traz do endpoint os vizinhos fora do recorte */}
-          <button
-            type="button"
-            className="eg-painel-expandir"
-            onClick={aoExpandir}
-            disabled={expandindo}
-            style={{
-              width: '100%',
-              padding: '10px 16px',
-              borderRadius: 12,
-              border: '1.5px solid var(--green)',
-              background: 'color-mix(in srgb, var(--bg) 50%, transparent)',
-              color: 'var(--green)',
-              font: "600 13.5px/1.4 'Figtree', sans-serif",
-              cursor: expandindo ? 'wait' : 'pointer',
-              marginBottom: 20,
-            }}
-          >
-            {expandindo ? 'Expandindo…' : 'Expandir conexões deste nó'}
-          </button>
+          {/* expandir conexões — volta na N8, quando a página passa aoExpandir */}
+          {aoExpandir ? (
+            <button
+              type="button"
+              className="eg-painel-expandir"
+              onClick={aoExpandir}
+              disabled={expandindo}
+              style={{
+                width: '100%',
+                padding: '10px 16px',
+                borderRadius: 12,
+                border: '1.5px solid var(--green)',
+                background: 'color-mix(in srgb, var(--bg) 50%, transparent)',
+                color: 'var(--green)',
+                font: "600 13.5px/1.4 'Figtree', sans-serif",
+                cursor: expandindo ? 'wait' : 'pointer',
+                marginBottom: 20,
+              }}
+            >
+              {expandindo ? 'Expandindo…' : 'Expandir conexões deste nó'}
+            </button>
+          ) : null}
 
-          {/* fonte oficial */}
-          <div style={{ borderTop: '1px solid color-mix(in srgb, var(--edge) 80%, transparent)', paddingTop: 14 }}>
-            <div style={{ ...MONO_LABEL, marginBottom: 9 }}>Fonte oficial</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          {/* fonte oficial — os rótulos da tabela de estilo são os do modelo da BNCC
+              montado pela orientadora; rótulo sem estilo não ganha o link */}
+          {ESTILO_NO[no.tipo] ? (
+            <div style={{ borderTop: '1px solid color-mix(in srgb, var(--edge) 80%, transparent)', paddingTop: 14 }}>
+              <div style={{ ...MONO_LABEL, marginBottom: 9 }}>Fonte oficial</div>
               <a
                 className="eg-painel-fonte"
-                href="http://portal.mec.gov.br/docman/fevereiro-2022-pdf/236791-anexo-ao-parecer-cneceb-n-2-2022-bncc-computacao/file"
+                href="http://basenacionalcomum.mec.gov.br/"
                 target="_blank"
                 rel="noopener"
                 style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--green)', textDecoration: 'none', display: 'inline-flex', gap: 6, alignItems: 'baseline' }}
               >
-                <span>BNCC — Computação (norma anexa ao Parecer CNE/CEB nº 2/2022)</span>
-                <span style={{ fontSize: 11 }}>↗</span>
-              </a>
-              <a
-                className="eg-painel-fonte"
-                href="http://portal.mec.gov.br/index.php?option=com_docman&view=download&alias=236131-rceb001-22&category_slug=fevereiro-2022-pdf&Itemid=30192"
-                target="_blank"
-                rel="noopener"
-                style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--green)', textDecoration: 'none', display: 'inline-flex', gap: 6, alignItems: 'baseline' }}
-              >
-                <span>Resolução CNE/CEB nº 1/2022</span>
+                <span>BNCC — Base Nacional Comum Curricular (MEC)</span>
                 <span style={{ fontSize: 11 }}>↗</span>
               </a>
             </div>
-          </div>
+          ) : null}
         </div>
       )}
 
       {/* rodapé: vistos por último + assistente (placeholder) */}
       <div style={{ flex: 'none', borderTop: '1px solid color-mix(in srgb, var(--edge) 80%, transparent)', padding: '12px 22px 14px' }}>
-        {vistosUI.length > 0 && (
+        {vistos.length > 0 && (
           <div style={{ marginBottom: 12 }}>
             <div style={{ ...MONO_LABEL, marginBottom: 7 }}>Vistos por último</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {vistosUI.map((n) => (
+              {vistos.map((n) => (
                 <button
                   key={n.id}
                   type="button"
                   className="eg-painel-chip"
-                  title={n.tipo === 'habilidade' ? n.resumo : n.label}
-                  onClick={() => aoIr(n.id)}
+                  title={n.dica}
+                  onClick={() => aoIr(n)}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -555,8 +534,8 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
                     cursor: 'pointer',
                   }}
                 >
-                  <Bolinha tipo={n.tipo} tamanho={7} />
-                  <span>{n.tipo === 'habilidade' ? n.codigo : n.label}</span>
+                  <PontoNo forma={n.forma} cor={`var(${n.cor})`} tamanho={7} />
+                  <span>{n.label}</span>
                 </button>
               ))}
             </div>
@@ -592,7 +571,7 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
             onKeyDown={(e) => {
               if (e.key === 'Enter') setIaAviso(true)
             }}
-            placeholder="Pergunte: onde “algoritmos” aparece no 7.º ano?"
+            placeholder="Pergunte: que habilidades do 1.º ano tratam de medidas de tempo?"
           />
           <button
             type="button"
@@ -620,7 +599,7 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, noGrafo, vistos, aoIr, ao
         </div>
         {iaAviso && (
           <p style={{ margin: '8px 0 0', fontSize: 11.5, lineHeight: 1.5, color: 'var(--faint)', animation: 'egSurgir .16s ease' }}>
-            Em desenvolvimento — aqui a IA vai transformar sua pergunta em uma consulta SPARQL e
+            Em desenvolvimento — aqui a IA vai transformar sua pergunta em uma consulta Cypher e
             destacar a resposta no grafo.
           </p>
         )}

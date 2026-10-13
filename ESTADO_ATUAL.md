@@ -805,7 +805,7 @@ completas contra o mock. Restam:
 2. **PENDENTE (pausado em 2026-10-09) — Desempenho do motor do grafo**: P0–P2
    feitas; **P3, P4 e P5 pendentes** — roadmap §4.4. Retomar depois da integração.
 3. **FOCO ATUAL — Integração com o Neo4j** (substitui o antigo plano de Apache
-   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N6 feitas; próxima etapa: N7.**
+   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N7 feitas; próxima etapa: N8.**
 
 ### 4.1 Página de grafos — caminho por etapas (G1–G11)
 
@@ -1590,7 +1590,7 @@ integração.
 - [x] **N4** — Do resultado ao grafo: extrair nós e relações (em texto) *(2026-10-12)*
 - [x] **N5** — Desenhar o grafo no canvas *(2026-10-12)*
 - [x] **N6** — Tipos novos: cores, formas, paletas e legenda *(2026-10-13)*
-- [ ] **N7** — Painel de detalhe com dados reais
+- [x] **N7** — Painel de detalhe com dados reais *(2026-10-13)*
 - [ ] **N8** — Expandir e desfazer com Cypher
 - [ ] **N9** — Home com dados do Neo4j
 - [ ] **N10** — Remoção do mock
@@ -2283,6 +2283,71 @@ conexão navega; arrastar, redimensionar e esconder o painel continuam funcionan
 
 **Pronto quando:** o painel mostra dados reais nos 4 rótulos.
 
+**Feito (2026-10-13).** Arquivos novos [src/data/vizinhanca.js](src/data/vizinhanca.js)
+(`conexoesDoNo`, `retratoDoNo`) e [src/components/grafo/PontoNo.jsx](src/components/grafo/PontoNo.jsx)
+(o pontinho de rótulo, agora compartilhado entre legenda/amostras e painel);
+alterados [GrafoPainel.jsx](src/components/grafo/GrafoPainel.jsx),
+[Grafos.jsx](src/pages/Grafos.jsx), [GrafoOverlays.jsx](src/components/grafo/GrafoOverlays.jsx)
+e [index.css](src/index.css) (só comentários). O `GrafoPainel` não importa mais
+nada do mock.
+
+Como ficou:
+- **Clique num nó** abre o painel com o **retrato** do nó: rótulo principal (+ os
+  outros rótulos, se houver), o texto completo como título (ex.: "EF01MA17 —
+  Reconhecer…"), **todas as propriedades** numa lista chave/valor (genérico — o
+  modelo ainda vai crescer) e o `elementId` no fim, como o inspetor do Neo4j
+  Browser.
+- **Conexões** consultadas no Neo4j (`MATCH (n)-[r]-(m) WHERE elementId(n) = $id
+  RETURN r, m`, até 200 — passando, aparece "200+"), agrupadas por **tipo e
+  sentido**: primeiro as que **saem** (`→ TEM_OBJETO`), depois as que **chegam**
+  (`← TEM_UNIDADE`); itens em ordem de legenda (EF01MA01 antes de EF01MA02). Carregando
+  e erro aparecem dentro do painel (o erro não derruba o palco). Canal `'painel'`:
+  clicar em outro nó cancela a consulta anterior.
+- **Item da conexão**: no desenho → seleciona e centra; **oculto** pela legenda ou
+  **fora do desenho** → abre o detalhe dele no painel (chip "oculto" / "fora do
+  desenho"). Com isso o painel navega pelo banco além do que está desenhado. A N8
+  troca o "fora do desenho" por expandir até o nó, como o protótipo.
+- **Seleção fora do desenho**: o painel pode mostrar um nó que não está no canvas, mas
+  o canvas só recebe a seleção se o nó estiver **visível** (`selecionadoNoDesenho`) —
+  um id que não está lá faria o canvas esmaecer todo o resto. Pelo mesmo motivo,
+  ocultar pela legenda o rótulo do nó aberto agora só tira o anel; o painel continua.
+- **"Vistos por último"** guardam o retrato (id, rótulos, propriedades, visual) — o nó
+  pode sair do grafo e continua reabrível.
+
+Decisões tomadas na etapa (o plano as deixava para o autor; mudam numa linha):
+- **Fonte oficial**: os dois links da BNCC Computação saíram; ficou um só, **"BNCC —
+  Base Nacional Comum Curricular (MEC)"** (`http://basenacionalcomum.mec.gov.br/`),
+  mostrado só para os rótulos da tabela de estilo (o modelo da BNCC montado pela
+  orientadora) — rótulo sem estilo não ganha o link.
+- **Assistente** (placeholder): "consulta SPARQL" → **"consulta Cypher"**; o exemplo
+  do campo virou "que habilidades do 1.º ano tratam de medidas de tempo?".
+- Saíram os blocos do mock: código em destaque, pills ano/eixo/área e "Texto
+  normativo — BNCC Computação" (a descrição agora está nas propriedades).
+
+Desvios do plano:
+- **A expansão do mock saiu já na N7**: sem o botão do painel e sem o 2×clique (N5), o
+  `expandir` ficou sem chamador e o lint não aceita código morto — saiu com o
+  `URI_PARA_ID` e as constantes `ATRASO_POS_EXPANSAO` (250 ms) e
+  `HISTORICO_EXPANSAO_MAX` (10). **A N8 reescreve a expansão em Cypher e traz as duas
+  constantes de volta** (valores do protótipo; o original está no git). O
+  `desfazerExpansao` e o histórico ficaram (genéricos). O botão "Expandir conexões
+  deste nó" só aparece quando a página passa `aoExpandir` (N8).
+- O cheat-sheet ainda diz "2× clique — expande as conexões do nó" (texto do
+  protótipo): vale de novo na N8.
+
+Verificado: `npm run lint` (0/0), `npm run build` (JS 286,09 → **281,36 kB** — saíram o
+detalhe e a expansão do mock; CSS 9,73 kB idêntico) e `npm run dev`. Testes do
+assistente sem instalar nada (Vite e React do projeto, no Node, contra servidor
+temporário), 9 casos: **Ano `EF1` = 27** (→ DESENVOLVE_HABILIDADE 22 + → TEM_UNIDADE 5),
+**"Números" = 7** (→ TEM_OBJETO 6 + ← TEM_UNIDADE 1), **`EF01MA17` = 2** (← DESENVOLVE 1 +
+← DESENVOLVE_HABILIDADE 1), ordem por legenda e chaves únicas; retrato; e o painel
+renderizado em HTML — cheat-sheet, detalhe com título, todas as propriedades,
+`elementId`, grupos com setas e contagens, chips "oculto"/"fora do desenho", link da
+BNCC, sem botão de expandir sem `aoExpandir`; carregando, erro e "sem conexões"; rótulo
+sem estilo (sem link, outros rótulos como chips); vistos. **Falta o teste do autor**
+(itens acima: os 3 nós com 27/7/2 conexões, propriedades iguais às do Browser,
+navegação pelas conexões, arrastar/redimensionar/esconder o painel).
+
 ---
 
 #### N8 — Expandir e desfazer com Cypher
@@ -2512,7 +2577,9 @@ src/
 │       ├── GrafoFiltros.jsx   # barra de busca/filtros do mock (G3) — SEM USO desde a N3 (decisão na N10)
 │       ├── GrafoCanvas.jsx    # canvas 2D: render + física + interações (hover/seleção/drag/pan/zoom,
 │       │                      #   2×clique expande; API centrarEm/enquadrar/reaquecer/assentar/zoom± via ref)
-│       ├── GrafoPainel.jsx    # painel de contexto "de vidro": detalhe, conexões, expandir, vistos (G7–G8)
+│       ├── GrafoPainel.jsx    # painel de contexto "de vidro": detalhe do Neo4j (propriedades, conexões por
+│       │                      #   tipo e sentido), vistos; expandir volta na N8 (G7–G8; N7)
+│       ├── PontoNo.jsx        # pontinho de rótulo (cor + forma da tabela de estilo), compartilhado (N7)
 │       ├── GrafoOverlays.jsx  # legenda "Tipos de nó" (rótulos do Neo4j, oculta no desenho — N6), gaveta
 │       │                      #   SPARQL (fora da tela até a N10), popover de paleta, OpcoesAcessibilidade (G9–G10)
 │       ├── GrafoPerfil.jsx    # perfil mock: identidade, turmas, acessibilidade (G10)
@@ -2522,6 +2589,7 @@ src/
 │   ├── neo4j.js               # cliente Cypher do Neo4j: executarCypher() via proxy /api/cypher (N2)
 │   ├── estiloGrafo.js         # tabela de estilo: por rótulo (cor, raio, forma, legenda, tooltip, semente)
 │   │                          #   e por tipo de relação (mola, tracejado); padrão p/ rótulo novo (N5)
+│   ├── vizinhanca.js          # conexões de um nó no Neo4j, agrupadas por tipo e sentido; retrato do nó (N7)
 │   ├── extrairGrafo.js        # resultado → nós + relações (puro) e as consultas extras do Browser:
 │                              #   pontas que faltam, limite de 300 nós, "conectar nós" (N4)
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
