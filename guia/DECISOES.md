@@ -158,6 +158,10 @@ controle integral sobre o comportamento interativo especificado no protótipo."
 **Quando:** desde a Etapa 1 · **Onde:** todo o projeto; receita de leitura no
 [ESTADO_ATUAL.md §5](ESTADO_ATUAL.md)
 
+> **Nota (2026-10-15):** a pasta `design/` com os protótipos foi retirada do
+> repositório — era o exemplo de referência da migração e não é mais usada. O método
+> abaixo continua valendo como registro de como a interface foi construída.
+
 **O problema.** O design aprovado vive em protótipos HTML "bundled"
 (design/prototipo_final.html e prototipo_grafo.html). Como transformá-los em app
 React sem desvios acidentais de design nem retrabalho?
@@ -539,8 +543,8 @@ próprio Neo4j (`POST /db/<banco>/query/v2`) com `fetch`, sem dependência nova;
 servidor do próprio site, e um **proxy** acrescenta a credencial — lida de
 variáveis de ambiente do servidor, sem o prefixo `VITE_`, portanto fora do bundle —
 e repassa a consulta. Em desenvolvimento é o proxy do Vite (N1); no site
-publicado, outro proxy no mesmo caminho (N11); (5) toda consulta em **modo somente
-leitura** — o cliente pede (N2) e o proxy de produção impõe (N11); (6) respostas no
+publicado, outro proxy no mesmo caminho (a definir); (5) toda consulta em **modo
+somente leitura** — o cliente pede (N2) e o proxy de produção impõe; (6) respostas no
 **JSON tipado** da Query API, em que cada valor declara o próprio tipo (nó,
 relação, caminho, inteiro…), o que permite remontar o grafo a partir de qualquer
 consulta, como o Neo4j Browser faz. A D14 **supera a D1**, que fica como registro
@@ -554,7 +558,7 @@ edição Community, poderia apagar o grafo; (c) *manter o mock como plano B:* o 
 publicado poderia exibir dados fictícios em silêncio — inaceitável numa ferramenta
 educacional; (d) *back-end próprio (Express etc.) já no desenvolvimento:*
 infraestrutura além do necessário — o proxy do Vite resolve o desenvolvimento em
-poucas linhas, e a hospedagem de produção ainda será decidida (N11); (e)
+poucas linhas, e a hospedagem de produção ainda será decidida; (e)
 *permanecer no Fuseki:* os dados agora são produzidos no Neo4j pelo grupo da
 orientadora.
 
@@ -748,7 +752,7 @@ Cypher, os parâmetros, quantas linhas voltaram, o tempo e o erro, se houve. Sai
 **Alternativas rejeitadas.** (a) *Copiar só a lista de anos e matérias para um arquivo
 pequeno e manter as turmas:* continuaria sendo dado do grafo fixado no código, de um
 modelo que o grafo real não tem; (b) *adiar a remoção do mock até as contas saírem:* o
-site iria ao ar (N11) ainda com dados fictícios; (c) *tirar o perfil inteiro agora:*
+site iria ao ar ainda com dados fictícios; (c) *tirar o perfil inteiro agora:*
 anteciparia a remoção das contas, que tem roadmap próprio, e esconderia as opções de
 acessibilidade do header; (d) *gaveta com uma consulta só:* uma ação (expandir,
 completar o resultado) faz duas consultas — mostrar só a última esconderia a outra.

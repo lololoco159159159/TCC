@@ -7,13 +7,13 @@
 > uma etapa, atualize-o.
 >
 > **Decisões importantes** (escopo, arquitetura, biblioteca, dados,
-> acessibilidade) são registradas em **[DECISOES.md](DECISOES.md)** — organizado e
+> acessibilidade) são registradas em **[guia/DECISOES.md](guia/DECISOES.md)** — organizado e
 > didático, é o material de preparação da defesa E da escrita do texto. Ao tomar
 > uma decisão dessas, adicione a entrada lá **na hora**, com **todos** os campos do
 > formato do cabeçalho — inclusive o **parágrafo de monografia** (tom acadêmico,
 > com o capítulo onde encaixa).
 
-Última atualização: 2026-10-09.
+Última atualização: 2026-10-15.
 
 ---
 
@@ -44,12 +44,15 @@ acadêmico.
 ## 1. Visão geral
 
 Front-end React + Vite do EduGraph (ver [README.md](README.md) para o contexto
-acadêmico completo). Sem back-end por enquanto — só as telas, com dados estáticos.
-A integração com o servidor de grafos — agora **Neo4j / Cypher** (decisão de
-2026-10-09, substitui o antigo plano Fuseki/SPARQL) — é o **foco atual** (§4.5).
+acadêmico completo). Sem back-end próprio: os dados do grafo vêm de um **Neo4j**
+(consultas **Cypher** — decisão de 2026-10-09, substitui o antigo plano
+Fuseki/SPARQL), sempre através do proxy `/api/cypher`, que guarda a senha (D14).
+Desde a N10 o site não guarda nenhum dado do grafo (D17). A integração com o Neo4j
+é o **foco atual** (§4.5).
 
-O código está sendo migrado **por partes** de um **protótipo inicial** para o
-**protótipo final aceito**, que vive em [design/prototipo_final.html](design/prototipo_final.html).
+O código foi migrado **por partes** de um **protótipo inicial** para o
+**protótipo final aceito** (`design/prototipo_final.html`). A pasta `design/` foi
+retirada em 2026-10-15: servia só de referência para a migração e não é mais usada.
 
 ## 2. Migração de design: inicial → final
 
@@ -713,7 +716,7 @@ funcional.
 
 **Números finais:** lint **0 erros / 0 warnings**; bundle JS 275.86 → **274.88 kB**
 (−0,35%), CSS **7.45 kB idêntico**; sem dependência nova. Convenções novas
-registradas: **D11** no [DECISOES.md](DECISOES.md).
+registradas: **D11** no [guia/DECISOES.md](guia/DECISOES.md).
 
 #### Ajuste de UX (2026-07-13) — conteúdo do slot de conta CENTRALIZADO
 A pedido do autor (durante a A1 do §4.3, mas vale para o site todo): o conteúdo
@@ -794,8 +797,8 @@ Ligar deixa o fundo de vértices estático na hora e persiste em
 > **FOCO ATUAL (desde 2026-10-09): integração com o Neo4j — ver §4.5.** Todo o
 > resto fica **pendente** até a integração estar de pé.
 
-A landing (Home, Etapas 1–6) e a **página de grafos (G1–G11, Etapas 7–16)** estão
-completas contra o mock. Restam:
+A landing (Home, Etapas 1–6) e a **página de grafos (G1–G11, Etapas 7–16)** foram
+construídas contra o mock e integradas ao Neo4j na §4.5. Restam:
 
 0. ~~Revisão e polimento do código~~ — **concluída** (roadmap §4.2, Etapa 17).
 1. ~~**Telas de conta (Entrar / Criar conta)**~~ — **concluída** (roadmap
@@ -805,7 +808,8 @@ completas contra o mock. Restam:
 2. **PENDENTE (pausado em 2026-10-09) — Desempenho do motor do grafo**: P0–P2
    feitas; **P3, P4 e P5 pendentes** — roadmap §4.4. Retomar depois da integração.
 3. **FOCO ATUAL — Integração com o Neo4j** (substitui o antigo plano de Apache
-   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N10 feitas; próxima etapa: N11.**
+   Jena Fuseki/SPARQL) — §4.5. **N1–N10 feitas e testadas; a próxima etapa (N11)
+   será definida pelo autor.**
 
 ### 4.1 Página de grafos — caminho por etapas (G1–G11)
 
@@ -895,7 +899,7 @@ marcar aqui antes da próxima.
 - Bug encontrado → **não corrigir**; anotar na seção "Relatório da revisão" (criar ao
   final) para o autor decidir.
 - Sem dependência nova; motor próprio de física/canvas intocável (decisões D1/D3/D4
-  do [DECISOES.md](DECISOES.md) — nada aqui pode contrariá-las).
+  do [guia/DECISOES.md](guia/DECISOES.md) — nada aqui pode contrariá-las).
 - Não renomear contratos: chaves de localStorage (`edugraphPrefs`, `eg_theme`,
   `eg_font`), parâmetros de URL (`serie/disciplina/conceito`), exports de
   `src/data/mockFuseki.js`, cabeçalho de proveniência do mock.
@@ -1459,7 +1463,8 @@ o commit é do autor.
   - **Critério de aceitação:** grafo parado sai de ~60 desenhos/s para **0**, e
     toda interação da lista de teste volta a acordar o loop e a dormir depois.
 > **P3–P5 PENDENTES** — pausadas em 2026-10-09 pela mudança de foco para a
-> integração com o Neo4j (§4.5).
+> integração com o Neo4j (§4.5). A linha de base da P1 foi medida com o mock:
+> medir de novo antes da P3.
 
 - [ ] **P3 — Custo por quadro**: tudo em `GrafoCanvas.jsx`, sem mudança visual.
   - (a) **Grid num único path**: `beginPath()` uma vez, `moveTo`+`arc` por ponto,
@@ -1554,7 +1559,7 @@ nome}`, `UnidadeTematica{nome}`, `ObjetoConhecimento{descricao}`,
 `Habilidade{codigo, descricao}`. Sem constraints/índices.
 
 **Direção técnica:** detalhada no roadmap abaixo (arquitetura, contrato, regras e
-etapas N0–N12). Em resumo: **Query API HTTP** com `fetch` (sem dependência nova),
+etapas N0–N10). Em resumo: **Query API HTTP** com `fetch` (sem dependência nova),
 sempre através de um **proxy do lado servidor** que guarda a senha — a edição
 Community não tem usuário só-leitura e o site vai para o ar. A UI foi construída
 sobre o modelo do protótipo (habilidade/conceito/disciplina; `desenvolve`/
@@ -1573,13 +1578,13 @@ fixas), **D10** (recorte 5.º–9.º).
 4. [neo4j/consultas:26](neo4j/consultas) tem erro de sintaxe (falta `)` depois de
    `:UnidadeTematica`).
 
-#### Roadmap da integração — etapas N0–N12
+#### Roadmap da integração — etapas N0–N10
 
 *Proposto em 2026-10-09.* A ordem segue um princípio simples: **primeiro provar que
 os dados chegam** (N1–N3), **depois provar que foram entendidos** (N4) e **só então
 desenhar** (N5) — se o grafo sair errado, já se sabe em qual camada procurar. Em
-seguida voltam, uma a uma, as funções que hoje dependem do mock (N6–N9), o mock sai
-(N10) e o site vai para o ar (N11). A barra de filtros **não** é adaptada: vai ser
+seguida voltam, uma a uma, as funções que hoje dependem do mock (N6–N9) e o mock sai
+(N10). A barra de filtros **não** é adaptada: vai ser
 redesenhada depois, e até lá o lugar dela é de um **console Cypher** para testar a
 integração.
 
@@ -1594,8 +1599,13 @@ integração.
 - [x] **N8** — Expandir e desfazer com Cypher *(2026-10-15)*
 - [x] **N9** — Home com dados do Neo4j *(2026-10-15)*
 - [x] **N10** — Remoção do mock *(2026-10-15)*
-- [ ] **N11** — Produção (site no ar)
-- [ ] **N12** — Fechamento
+
+**N1–N10 finalizadas e testadas pelo autor** (confirmado em 2026-10-15). A próxima
+etapa (N11) será definida pelo autor.
+
+**Fora deste roadmap** (registrado para não se perder): o redesenho dos filtros, da
+busca e do deep-link sobre o modelo novo; a remoção do sistema de contas (roadmap
+próprio); os pontos de modelagem para a orientadora (lista acima).
 
 **Arquitetura**
 
@@ -1605,7 +1615,7 @@ src/data/neo4j.js ──POST /api/cypher──► proxy ──POST /db/neo4j/que
    (sem senha)                  (põe a senha, força leitura)          (porta 7474)
 
 desenvolvimento: proxy = Vite (vite.config.js, lê o .env.local)     → N1
-produção:        proxy = a definir (mesmo caminho /api/cypher)        → N11
+produção:        proxy = a definir (mesmo caminho /api/cypher)
 ```
 
 **Contrato (vale para todas as etapas)**
@@ -1762,8 +1772,8 @@ pelo assistente em servidores temporários (portas 5196–5199, encerrados no fi
 (passada por variável de ambiente, sem editar o `.env.local`) → 401 `Invalid
 credential.`; (3) Neo4j inalcançável (URL com porta fechada, sem derrubar o Neo4j
 do autor) → 502 JSON em ~3 ms; (4) `.env.local` ignorado pelo git; a senha e o texto
-`NEO4J` com zero ocorrências em `dist/`. **Falta o teste do autor** (os 4 itens
-acima, no `npm run dev` dele — no teste 3, parando o Neo4j de verdade).
+`NEO4J` com zero ocorrências em `dist/`. **Teste do autor: feito** (os 4 itens
+acima, no `npm run dev` dele; confirmado em 2026-10-15).
 
 **Na outra máquina:** copiar `.env.example` para `.env.local` e preencher a senha;
 ter o Neo4j rodando com os mesmos dados (script
@@ -1811,7 +1821,7 @@ await executarCypher('CREATE (:TesteEscrita) RETURN 1').catch(erro) // 'neo4j', 
 - 2.ª: `linhas[0].h` é um `No` com `id`, `rotulos: ['Habilidade']` e `props`
   (`codigo`, `descricao`).
 - Se o `CREATE` **não** falhar: apagar no Browser (`MATCH (t:TesteEscrita) DELETE t`)
-  e anotar aqui — o bloqueio de escrita passa a ser obrigação do proxy (N11).
+  e anotar aqui — o bloqueio de escrita passa a ser obrigação do proxy de produção.
 - Neo4j parado → `.catch(erro)` devolve `['http', 'EduGraph.Proxy.Neo4jIndisponivel',
   'Não foi possível conectar ao Neo4j…']` na hora, sem travar.
 
@@ -1829,7 +1839,7 @@ Achados no Neo4j antes de escrever (testados direto na Query API):
   → `Neo.ClientError.Statement.AccessMode` ("Writing in read access mode not
   allowed"). O primeiro teste foi feito dentro de uma transação explícita desfeita no
   fim, para garantir que nada fosse gravado; o banco seguiu com 0 nós `TesteEscrita`
-  e sem o rótulo criado. Na N11 o proxy de produção força o modo mesmo assim (o
+  e sem o rótulo criado. Em produção, o proxy deve forçar o modo mesmo assim (o
   código do navegador pode ser alterado por quem visita o site).
 
 Detalhes e desvios do plano (todos a favor):
@@ -1976,9 +1986,9 @@ kB) e `npm run dev`. O assistente chegou a conferir parte do teste num navegador
 automatizado instalado numa pasta temporária **sem pedir permissão** — erro dele; tudo
 foi removido a pedido do autor, inclusive do cache do npm. O que essa conferência
 cobriu: os 7 exemplos (22/4/1/22/1/2 linhas e o erro de sintaxe com `^`, sem "Tentar
-novamente"), a aba JSON tipada, o Ctrl+Enter e os tipos na tabela. **Falta o teste
-do autor** (itens acima), que também cobre o que ficou sem conferência: avisos,
-"Voltar ao início", tema escuro e Neo4j fora do ar.
+novamente"), a aba JSON tipada, o Ctrl+Enter e os tipos na tabela. **Teste do
+autor: feito** (itens acima, inclusive o que ficou sem conferência: avisos, "Voltar
+ao início", tema escuro e Neo4j fora do ar; confirmado em 2026-10-15).
 
 ---
 
@@ -2059,9 +2069,9 @@ corrigida, 11/10 → 11/14 — todos batendo), só relações (busca 6 pontas), 
 resultado sem nós (nenhuma consulta extra) e mapa que imita nó; (b) **renderização**
 dos componentes em HTML (`react-dom/server`, sem navegador), 6 casos: aba Grafo com a
 chave ligada/desligada, limite, pontas, sem nós, Tabela/JSON intactas e a linha de
-status + chave do console. **Falta o teste do autor** no navegador (itens acima): os
-números de cada consulta aparecem na linha de status (`grafo: N nós, M relações`) e na
-aba Grafo; alternar a chave refaz a consulta.
+status + chave do console. **Teste do autor no navegador: feito** (confirmado em
+2026-10-15): os números de cada consulta aparecem na linha de status (`grafo: N nós,
+M relações`) e na aba Grafo; alternar a chave refaz a consulta.
 
 ---
 
@@ -2171,6 +2181,7 @@ Desvios do plano:
 assistente, ajustáveis numa linha da tabela de estilo depois de ver o desenho): os
 comprimentos de mola acima; e o atalho `DESENVOLVE_HABILIDADE` desenhado **igual às
 outras setas**, fiel ao Browser (alternativa: `tracejado: true` para ficar discreto).
+Ficaram os valores atuais (etapa finalizada pelo autor em 2026-10-15).
 
 Verificado: `npm run lint` (0/0), `npm run build` (JS 282,02 → **283,29 kB**; CSS 8,81 →
 8,97 kB) e `npm run dev` (os 5 módulos alterados servidos com 200). Testes do assistente
@@ -2180,8 +2191,9 @@ descrição de objeto de conhecimento encurtada em 28 caracteres), rótulo desco
 nó sem rótulo nem propriedades, nó com dois rótulos, molas e padrão de 150, tokens nos
 **dois temas**, árvore inteira sem nenhum nó caindo no padrão, painel recolhido/aberto
 e estados do palco sem o card vazio. **O desenho no canvas só roda no navegador —
-falta o teste do autor** (itens acima: a árvore lado a lado com o Browser, arrastar,
-pan, zoom, hover/tooltip, tema escuro, A/A, sem animação, repetir a consulta).
+teste do autor: feito** (itens acima: a árvore lado a lado com o Browser, arrastar,
+pan, zoom, hover/tooltip, tema escuro, A/A, sem animação, repetir a consulta;
+confirmado em 2026-10-15).
 
 ---
 
@@ -2262,10 +2274,10 @@ Habilidade oculta e alternável, sem o selo "fixo"), chave tracejada só quando 
 tipo pede, 16 amostras de paleta com o "Padrão" lendo os tokens de fábrica, botão com
 4 círculos, cada paleta cobrindo os 4 rótulos com 4 cores distintas, e tokens de
 fábrica nos dois temas + regras de forma no CSS. A escolha das paletas veio de um
-script de simulação (as contas estão na D15 e no cabeçalho do `paletas.js`). **Falta o
-teste do autor** (itens acima: cada paleta recolore canvas, legenda e amostras; formas
+script de simulação (as contas estão na D15 e no cabeçalho do `paletas.js`). **Teste
+do autor: feito** (itens acima: cada paleta recolore canvas, legenda e amostras; formas
 no canvas e nos pontinhos; ocultar/mostrar cada rótulo; recarregar mantém paleta,
-formas e sem-animação).
+formas e sem-animação; confirmado em 2026-10-15).
 
 ---
 
@@ -2352,9 +2364,10 @@ temporário), 9 casos: **Ano `EF1` = 27** (→ DESENVOLVE_HABILIDADE 22 + → TE
 renderizado em HTML — cheat-sheet, detalhe com título, todas as propriedades,
 `elementId`, grupos com setas e contagens, chips "oculto"/"fora do desenho", link da
 BNCC, sem botão de expandir sem `aoExpandir`; carregando, erro e "sem conexões"; rótulo
-sem estilo (sem link, outros rótulos como chips); vistos. **Falta o teste do autor**
+sem estilo (sem link, outros rótulos como chips); vistos. **Teste do autor: feito**
 (itens acima: os 3 nós com 27/7/2 conexões, propriedades iguais às do Browser,
-navegação pelas conexões, arrastar/redimensionar/esconder o painel).
+navegação pelas conexões, arrastar/redimensionar/esconder o painel; confirmado em
+2026-10-15).
 
 ---
 
@@ -2424,9 +2437,9 @@ medidas", `EF01MA16` e `EF01MA18` (6 nós, **8 relações**, todas as 4 do Ano p
 (2b) o mesmo com a chave **desligada** → 5 relações e 1 consulta só; (3) expandir de
 novo quem já está todo na tela → nada muda e o "conectar" é pulado; limite de 100
 conferido (o Ano traz os seus 27). E o painel renderizado: "+ expandir" e botão só com
-o nó no grafo, "fora do desenho" sem, "Expandindo…" e o aviso de erro. **Falta o teste
-do autor** (itens acima: 2×clique, botão, "+ expandir", Desfazer ×N, nova consulta zera
-o histórico, a câmera não re-enquadra).
+o nó no grafo, "fora do desenho" sem, "Expandindo…" e o aviso de erro. **Teste do
+autor: feito** (itens acima: 2×clique, botão, "+ expandir", Desfazer ×N, nova consulta
+zera o histórico, a câmera não re-enquadra; confirmado em 2026-10-15).
 
 ---
 
@@ -2503,7 +2516,8 @@ contra servidor temporário), 5 casos: a consulta da banda devolve **22 habilida
 unidades temáticas e o ano 1**; a da grade, só **EF1 "1º Ano"**; o número do ano a
 partir do código; a banda renderizada antes do dado (ou sem Neo4j) com "—" e os rótulos
 novos; e o card ("1º Ano" e nada mais) com o balão só com o botão, sem chips de
-matéria. **Falta o teste do autor**: a banda mostra 22 · 5 · 1.º ano; a grade mostra o
+matéria. **Teste do autor: feito** (confirmado em 2026-10-15): a banda mostra 22 · 5 ·
+1.º ano; a grade mostra o
 card "1º Ano"; o botão abre a página de grafos já com o grafo da consulta; com o Neo4j
 parado, a Home abre normalmente.
 
@@ -2597,59 +2611,22 @@ expansão do EF1 anunciam *conexões do nó* (`$limite = 201`, 27 linhas), *vizi
 *conectar os novos* (27 novos); o perfil aberto tem identidade, "Alterar senha" e
 acessibilidade, sem turmas nem selects; a gaveta escondida fora do "pronto" e, visível,
 com o botão "Cypher" fechado; a página de grafos e o App renderizam sem o mock; nenhum
-arquivo de `src/` cita o mock. **Falta o teste do autor** (abaixo).
+arquivo de `src/` cita o mock. **Teste do autor: feito** (abaixo; confirmado em
+2026-10-15).
 
-**Teste do autor:** `grep -r mockFuseki src` vazio; repetir os testes da N3, N5, N7, N8 e
+**Teste do autor (feito):** `grep -r mockFuseki src` vazio; repetir os testes da N3, N5, N7, N8 e
 N9; e, na gaveta Cypher: rodar "arvore completa" → abrir "Cypher" → aparece *conectar
 nós do resultado*; clicar num nó → *conexões do nó (painel)*; 2×clique → *expandir ·
 vizinhos* (+ *conectar os novos*, se trouxe nós); `MATCH ()-[r:TEM_UNIDADE]->() RETURN r`
 → *pontas das relações do resultado*. No perfil: só identidade, "Alterar senha" e
 acessibilidade.
 
----
-
-#### N11 — Produção (site no ar)
-
-**Objetivo:** o mesmo `POST /api/cypher` funcionando fora da máquina do autor, com a
-senha protegida.
-
-**Decisão antes da etapa (com a orientadora):** onde o Neo4j definitivo vai rodar
-(servidor da UFES/LabOtim, Neo4j Aura, outro) e onde o site vai ser publicado. Isso
-escolhe o proxy de produção: função serverless (exige o Neo4j acessível por HTTPS),
-servidor Node pequeno na mesma máquina do Neo4j (o Neo4j nem precisa ficar exposto
-à internet) ou proxy reverso (nginx).
-
-**Obrigatório em qualquer opção:** senha só em variável de ambiente do servidor; o
-proxy **força** `accessMode: "READ"` (sobrescreve o que vier do navegador) e/ou a
-base de produção fica somente leitura; tempo-limite de transação no Neo4j (uma
-consulta pesada não derruba o servidor); HTTPS.
-
-**Decidir também:** se o console Cypher continua visível no site publicado.
-
-**Como testar (autor):** o site publicado roda as consultas de exemplo; a senha não
-aparece no código publicado; `CREATE` pelo console falha; uma consulta
-propositalmente pesada termina em erro legível.
-
-**Pronto quando:** o site publicado funciona integrado e os testes de segurança
-passam.
-
----
-
-#### N12 — Fechamento
-
-- Relatório no §3 (próximo número de Etapa): o que mudou, números, bugs encontrados.
-- Entradas novas no DECISOES.md para o que mudou no caminho (desenho genérico no
-  estilo do Browser, arquitetura de produção) — todas com parágrafo de monografia.
-  (A revisão da D7 já entrou na **D15**, na N6; a da D10, na **D16**, na N9.)
-- §1, §6 e §7 sincronizados (arquivos novos, mock fora).
-- Retomar o §4.4 (P3–P5). A linha de base da P1 foi medida com o mock: medir de novo
-  antes da P3.
-
-**Fora deste roadmap** (registrado para não se perder): o redesenho dos filtros, da
-busca e do deep-link sobre o modelo novo (depois da N10); a remoção do sistema de
-contas (roadmap próprio); os pontos de modelagem para a orientadora (lista acima).
-
 ## 5. Como ler o protótipo final (arquivo "bundled")
+
+> **A pasta `design/` foi retirada do repositório em 2026-10-15.** Os protótipos eram
+> o exemplo de referência da migração (decisões de design e porte fiel, D4) e não são
+> mais usados. Esta seção fica só como registro de como eles foram lidos. Se voltarem
+> a ser necessários, o autor traz a pasta de volta.
 
 [design/prototipo_final.html](design/prototipo_final.html) (~1.1 MB) é uma página
 empacotada — o HTML/JSX real **não** está legível direto. Estrutura:
@@ -2701,7 +2678,7 @@ Particularidades:
 
 - **Estilos inline** (`style={{}}`) na maioria dos componentes; classes utilitárias
   `.eg-*` e variáveis de tema em `index.css`. Sem Tailwind, sem lib de UI.
-- **Roteamento por estado** em [src/App.jsx](src/App.jsx) (`tela` = home/login/signup),
+- **Roteamento por estado** em [src/App.jsx](src/App.jsx) (`tela` = home/login/signup/grafos),
   sem react-router. Páginas recebem callbacks `onLogin`/`onSignup`/`onHome`.
 - **Tema + zoom de fonte** via Context: [src/context/ThemeContext.jsx](src/context/ThemeContext.jsx)
   (atributo `data-theme` no `<html>`, persistência em localStorage).
@@ -2722,11 +2699,12 @@ Particularidades:
   [.env.example](.env.example)), sempre **sem** o prefixo `VITE_` — o Vite só embute
   no bundle as variáveis `VITE_*`. Quem lê é o proxy `/api/cypher` do
   [vite.config.js](vite.config.js) (N1/D14).
-- **Decisões importantes → [DECISOES.md](DECISOES.md)**: toda escolha relevante de
+- **Decisões importantes → [guia/DECISOES.md](guia/DECISOES.md)**: toda escolha relevante de
   escopo/arquitetura/biblioteca/dados/acessibilidade ganha uma entrada didática lá
   (problema → decisão → alternativas rejeitadas → fala pronta para a banca →
   **parágrafo de monografia**, em tom acadêmico e com o capítulo onde encaixa), no
-  momento em que é tomada. O arquivo é versionado e já contém D1–D10 (retroativas).
+  momento em que é tomada. O arquivo é versionado e contém D1–D17 (D1–D10
+  retroativas; D13 reservada para a P5 do §4.4).
 
 ## 7. Estrutura de arquivos
 
