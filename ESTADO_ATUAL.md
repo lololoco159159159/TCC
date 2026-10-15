@@ -805,7 +805,7 @@ completas contra o mock. Restam:
 2. **PENDENTE (pausado em 2026-10-09) — Desempenho do motor do grafo**: P0–P2
    feitas; **P3, P4 e P5 pendentes** — roadmap §4.4. Retomar depois da integração.
 3. **FOCO ATUAL — Integração com o Neo4j** (substitui o antigo plano de Apache
-   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N7 feitas; próxima etapa: N8.**
+   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N8 feitas; próxima etapa: N9.**
 
 ### 4.1 Página de grafos — caminho por etapas (G1–G11)
 
@@ -1591,7 +1591,8 @@ integração.
 - [x] **N5** — Desenhar o grafo no canvas *(2026-10-12)*
 - [x] **N6** — Tipos novos: cores, formas, paletas e legenda *(2026-10-13)*
 - [x] **N7** — Painel de detalhe com dados reais *(2026-10-13)*
-- [ ] **N8** — Expandir e desfazer com Cypher
+ tambem colocar como topico fazer a fisica melhor, semelhante ao neo4j e com opcao de hierarquia
+- [x] **N8** — Expandir e desfazer com Cypher *(2026-10-15)*
 - [ ] **N9** — Home com dados do Neo4j
 - [ ] **N10** — Remoção do mock
 - [ ] **N11** — Produção (site no ar)
@@ -2371,6 +2372,55 @@ zera o histórico; a câmera não re-enquadra ao expandir.
 
 **Pronto quando:** os 3 caminhos de expansão e o desfazer funcionam com dados reais.
 
+**Feito (2026-10-15).** Alterados [src/data/vizinhanca.js](src/data/vizinhanca.js)
+(`expandirNo`, `LIMITE_VIZINHOS`), [Grafos.jsx](src/pages/Grafos.jsx),
+[GrafoPainel.jsx](src/components/grafo/GrafoPainel.jsx) e
+[ResultadoCypher.jsx](src/components/grafo/ResultadoCypher.jsx) (só comentário).
+Decisão do autor na etapa: **manter o comportamento do Neo4j Browser — toda expansão
+consulta o banco** (foi oferecido reaproveitar as conexões que o painel já buscou para
+poupar a 1.ª consulta; recusado).
+
+Como ficou:
+- **`expandirNo(id, idsNaTela, { conectar })`**: (1) os vizinhos do nó — a mesma
+  consulta do painel, com limite de **100** (o "Max Neighbours" do Browser); (2) com a
+  chave "Conectar nós do resultado" ligada e algum nó novo, as relações entre os
+  **nós que chegaram** e **todos os da tela** (`MATCH (a)-[r]-(b) WHERE elementId(a)
+  IN $novos AND elementId(b) IN $todos RETURN r` — o padrão sem sentido acha cada
+  relação a partir do lado novo). No máximo **2 consultas por expansão**; sem nó novo, a
+  2.ª é pulada. Os "nós da tela" incluem os ocultos pela legenda.
+- **Fusão na página** (`expandir`): nós novos nascem a **90 px** da origem
+  (`DISTANCIA_NASCIMENTO`), relação já desenhada ou com ponta de fora é descartada,
+  `reaquecer(0.8)` **sem re-enquadrar**, snapshot para o **Desfazer** (até 10) — fiel à
+  G8. As constantes `ATRASO_POS_EXPANSAO` (250 ms) e `HISTORICO_EXPANSAO_MAX` (10),
+  tiradas na N7, voltaram. O nó do canvas e a aresta saem dos mesmos `noDoCanvas`/
+  `arestaDoCanvas` do `montarGrafo` (extraídos, sem mudar o comportamento dele).
+- **Os 3 caminhos**: **2×clique** num nó (seleciona + expande); botão **"Expandir
+  conexões deste nó"** no painel; item **"+ expandir"** de uma conexão fora do desenho
+  (expande o nó do painel e, ~250 ms depois, seleciona e centra o alvo; se ele não
+  chegou — ex.: além dos 100 —, abre o detalhe dele). Botão e "+ expandir" só aparecem
+  com o nó do painel **no grafo**; um nó aberto a partir de uma conexão, fora do
+  desenho, mostra "fora do desenho" (não tem de onde crescer).
+- **Falha de expansão** aparece no painel, embaixo do botão ("Não foi possível
+  expandir: …"), **sem derrubar o palco** (desvio da G8, que abria o card de erro e,
+  com ele, o "Voltar ao início" apagaria o grafo); trocar de nó limpa o aviso.
+- Consulta nova no console invalida a expansão em voo (guarda `seq`) e zera o
+  histórico, como o recorte novo da G8. As abas Tabela/Relações/JSON continuam
+  descrevendo a resposta da **consulta**; o que a expansão acrescenta aparece no
+  desenho, no resumo e na legenda.
+
+Verificado: `npm run lint` (0/0), `npm run build` (JS 281,36 → **283,52 kB**; CSS
+idêntico) e `npm run dev`. Testes do assistente sem instalar nada (Vite do projeto, no
+Node, contra servidor temporário) — o **cenário do plano** com a consulta real e a
+mesma fusão da página: (1) `EF01MA17` sozinha → expandir traz o objeto "Medidas de
+tempo" e o Ano (+2 nós, 2 relações, 2 consultas); (2) expandir o objeto → "Grandezas e
+medidas", `EF01MA16` e `EF01MA18` (6 nós, **8 relações**, todas as 4 do Ano presentes);
+(2b) o mesmo com a chave **desligada** → 5 relações e 1 consulta só; (3) expandir de
+novo quem já está todo na tela → nada muda e o "conectar" é pulado; limite de 100
+conferido (o Ano traz os seus 27). E o painel renderizado: "+ expandir" e botão só com
+o nó no grafo, "fora do desenho" sem, "Expandindo…" e o aviso de erro. **Falta o teste
+do autor** (itens acima: 2×clique, botão, "+ expandir", Desfazer ×N, nova consulta zera
+o histórico, a câmera não re-enquadra).
+
 ---
 
 #### N9 — Home com dados do Neo4j
@@ -2578,7 +2628,7 @@ src/
 │       ├── GrafoCanvas.jsx    # canvas 2D: render + física + interações (hover/seleção/drag/pan/zoom,
 │       │                      #   2×clique expande; API centrarEm/enquadrar/reaquecer/assentar/zoom± via ref)
 │       ├── GrafoPainel.jsx    # painel de contexto "de vidro": detalhe do Neo4j (propriedades, conexões por
-│       │                      #   tipo e sentido), vistos; expandir volta na N8 (G7–G8; N7)
+│       │                      #   tipo e sentido), vistos, expandir (+ expandir / botão) e o erro dela (G7–G8; N7–N8)
 │       ├── PontoNo.jsx        # pontinho de rótulo (cor + forma da tabela de estilo), compartilhado (N7)
 │       ├── GrafoOverlays.jsx  # legenda "Tipos de nó" (rótulos do Neo4j, oculta no desenho — N6), gaveta
 │       │                      #   SPARQL (fora da tela até a N10), popover de paleta, OpcoesAcessibilidade (G9–G10)
@@ -2589,7 +2639,8 @@ src/
 │   ├── neo4j.js               # cliente Cypher do Neo4j: executarCypher() via proxy /api/cypher (N2)
 │   ├── estiloGrafo.js         # tabela de estilo: por rótulo (cor, raio, forma, legenda, tooltip, semente)
 │   │                          #   e por tipo de relação (mola, tracejado); padrão p/ rótulo novo (N5)
-│   ├── vizinhanca.js          # conexões de um nó no Neo4j, agrupadas por tipo e sentido; retrato do nó (N7)
+│   ├── vizinhanca.js          # conexões de um nó no Neo4j por tipo e sentido; retrato do nó (N7);
+│   │                          #   expandirNo: vizinhos (até 100) + "conectar" os novos (N8)
 │   ├── extrairGrafo.js        # resultado → nós + relações (puro) e as consultas extras do Browser:
 │                              #   pontas que faltam, limite de 300 nós, "conectar nós" (N4)
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)

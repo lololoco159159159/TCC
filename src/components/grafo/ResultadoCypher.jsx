@@ -12,7 +12,9 @@ import { MONO_LABEL } from './estilos'
 //  - Relações (N4; chamada "Grafo" até um ajuste da N5): o grafo extraído do
 //    resultado (src/data/extrairGrafo.js), em
 //    texto — totais, consultas extras feitas, contagem por rótulo e por tipo
-//    de relação e as listas. É exatamente o que o canvas desenha (N5);
+//    de relação e as listas. É o que o canvas desenha ao chegar o resultado
+//    (N5); o que as expansões (N8) acrescentam aparece só no desenho, no resumo
+//    e na legenda — as abas descrevem a resposta da CONSULTA;
 //  - JSON: a resposta EXATAMENTE como chegou do Neo4j (JSON tipado da Query
 //    API), formatada — é a aba de conferência com o Neo4j Browser.
 // As abas são memo(): o contêiner re-renderiza a cada movimento quando o

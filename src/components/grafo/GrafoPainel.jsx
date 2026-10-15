@@ -15,9 +15,11 @@ import PontoNo from './PontoNo'
 // inspetor do Neo4j Browser — rótulos, o texto completo do nó como título, TODAS
 // as propriedades (o modelo ainda vai crescer) e as CONEXÕES consultadas no
 // banco, agrupadas por tipo de relação e sentido (src/data/vizinhanca.js). Item
-// no desenho → seleciona e centra; oculto pela legenda ou fora do desenho → abre
-// o detalhe dele aqui (aoIr decide). O botão "Expandir conexões deste nó" só
-// aparece quando a página passa aoExpandir (volta na N8).
+// no desenho → seleciona e centra; oculto pela legenda → abre o detalhe dele
+// aqui; fora do desenho → "+ expandir" (aoIr decide). N8: o botão "Expandir
+// conexões deste nó" e o "+ expandir" só aparecem quando a página passa
+// aoExpandir (o nó do painel está no grafo); a falha de uma expansão aparece
+// embaixo do botão (erroExpansao).
 
 // Limites de arrasto/redimensionamento do painel (clamps do protótipo)
 const MARGEM_PALCO = 8 // folga mínima até as bordas do palco
@@ -53,9 +55,21 @@ const DICA_ITEM = {
   visivel: 'Ver este nó no grafo',
   oculto: 'Oculto pela legenda — clique para ver os detalhes aqui',
   fora: 'Fora do desenho — clique para ver os detalhes aqui',
+  expandir: 'Fora do desenho — clique para expandir o grafo até este nó',
 }
 
-function GrafoPainel({ painel, aoMudarPainel, detalhe, estadoNo, vistos, aoIr, aoFechar, aoExpandir, expandindo }) {
+function GrafoPainel({
+  painel,
+  aoMudarPainel,
+  detalhe,
+  estadoNo,
+  vistos,
+  aoIr,
+  aoFechar,
+  aoExpandir,
+  expandindo,
+  erroExpansao,
+}) {
   const asideRef = useRef(null)
   const atual = useRef(painel) // x/w correntes para os handlers de arrasto/resize
   atual.current = painel
@@ -416,12 +430,13 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, estadoNo, vistos, aoIr, a
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                     {g.itens.map((it) => {
                       const estado = estadoNo(it.id)
+                      const expande = estado === 'fora' && aoExpandir // fora do desenho, mas dá para expandir até ele
                       return (
                         <button
                           key={it.relId}
                           type="button"
                           className="eg-painel-item"
-                          title={DICA_ITEM[estado]}
+                          title={DICA_ITEM[expande ? 'expandir' : estado]}
                           onClick={() => aoIr(it)}
                           style={{
                             display: 'flex',
@@ -454,7 +469,9 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, estadoNo, vistos, aoIr, a
                             {it.dica}
                           </span>
                           {estado === 'visivel' ? null : (
-                            <span style={CHIP}>{estado === 'oculto' ? 'oculto' : 'fora do desenho'}</span>
+                            <span style={CHIP}>
+                              {estado === 'oculto' ? 'oculto' : expande ? '+ expandir' : 'fora do desenho'}
+                            </span>
                           )}
                         </button>
                       )
@@ -465,7 +482,7 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, estadoNo, vistos, aoIr, a
             </div>
           </div>
 
-          {/* expandir conexões — volta na N8, quando a página passa aoExpandir */}
+          {/* expandir conexões (N8) — só com o nó do painel no grafo (aoExpandir) */}
           {aoExpandir ? (
             <button
               type="button"
@@ -481,11 +498,16 @@ function GrafoPainel({ painel, aoMudarPainel, detalhe, estadoNo, vistos, aoIr, a
                 color: 'var(--green)',
                 font: "600 13.5px/1.4 'Figtree', sans-serif",
                 cursor: expandindo ? 'wait' : 'pointer',
-                marginBottom: 20,
+                marginBottom: erroExpansao ? 8 : 20,
               }}
             >
               {expandindo ? 'Expandindo…' : 'Expandir conexões deste nó'}
             </button>
+          ) : null}
+          {erroExpansao ? (
+            <p style={{ margin: '0 0 20px', font: "11.5px/1.5 'JetBrains Mono', monospace", color: 'var(--gold)', overflowWrap: 'anywhere' }}>
+              Não foi possível expandir: {erroExpansao}
+            </p>
           ) : null}
 
           {/* fonte oficial — os rótulos da tabela de estilo são os do modelo da BNCC

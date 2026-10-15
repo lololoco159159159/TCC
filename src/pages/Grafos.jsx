@@ -12,7 +12,7 @@ import { PALETAS } from '../data/paletas'
 import { executarCypher } from '../data/neo4j'
 import { completarGrafo, extrairGrafo } from '../data/extrairGrafo'
 import { estiloRelacao, visualDoNo } from '../data/estiloGrafo'
-import { conexoesDoNo, retratoDoNo } from '../data/vizinhanca'
+import { conexoesDoNo, expandirNo, retratoDoNo } from '../data/vizinhanca'
 import { ANOS, NOS } from '../data/mockFuseki'
 
 // Página "Grafos" — a tela que exibe o grafo de conhecimento. Protótipo:
@@ -31,21 +31,25 @@ import { ANOS, NOS } from '../data/mockFuseki'
 //  - N7: clicar num nó abre o PAINEL com o que o Neo4j sabe dele (rótulos,
 //    todas as propriedades e as conexões consultadas no banco —
 //    src/data/vizinhanca.js); o painel também mostra nós fora do desenho.
+//  - N8: EXPANDIR (2×clique, botão do painel ou item "+ expandir") consulta os
+//    vizinhos no Neo4j e os funde ao desenho, como o Browser; Desfazer volta.
 //  - Do porte do protótipo continuam o canvas com física e interações
 //    (G4–G6: seleção, Esc, +/−/recentrar), o painel de contexto (G7; sua
 //    largura é descontada do palco), o desfazer com histórico de snapshots
 //    (G8), paleta para daltonismo, modo formas, sem animação e a PERSISTÊNCIA
-//    das preferências em localStorage['edugraphPrefs'] (G9–G10). A expansão
-//    (2×clique, botão do painel) volta na N8, já pelo Neo4j.
+//    das preferências em localStorage['edugraphPrefs'] (G9–G10).
 //  - Perfil mock no header (GrafoPerfil, G10) intocado: as contas vão sair do
 //    site em roadmap próprio.
 
 const PAINEL_PADRAO = { x: 12, w: 392, esc: false }
 
 // Tempos e limites da interação (valores do protótipo — não alterar)
+const ATRASO_POS_EXPANSAO = 250 // espera o layout abrir antes de ir ao nó recém-chegado
 const ATRASO_ASSENTAR = 30 // a prop semAnim precisa chegar ao canvas antes do salto
 const DEBOUNCE_PREFS_MS = 150 // o arrasto do painel muda o estado a cada pointermove
 const VISTOS_MAX = 5 // chips "Vistos por último" no painel
+const HISTORICO_EXPANSAO_MAX = 10 // snapshots do Desfazer
+const DISTANCIA_NASCIMENTO = 90 // px da origem em que nascem os nós trazidos por uma expansão
 
 // Lê localStorage['edugraphPrefs'] com validação campo a campo (prefs
 // corrompidas viram padrão). Roda uma vez, na carga do módulo (só browser).
@@ -78,24 +82,25 @@ function montarGrafo({ nos, relacoes }, antigos) {
   const novos = new Map()
   let idx = 0
   nos.forEach((no) => {
-    const visual = visualDoNo(no)
     const velho = antigos.get(no.id)
     const angulo = idx++ * 2.399963
-    const dist = visual.anel + (idx % 5) * 24
-    novos.set(no.id, {
-      id: no.id,
-      rotulos: no.rotulos,
-      props: no.props,
-      ...visual,
-      x: velho ? velho.x : Math.cos(angulo) * dist + (Math.random() - 0.5) * 30,
-      y: velho ? velho.y : Math.sin(angulo) * dist + (Math.random() - 0.5) * 30,
-      vx: 0,
-      vy: 0,
-    })
+    const dist = visualDoNo(no).anel + (idx % 5) * 24
+    novos.set(
+      no.id,
+      velho
+        ? noDoCanvas(no, velho.x, velho.y)
+        : noDoCanvas(no, Math.cos(angulo) * dist + (Math.random() - 0.5) * 30, Math.sin(angulo) * dist + (Math.random() - 0.5) * 30),
+    )
   })
-  const arestas = [...relacoes.values()].map((r) => ({ id: r.id, a: r.inicio, b: r.fim, rel: r.rel, props: r.props }))
-  return { nos: novos, arestas }
+  return { nos: novos, arestas: [...relacoes.values()].map(arestaDoCanvas) }
 }
+
+// nó e aresta do Neo4j no formato do canvas (contrato do §4.5): identidade,
+// dados e o visual da tabela de estilo; posição inicial dada por quem cria
+function noDoCanvas(no, x, y) {
+  return { id: no.id, rotulos: no.rotulos, props: no.props, ...visualDoNo(no), x, y, vx: 0, vy: 0 }
+}
+const arestaDoCanvas = (r) => ({ id: r.id, a: r.inicio, b: r.fim, rel: r.rel, props: r.props })
 
 function Grafos({ onHome, onSignup, onGrafos }) {
   const [status, setStatus] = useState('inicio') // inicio | carregando | pronto | erro
@@ -112,6 +117,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
   const [vistos, setVistos] = useState([]) // retratos dos últimos 5 nós selecionados (chips do painel)
   const [painel, setPainel] = useState(PREFS.painel) // posição/largura persistem (G10)
   const [expandindo, setExpandindo] = useState(false) // consulta de expansão em voo (G8)
+  const [erroExpansao, setErroExpansao] = useState(null) // falha da última expansão (aparece no painel, N8)
   const [desfaziveis, setDesfaziveis] = useState(0) // tamanho do histórico de expansões
   const [paleta, setPaleta] = useState(PREFS.paleta) // paleta de cores dos nós (G9/G10)
   const [paletaAberta, setPaletaAberta] = useState(false)
@@ -136,6 +142,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
     const retrato = retratoDoNo(no)
     selRef.current = no.id
     setSelecionadoId(no.id)
+    setErroExpansao(null) // o erro de expansão era do nó anterior
     setVistos((v) => [retrato, ...v.filter((x) => x.id !== no.id)].slice(0, VISTOS_MAX))
     setDetalhe({ no: retrato, carregando: true, grupos: [], total: 0, mais: false, erro: null })
     try {
@@ -155,6 +162,53 @@ function Grafos({ onHome, onSignup, onGrafos }) {
     setPaletaAberta(false) // clicar no vazio também fecha os popovers (protótipo)
   }
 
+  // Expande um nó do desenho (N8), como o Neo4j Browser: SEMPRE consulta o
+  // banco (expandirNo — os vizinhos, até 100, e, com a chave "Conectar nós"
+  // ligada, as relações entre os que chegaram e os que já estavam na tela) e
+  // funde ao grafo sem repetir. Nós novos nascem num círculo de 90px ao redor
+  // da origem e a física os assenta (reaquecer 0.8, SEM re-enquadrar: `versao`
+  // não muda). Antes de fundir, tira um snapshot para o Desfazer (até 10) —
+  // fiel à G8. Falha aparece no painel, sem derrubar o palco.
+  async function expandir(id, aposExpandir) {
+    const origem = nosRef.current.get(id)
+    if (!origem || expandindo) return
+    const meuSeq = ++seq.current // consulta nova no console invalida a expansão em voo
+    setExpandindo(true)
+    setErroExpansao(null)
+    try {
+      const { nos, relacoes, consultas } = await expandirNo(id, new Set(nosRef.current.keys()), { conectar: conectarNos })
+      if (meuSeq !== seq.current) return
+      const foto = { nos: [...nosRef.current.values()].map((n) => ({ ...n })), arestas: grafo.arestas.map((a) => ({ ...a })) }
+      const novosNos = new Map(nosRef.current)
+      nos.forEach((no) => {
+        const ang = Math.random() * Math.PI * 2
+        novosNos.set(
+          no.id,
+          noDoCanvas(no, origem.x + Math.cos(ang) * DISTANCIA_NASCIMENTO, origem.y + Math.sin(ang) * DISTANCIA_NASCIMENTO),
+        )
+      })
+      const jaTem = new Set(grafo.arestas.map((a) => a.id))
+      const arestasNovas = [...relacoes.values()]
+        .filter((r) => !jaTem.has(r.id) && novosNos.has(r.inicio) && novosNos.has(r.fim))
+        .map(arestaDoCanvas)
+      if (nos.size || arestasNovas.length) {
+        histExp.current.push(foto)
+        if (histExp.current.length > HISTORICO_EXPANSAO_MAX) histExp.current.shift()
+        setDesfaziveis(histExp.current.length)
+        nosRef.current = novosNos
+        setGrafo((g) => ({ ...g, nos: novosNos, arestas: [...g.arestas, ...arestasNovas] }))
+        canvasApi.current?.reaquecer(0.8)
+      }
+      setTempoMs(consultas.reduce((s, c) => s + c.ms, 0))
+      setExpandindo(false)
+      if (aposExpandir) setTimeout(aposExpandir, ATRASO_POS_EXPANSAO)
+    } catch (e) {
+      if (meuSeq !== seq.current) return
+      setExpandindo(false)
+      setErroExpansao(String(e?.message || e))
+    }
+  }
+
   // Desfaz a última expansão: restaura o snapshot (posições inclusas) e
   // reaquece de leve (0.5). A seleção só sobrevive se o nó ainda existe.
   function desfazerExpansao() {
@@ -169,14 +223,27 @@ function Grafos({ onHome, onSignup, onGrafos }) {
     canvasApi.current?.reaquecer(0.5)
   }
 
-  // Vai até um nó a partir do painel (conexões / vistos): no desenho →
-  // seleciona e centra; oculto pela legenda ou fora do desenho → abre o
-  // detalhe dele no painel. (A N8 troca o "fora do desenho" por expandir o nó
-  // selecionado até o alvo, como no protótipo.)
+  // Vai até um nó a partir do painel (conexões / vistos), como no protótipo:
+  // no desenho → seleciona e centra; fora do desenho com o nó do painel no
+  // grafo → EXPANDE esse nó (N8) e vai ao alvo se ele chegou (senão, abre o
+  // detalhe); oculto pela legenda ou sem como expandir → abre o detalhe dele.
   function irPara(no) {
-    const doDesenho = grafoVisivel.nos.get(no.id)
-    selecionar(doDesenho || no)
-    if (doDesenho) canvasApi.current?.centrarEm(no.id)
+    const vaiAte = () => {
+      const doDesenho = grafoVisivel.nos.get(no.id)
+      selecionar(doDesenho || no)
+      if (doDesenho) canvasApi.current?.centrarEm(no.id)
+    }
+    if (!grafo.nos.has(no.id) && selRef.current && nosRef.current.has(selRef.current)) {
+      expandir(selRef.current, () => {
+        // depois da expansão o grafo é outro: lê o nó pelo ref, não pelo
+        // closure deste render
+        const chegou = nosRef.current.get(no.id)
+        selecionar(chegou || no)
+        if (chegou && !ocultos.has(chegou.tipo)) canvasApi.current?.centrarEm(no.id)
+      })
+    } else {
+      vaiAte()
+    }
   }
 
   // Console Cypher (N3): executa a consulta no Neo4j e mostra a resposta no
@@ -430,9 +497,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
               if (no) selecionar(no)
               else desselecionar()
             }}
-            // onExpandir (2×clique) volta na N8, com a expansão pelo Neo4j — até
-            // lá ele chamaria o mock; e o clique num nó ainda não abre o painel
-            // (selecionar() só conhece os nós do mock; volta na N7)
+            onExpandir={(id) => expandir(id)}
             offsetEsquerda={offsetPainel}
             semAnim={semAnim}
             formas={formas}
@@ -600,8 +665,11 @@ function Grafos({ onHome, onSignup, onGrafos }) {
             vistos={vistos}
             aoIr={irPara}
             aoFechar={desselecionar}
-            // aoExpandir (botão "Expandir conexões deste nó") volta na N8
+            // expandir só faz sentido com o nó do painel no grafo (um nó aberto
+            // a partir de uma conexão, fora do desenho, não tem de onde crescer)
+            aoExpandir={detalhe && grafo.nos.has(detalhe.no.id) ? () => expandir(detalhe.no.id) : undefined}
             expandindo={expandindo}
+            erroExpansao={erroExpansao}
           />
         </main>
       </div>
