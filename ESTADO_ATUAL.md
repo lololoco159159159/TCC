@@ -805,7 +805,7 @@ completas contra o mock. Restam:
 2. **PENDENTE (pausado em 2026-10-09) — Desempenho do motor do grafo**: P0–P2
    feitas; **P3, P4 e P5 pendentes** — roadmap §4.4. Retomar depois da integração.
 3. **FOCO ATUAL — Integração com o Neo4j** (substitui o antigo plano de Apache
-   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N8 feitas; próxima etapa: N9.**
+   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N9 feitas; próxima etapa: N10.**
 
 ### 4.1 Página de grafos — caminho por etapas (G1–G11)
 
@@ -1593,7 +1593,7 @@ integração.
 - [x] **N7** — Painel de detalhe com dados reais *(2026-10-13)*
  tambem colocar como topico fazer a fisica melhor, semelhante ao neo4j e com opcao de hierarquia
 - [x] **N8** — Expandir e desfazer com Cypher *(2026-10-15)*
-- [ ] **N9** — Home com dados do Neo4j
+- [x] **N9** — Home com dados do Neo4j *(2026-10-15)*
 - [ ] **N10** — Remoção do mock
 - [ ] **N11** — Produção (site no ar)
 - [ ] **N12** — Fechamento
@@ -2446,6 +2446,60 @@ o histórico, a câmera não re-enquadra).
 
 **Pronto quando:** nenhum número da Home vem do mock.
 
+**Feito (2026-10-15).** Arquivo novo [src/data/resumoGrafo.js](src/data/resumoGrafo.js)
+(`estatisticasDoGrafo`, `anosDoGrafo`, `numeroDoAno`); alterados
+[StatsBand.jsx](src/components/StatsBand.jsx),
+[TestimonialsSection.jsx](src/components/TestimonialsSection.jsx),
+[GradeCard.jsx](src/components/GradeCard.jsx),
+[MateriaPopover.jsx](src/components/MateriaPopover.jsx), [App.jsx](src/App.jsx),
+[Grafos.jsx](src/pages/Grafos.jsx) e [ConsoleCypher.jsx](src/components/grafo/ConsoleCypher.jsx).
+**D16** registrada no [guia/DECISOES.md](guia/DECISOES.md) (a D10 ganhou a nota
+"revista pela D16"). **A Home não importa mais nada do mock.**
+
+Decisões do autor na etapa (perguntadas antes de implementar):
+- **Banda**: o 2.º número vira **"unidades temáticas conectadas"** (no lugar de
+  "componentes curriculares", que o modelo não tem); os anos mostram só o que o grafo
+  tem — hoje **"1.º ano"** ("ano do fundamental disponível agora").
+- **Grade**: **um card por Ano** do grafo (hoje só EF1), com **só o `nome` do nó**
+  ("1º Ano") em destaque. **Balão sem matérias** — só "Ver o grafo desta turma", que
+  abre a página de grafos já executando `MATCH p = (:Ano)-[:DESENVOLVE_HABILIDADE]->
+  (:Habilidade) RETURN p` (o exemplo "ano direto p habilidade"). As matérias voltam
+  quando o grafo tiver componente curricular; EF2, EF3… viram cards novos sozinhos.
+
+Como ficou:
+- **Consultas** (`resumoGrafo.js`): a banda numa só —
+  `RETURN COUNT { (:Habilidade) }, COUNT { (:UnidadeTematica) }, COLLECT { MATCH
+  (a:Ano) RETURN a.codigo }` (a compreensão de padrão `[(a:Ano) | …]` não serve: exige
+  uma relação); a grade — `MATCH (a:Ano) RETURN a.codigo, a.nome`, em ordem de ano.
+  O número do ano sai do código (`EF1` → 1): o modelo não o guarda como propriedade.
+- **Banda**: carrega ao montar; a contagem animada só começa quando o dado **chegou e**
+  a faixa está visível; um ano só → conta "0.º ano" → "1.º ano"; vários → "1.º – N.º
+  ano" (o último conta, como antes). Neo4j fora do ar → "—" e a página segue.
+  **Ajuste pedido pelo autor (mesmo dia):** a 1.ª versão mostrava "1.º ano" fixo, sem
+  animar; agora conta. Como é um passo só, usa `Math.floor` em vez de `Math.round`
+  (que viraria na metade dos 1,4 s, rápido demais): o "1" aparece no fim da
+  animação, quando habilidades e unidades já chegaram aos valores finais.
+- **Grade**: carrega ao montar; Neo4j fora → "Não foi possível carregar as turmas
+  agora." no lugar dos cards.
+- **"Ver o grafo desta turma"** → `onGrafos({ consulta })`: o App guarda a consulta e a
+  entrega à página de grafos (`consultaInicial`), que a escreve no console e a executa
+  ao abrir. Qualquer outra navegação zera (os links que chamam `onGrafos` direto do
+  `onClick` passam o evento — o App só aceita `consulta` do tipo texto). Substitui o
+  deep-link antigo `?serie=&disciplina=` (que a página não lê desde a N3; o código de
+  URL do App sai na N10).
+- O `depoimentos.js` continua (conteúdo editorial). As classes `.eg-materia-chip`
+  ficam no CSS para quando as matérias voltarem.
+
+Verificado: `npm run lint` (0/0), `npm run build` (JS **283,87 kB**; CSS idêntico) e
+`npm run dev`. Testes do assistente sem instalar nada (Vite e React do projeto, no Node,
+contra servidor temporário), 5 casos: a consulta da banda devolve **22 habilidades, 5
+unidades temáticas e o ano 1**; a da grade, só **EF1 "1º Ano"**; o número do ano a
+partir do código; a banda renderizada antes do dado (ou sem Neo4j) com "—" e os rótulos
+novos; e o card ("1º Ano" e nada mais) com o balão só com o botão, sem chips de
+matéria. **Falta o teste do autor**: a banda mostra 22 · 5 · 1.º ano; a grade mostra o
+card "1º Ano"; o botão abre a página de grafos já com o grafo da consulta; com o Neo4j
+parado, a Home abre normalmente.
+
 ---
 
 #### N10 — Remoção do mock
@@ -2505,9 +2559,9 @@ passam.
 #### N12 — Fechamento
 
 - Relatório no §3 (próximo número de Etapa): o que mudou, números, bugs encontrados.
-- Entradas novas no DECISOES.md para o que mudou no caminho (revisão da D10, desenho
-  genérico no estilo do Browser, arquitetura de produção) — todas com parágrafo de
-  monografia. (A revisão da D7 já entrou na **D15**, na N6.)
+- Entradas novas no DECISOES.md para o que mudou no caminho (desenho genérico no
+  estilo do Browser, arquitetura de produção) — todas com parágrafo de monografia.
+  (A revisão da D7 já entrou na **D15**, na N6; a da D10, na **D16**, na N9.)
 - §1, §6 e §7 sincronizados (arquivos novos, mock fora).
 - Retomar o §4.4 (P3–P5). A linha de base da P1 foi medida com o mock: medir de novo
   antes da P3.
@@ -2604,15 +2658,15 @@ src/
 │   ├── Logo.jsx               # logo grafo 9 nós + "EduGraph" (Spectral)
 │   ├── ThemeToggle.jsx        # toggle sol/lua (já bate com o protótipo)
 │   ├── GraphSection.jsx       # seção 2: grafo-globo interativo (Etapa 2 — FEITO)
-│   ├── StatsBand.jsx          # seção 3: banda de estatísticas, 3 contadores (Etapa 3 — FEITO)
-│   ├── TestimonialsSection.jsx # seção 4: depoimentos + cortina que revela a grade; cards abrem popover;
-│   │                          #   "Ver o grafo desta turma" navega com recorte (Etapas 4-6 + G11 — FEITO)
-│   ├── MateriaPopover.jsx     # balão de matérias ancorado ao card de série; CTA da G11 (Etapas 6+16 — FEITO)
+│   ├── StatsBand.jsx          # seção 3: banda de estatísticas, 3 contadores — dados do Neo4j (Etapa 3; N9)
+│   ├── TestimonialsSection.jsx # seção 4: depoimentos + cortina que revela a grade (um card por Ano do Neo4j);
+│   │                          #   "Ver o grafo desta turma" abre os grafos com a consulta da turma (Etapas 4-6; N9)
+│   ├── MateriaPopover.jsx     # balão do card de série: só o CTA desde a N9 (matérias voltam com o componente)
 │   ├── Footer.jsx             # footer / fim do site (Etapa 5 — FEITO)
 │   ├── SiteHeader.jsx         # header único (Home + Grafos): nav no centro geométrico, slot de conta
 │   │                          #   de largura fixa (ajuste de UX de 2026-07-12)
 │   ├── HeroSection.jsx        # hero "Conhecimento conectado." da Home (R7b)
-│   ├── GradeCard.jsx          # card de série da grade (abre o MateriaPopover; R7b)
+│   ├── GradeCard.jsx          # card de série da grade: o nome do Ano ("1º Ano"); abre o MateriaPopover (R7b; N9)
 │   ├── LogosInstitucionais.jsx # par de <a> LabOtim/UFES dos headers (R6; o Footer tem variação própria)
 │   ├── FontSizeWidget.jsx     # controles A/A de acessibilidade
 │   ├── Chave.jsx              # switch 34×20 (primitivo compartilhado grafo + conta)
@@ -2639,15 +2693,15 @@ src/
 │   ├── neo4j.js               # cliente Cypher do Neo4j: executarCypher() via proxy /api/cypher (N2)
 │   ├── estiloGrafo.js         # tabela de estilo: por rótulo (cor, raio, forma, legenda, tooltip, semente)
 │   │                          #   e por tipo de relação (mola, tracejado); padrão p/ rótulo novo (N5)
+│   ├── resumoGrafo.js         # agregados da Home no Neo4j: habilidades, unidades temáticas, anos (N9)
 │   ├── vizinhanca.js          # conexões de um nó no Neo4j por tipo e sentido; retrato do nó (N7);
 │   │                          #   expandirNo: vizinhos (até 100) + "conectar" os novos (N8)
 │   ├── extrairGrafo.js        # resultado → nós + relações (puro) e as consultas extras do Browser:
 │                              #   pontas que faltam, limite de 300 nós, "conectar nós" (N4)
 │   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
 │   ├── paletas.js             # paletas de daltonismo por rótulo, escolhidas por simulação (G9; refeitas na N6 — D15)
-│   └── mockFuseki.js          # endpoint SPARQL simulado: 56 nós, 136 arestas (5.º–9.º), consultas reais,
-│                              #   estatisticas() e habilidadesPorAno(); alimenta StatsBand, MateriaPopover
-│                              #   e a grade de séries (Etapa 8/G2 — FEITO)
+│   └── mockFuseki.js          # endpoint SPARQL simulado (G2). Desde a N9 só o citam: a barra de filtros antiga
+│                              #   (sem uso), as turmas do perfil e os rótulos de turma da página — sai na N10
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
 │   ├── Grafos.jsx             # página do grafo — console Cypher (N3) + grafo do Neo4j no canvas (N5) + estados + painel + expandir/desfazer + perfil/prefs (em transição, §4.5)

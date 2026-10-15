@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import depoimentos from '../data/depoimentos'
-import { habilidadesPorAno } from '../data/mockFuseki'
+import { anosDoGrafo } from '../data/resumoGrafo'
 import GradeCard from './GradeCard'
 
 // Seção "Quem ensina, sabe o que funciona." — depoimentos + grade de séries.
@@ -17,33 +17,35 @@ const N = depoimentos.length
 const clamp01 = (x) => Math.max(0, Math.min(1, x))
 const dois = (n) => String(n).padStart(2, '0')
 
-// Séries da grade vêm do "back-end" (mock do Fuseki) — mesma fonte da página de
-// grafos e da banda de estatísticas; futura consulta SPARQL de agregação.
-const series = habilidadesPorAno()
+// N9 — consulta que o "Ver o grafo desta turma" abre na página de grafos: o
+// exemplo "ano direto p habilidade" do neo4j/consultas (decisão do autor). Hoje
+// o grafo só tem o 1.º ano; quando EF2, EF3… chegarem, ela trará todos os anos —
+// aí vale filtrar pelo `codigo` do card.
+const CONSULTA_DA_TURMA = 'MATCH p = (:Ano)-[:DESENVOLVE_HABILIDADE]->(:Habilidade)\nRETURN p'
 
 function TestimonialsSection({ onGrafos }) {
   const zoneRef = useRef(null)
   const [sp, setSp] = useState(0) // progresso de scroll 0..1 no zone inteiro
   const [vw, setVw] = useState(typeof window !== 'undefined' ? window.innerWidth : 1400)
   const [wh, setWh] = useState(typeof window !== 'undefined' ? window.innerHeight : 900)
-  const [anoAberto, setAnoAberto] = useState(null) // série com o popover de matérias aberto
+  const [anoAberto, setAnoAberto] = useState(null) // série com o popover aberto
+  // N9: um card por Ano do grafo (Neo4j), em ordem — null enquanto carrega;
+  // 'erro' se o Neo4j não respondeu (a Home abre do mesmo jeito)
+  const [anos, setAnos] = useState(null)
 
-  // G11 — "Ver o grafo desta turma": escreve o recorte na URL e navega; a
-  // página de grafos lê ?serie=&disciplina= no mount (deep-link da G3) e
-  // aplica o filtro sozinha. O irPara() do App preserva os parâmetros quando
-  // o destino é a página de grafos.
-  const verGrafoDaTurma = (anoId, disciplinaId) => {
-    try {
-      const u = new URL(location.href)
-      u.searchParams.set('serie', anoId)
-      if (disciplinaId) u.searchParams.set('disciplina', disciplinaId)
-      else u.searchParams.delete('disciplina')
-      history.replaceState(null, '', u.toString())
-    } catch {
-      /* ambientes sem history: a página abre sem recorte */
+  useEffect(() => {
+    let vivo = true
+    anosDoGrafo()
+      .then((a) => vivo && setAnos(a))
+      .catch(() => vivo && setAnos('erro'))
+    return () => {
+      vivo = false
     }
-    onGrafos?.()
-  }
+  }, [])
+
+  // "Ver o grafo desta turma" (G11 → N9): navega para a página de grafos já
+  // executando a consulta da turma no console (o App a entrega à página)
+  const verGrafoDaTurma = () => onGrafos?.({ consulta: CONSULTA_DA_TURMA })
 
   // Progresso de scroll por rAF (imune a throttling de evento), como em GraphSection.
   useEffect(() => {
@@ -190,19 +192,24 @@ function TestimonialsSection({ onGrafos }) {
               </a>
             </div>
 
-            {/* coluna direita: grade com os cards de série */}
+            {/* coluna direita: grade com um card por Ano do grafo (N9) */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
-              {series.map((s) => (
-                <GradeCard
-                  key={s.ano}
-                  ano={s.ano}
-                  anoId={s.id}
-                  habilidades={s.habilidades}
-                  aberto={anoAberto === s.ano}
-                  onToggle={setAnoAberto}
-                  aoVerGrafo={verGrafoDaTurma}
-                />
-              ))}
+              {Array.isArray(anos)
+                ? anos.map((a) => (
+                    <GradeCard
+                      key={a.codigo}
+                      ano={a.nome || a.codigo}
+                      aberto={anoAberto === a.codigo}
+                      onToggle={(aberto) => setAnoAberto(aberto ? a.codigo : null)}
+                      aoVerGrafo={verGrafoDaTurma}
+                    />
+                  ))
+                : null}
+              {anos === 'erro' ? (
+                <p style={{ gridColumn: '1 / -1', margin: 0, fontSize: 14, color: 'var(--muted)' }}>
+                  Não foi possível carregar as turmas agora.
+                </p>
+              ) : null}
             </div>
           </div>
         </div>

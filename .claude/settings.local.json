@@ -67,7 +67,10 @@
       "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/6bb6fcf0-7e99-408c-be70-54562c28719e/scratchpad/escolher-paletas.mjs)",
       "Bash(RAIZ=__TRACKED_VAR__ node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/6bb6fcf0-7e99-408c-be70-54562c28719e/scratchpad/testar-n6.mjs)",
       "Bash(python3 -I /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/6bb6fcf0-7e99-408c-be70-54562c28719e/scratchpad/perfil-painel.py)",
-      "Bash(grep -n \"DICA_ITEM\\\\|fora do desenho\\\\|aoExpandir, expandindo\\\\|{expandindo ? 'Expandindo…'\" src/components/grafo/GrafoPainel.jsx)"
+      "Bash(grep -n \"DICA_ITEM\\\\|fora do desenho\\\\|aoExpandir, expandindo\\\\|{expandindo ? 'Expandindo…'\" src/components/grafo/GrafoPainel.jsx)",
+      "Bash(curl -s -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"RETURN COUNT { \\(:Habilidade\\) } AS habilidades, COUNT { \\(:UnidadeTematica\\) } AS unidades, [\\(a:Ano\\) | a.codigo] AS anos\",\"accessMode\":\"READ\"}' http://localhost:7474/db/neo4j/query/v2)",
+      "Bash(curl -s -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"RETURN COUNT { \\(:Habilidade\\) } AS habilidades, COUNT { \\(:UnidadeTematica\\) } AS unidades, COLLECT { MATCH \\(a:Ano\\) RETURN a.codigo } AS anos\",\"accessMode\":\"READ\"}' http://localhost:7474/db/neo4j/query/v2)",
+      "Bash(node -e ' *)"
     ],
     "additionalDirectories": [
       "/home/lorenzo/tcc_implementacao/TCC/.claude/skills"

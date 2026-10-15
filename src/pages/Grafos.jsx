@@ -102,7 +102,7 @@ function noDoCanvas(no, x, y) {
 }
 const arestaDoCanvas = (r) => ({ id: r.id, a: r.inicio, b: r.fim, rel: r.rel, props: r.props })
 
-function Grafos({ onHome, onSignup, onGrafos }) {
+function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
   const [status, setStatus] = useState('inicio') // inicio | carregando | pronto | erro
   const [resultado, setResultado] = useState(null) // última resposta do console Cypher (N3) + `grafo` (N4)
   const [erro, setErro] = useState(null) // falha da última consulta: { origem, codigo, mensagem }
@@ -307,6 +307,14 @@ function Grafos({ onHome, onSignup, onGrafos }) {
     setStatus('inicio')
   }
 
+  // N9: aberta pelo "Ver o grafo desta turma" da Home, a página já executa a
+  // consulta da turma (que também aparece escrita no console)
+  useEffect(() => {
+    if (consultaInicial) executarConsulta(consultaInicial)
+    // roda uma única vez, no mount — executarConsulta muda a cada render por design
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Esc limpa a seleção do grafo e fecha os popovers, como no protótipo
   useEffect(() => {
     const aoTecla = (ev) => {
@@ -482,6 +490,7 @@ function Grafos({ onHome, onSignup, onGrafos }) {
           aoExecutar={executarConsulta}
           conectar={conectarNos}
           aoAlternarConectar={alternarConectar}
+          consultaInicial={consultaInicial}
         />
 
         {/* ============ ÁREA DE TRABALHO: canvas + overlays de estado ============ */}

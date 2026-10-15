@@ -89,8 +89,10 @@ const BOTAO_CHAVE = {
   cursor: 'pointer',
 }
 
-function ConsoleCypher({ status, resultado, erro, aoExecutar, conectar, aoAlternarConectar }) {
-  const [texto, setTexto] = useState('')
+// `consultaInicial` (N9): a consulta com que a página abriu (o "Ver o grafo
+// desta turma" da Home) — aparece escrita na caixa, como se tivesse sido digitada
+function ConsoleCypher({ status, resultado, erro, aoExecutar, conectar, aoAlternarConectar, consultaInicial }) {
+  const [texto, setTexto] = useState(consultaInicial || '')
   const campo = useRef(null)
   const executando = status === 'carregando'
   const podeExecutar = !executando && texto.trim() !== ''

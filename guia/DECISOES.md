@@ -363,6 +363,10 @@ aplicada."
 
 **Quando:** ajuste da Etapa 8 · **Onde:** [src/data/mockFuseki.js](src/data/mockFuseki.js)
 
+> **Revista pela D16 (2026-10-15):** o recorte deixou de ser fixado pelo site — agora é o
+> que o grafo da orientadora contém (hoje, o 1.º ano de Matemática). O princípio de
+> "todo número da interface é agregação sobre o grafo" continua valendo.
+
 **O problema.** O protótipo trazia habilidades do EM (`EM13CO*`) junto com as do
 fundamental, mas o produto e o discurso do site cobrem o ensino fundamental.
 
@@ -650,5 +654,62 @@ não admitem refiltragem automática no servidor."
 
 ---
 
-*Última atualização: 2026-10-13. Novas decisões: adicionar ao fim da lista como
+## D16 — A Home mostra o que o grafo tem: recorte dirigido pelos dados do Neo4j (revê D10)
+
+**Quando:** 2026-10-15, N9 do roadmap (ESTADO_ATUAL.md §4.5), decisões do autor ·
+**Onde:** [src/data/resumoGrafo.js](src/data/resumoGrafo.js),
+[src/components/StatsBand.jsx](src/components/StatsBand.jsx),
+[src/components/TestimonialsSection.jsx](src/components/TestimonialsSection.jsx),
+[src/components/GradeCard.jsx](src/components/GradeCard.jsx),
+[src/components/MateriaPopover.jsx](src/components/MateriaPopover.jsx)
+
+**O problema.** A Home exibia números e séries do mock (37 habilidades, 8 componentes
+curriculares, 5.º–9.º ano, 8 matérias no balão). O grafo real da orientadora é, por
+ora, uma versão resumida — só o 1.º ano de Matemática, sem nó de componente
+curricular —, mas que respeita a estrutura definitiva e vai crescer (EF2, EF3…, outras
+matérias). Manter qualquer número ou lista "do site" mentiria sobre o que existe; criar
+artificialmente o que o modelo não tem (componente curricular) anteciparia uma
+modelagem que é da orientadora.
+
+**A decisão.** Tudo o que a Home mostra passa a ser **consulta de agregação no Neo4j**,
+sem valor fixado no código: (1) banda de estatísticas — habilidades
+(`COUNT { (:Habilidade) }`), **unidades temáticas** no lugar de "componentes
+curriculares", que o modelo ainda não tem, e os anos disponíveis (hoje "1.º ano");
+(2) a grade "Encontre as habilidades da sua turma" tem **um card por nó `Ano`**,
+mostrando o `nome` do nó ("1º Ano") — EF2, EF3… viram cards novos sozinhos; (3) o balão
+do card perde as **matérias** (vinham do mock) e fica só com **"Ver o grafo desta
+turma"**, que abre a página de grafos já executando no console a consulta de exemplo
+`MATCH p = (:Ano)-[:DESENVOLVE_HABILIDADE]->(:Habilidade) RETURN p`. As matérias voltam
+quando o grafo tiver o componente curricular. Com o Neo4j fora do ar, a Home abre
+normalmente (números em "—", grade com aviso). Revê a **D10**: o recorte deixa de ser
+uma escolha do site (5.º–9.º) e passa a ser o conteúdo do grafo.
+
+**Alternativas rejeitadas.** (a) *Manter os números do mock até o grafo completo:*
+contradiz a integração real (D14) — o site publicado mostraria dados fictícios;
+(b) *contar "componentes" pelo prefixo do código das habilidades (MA = Matemática):*
+inventaria uma entidade que o modelo da orientadora não tem; (c) *esconder a banda e a
+grade até o grafo crescer:* a Home perderia a ligação com os dados, que é justamente o
+que ela demonstra.
+
+**Para a banca.** *"Nada do que a página inicial mostra é digitado no código: os
+números da banda e os cards de série são consultas de agregação ao Neo4j. Hoje o grafo
+tem só o 1.º ano de Matemática, e é isso que a página mostra; quando a orientadora
+carregar os outros anos, eles aparecem sem nenhuma alteração no site."*
+
+**Monografia** *(cap. de Implementação, seção da página inicial — retoma a D10 e a
+D14):*
+"A página inicial apresenta exclusivamente indicadores derivados do grafo de
+conhecimento: o número de habilidades e de unidades temáticas e os anos escolares
+disponíveis são obtidos por consultas de agregação em Cypher, e a grade de navegação
+por série é gerada a partir dos vértices do tipo Ano existentes no banco. Com isso, o
+recorte curricular exibido deixa de ser um parâmetro da aplicação e passa a refletir o
+conteúdo efetivamente modelado — na versão atual do grafo, o primeiro ano do ensino
+fundamental em Matemática —, de modo que a inclusão de novos anos ou componentes pelo
+grupo de pesquisa se reflete na interface sem alteração de código. Elementos que
+dependem de entidades ainda não modeladas, como a seleção por componente curricular,
+foram suspensos até que o modelo as contemple."
+
+---
+
+*Última atualização: 2026-10-15. Novas decisões: adicionar ao fim da lista como
 D<N+1>, seguindo o formato do cabeçalho — **sempre com o parágrafo de monografia**.*

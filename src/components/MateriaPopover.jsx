@@ -1,24 +1,19 @@
-import { useEffect, useRef, useState } from 'react'
-import { LISTA_DISCIPLINAS } from '../data/mockFuseki'
+import { useEffect, useRef } from 'react'
 
 // Popover ("balão") ancorado a um card de série na grade "Explore por série".
-// Sobe ao abrir (keyframe egFadeUp), com uma setinha apontando para o card.
-// Lista as matérias como chips selecionáveis e, desde a G11, fecha o ciclo com
-// a Home: o CTA "Ver o grafo desta turma →" chama onVerGrafo(disciplinaId) — a
-// seção escreve o recorte na URL e navega para a página de grafos, que o aplica
-// pelo deep-link da G3. Fecha no ×, clicando fora ou com Esc.
-// O grid não se mexe: o balão é position:absolute (fora do fluxo) sobre o card.
+// Sobe ao abrir (keyframe egFadeUp), com uma setinha apontando para o card. O
+// CTA "Ver o grafo desta turma →" (G11) chama onVerGrafo — a seção navega para
+// a página de grafos com a consulta da turma. Fecha no ×, clicando fora ou com
+// Esc. O grid não se mexe: o balão é position:absolute (fora do fluxo).
 // (Desvio documentado: o CTA não existe no protótipo — o balão de lá é só
 // visual; o botão materializa a integração prevista no roadmap G11.)
-
-// As matérias vêm do "back-end" (mock do Fuseki) — mesma fonte da página de
-// grafos; o chip "Todas as matérias" vira recorte sem disciplina (id vazio).
-const TODAS = { id: '', label: 'Todas as matérias' }
-const materias = [TODAS, ...LISTA_DISCIPLINAS.map((d) => ({ id: d.id, label: d.label }))]
+// N9 (integração com o Neo4j): os chips de MATÉRIA saíram — vinham do mock, e o
+// grafo da orientadora ainda não tem componente curricular (hoje é só o 1.º ano
+// de Matemática). Voltam quando o modelo tiver o componente; até lá, o balão
+// tem só o CTA (decisão do autor).
 
 function MateriaPopover({ ano, onClose, onVerGrafo, placement = 'baixo', anchorRef }) {
   const ref = useRef(null)
-  const [selecionada, setSelecionada] = useState(TODAS.id)
 
   // Fecha ao clicar fora do CARD (mousedown) ou ao pressionar Esc. Usamos o card
   // (anchorRef), não só o balão: assim clicar no próprio card apenas alterna (o
@@ -46,7 +41,7 @@ function MateriaPopover({ ano, onClose, onVerGrafo, placement = 'baixo', anchorR
     <div
       ref={ref}
       role="dialog"
-      aria-label={`Matérias — ${ano}`}
+      aria-label={`Turma — ${ano}`}
       onClick={(e) => e.stopPropagation()} // não deixa o clique fechar o card pai
       style={{
         position: 'absolute',
@@ -82,7 +77,7 @@ function MateriaPopover({ ano, onClose, onVerGrafo, placement = 'baixo', anchorR
         }}
       />
 
-      {/* cabeçalho: MATÉRIA — {ano} + botão fechar */}
+      {/* cabeçalho: TURMA — {ano} + botão fechar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <span
           style={{
@@ -92,43 +87,24 @@ function MateriaPopover({ ano, onClose, onVerGrafo, placement = 'baixo', anchorR
             color: 'var(--muted)',
           }}
         >
-          Matéria — {ano}
+          Turma — {ano}
         </span>
         <button type="button" aria-label="Fechar" onClick={onClose} className="eg-materia-fechar">
           ×
         </button>
       </div>
 
-      {/* chips de matérias */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {materias.map((m) => {
-          const sel = selecionada === m.id
-          return (
-            <button
-              key={m.id || 'todas'}
-              type="button"
-              aria-pressed={sel}
-              onClick={() => setSelecionada(m.id)}
-              className={sel ? 'eg-materia-chip eg-materia-chip--sel' : 'eg-materia-chip'}
-            >
-              {m.label}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* CTA da G11: abre a página de grafos com o recorte série(+matéria) aplicado */}
+      {/* CTA (G11 → N9): abre a página de grafos com a consulta da turma */}
       <button
         type="button"
         className="eg-grafo-filtrar"
-        onClick={() => onVerGrafo?.(selecionada)}
+        onClick={() => onVerGrafo?.()}
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: 8,
           width: '100%',
-          marginTop: 14,
           padding: '10px 16px',
           borderRadius: 999,
           border: 'none',

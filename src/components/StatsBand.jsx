@@ -1,22 +1,35 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { estatisticas } from '../data/mockFuseki'
+import { estatisticasDoGrafo } from '../data/resumoGrafo'
 
 // Banda de estatísticas: 3 números que contam de 0 até o valor final quando a
 // faixa entra na tela (uma única vez), espelhando o protótipo. Um único
 // progresso `cp` (0→1, easeInOutCubic em 1.4s) move os três em sincronia.
-// Os valores vêm do "back-end" (mock do Fuseki em src/data/mockFuseki.js) —
-// quando o endpoint SPARQL real existir, esta banda o refletirá sem mudanças.
+// N9 (integração com o Neo4j): os valores vêm de uma consulta de agregação no
+// grafo (src/data/resumoGrafo.js) — habilidades, unidades temáticas (no lugar
+// de "componentes curriculares", que o modelo ainda não tem; decisão do autor)
+// e os anos disponíveis. A contagem só começa quando o dado CHEGOU e a faixa
+// está visível; com o Neo4j fora do ar, os números ficam em "—" e a página segue.
 
 const DUR = 1400 // ms
-const EST = estatisticas() // { habilidades, componentes, anoInicial, anoFinal }
 
 function StatsBand() {
   const ref = useRef(null)
   const [cp, setCp] = useState(0)
+  const [est, setEst] = useState(null) // { habilidades, unidades, anos } — null enquanto não chega (ou se falhou)
+
+  useEffect(() => {
+    let vivo = true
+    estatisticasDoGrafo()
+      .then((e) => vivo && setEst(e))
+      .catch(() => {}) // sem dado: fica no "—"
+    return () => {
+      vivo = false
+    }
+  }, [])
 
   useEffect(() => {
     const el = ref.current
-    if (!el) return undefined
+    if (!el || !est) return undefined
     let raf = 0
     let started = false
 
@@ -52,14 +65,23 @@ function StatsBand() {
       io.disconnect()
       cancelAnimationFrame(raf)
     }
-  }, [])
+  }, [est])
 
+  const contar = (v) => (est ? String(Math.round(v * cp)) : '—')
+  // anos: um só → conta "0.º ano" → "1.º ano"; vários → "1.º – N.º ano" (o último
+  // conta, como antes). Com um ano só, a contagem é de um único passo: com
+  // Math.round ele viraria na METADE da animação (rápido demais, a pedido do
+  // autor); com Math.floor vira só no fim, junto com os outros números
+  const anos = est ? est.anos : []
+  let valorAnos = '—'
+  if (anos.length === 1) valorAnos = `${Math.floor(anos[0] * cp)}.º ano`
+  else if (anos.length > 1) valorAnos = `${anos[0]}.º – ${Math.round(anos[anos.length - 1] * cp)}.º ano`
   const stats = [
-    { value: String(Math.round(EST.habilidades * cp)), label: 'habilidades BNCC mapeadas' },
-    { value: String(Math.round(EST.componentes * cp)), label: 'componentes curriculares conectados' },
+    { value: contar(est?.habilidades), label: 'habilidades BNCC mapeadas' },
+    { value: contar(est?.unidades), label: 'unidades temáticas conectadas' },
     {
-      value: `${EST.anoInicial}.º – ${Math.round(EST.anoFinal * cp)}.º ano`,
-      label: 'anos disponíveis agora',
+      value: valorAnos,
+      label: anos.length > 1 ? 'anos do fundamental disponíveis agora' : 'ano do fundamental disponível agora',
     },
   ]
 

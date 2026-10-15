@@ -25,9 +25,16 @@ function telaInicial() {
 // Quando o site crescer, isto pode ser substituído por react-router-dom.
 function App() {
   const [tela, setTela] = useState(telaInicial)
+  // consulta Cypher que a página de grafos executa ao abrir (N9: o "Ver o grafo
+  // desta turma" da Home); qualquer outra navegação zera
+  const [consultaGrafos, setConsultaGrafos] = useState(null)
   const { fontZoom } = useTheme()
 
-  function irPara(novaTela) {
+  // `opcoes.consulta` só vale para a página de grafos. (Os links que chamam
+  // onGrafos direto do onClick passam o evento como 1.º argumento — por isso o
+  // teste de tipo.)
+  function irPara(novaTela, opcoes) {
+    setConsultaGrafos(novaTela === 'grafos' && typeof opcoes?.consulta === 'string' ? opcoes.consulta : null)
     // saindo do grafo, o recorte sai da URL junto (ele só faz sentido lá)
     if (novaTela !== 'grafos') {
       try {
@@ -67,6 +74,7 @@ function App() {
         onHome={() => irPara('home')}
         onSignup={() => irPara('signup')}
         onGrafos={() => irPara('grafos')}
+        consultaInicial={consultaGrafos}
       />
     )
   } else {
@@ -74,7 +82,7 @@ function App() {
       <Home
         onLogin={() => irPara('login')}
         onSignup={() => irPara('signup')}
-        onGrafos={() => irPara('grafos')}
+        onGrafos={(opcoes) => irPara('grafos', opcoes)}
       />
     )
   }
