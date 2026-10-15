@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import depoimentos from '../data/depoimentos'
 import { anosDoGrafo } from '../data/resumoGrafo'
+import { CONSULTA_ANO_HABILIDADES } from '../data/consultasExemplo'
 import GradeCard from './GradeCard'
 
 // Seção "Quem ensina, sabe o que funciona." — depoimentos + grade de séries.
@@ -18,10 +19,10 @@ const clamp01 = (x) => Math.max(0, Math.min(1, x))
 const dois = (n) => String(n).padStart(2, '0')
 
 // N9 — consulta que o "Ver o grafo desta turma" abre na página de grafos: o
-// exemplo "ano direto p habilidade" do neo4j/consultas (decisão do autor). Hoje
-// o grafo só tem o 1.º ano; quando EF2, EF3… chegarem, ela trará todos os anos —
-// aí vale filtrar pelo `codigo` do card.
-const CONSULTA_DA_TURMA = 'MATCH p = (:Ano)-[:DESENVOLVE_HABILIDADE]->(:Habilidade)\nRETURN p'
+// exemplo "ano direto p habilidade" (src/data/consultasExemplo.js; decisão do
+// autor). Hoje o grafo só tem o 1.º ano; quando EF2, EF3… chegarem, ela trará
+// todos os anos — aí vale filtrar pelo `codigo` do card.
+const CONSULTA_DA_TURMA = CONSULTA_ANO_HABILIDADES
 
 function TestimonialsSection({ onGrafos }) {
   const zoneRef = useRef(null)

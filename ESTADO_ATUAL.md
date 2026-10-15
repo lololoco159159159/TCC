@@ -1887,7 +1887,13 @@ os filtros vão ser redesenhados).
   **Executar** (e Ctrl/Cmd+Enter), menu de **exemplos** com as consultas de
   [neo4j/consultas](neo4j/consultas) — lidas do próprio arquivo (import `?raw`), para
   acompanharem o que a orientadora mandar — e linha de status (linhas · tempos do
-  Neo4j · tempo total).
+  Neo4j · tempo total). **Ajuste do autor (2026-10-15):** o site não lê mais a pasta
+  `neo4j/` — ela é só o registro do material da orientadora. Os exemplos foram
+  copiados sem mudança para [src/data/consultasExemplo.js](src/data/consultasExemplo.js)
+  (`CONSULTAS_EXEMPLO`; conferido: idênticos ao que o console lia), que também exporta
+  `CONSULTA_ANO_HABILIDADES` — a consulta do "Ver o grafo desta turma" da Home (N9)
+  agora sai dali, em vez de ser uma cópia à parte. Consulta nova no menu = uma entrada
+  nova nesse módulo.
 - Resultado no palco, em abas: **Tabela** (uma coluna por campo; nó como
   `(:Rotulo {props})`, relação como `[:TIPO]`, caminho resumido) e **JSON** (a
   resposta exatamente como veio, formatada).
@@ -2676,7 +2682,7 @@ src/
 │   │   ├── BotaoAcessibilidade.jsx # botão flutuante: toggle "desativar animações e física"
 │   │   └── estilos.js         # estilos inline compartilhados dos cards (CARD_VIDRO, ...; A3)
 │   └── grafo/                 # componentes exclusivos da página de grafos (R7a)
-│       ├── ConsoleCypher.jsx  # barra do console Cypher: consulta, exemplos de neo4j/consultas, Executar (N3)
+│       ├── ConsoleCypher.jsx  # barra do console Cypher: consulta, menu de exemplos, Executar (N3)
 │       ├── ResultadoCypher.jsx # resultado do console no palco: abas Tabela/JSON + avisos do Neo4j (N3)
 │       ├── GrafoFiltros.jsx   # barra de busca/filtros do mock (G3) — SEM USO desde a N3 (decisão na N10)
 │       ├── GrafoCanvas.jsx    # canvas 2D: render + física + interações (hover/seleção/drag/pan/zoom,
@@ -2694,6 +2700,8 @@ src/
 │   ├── estiloGrafo.js         # tabela de estilo: por rótulo (cor, raio, forma, legenda, tooltip, semente)
 │   │                          #   e por tipo de relação (mola, tracejado); padrão p/ rótulo novo (N5)
 │   ├── resumoGrafo.js         # agregados da Home no Neo4j: habilidades, unidades temáticas, anos (N9)
+│   ├── consultasExemplo.js    # consultas Cypher de exemplo (menu do console) + a do "Ver o grafo desta
+│   │                          #   turma"; cópia das de teste da orientadora (neo4j/ é só o registro dela)
 │   ├── vizinhanca.js          # conexões de um nó no Neo4j por tipo e sentido; retrato do nó (N7);
 │   │                          #   expandirNo: vizinhos (até 100) + "conectar" os novos (N8)
 │   ├── extrairGrafo.js        # resultado → nós + relações (puro) e as consultas extras do Browser:

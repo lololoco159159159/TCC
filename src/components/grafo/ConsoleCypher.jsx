@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import textoConsultas from '../../../neo4j/consultas?raw'
+import { CONSULTAS_EXEMPLO as EXEMPLOS } from '../../data/consultasExemplo'
 import Chave from '../Chave'
 import { MONO_LABEL } from './estilos'
 
@@ -14,23 +14,9 @@ import { MONO_LABEL } from './estilos'
 // "Conectar nós do resultado" (o "Connect result nodes" do Neo4j Browser) fica
 // à direita dela — o estado mora na página, que refaz a consulta ao mudar.
 
-// Exemplos do menu = as consultas de neo4j/consultas, lidas do próprio arquivo
-// (import ?raw do Vite) para acompanharem o que a orientadora mandar. Formato
-// do arquivo: cada consulta vem depois de uma linha de comentário (`// título`).
-function lerExemplos(texto) {
-  const exemplos = []
-  for (const linha of texto.split('\n')) {
-    const t = linha.trim()
-    if (t.startsWith('//')) {
-      exemplos.push({ titulo: t.replace(/^\/\/\s*/, ''), consulta: '' })
-    } else if (t && exemplos.length) {
-      const ex = exemplos[exemplos.length - 1]
-      ex.consulta += (ex.consulta ? '\n' : '') + linha.trimEnd()
-    }
-  }
-  return exemplos.filter((ex) => ex.consulta)
-}
-const EXEMPLOS = lerExemplos(textoConsultas)
+// Exemplos do menu: src/data/consultasExemplo.js (as consultas de teste da
+// orientadora). Até este ajuste eram lidos do arquivo neo4j/consultas por import
+// ?raw; aquela pasta ficou só como o registro do material dela.
 
 const LINHAS_MAX = 8 // a caixa cresce com a consulta até este nº de linhas (depois rola)
 
@@ -174,8 +160,8 @@ function ConsoleCypher({ status, resultado, erro, aoExecutar, conectar, aoAltern
         <select
           value=""
           onChange={aoEscolherExemplo}
-          aria-label="Exemplos de consulta (arquivo neo4j/consultas)"
-          title="Consultas do arquivo neo4j/consultas"
+          aria-label="Exemplos de consulta"
+          title="Consultas de exemplo (as de teste da orientadora)"
           style={SELECT}
         >
           <option value="" disabled>

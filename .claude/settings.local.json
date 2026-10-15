@@ -70,7 +70,8 @@
       "Bash(grep -n \"DICA_ITEM\\\\|fora do desenho\\\\|aoExpandir, expandindo\\\\|{expandindo ? 'Expandindo…'\" src/components/grafo/GrafoPainel.jsx)",
       "Bash(curl -s -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"RETURN COUNT { \\(:Habilidade\\) } AS habilidades, COUNT { \\(:UnidadeTematica\\) } AS unidades, [\\(a:Ano\\) | a.codigo] AS anos\",\"accessMode\":\"READ\"}' http://localhost:7474/db/neo4j/query/v2)",
       "Bash(curl -s -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"RETURN COUNT { \\(:Habilidade\\) } AS habilidades, COUNT { \\(:UnidadeTematica\\) } AS unidades, COLLECT { MATCH \\(a:Ano\\) RETURN a.codigo } AS anos\",\"accessMode\":\"READ\"}' http://localhost:7474/db/neo4j/query/v2)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(grep -n \"ConsoleCypher.jsx  # barra\\\\|│   ├── resumoGrafo.js\\\\|lidas do próprio arquivo \\(import \\\\`?raw\\\\`\\)\" ESTADO_ATUAL.md)"
     ],
     "additionalDirectories": [
       "/home/lorenzo/tcc_implementacao/TCC/.claude/skills"
