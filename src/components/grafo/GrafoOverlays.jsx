@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ESTILO_NO } from '../../data/estiloGrafo'
+import { observarConsultas } from '../../data/neo4j'
 import { PALETAS } from '../../data/paletas'
 import { MONO_LABEL } from './estilos'
 import Chave from '../Chave'
@@ -11,9 +12,9 @@ import PontoNo from './PontoNo'
 //   • LegendaTipos — "Tipos de nó" (canto inferior direito). N6: lista os
 //     rótulos do Neo4j presentes no grafo da tela, com contagem, cor e forma da
 //     tabela de estilo; clicar oculta/mostra os nós do rótulo SÓ NO DESENHO.
-//   • GavetaSparql — botão "SPARQL" que abre a gaveta com a última consulta
-//     enviada ao mock + "Simular falha (HTTP 503)". Fora da tela desde a N3;
-//     volta como gaveta Cypher na N10.
+//   • GavetaCypher — botão "Cypher" que abre a gaveta com as últimas consultas
+//     que o site fez no Neo4j por conta própria (N10; era a gaveta SPARQL do
+//     mock, com o "Simular falha (HTTP 503)" — as falhas agora são reais).
 //   • PaletaPopover — botão-swatch na coluna de zoom que abre o popover
 //     "Cores do grafo · daltonismo" (Padrão/Protanopia/Deuteranopia/
 //     Tritanopia, de src/data/paletas.js). A troca escreve os tokens --no-*
@@ -119,16 +120,53 @@ export function LegendaTipos({ rotulos, tiposTracejados, aoAlternar }) {
   )
 }
 
-// ---- Gaveta da consulta SPARQL ----
-export function GavetaSparql({ consulta, tempoMs, simErro, aoSimErro }) {
+// ---- Gaveta Cypher (N10; era a gaveta SPARQL do mock, G9) ----
+// As consultas que o SITE fez no Neo4j por conta própria — completar o
+// resultado do console (pontas, conectar nós), conexões do painel, expansão —
+// com os parâmetros, as linhas que voltaram e o tempo; a mais recente em cima.
+// A do console não entra: quem a escreveu foi a pessoa, e ela já está lá. A
+// gaveta se inscreve sozinha no cliente (observarConsultas): uma consulta
+// nova re-renderiza só ela, não a página. Fica montada o tempo todo (`visivel`
+// só a esconde) para não perder as consultas feitas enquanto o palco carrega.
+const REGISTRO_MAX = 10 // consultas guardadas na gaveta (só enquanto a página está aberta)
+const PARAMETRO_ITENS_MAX = 3 // listas longas (os elementIds da tela) mostram só o começo
+
+// parâmetros como comentários Cypher embaixo da consulta: `// $id = "4:…"`
+function textoParametros(parametros) {
+  return Object.entries(parametros)
+    .map(([nome, v]) => {
+      const valor =
+        Array.isArray(v) && v.length > PARAMETRO_ITENS_MAX
+          ? `[${v.slice(0, PARAMETRO_ITENS_MAX).map((x) => JSON.stringify(x)).join(', ')}, … +${v.length - PARAMETRO_ITENS_MAX}]`
+          : JSON.stringify(v)
+      return `\n// $${nome} = ${valor}`
+    })
+    .join('')
+}
+
+export function GavetaCypher({ direita, visivel }) {
   const [aberta, setAberta] = useState(false)
+  const [registro, setRegistro] = useState([])
+  const seq = useRef(0) // chave de cada item
+
+  useEffect(
+    () =>
+      observarConsultas((c) => {
+        if (!c.descricao) return // a do console
+        const item = { ...c, chave: ++seq.current, hora: new Date().toLocaleTimeString('pt-BR') }
+        setRegistro((r) => [item, ...r].slice(0, REGISTRO_MAX))
+      }),
+    [],
+  )
+
+  const ultimaFalhou = Boolean(registro[0]?.erro)
   return (
     <div
       style={{
         position: 'absolute',
         bottom: 14,
-        right: 224,
-        display: 'flex',
+        right: direita,
+        display: visivel ? 'flex' : 'none',
         flexDirection: 'column',
         alignItems: 'flex-end',
       }}
@@ -137,7 +175,7 @@ export function GavetaSparql({ consulta, tempoMs, simErro, aoSimErro }) {
         <div
           style={{
             width: 560,
-            maxWidth: 'calc(100vw - 260px)',
+            maxWidth: 'calc(100vw - 300px)',
             background: 'var(--pill-bg)',
             border: '1px solid var(--pill-border)',
             borderRadius: 14,
@@ -147,60 +185,65 @@ export function GavetaSparql({ consulta, tempoMs, simErro, aoSimErro }) {
             animation: 'egSurgir .16s ease',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)' }} />
-            <span style={{ ...MONO_LABEL, color: 'var(--muted)' }}>Última consulta ao endpoint</span>
-            <span style={{ flex: 1 }} />
-            <span style={{ font: "10px/1 'JetBrains Mono', monospace", color: 'var(--faint)' }}>
-              {tempoMs ? `${tempoMs} ms` : ''}
-            </span>
+          <div style={{ ...MONO_LABEL, color: 'var(--muted)', marginBottom: 9 }}>Consultas do site ao Neo4j</div>
+          <div style={{ maxHeight: 330, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {registro.length ? (
+              registro.map((c) => (
+                <div key={c.chave}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: c.erro ? 'var(--gold)' : 'var(--green)',
+                        flex: 'none',
+                      }}
+                    />
+                    <span style={{ font: "600 12px/1.3 'Figtree', sans-serif", color: 'var(--body)' }}>{c.descricao}</span>
+                    <span style={{ flex: 1 }} />
+                    <span style={{ font: "10px/1 'JetBrains Mono', monospace", color: c.erro ? 'var(--gold)' : 'var(--faint)' }}>
+                      {c.erro ? `erro · ${c.erro}` : `${c.linhas} ${c.linhas === 1 ? 'linha' : 'linhas'}`} · {c.ms} ms ·{' '}
+                      {c.hora}
+                    </span>
+                  </div>
+                  {/* bloco "terminal": cores fixas de propósito (escuro nos 2 temas) */}
+                  <pre
+                    style={{
+                      margin: 0,
+                      maxHeight: 140,
+                      overflow: 'auto',
+                      background: '#1c2620',
+                      color: '#dde6df',
+                      borderRadius: 10,
+                      padding: '10px 13px',
+                      font: "10.5px/1.55 'JetBrains Mono', monospace",
+                      whiteSpace: 'pre',
+                    }}
+                  >
+                    {c.consulta}
+                    <span style={{ color: '#8fa396' }}>{textoParametros(c.parametros)}</span>
+                  </pre>
+                </div>
+              ))
+            ) : (
+              <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.5, color: 'var(--faint)' }}>
+                Nenhuma ainda. Aparecem aqui as consultas que o site faz sozinho: ao completar o resultado do console, ao
+                abrir o painel de um nó e ao expandir.
+              </p>
+            )}
           </div>
-          {/* bloco "terminal": cores fixas de propósito (escuro nos 2 temas) */}
-          <pre
-            style={{
-              margin: 0,
-              maxHeight: 180,
-              overflow: 'auto',
-              background: '#1c2620',
-              color: '#dde6df',
-              borderRadius: 10,
-              padding: '12px 14px',
-              font: "10.5px/1.55 'JetBrains Mono', monospace",
-              whiteSpace: 'pre',
-            }}
-          >
-            {consulta || '# Nenhuma consulta executada ainda.\n# Escolha um recorte e clique em Filtrar.'}
-          </pre>
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              marginTop: 10,
-              cursor: 'pointer',
-              fontSize: 12.5,
-              color: 'var(--body)',
-              fontWeight: 500,
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={simErro}
-              onChange={(e) => aoSimErro(e.target.checked)}
-              style={{ accentColor: 'var(--gold)', cursor: 'pointer' }}
-            />
-            <span>Simular falha do endpoint (HTTP 503) na próxima consulta</span>
-          </label>
-          <p style={{ margin: '8px 0 0', fontSize: 11.5, lineHeight: 1.5, color: 'var(--faint)' }}>
-            Dados de demonstração. Na implementação, substitua{' '}
-            <span style={{ font: "10.5px/1.5 'JetBrains Mono', monospace" }}>consultarFuseki()</span> por um
-            fetch ao serviço Fuseki — o formato de resposta (sparql-results+json) é o mesmo.
+          <p style={{ margin: '10px 0 0', fontSize: 11.5, lineHeight: 1.5, color: 'var(--faint)' }}>
+            Todas em modo somente leitura, as {REGISTRO_MAX} mais recentes. A consulta do console não entra aqui: ela já
+            está escrita no console.
           </p>
         </div>
       )}
       <button
         type="button"
-        className="eg-grafo-sparql"
+        className="eg-grafo-cypher"
+        aria-expanded={aberta}
+        title="Consultas que o site fez no Neo4j por conta própria"
         onClick={() => setAberta((a) => !a)}
         style={{
           display: 'inline-flex',
@@ -218,8 +261,8 @@ export function GavetaSparql({ consulta, tempoMs, simErro, aoSimErro }) {
           textTransform: 'uppercase',
         }}
       >
-        <span style={{ width: 6, height: 6, borderRadius: '50%', background: simErro ? 'var(--gold)' : 'var(--green)' }} />
-        <span>SPARQL</span>
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: ultimaFalhou ? 'var(--gold)' : 'var(--green)' }} />
+        <span>Cypher</span>
       </button>
     </div>
   )

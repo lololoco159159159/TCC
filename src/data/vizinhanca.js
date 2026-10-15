@@ -33,7 +33,11 @@ export const retratoDoNo = (no) => ({ id: no.id, rotulos: no.rotulos, props: no.
  *   mesmo com duas relações para o mesmo vizinho); `mais`: passou do limite.
  */
 export async function conexoesDoNo(id, opcoes = {}) {
-  const resp = await executarCypher(CONEXOES, { id, limite: LIMITE_CONEXOES + 1 }, opcoes)
+  const resp = await executarCypher(
+    CONEXOES,
+    { id, limite: LIMITE_CONEXOES + 1 },
+    { descricao: 'conexões do nó (painel)', ...opcoes },
+  )
   const linhas = resp.linhas.slice(0, LIMITE_CONEXOES)
   const grupos = new Map()
   for (const { r, m } of linhas) {
@@ -63,7 +67,7 @@ export async function conexoesDoNo(id, opcoes = {}) {
  *   (quem funde descarta as que já tem); `consultas`: { tipo, ms } de cada uma
  */
 export async function expandirNo(id, idsNaTela, { conectar = true } = {}) {
-  const resp = await executarCypher(CONEXOES, { id, limite: LIMITE_VIZINHOS })
+  const resp = await executarCypher(CONEXOES, { id, limite: LIMITE_VIZINHOS }, { descricao: 'expandir · vizinhos' })
   const nos = new Map()
   const relacoes = new Map()
   for (const { r, m } of resp.linhas) {
@@ -73,7 +77,11 @@ export async function expandirNo(id, idsNaTela, { conectar = true } = {}) {
   const consultas = [{ tipo: 'vizinhos', ms: resp.tempos.totalMs }]
   if (conectar && nos.size) {
     const novos = [...nos.keys()]
-    const c = await executarCypher(CONECTAR_NOVOS, { novos, todos: [...idsNaTela, ...novos] })
+    const c = await executarCypher(
+      CONECTAR_NOVOS,
+      { novos, todos: [...idsNaTela, ...novos] },
+      { descricao: 'expandir · conectar os novos' },
+    )
     c.linhas.forEach(({ r }) => relacoes.set(r.id, r))
     consultas.push({ tipo: 'conectar', ms: c.tempos.totalMs })
   }

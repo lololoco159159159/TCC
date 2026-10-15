@@ -71,7 +71,19 @@
       "Bash(curl -s -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"RETURN COUNT { \\(:Habilidade\\) } AS habilidades, COUNT { \\(:UnidadeTematica\\) } AS unidades, [\\(a:Ano\\) | a.codigo] AS anos\",\"accessMode\":\"READ\"}' http://localhost:7474/db/neo4j/query/v2)",
       "Bash(curl -s -u neo4j:159159159lo -H 'Content-Type: application/json' -d '{\"statement\":\"RETURN COUNT { \\(:Habilidade\\) } AS habilidades, COUNT { \\(:UnidadeTematica\\) } AS unidades, COLLECT { MATCH \\(a:Ano\\) RETURN a.codigo } AS anos\",\"accessMode\":\"READ\"}' http://localhost:7474/db/neo4j/query/v2)",
       "Bash(node -e ' *)",
-      "Bash(grep -n \"ConsoleCypher.jsx  # barra\\\\|│   ├── resumoGrafo.js\\\\|lidas do próprio arquivo \\(import \\\\`?raw\\\\`\\)\" ESTADO_ATUAL.md)"
+      "Bash(grep -n \"ConsoleCypher.jsx  # barra\\\\|│   ├── resumoGrafo.js\\\\|lidas do próprio arquivo \\(import \\\\`?raw\\\\`\\)\" ESTADO_ATUAL.md)",
+      "Bash(systemctl show *)",
+      "Read(//usr/lib/systemd/system/**)",
+      "Read(//var/log/apt/**)",
+      "Bash(zgrep -h -i \"neo4j\" /var/log/dpkg.log*)",
+      "Bash(git log *)",
+      "Bash(echo \"exit grep: $?\")",
+      "Bash(sed -i 's|// para facilitar a troca futura por uma consulta SPARQL ao grafo de conhecimento.|// para facilitar a troca futura por uma consulta Cypher ao grafo de conhecimento.|' src/data/depoimentos.js)",
+      "Bash(sed -i 's|// bloco \"terminal\": as mesmas cores fixas da gaveta SPARQL \\(escuro nos 2 temas\\)|// bloco \"terminal\": as mesmas cores fixas da gaveta Cypher \\(escuro nos 2 temas\\)|' src/components/grafo/ResultadoCypher.jsx)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:7474/)",
+      "Bash(ps -eo pid,args)",
+      "Bash(kill 27560 27559 27543)",
+      "Bash(sed -n '/^├── data\\\\//,/^├── pages\\\\//p' ESTADO_ATUAL.md)"
     ],
     "additionalDirectories": [
       "/home/lorenzo/tcc_implementacao/TCC/.claude/skills"

@@ -805,7 +805,7 @@ completas contra o mock. Restam:
 2. **PENDENTE (pausado em 2026-10-09) — Desempenho do motor do grafo**: P0–P2
    feitas; **P3, P4 e P5 pendentes** — roadmap §4.4. Retomar depois da integração.
 3. **FOCO ATUAL — Integração com o Neo4j** (substitui o antigo plano de Apache
-   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N9 feitas; próxima etapa: N10.**
+   Jena Fuseki/SPARQL) — §4.5, roadmap N0–N12. **N1–N10 feitas; próxima etapa: N11.**
 
 ### 4.1 Página de grafos — caminho por etapas (G1–G11)
 
@@ -1591,10 +1591,9 @@ integração.
 - [x] **N5** — Desenhar o grafo no canvas *(2026-10-12)*
 - [x] **N6** — Tipos novos: cores, formas, paletas e legenda *(2026-10-13)*
 - [x] **N7** — Painel de detalhe com dados reais *(2026-10-13)*
- tambem colocar como topico fazer a fisica melhor, semelhante ao neo4j e com opcao de hierarquia
 - [x] **N8** — Expandir e desfazer com Cypher *(2026-10-15)*
 - [x] **N9** — Home com dados do Neo4j *(2026-10-15)*
-- [ ] **N10** — Remoção do mock
+- [x] **N10** — Remoção do mock *(2026-10-15)*
 - [ ] **N11** — Produção (site no ar)
 - [ ] **N12** — Fechamento
 
@@ -1647,6 +1646,7 @@ produção:        proxy = a definir (mesmo caminho /api/cypher)        → N11
   sempre do autor (§0).
 - **Sem mock como plano B** (decisão de 2026-10-09). Durante a transição, partes da
   página ainda leem o `mockFuseki.js` até a etapa delas chegar; na N10 ele sai.
+  (**Saiu na N10** — o site não guarda mais nenhum dado do grafo; D17.)
 - **Sem dependência nova**: `fetch` + Query API (driver Bolt descartado); sem
   biblioteca de grafos (D3).
 - **A senha nunca entra no código do front**: variáveis **sem** o prefixo `VITE_` (o
@@ -1659,7 +1659,8 @@ produção:        proxy = a definir (mesmo caminho /api/cypher)        → N11
   futuro).
 - **Contas: não mexer** em Login/Signup/`GrafoPerfil` (vão sair num roadmap
   próprio). Quando a integração esbarrar nelas, a etapa registra o efeito e não
-  altera o componente.
+  altera o componente. (Exceção decidida pelo autor na N10: as "Minhas turmas" saíram
+  do `GrafoPerfil`, porque eram dados do mock.)
 - Motor do canvas (D3/D4) intacto — física, câmera e tempos. Só a tabela de molas
   por tipo de relação muda, porque os tipos mudaram. Acessibilidade (D6) preservada.
 - Bug fora do escopo da etapa → anotar aqui, não corrigir junto.
@@ -2533,6 +2534,78 @@ repetir os testes da N3, N5, N7, N8 e N9.
 
 **Pronto quando:** zero referências ao mock e todas as telas funcionando.
 
+**Feito (2026-10-15).** Apagados `src/data/mockFuseki.js` e
+`src/components/grafo/GrafoFiltros.jsx` (recuperáveis no git: estão no commit
+`05a1894`, ex.: `git show 05a1894:src/components/grafo/GrafoFiltros.jsx`); alterados
+[neo4j.js](src/data/neo4j.js), [extrairGrafo.js](src/data/extrairGrafo.js),
+[vizinhanca.js](src/data/vizinhanca.js), [resumoGrafo.js](src/data/resumoGrafo.js),
+[GrafoOverlays.jsx](src/components/grafo/GrafoOverlays.jsx),
+[GrafoPerfil.jsx](src/components/grafo/GrafoPerfil.jsx), [Grafos.jsx](src/pages/Grafos.jsx),
+[App.jsx](src/App.jsx) e [index.css](src/index.css). **D17** registrada no
+[guia/DECISOES.md](guia/DECISOES.md) (a D1 ganhou a nota "encerrada pela D17"; a D2,
+"revista pela D17"). **`grep -r mockFuseki src` vazio.**
+
+Decisões do autor na etapa (perguntadas antes de implementar):
+- **`GrafoFiltros.jsx`: apagar.** O redesenho dos filtros vai ser sobre o modelo novo;
+  o código antigo fica no histórico do git. (A pasta `design/`, com os protótipos, já
+  estava apagada na cópia local do autor.)
+- **Perfil: tirar tudo o que usava o mock** — *"não quero que nenhuma informação (se
+  não consultas para serem feitas via API) seja guardada como feito no mock"*. O perfil
+  **continua** no header, com a identidade e as **opções de acessibilidade**; a seção
+  **"Minhas turmas" saiu inteira**.
+
+Como ficou:
+- **Gaveta Cypher** (`GavetaCypher`, no lugar da `GavetaSparql`): botão "Cypher" no canto
+  inferior direito, à esquerda da legenda (ou no canto, sem legenda); aparece com o
+  palco no estado "pronto". Lista as **10 últimas consultas que o site fez sozinho**, a
+  mais recente em cima: para que serviu (*pontas das relações do resultado*, *conectar
+  nós do resultado*, *conexões do nó (painel)*, *expandir · vizinhos*, *expandir ·
+  conectar os novos*), linhas que voltaram (ou o código do erro), tempo e hora; embaixo,
+  o texto Cypher e os parâmetros como comentários (`// $id = "4:…"`; lista longa mostra
+  os 3 primeiros e "… +N"). O ponto do botão fica dourado se a última falhou. Saiu o
+  "Simular falha (HTTP 503)". A consulta do console **não** entra (já está escrita no
+  console).
+- **Como a gaveta sabe das consultas:** o `neo4j.js` ganhou `observarConsultas()` —
+  toda consulta concluída (com resposta ou com erro; cancelada não) é anunciada com
+  `{ descricao, consulta, parametros, ms, linhas, erro }`, e `executarCypher` aceita a
+  opção `descricao`. A gaveta se inscreve sozinha e guarda a lista no próprio estado:
+  uma consulta nova re-renderiza só ela (o cuidado da P4). Fica sempre montada — só
+  escondida fora do "pronto" — para não perder as consultas que rodam enquanto o palco
+  carrega.
+- **Perfil:** identidade + "Alterar senha" + "Acessibilidade · cores do grafo". Na
+  página saíram o estado `turmas`, os rótulos de turma e o campo `turmas` das
+  preferências salvas (`localStorage['edugraphPrefs']` agora guarda só paleta, formas,
+  sem animação e posição do painel; um valor antigo de `turmas` é ignorado e some na
+  próxima gravação).
+- **App:** saiu o deep-link do mock (`?serie=&disciplina=…` abria a página de grafos e
+  era limpo da URL ao sair); o site sempre abre na Home. O link para os grafos volta com
+  os filtros novos.
+- **CSS:** saíram as regras que só o código apagado usava (`.eg-grafo-busca`,
+  `.eg-grafo-sugestao`, `.eg-grafo-pill`, `.eg-no-*`, `.eg-turma-*`, os tokens
+  `--no-conceito`/`--no-disciplina` e o nível `60` da escala de z-index); `.eg-grafo-sparql`
+  virou `.eg-grafo-cypher`. As `.eg-materia-chip` ficam (as matérias voltam com o
+  componente curricular — N9).
+
+Verificado: `npm run lint` (0/0), `npm run build` (JS **270,64 kB**, era 283,66 kB sem
+o mock no bundle; CSS 8,67 kB) e `npm run dev`. Testes do assistente sem instalar nada
+(Vite e React do projeto, no Node, contra servidor temporário), 12 casos: o anúncio de
+uma consulta (descrição, texto, parâmetros, linhas, tempo); a do console chega sem
+descrição; erro de sintaxe é anunciado com o código e a promessa ainda rejeita; a
+consulta **cancelada** não é anunciada; cancelar a inscrição funciona; completar
+`RETURN r` de TEM_UNIDADE anuncia *pontas* (6 ids, 6 linhas) e *conectar*; painel e
+expansão do EF1 anunciam *conexões do nó* (`$limite = 201`, 27 linhas), *vizinhos* e
+*conectar os novos* (27 novos); o perfil aberto tem identidade, "Alterar senha" e
+acessibilidade, sem turmas nem selects; a gaveta escondida fora do "pronto" e, visível,
+com o botão "Cypher" fechado; a página de grafos e o App renderizam sem o mock; nenhum
+arquivo de `src/` cita o mock. **Falta o teste do autor** (abaixo).
+
+**Teste do autor:** `grep -r mockFuseki src` vazio; repetir os testes da N3, N5, N7, N8 e
+N9; e, na gaveta Cypher: rodar "arvore completa" → abrir "Cypher" → aparece *conectar
+nós do resultado*; clicar num nó → *conexões do nó (painel)*; 2×clique → *expandir ·
+vizinhos* (+ *conectar os novos*, se trouxe nós); `MATCH ()-[r:TEM_UNIDADE]->() RETURN r`
+→ *pontas das relações do resultado*. No perfil: só identidade, "Alterar senha" e
+acessibilidade.
+
 ---
 
 #### N11 — Produção (site no ar)
@@ -2643,7 +2716,7 @@ Particularidades:
   intermediários novos): `1–8` camadas internas da landing · `20` GradeCard aberto ·
   `30` painel de contexto/resultado do console/popovers do palco/balão de matérias ·
   `32` overlays de estado · `40` barra do console Cypher (era a de filtros até a N3) ·
-  `60` dropdowns da barra · `120` widget A/A ·
+  `120` widget A/A ·
   `190/200` backdrop/dropdown do perfil.
 - **Segredos** (senha do Neo4j): só no `.env.local` (não versionado; modelo em
   [.env.example](.env.example)), sempre **sem** o prefixo `VITE_` — o Vite só embute
@@ -2684,19 +2757,20 @@ src/
 │   └── grafo/                 # componentes exclusivos da página de grafos (R7a)
 │       ├── ConsoleCypher.jsx  # barra do console Cypher: consulta, menu de exemplos, Executar (N3)
 │       ├── ResultadoCypher.jsx # resultado do console no palco: abas Tabela/JSON + avisos do Neo4j (N3)
-│       ├── GrafoFiltros.jsx   # barra de busca/filtros do mock (G3) — SEM USO desde a N3 (decisão na N10)
 │       ├── GrafoCanvas.jsx    # canvas 2D: render + física + interações (hover/seleção/drag/pan/zoom,
 │       │                      #   2×clique expande; API centrarEm/enquadrar/reaquecer/assentar/zoom± via ref)
 │       ├── GrafoPainel.jsx    # painel de contexto "de vidro": detalhe do Neo4j (propriedades, conexões por
 │       │                      #   tipo e sentido), vistos, expandir (+ expandir / botão) e o erro dela (G7–G8; N7–N8)
 │       ├── PontoNo.jsx        # pontinho de rótulo (cor + forma da tabela de estilo), compartilhado (N7)
 │       ├── GrafoOverlays.jsx  # legenda "Tipos de nó" (rótulos do Neo4j, oculta no desenho — N6), gaveta
-│       │                      #   SPARQL (fora da tela até a N10), popover de paleta, OpcoesAcessibilidade (G9–G10)
-│       ├── GrafoPerfil.jsx    # perfil mock: identidade, turmas, acessibilidade (G10)
+│       │                      #   Cypher (consultas que o site fez sozinho — N10), popover de paleta,
+│       │                      #   OpcoesAcessibilidade (G9–G10)
+│       ├── GrafoPerfil.jsx    # perfil mock: identidade e acessibilidade (G10; as turmas saíram na N10)
 │       ├── GrafoEstados.jsx   # overlays de estado do palco: convite/carregando/erro (código + ^) (R7b; N3; vazio saiu na N5)
 │       └── estilos.js         # estilos inline compartilhados do domínio (MONO_LABEL, R6)
 ├── data/
-│   ├── neo4j.js               # cliente Cypher do Neo4j: executarCypher() via proxy /api/cypher (N2)
+│   ├── neo4j.js               # cliente Cypher do Neo4j: executarCypher() via proxy /api/cypher (N2);
+│   │                          #   observarConsultas(): anuncia cada consulta concluída (gaveta Cypher, N10)
 │   ├── estiloGrafo.js         # tabela de estilo: por rótulo (cor, raio, forma, legenda, tooltip, semente)
 │   │                          #   e por tipo de relação (mola, tracejado); padrão p/ rótulo novo (N5)
 │   ├── resumoGrafo.js         # agregados da Home no Neo4j: habilidades, unidades temáticas, anos (N9)
@@ -2705,14 +2779,12 @@ src/
 │   ├── vizinhanca.js          # conexões de um nó no Neo4j por tipo e sentido; retrato do nó (N7);
 │   │                          #   expandirNo: vizinhos (até 100) + "conectar" os novos (N8)
 │   ├── extrairGrafo.js        # resultado → nós + relações (puro) e as consultas extras do Browser:
-│                              #   pontas que faltam, limite de 300 nós, "conectar nós" (N4)
-│   ├── depoimentos.js         # 5 depoimentos (mock; troca futura por SPARQL)
-│   ├── paletas.js             # paletas de daltonismo por rótulo, escolhidas por simulação (G9; refeitas na N6 — D15)
-│   └── mockFuseki.js          # endpoint SPARQL simulado (G2). Desde a N9 só o citam: a barra de filtros antiga
-│                              #   (sem uso), as turmas do perfil e os rótulos de turma da página — sai na N10
+│   │                          #   pontas que faltam, limite de 300 nós, "conectar nós" (N4)
+│   ├── depoimentos.js         # 5 depoimentos (conteúdo editorial do protótipo; troca futura por Cypher)
+│   └── paletas.js             # paletas de daltonismo por rótulo, escolhidas por simulação (G9; refeitas na N6 — D15)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
-│   ├── Grafos.jsx             # página do grafo — console Cypher (N3) + grafo do Neo4j no canvas (N5) + estados + painel + expandir/desfazer + perfil/prefs (em transição, §4.5)
+│   ├── Grafos.jsx             # página do grafo — console Cypher (N3) + grafo do Neo4j no canvas (N5) + estados + painel + expandir/desfazer + gaveta Cypher + perfil/prefs (§4.5)
 │   ├── Login.jsx              # card de vidro na MolduraConta; form acessível (A1–A5 — FEITO)
 │   └── Signup.jsx             # card de vidro na MolduraConta; form acessível (A1–A5 — FEITO)
 ├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)

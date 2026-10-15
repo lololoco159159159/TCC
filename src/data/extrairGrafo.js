@@ -72,7 +72,7 @@ export async function completarGrafo({ nos, relacoes }, { conectar = true, limit
   const achados = new Map()
   const faltando = exibidos.filter((id) => !nos.has(id))
   if (faltando.length) {
-    const resp = await executarCypher(BUSCAR_PONTAS, { ids: faltando })
+    const resp = await executarCypher(BUSCAR_PONTAS, { ids: faltando }, { descricao: 'pontas das relações do resultado' })
     resp.linhas.forEach(({ n }) => achados.set(n.id, n))
     extras.push({ tipo: 'pontas', consulta: BUSCAR_PONTAS, adicionados: achados.size, ms: resp.tempos.totalMs })
   }
@@ -91,7 +91,7 @@ export async function completarGrafo({ nos, relacoes }, { conectar = true, limit
 
   // 3) conectar os nós do resultado
   if (conectar && nosFinais.size) {
-    const resp = await executarCypher(CONECTAR, { ids: [...nosFinais.keys()] })
+    const resp = await executarCypher(CONECTAR, { ids: [...nosFinais.keys()] }, { descricao: 'conectar nós do resultado' })
     let adicionados = 0
     resp.linhas.forEach(({ r }) => {
       if (!relacoesFinais.has(r.id)) {

@@ -18,7 +18,7 @@ export const numeroDoAno = (codigo) => Number(String(codigo ?? '').replace(/\D/g
 
 // banda de estatísticas: { habilidades, unidades, anos: [1, …] (números, em ordem) }
 export async function estatisticasDoGrafo() {
-  const { linhas } = await executarCypher(ESTATISTICAS)
+  const { linhas } = await executarCypher(ESTATISTICAS, {}, { descricao: 'Home · banda de estatísticas' })
   const { habilidades, unidades, anos } = linhas[0]
   return {
     habilidades,
@@ -32,7 +32,7 @@ export async function estatisticasDoGrafo() {
 
 // grade da Home: um item por Ano do grafo ({ codigo, nome }), em ordem de ano
 export async function anosDoGrafo() {
-  const { linhas } = await executarCypher(ANOS)
+  const { linhas } = await executarCypher(ANOS, {}, { descricao: 'Home · turmas da grade' })
   return linhas.sort(
     (a, b) => numeroDoAno(a.codigo) - numeroDoAno(b.codigo) || String(a.codigo).localeCompare(String(b.codigo)),
   )

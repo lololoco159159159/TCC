@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { ANOS, LISTA_DISCIPLINAS } from '../../data/mockFuseki'
 import { OpcoesAcessibilidade } from './GrafoOverlays'
 import { MONO_LABEL } from './estilos'
 
@@ -8,46 +7,18 @@ import { MONO_LABEL } from './estilos'
 // Entrar/Criar conta por um botão de conta que abre um dropdown fixo
 // (backdrop fecha ao clicar fora):
 //   • identidade + "Alterar senha" (aviso: o fluxo chega com o sistema de contas);
-//   • "Minhas turmas": lista ano+matéria com Filtrar (aplica o recorte) e
-//     remover, + selects e "+ Adicionar" (dedupe na página);
 //   • "Acessibilidade · cores do grafo": reusa OpcoesAcessibilidade (paletas
 //     CUD + formas + sem animação) — os mesmos controles do PaletaPopover.
 // As preferências persistem em localStorage['edugraphPrefs'] (efeito na página).
-
-const SELECT_TURMA = {
-  minWidth: 0,
-  padding: '7px 8px',
-  border: '1px solid var(--pill-border)',
-  borderRadius: 9,
-  background: 'var(--bg)',
-  font: "500 12.5px/1.3 'Figtree', sans-serif",
-  color: 'var(--body)',
-  cursor: 'pointer',
-  outline: 'none',
-}
-
-// chapeuzinho de formatura (turma) — ícone do protótipo
-function IconeTurma({ tamanho }) {
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flex: 'none' }}>
-      <path d="M22 10 12 5 2 10l10 5z" />
-      <path d="M6 12v5c3 3 9 3 12 0v-5" />
-    </svg>
-  )
-}
+// N10: a seção "Minhas turmas" saiu com o mock (os anos 5.º–9.º e as matérias
+// eram dados do mock; decisão do autor — nada de dado local do grafo).
 
 function GrafoPerfil({
   aberto,
   aoAlternar,
   aoFechar,
-  turmas, // já com { ano, disciplina, label, indice }
-  aoAddTurma,
-  aoRemoverTurma,
-  aoFiltrarTurma,
   ...acessibilidade // paleta/formas/semAnim + handlers (OpcoesAcessibilidade)
 }) {
-  const [novaAno, setNovaAno] = useState(ANOS[0].id)
-  const [novaDisc, setNovaDisc] = useState(LISTA_DISCIPLINAS[0].id)
   const [senhaAviso, setSenhaAviso] = useState(false)
 
   const alternar = () => {
@@ -186,121 +157,6 @@ function GrafoPerfil({
                 O fluxo de troca de senha chega junto com o sistema de contas (em desenvolvimento).
               </p>
             )}
-
-            {/* minhas turmas */}
-            <div style={{ borderTop: '1px solid var(--pill-border)', marginTop: 16, paddingTop: 14 }}>
-              <div style={{ ...MONO_LABEL, marginBottom: 9 }}>Minhas turmas</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 11 }}>
-                {turmas.map((t) => (
-                  <div
-                    key={`${t.ano}|${t.disciplina}`}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 9,
-                      padding: '8px 10px',
-                      border: '1px solid var(--pill-border)',
-                      borderRadius: 11,
-                      background: 'var(--bg)',
-                    }}
-                  >
-                    <IconeTurma tamanho={13} />
-                    <span
-                      style={{
-                        flex: 1,
-                        minWidth: 0,
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: 'var(--text)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {t.label}
-                    </span>
-                    <button
-                      type="button"
-                      className="eg-grafo-filtrar"
-                      title="Filtrar o grafo por esta turma"
-                      onClick={() => aoFiltrarTurma(t)}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 5,
-                        padding: '5px 10px',
-                        borderRadius: 999,
-                        border: 'none',
-                        background: 'var(--green)',
-                        color: '#fff',
-                        font: "700 11.5px/1 'Figtree', sans-serif",
-                        cursor: 'pointer',
-                        flex: 'none',
-                      }}
-                    >
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M4 5h16l-6.5 8v5.5L10.5 20v-7z" />
-                      </svg>
-                      <span>Filtrar</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="eg-painel-fechar"
-                      title="Remover turma"
-                      onClick={() => aoRemoverTurma(t.indice)}
-                      style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: 7,
-                        border: '1px solid transparent',
-                        background: 'transparent',
-                        color: 'var(--faint)',
-                        fontSize: 14,
-                        lineHeight: 1,
-                        cursor: 'pointer',
-                        flex: 'none',
-                      }}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <select value={novaAno} onChange={(e) => setNovaAno(e.target.value)} style={{ ...SELECT_TURMA, flex: 1 }}>
-                  {ANOS.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.label}
-                    </option>
-                  ))}
-                </select>
-                <select value={novaDisc} onChange={(e) => setNovaDisc(e.target.value)} style={{ ...SELECT_TURMA, flex: 1.3 }}>
-                  {LISTA_DISCIPLINAS.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className="eg-turma-add"
-                  title="Adicionar turma"
-                  onClick={() => aoAddTurma(novaAno, novaDisc)}
-                  style={{
-                    padding: '7px 13px',
-                    borderRadius: 9,
-                    border: '1.5px solid var(--green)',
-                    background: 'transparent',
-                    color: 'var(--green)',
-                    font: "700 12.5px/1 'Figtree', sans-serif",
-                    cursor: 'pointer',
-                    flex: 'none',
-                  }}
-                >
-                  + Adicionar
-                </button>
-              </div>
-            </div>
 
             {/* acessibilidade (mesmos controles do popover de paleta) */}
             <div style={{ borderTop: '1px solid var(--pill-border)', marginTop: 16, paddingTop: 14 }}>

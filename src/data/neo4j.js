@@ -23,6 +23,12 @@
 //                modo leitura, erro de execução);
 //  'cancelada' — não é falha: outra consulta do mesmo `canal` tomou o lugar, ou
 //                quem chamou abortou pelo `signal`. Quem chama só ignora.
+//
+// N10: toda consulta concluída (com resposta ou com erro; as canceladas não) é
+// anunciada a quem se inscreveu em observarConsultas() — é assim que a gaveta
+// Cypher da página de grafos mostra o que o site mandou ao Neo4j por conta
+// própria. A `descricao` (opção do executarCypher) diz para que a consulta
+// serve; a do console não tem, porque quem a escreveu foi a pessoa.
 
 const ENDPOINT = '/api/cypher'
 const TEMPO_LIMITE_MS = 15000 // sem resposta nesse prazo, a consulta vira erro 'rede'
@@ -128,6 +134,20 @@ function mensagemHttp(status) {
 }
 
 const canais = new Map() // canal → função que cancela a consulta em andamento nele
+const observadores = new Set() // quem acompanha as consultas concluídas (N10)
+
+/**
+ * Inscreve `aoConcluir` para receber cada consulta concluída:
+ * { descricao, consulta, parametros, ms, linhas, erro } — `descricao` vazia na
+ * do console; `linhas`: quantas voltaram; `erro`: o código, ou null.
+ * @returns {() => void}  cancela a inscrição
+ */
+export function observarConsultas(aoConcluir) {
+  observadores.add(aoConcluir)
+  return () => {
+    observadores.delete(aoConcluir)
+  }
+}
 
 /**
  * Executa uma consulta Cypher (somente leitura) no Neo4j, via proxy do site.
@@ -139,6 +159,8 @@ const canais = new Map() // canal → função que cancela a consulta em andamen
  * @param {string} [opcoes.canal]  consultas do mesmo canal são exclusivas: uma
  *   nova cancela a anterior (ex.: 'console' — só a última execução importa).
  *   Sem canal, a consulta nunca é cancelada por outra.
+ * @param {string} [opcoes.descricao]  para que o site fez a consulta (aparece
+ *   na gaveta Cypher; ex.: 'conectar nós do resultado')
  * @param {AbortSignal} [opcoes.signal]  cancelamento externo
  * @param {number} [opcoes.tempoLimiteMs]  padrão 15000
  * @returns {Promise<{ campos: string[], linhas: object[], tempos: { disponivelApos:
@@ -150,6 +172,20 @@ const canais = new Map() // canal → função que cancela a consulta em andamen
  * @throws {ErroCypher}
  */
 export async function executarCypher(consulta, parametros = {}, opcoes = {}) {
+  const t0 = performance.now()
+  const anunciar = (ms, linhas, erro) =>
+    observadores.forEach((f) => f({ descricao: opcoes.descricao || '', consulta, parametros, ms, linhas, erro }))
+  try {
+    const r = await executar(consulta, parametros, opcoes)
+    anunciar(r.tempos.totalMs, r.linhas.length, null)
+    return r
+  } catch (e) {
+    if (e?.origem !== 'cancelada') anunciar(Math.round(performance.now() - t0), 0, e?.codigo || String(e))
+    throw e
+  }
+}
+
+async function executar(consulta, parametros, opcoes) {
   const { canal, signal, tempoLimiteMs = TEMPO_LIMITE_MS } = opcoes
   // serializa antes de qualquer preparo: parâmetro não serializável é erro de
   // programação e deve estourar como tal, não virar "falha de rede"

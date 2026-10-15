@@ -6,14 +6,13 @@ import ResultadoCypher from '../components/grafo/ResultadoCypher'
 import GrafoCanvas from '../components/grafo/GrafoCanvas'
 import GrafoPainel from '../components/grafo/GrafoPainel'
 import GrafoPerfil from '../components/grafo/GrafoPerfil'
-import { LegendaTipos, PaletaPopover } from '../components/grafo/GrafoOverlays'
+import { GavetaCypher, LegendaTipos, PaletaPopover } from '../components/grafo/GrafoOverlays'
 import GrafoEstados from '../components/grafo/GrafoEstados'
 import { PALETAS } from '../data/paletas'
 import { executarCypher } from '../data/neo4j'
 import { completarGrafo, extrairGrafo } from '../data/extrairGrafo'
 import { estiloRelacao, visualDoNo } from '../data/estiloGrafo'
 import { conexoesDoNo, expandirNo, retratoDoNo } from '../data/vizinhanca'
-import { ANOS, NOS } from '../data/mockFuseki'
 
 // Página "Grafos" — a tela que exibe o grafo de conhecimento. Protótipo:
 // design/prototipo_grafo.html. Está em transição para o Neo4j (integração,
@@ -38,8 +37,11 @@ import { ANOS, NOS } from '../data/mockFuseki'
 //    largura é descontada do palco), o desfazer com histórico de snapshots
 //    (G8), paleta para daltonismo, modo formas, sem animação e a PERSISTÊNCIA
 //    das preferências em localStorage['edugraphPrefs'] (G9–G10).
-//  - Perfil mock no header (GrafoPerfil, G10) intocado: as contas vão sair do
-//    site em roadmap próprio.
+//  - N10: o mock saiu do site. A gaveta CYPHER (GavetaCypher) mostra as
+//    consultas que o site fez sozinho (completar o resultado, conexões,
+//    expansão); o perfil mock do header (GrafoPerfil, G10) ficou só com a
+//    identidade e a acessibilidade — as "Minhas turmas" eram dados do mock.
+//    As contas vão sair do site em roadmap próprio.
 
 const PAINEL_PADRAO = { x: 12, w: 392, esc: false }
 
@@ -50,18 +52,18 @@ const DEBOUNCE_PREFS_MS = 150 // o arrasto do painel muda o estado a cada pointe
 const VISTOS_MAX = 5 // chips "Vistos por último" no painel
 const HISTORICO_EXPANSAO_MAX = 10 // snapshots do Desfazer
 const DISTANCIA_NASCIMENTO = 90 // px da origem em que nascem os nós trazidos por uma expansão
+const DIREITA_GAVETA_COM_LEGENDA = 14 + 228 + 10 // legenda: right 14 + largura 228; mais 10 de folga
 
 // Lê localStorage['edugraphPrefs'] com validação campo a campo (prefs
 // corrompidas viram padrão). Roda uma vez, na carga do módulo (só browser).
 function lerPrefs() {
-  const padrao = { paleta: 'padrao', formas: false, semAnim: false, turmas: [], painel: PAINEL_PADRAO }
+  const padrao = { paleta: 'padrao', formas: false, semAnim: false, painel: PAINEL_PADRAO }
   try {
     const p = JSON.parse(localStorage.getItem('edugraphPrefs') || '{}')
     return {
       paleta: p.paleta === 'padrao' || PALETAS[p.paleta] ? p.paleta : 'padrao',
       formas: typeof p.formas === 'boolean' ? p.formas : false,
       semAnim: typeof p.semAnim === 'boolean' ? p.semAnim : false,
-      turmas: Array.isArray(p.turmas) ? p.turmas.filter((t) => t && t.ano && t.disciplina) : [],
       painel: p.painel && typeof p.painel === 'object' ? { ...PAINEL_PADRAO, ...p.painel } : PAINEL_PADRAO,
     }
   } catch {
@@ -123,7 +125,6 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
   const [paletaAberta, setPaletaAberta] = useState(false)
   const [formas, setFormas] = useState(PREFS.formas) // formas em vez de cores (G10)
   const [semAnim, setSemAnim] = useState(PREFS.semAnim) // desativar animações e física (G10)
-  const [turmas, setTurmas] = useState(PREFS.turmas) // turmas do perfil mock (G10)
   const [perfilAberto, setPerfilAberto] = useState(false)
   const seq = useRef(0) // descarta respostas fora de ordem
   const nosRef = useRef(new Map()) // nós do grafo ATUAL (estabilidade de posição + closures assíncronas)
@@ -334,13 +335,13 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
   useEffect(() => {
     const t = setTimeout(() => {
       try {
-        localStorage.setItem('edugraphPrefs', JSON.stringify({ paleta, formas, semAnim, turmas, painel }))
+        localStorage.setItem('edugraphPrefs', JSON.stringify({ paleta, formas, semAnim, painel }))
       } catch {
         /* sem storage */
       }
     }, DEBOUNCE_PREFS_MS)
     return () => clearTimeout(t)
-  }, [paleta, formas, semAnim, turmas, painel])
+  }, [paleta, formas, semAnim, painel])
 
   // modo "formas em vez de cores": o atributo no <html> troca a forma dos
   // pontinhos DOM (classes .eg-forma-* no index.css); o canvas recebe via prop
@@ -369,20 +370,6 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
     Object.entries(cores).forEach(([token, cor]) => raiz.setProperty(token, cor))
     return () => Object.keys(cores).forEach((token) => raiz.removeProperty(token))
   }, [paleta])
-
-  // ---- turmas do perfil mock (G10) ----
-  const rotuloTurma = (t) =>
-    `${(ANOS.find((a) => a.id === t.ano) || {}).label || t.ano} · ${NOS.get(t.disciplina)?.label || t.disciplina}`
-  const turmasUI = turmas.map((t, i) => ({ ...t, label: rotuloTurma(t), indice: i }))
-  const aoAddTurma = (ano, disciplina) =>
-    setTurmas((ts) =>
-      ts.some((t) => t.ano === ano && t.disciplina === disciplina) ? ts : [...ts, { ano, disciplina }],
-    )
-  const aoRemoverTurma = (i) => setTurmas((ts) => ts.filter((_, j) => j !== i))
-  // "Filtrar" de uma turma: o fluxo de filtros do mock saiu na N3 e os filtros
-  // novos ainda não existem — por ora só fecha o perfil. O GrafoPerfil fica
-  // intocado (as contas vão sair do site; ESTADO_ATUAL.md §4.5).
-  const aoFiltrarTurma = () => setPerfilAberto(false)
 
   // ---- toggles de acessibilidade (G10) ----
   const aoToggleFormas = () => setFormas((f) => !f)
@@ -474,10 +461,6 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
             aberto={perfilAberto}
             aoAlternar={() => setPerfilAberto((a) => !a)}
             aoFechar={() => setPerfilAberto(false)}
-            turmas={turmasUI}
-            aoAddTurma={aoAddTurma}
-            aoRemoverTurma={aoRemoverTurma}
-            aoFiltrarTurma={aoFiltrarTurma}
             {...acessibilidade}
           />
         </SiteHeader>
@@ -567,10 +550,18 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
           )}
 
           {/* legenda "Tipos de nó" (N6): os rótulos do grafo da tela; ocultar é
-              só no desenho. A gaveta SPARQL (G9) volta como gaveta Cypher na N10 */}
+              só no desenho */}
           {status === 'pronto' && temGrafo ? (
             <LegendaTipos rotulos={rotulosLegenda} tiposTracejados={tiposTracejados} aoAlternar={alternarOculto} />
           ) : null}
+
+          {/* gaveta Cypher (N10): as consultas que o site fez sozinho. Sempre
+              montada (guarda as que rodam enquanto o palco carrega); aparece
+              com o resultado, à esquerda da legenda quando ela está na tela */}
+          <GavetaCypher
+            visivel={status === 'pronto'}
+            direita={temGrafo ? DIREITA_GAVETA_COM_LEGENDA : 14}
+          />
 
           {/* desfazer expansão (pill abaixo do resumo, G8) */}
           {status === 'pronto' && desfaziveis > 0 && (

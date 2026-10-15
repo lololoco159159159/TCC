@@ -31,6 +31,7 @@
 > **Superada pela D14 (2026-10-09):** o servidor passou a ser um Neo4j (Cypher), e o
 > dublê é aposentado ao fim da integração. O raciocínio abaixo continua valendo
 > como registro de como as telas foram construídas antes de os dados existirem.
+> **Encerrada pela D17 (2026-10-15, N10):** o `mockFuseki.js` foi apagado.
 
 **O problema.** O TCC precisa de um servidor de grafos (Apache Jena Fuseki) para
 responder consultas SPARQL, mas construir front-end e back-end ao mesmo tempo
@@ -71,6 +72,9 @@ chamada HTTP, sem alterações nas camadas de apresentação."
 **Quando:** decisão de escopo, consolidada na Etapa 15 (G10) · **Onde:**
 [src/pages/Login.jsx](src/pages/Login.jsx), [src/pages/Signup.jsx](src/pages/Signup.jsx),
 [src/components/GrafoPerfil.jsx](src/components/GrafoPerfil.jsx)
+
+> **Revista pela D17 (2026-10-15, N10):** as turmas saíram do perfil (eram dados do
+> mock); ele ficou com a identidade e as preferências de acessibilidade.
 
 **O problema.** Um produto real precisa de autenticação, mas implementá-la (servidor,
 banco de usuários, hash de senha, sessões) não agrega contribuição acadêmica — é
@@ -708,6 +712,66 @@ fundamental em Matemática —, de modo que a inclusão de novos anos ou compone
 grupo de pesquisa se reflete na interface sem alteração de código. Elementos que
 dependem de entidades ainda não modeladas, como a seleção por componente curricular,
 foram suspensos até que o modelo as contemple."
+
+---
+
+## D17 — Nenhum dado local do grafo: o mock sai, o perfil perde as turmas e as consultas do site ficam à vista (fecha D1, revê D2)
+
+**Quando:** 2026-10-15, N10 do roadmap (ESTADO_ATUAL.md §4.5), decisões do autor ·
+**Onde:** [src/data/neo4j.js](src/data/neo4j.js) (`observarConsultas`),
+[src/components/grafo/GrafoOverlays.jsx](src/components/grafo/GrafoOverlays.jsx)
+(`GavetaCypher`), [src/components/grafo/GrafoPerfil.jsx](src/components/grafo/GrafoPerfil.jsx),
+[src/pages/Grafos.jsx](src/pages/Grafos.jsx), [src/App.jsx](src/App.jsx); apagados
+`src/data/mockFuseki.js` e `src/components/grafo/GrafoFiltros.jsx`
+
+**O problema.** Depois da N9, o mock do Fuseki (D1) só sobrevivia em três lugares: a
+barra de filtros antiga (sem uso desde a N3), o perfil mock ("Minhas turmas", com os
+anos 5.º–9.º e as matérias do mock) e os rótulos de turma da página. As turmas eram
+dado do grafo **guardado no código** — de um modelo que não existe mais (o grafo real
+não tem 5.º–9.º nem componente curricular). E a gaveta SPARQL, que mostrava a consulta
+enviada ao mock, tinha perdido o sentido; o site, porém, continua fazendo consultas por
+conta própria (completar o resultado, conexões do painel, expansão) que ninguém via.
+
+**A decisão.** (1) **O site não guarda nenhuma informação do grafo** — só consultas
+para serem feitas pela API (as de exemplo, em `consultasExemplo.js`); tudo o que
+aparece vem do Neo4j. O `mockFuseki.js` foi apagado. (2) O **perfil mock continua** no
+header da página de grafos, mas só com a identidade e as **opções de acessibilidade**:
+a seção "Minhas turmas" saiu inteira (com ela, o campo `turmas` das preferências
+salvas). (3) A barra de filtros antiga (`GrafoFiltros.jsx`) foi **apagada** — o
+redesenho dos filtros vai ser sobre o modelo novo, e o código antigo fica no histórico
+do git. Saiu também o deep-link `?serie=&disciplina=` do App. (4) A gaveta SPARQL virou
+a **gaveta Cypher**: o cliente (`neo4j.js`) anuncia cada consulta concluída, e a gaveta
+lista as **10 últimas que o site fez sozinho** — para que serviu cada uma, o texto
+Cypher, os parâmetros, quantas linhas voltaram, o tempo e o erro, se houve. Sai o
+"Simular falha (HTTP 503)": as falhas agora são reais.
+
+**Alternativas rejeitadas.** (a) *Copiar só a lista de anos e matérias para um arquivo
+pequeno e manter as turmas:* continuaria sendo dado do grafo fixado no código, de um
+modelo que o grafo real não tem; (b) *adiar a remoção do mock até as contas saírem:* o
+site iria ao ar (N11) ainda com dados fictícios; (c) *tirar o perfil inteiro agora:*
+anteciparia a remoção das contas, que tem roadmap próprio, e esconderia as opções de
+acessibilidade do header; (d) *gaveta com uma consulta só:* uma ação (expandir,
+completar o resultado) faz duas consultas — mostrar só a última esconderia a outra.
+
+**Para a banca.** *"Desde a remoção do mock, o site não tem nenhum dado do grafo no
+código: tudo o que aparece vem do Neo4j. E as consultas que o site faz por conta
+própria não ficam escondidas — a gaveta Cypher mostra cada uma, com parâmetros, linhas
+e tempo, do mesmo jeito que a gaveta SPARQL mostrava as do protótipo."*
+
+**Monografia** *(cap. de Implementação, seção de integração com o banco de grafos —
+encerra a D1 e retoma a D2):*
+"Concluída a integração, o módulo de simulação do servidor de grafos foi removido, e a
+aplicação deixou de manter qualquer dado curricular em seu código-fonte: todas as
+informações exibidas são obtidas por consultas Cypher ao Neo4j, e o único conteúdo
+local remanescente são consultas de exemplo. Elementos que dependiam do modelo
+simulado — a lista de turmas do perfil de demonstração e a barra de filtros original —
+foram retirados, permanecendo apenas as preferências de acessibilidade do usuário. Para
+preservar a transparência das operações, a camada de acesso a dados passou a notificar
+cada consulta concluída, e a interface disponibiliza um registro das consultas emitidas
+automaticamente pela aplicação (complementação do resultado, vizinhança de um vértice e
+expansão), com o texto Cypher, os parâmetros, o número de registros retornados e o
+tempo de resposta — o que permite auditar, durante o uso, exatamente o que é solicitado
+ao banco."
 
 ---
 

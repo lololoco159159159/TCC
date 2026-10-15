@@ -132,7 +132,7 @@ const CHIP = {
   color: 'var(--body)',
 }
 const SUBTITULO = { ...MONO_LABEL, display: 'block', padding: '14px 16px 6px', color: 'var(--muted)' }
-// bloco "terminal": as mesmas cores fixas da gaveta SPARQL (escuro nos 2 temas)
+// bloco "terminal": as mesmas cores fixas da gaveta Cypher (escuro nos 2 temas)
 const TERMINAL = {
   margin: 12,
   background: '#1c2620',

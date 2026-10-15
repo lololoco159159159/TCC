@@ -1,6 +1,6 @@
 // Depoimentos de professores (dados mockados).
 // Conteúdo verbatim do protótipo final. Mantidos aqui, separados da interface,
-// para facilitar a troca futura por uma consulta SPARQL ao grafo de conhecimento.
+// para facilitar a troca futura por uma consulta Cypher ao grafo de conhecimento.
 // Cada item: { nome, funcao, etapa, texto }.
 
 const depoimentos = [
