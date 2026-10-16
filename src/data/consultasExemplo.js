@@ -3,8 +3,8 @@
 // desta turma" da Home abre (N9). São as consultas de teste que a orientadora
 // passou, copiadas sem mudança — inclusive os títulos e a 7.ª, que tem um erro de
 // sintaxe (falta o `)` depois de `:UnidadeTematica`) e serve para testar o card de
-// erro. O arquivo neo4j/consultas da raiz é só o registro do material dela; o
-// site não o lê.
+// erro. O arquivo original dela (neo4j/consultas) saiu do repositório em
+// 2026-10-15; este módulo é a cópia que o site usa.
 
 // "ano direto p habilidade" — também é a consulta do "Ver o grafo desta turma"
 export const CONSULTA_ANO_HABILIDADES = `MATCH p = (:Ano)-[:DESENVOLVE_HABILIDADE]->(:Habilidade)

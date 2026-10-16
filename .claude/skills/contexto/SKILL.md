@@ -20,7 +20,10 @@ skill — o objetivo é entender o estado do trabalho antes de qualquer tarefa.
    mais de uma chamada de Read se for preciso — não responda a partir de
    leitura parcial. A pasta `design/` (os protótipos "bundled" usados como
    referência na migração) foi retirada em 2026-10-15 e **não é mais usada**:
-   não tente recuperá-la — se for necessária, o autor a traz de volta.
+   não tente recuperá-la — se for necessária, o autor a traz de volta. A
+   pasta `neo4j/` (material da orientadora: script de carga e consultas de
+   teste) também saiu; as consultas de teste vivem em
+   `src/data/consultasExemplo.js`.
 2. **guia/DECISOES.md** — as decisões de projeto (D1, D2, D3…),
    cada uma com problema, decisão, alternativas rejeitadas, fala pronta para a
    banca e parágrafo de monografia. É o material de defesa e de escrita do
@@ -48,7 +51,8 @@ skill — o objetivo é entender o estado do trabalho antes de qualquer tarefa.
   precisa estar nos arquivos versionados (ESTADO_ATUAL.md, guia/DECISOES.md),
   nunca apenas na conversa ou no CLAUDE.md. A outra máquina precisa do seu
   próprio `.env.local` (copiado do `.env.example`) e de um Neo4j com os mesmos
-  dados.
+  dados (o script de carga da orientadora não fica no repositório — ver
+  "Material de origem" na §4.5).
 - Os commits são feitos **pelo autor**, sem nenhum rastro de IA (regra §0 do
   ESTADO_ATUAL.md) — implemente, verifique (`npm run lint` / `npm run build` /
   `npm run dev`), registre a etapa no ESTADO_ATUAL.md e apenas sugira a

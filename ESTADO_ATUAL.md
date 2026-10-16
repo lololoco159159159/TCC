@@ -808,8 +808,8 @@ construídas contra o mock e integradas ao Neo4j na §4.5. Restam:
 2. **PENDENTE (pausado em 2026-10-09) — Desempenho do motor do grafo**: P0–P2
    feitas; **P3, P4 e P5 pendentes** — roadmap §4.4. Retomar depois da integração.
 3. **FOCO ATUAL — Integração com o Neo4j** (substitui o antigo plano de Apache
-   Jena Fuseki/SPARQL) — §4.5. **N1–N10 feitas e testadas; a próxima etapa (N11)
-   será definida pelo autor.**
+   Jena Fuseki/SPARQL) — §4.5. **N1–N10 feitas e testadas; próximas: N11 (globo da
+   Home com dados reais) e N12 (física e layout hierárquico do Neo4j Browser).**
 
 ### 4.1 Página de grafos — caminho por etapas (G1–G11)
 
@@ -1464,7 +1464,7 @@ o commit é do autor.
     toda interação da lista de teste volta a acordar o loop e a dormir depois.
 > **P3–P5 PENDENTES** — pausadas em 2026-10-09 pela mudança de foco para a
 > integração com o Neo4j (§4.5). A linha de base da P1 foi medida com o mock:
-> medir de novo antes da P3.
+> medir de novo antes da P3 — e depois da N12, que troca a física do motor.
 
 - [ ] **P3 — Custo por quadro**: tudo em `GrafoCanvas.jsx`, sem mudança visual.
   - (a) **Grid num único path**: `beginPath()` uma vez, `moveTo`+`arc` por ponto,
@@ -1538,7 +1538,7 @@ ficam pendentes.
   dados locais como segundo plano/fallback. O `mockFuseki.js` deixa de ser fonte
   de dados do app (a remoção/substituição é parte do trabalho desta seção).
 - **Mostrar o grafo como o Neo4j Browser mostra** ao rodar a consulta da árvore
-  (`neo4j/consultas`, "arvore completa"): nós `Ano → UnidadeTematica →
+  ("arvore completa", das consultas de teste da orientadora): nós `Ano → UnidadeTematica →
   ObjetoConhecimento → Habilidade` e as arestas entre eles.
 - **O Ano é um nó** do grafo (não só um filtro).
 - **O grafo atual é uma versão resumida** do que a orientadora ainda está
@@ -1547,8 +1547,13 @@ ficam pendentes.
 - **Não haverá mais sistema de usuários/cadastro.** Login/Signup/perfil mock **não
   devem ser alterados agora** — vão acabar deixando de existir, em etapa futura.
 
-**Material de origem:** [neo4j/exemplo_rosiane_alterado](neo4j/exemplo_rosiane_alterado)
-(script Cypher de carga) e [neo4j/consultas](neo4j/consultas) (consultas de teste).
+**Material de origem:** o script Cypher de carga (`exemplo_rosiane_alterado`) e as
+consultas de teste (`consultas`) da orientadora. Ficavam na pasta `neo4j/`, **retirada
+do repositório em 2026-10-15**: o site não usa esses arquivos (as consultas de teste
+foram copiadas sem mudança para [src/data/consultasExemplo.js](src/data/consultasExemplo.js)).
+O script de carga é material da orientadora e não fica no repositório — para montar o
+Neo4j numa máquina, rodar no Browser a cópia que o autor guarda ou a versão mais
+recente enviada por ela.
 Neo4j local em `http://localhost:7474` (Browser em `/browser/`), banco `neo4j`.
 
 **Estado do banco (conferido em 2026-10-09):** Neo4j 2026.09 Community, Cypher 5/25.
@@ -1559,7 +1564,7 @@ nome}`, `UnidadeTematica{nome}`, `ObjetoConhecimento{descricao}`,
 `Habilidade{codigo, descricao}`. Sem constraints/índices.
 
 **Direção técnica:** detalhada no roadmap abaixo (arquitetura, contrato, regras e
-etapas N0–N10). Em resumo: **Query API HTTP** com `fetch` (sem dependência nova),
+etapas N0–N12). Em resumo: **Query API HTTP** com `fetch` (sem dependência nova),
 sempre através de um **proxy do lado servidor** que guarda a senha — a edição
 Community não tem usuário só-leitura e o site vai para o ar. A UI foi construída
 sobre o modelo do protótipo (habilidade/conceito/disciplina; `desenvolve`/
@@ -1575,10 +1580,12 @@ fixas), **D10** (recorte 5.º–9.º).
    UnidadeTematica/ObjetoConhecimento.
 3. Não há nó de componente curricular (a matéria só aparece no código `MA`) nem
    relação de progressão entre anos; descrições das habilidades estão truncadas.
-4. [neo4j/consultas:26](neo4j/consultas) tem erro de sintaxe (falta `)` depois de
-   `:UnidadeTematica`).
+4. A 7.ª consulta de teste dela ("professor colocar as habilidades que precisa
+   ensinar no ano", linha 26 do arquivo `consultas`; cópia idêntica em
+   [src/data/consultasExemplo.js](src/data/consultasExemplo.js)) tem erro de sintaxe
+   (falta `)` depois de `:UnidadeTematica`).
 
-#### Roadmap da integração — etapas N0–N10
+#### Roadmap da integração — etapas N0–N12
 
 *Proposto em 2026-10-09.* A ordem segue um princípio simples: **primeiro provar que
 os dados chegam** (N1–N3), **depois provar que foram entendidos** (N4) e **só então
@@ -1586,7 +1593,8 @@ desenhar** (N5) — se o grafo sair errado, já se sabe em qual camada procurar.
 seguida voltam, uma a uma, as funções que hoje dependem do mock (N6–N9) e o mock sai
 (N10). A barra de filtros **não** é adaptada: vai ser
 redesenhada depois, e até lá o lugar dela é de um **console Cypher** para testar a
-integração.
+integração. **N11 e N12** (acrescentadas em 2026-10-15) levam os dados reais ao globo
+da Home e trazem para o canvas a física e o layout hierárquico do Neo4j Browser.
 
 - [x] **N0** — Este roadmap *(2026-10-09)*
 - [x] **N1** — Conexão: proxy de desenvolvimento e senha fora do código (+ D14) *(2026-10-09)*
@@ -1599,9 +1607,11 @@ integração.
 - [x] **N8** — Expandir e desfazer com Cypher *(2026-10-15)*
 - [x] **N9** — Home com dados do Neo4j *(2026-10-15)*
 - [x] **N10** — Remoção do mock *(2026-10-15)*
+- [ ] **N11** — Globo da Home com dados do Neo4j (objetos de conhecimento)
+- [ ] **N12** — Física igual à do Neo4j Browser + layout hierárquico
 
-**N1–N10 finalizadas e testadas pelo autor** (confirmado em 2026-10-15). A próxima
-etapa (N11) será definida pelo autor.
+**N1–N10 finalizadas e testadas pelo autor** (confirmado em 2026-10-15). N11 e N12
+planejadas em 2026-10-15 (detalhes no fim desta seção).
 
 **Fora deste roadmap** (registrado para não se perder): o redesenho dos filtros, da
 busca e do deep-link sobre o modelo novo; a remoção do sistema de contas (roadmap
@@ -1673,13 +1683,15 @@ produção:        proxy = a definir (mesmo caminho /api/cypher)
   do `GrafoPerfil`, porque eram dados do mock.)
 - Motor do canvas (D3/D4) intacto — física, câmera e tempos. Só a tabela de molas
   por tipo de relação muda, porque os tipos mudaram. Acessibilidade (D6) preservada.
+  **Exceção planejada: a N12**, que troca a física pela do Neo4j Browser (pedido do
+  autor, 2026-10-15) — com decisão própria no DECISOES.md.
 - Bug fora do escopo da etapa → anotar aqui, não corrigir junto.
 
 **Números de referência** — base local de 2026-10-09 (1.º ano de Matemática),
 calculados direto no Neo4j. **Mudam quando a orientadora atualizar a base**:
 recalcular antes de usar como critério.
 
-| # | Consulta de [neo4j/consultas](neo4j/consultas) | Linhas | Nós | Relações | Relações com "conectar nós" |
+| # | Consulta de teste ([consultasExemplo.js](src/data/consultasExemplo.js), mesma ordem) | Linhas | Nós | Relações | Relações com "conectar nós" |
 |---|---|---|---|---|---|
 | 1 | árvore completa | 22 | 45 | 44 | 66 |
 | 2 | geometria completa | 4 | 8 | 7 | 7 |
@@ -1710,8 +1722,8 @@ senha do lado do servidor. **Nenhuma tela muda.**
   `NEO4J_DATABASE=neo4j`, `NEO4J_USER=neo4j`, `NEO4J_PASSWORD=…`.
 - `.env.example` (versionado, **sem** senha) com as mesmas variáveis — é por ele que
   a outra máquina monta o seu `.env.local`. A outra máquina também precisa do Neo4j
-  com os mesmos dados (rodar [neo4j/exemplo_rosiane_alterado](neo4j/exemplo_rosiane_alterado)
-  no Browser dela).
+  com os mesmos dados (rodar o script de carga da orientadora no Browser dela — ver
+  "Material de origem" no início da §4.5).
 - [vite.config.js](vite.config.js): `loadEnv` + `server.proxy` **e** `preview.proxy`
   de `/api/cypher` para `${NEO4J_URL}/db/${NEO4J_DATABASE}/query/v2`, com o
   cabeçalho `Authorization: Basic …` montado das variáveis.
@@ -1776,8 +1788,9 @@ do autor) → 502 JSON em ~3 ms; (4) `.env.local` ignorado pelo git; a senha e o
 acima, no `npm run dev` dele; confirmado em 2026-10-15).
 
 **Na outra máquina:** copiar `.env.example` para `.env.local` e preencher a senha;
-ter o Neo4j rodando com os mesmos dados (script
-[neo4j/exemplo_rosiane_alterado](neo4j/exemplo_rosiane_alterado) no Browser dela).
+ter o Neo4j rodando com os mesmos dados (o script de carga da orientadora rodado no
+Browser dela; o arquivo não fica no repositório — ver "Material de origem" no início
+da §4.5).
 
 ---
 
@@ -1896,10 +1909,10 @@ os filtros vão ser redesenhados).
 **O que fazer:**
 - `src/components/grafo/ConsoleCypher.jsx`: caixa de texto em fonte mono, botão
   **Executar** (e Ctrl/Cmd+Enter), menu de **exemplos** com as consultas de
-  [neo4j/consultas](neo4j/consultas) — lidas do próprio arquivo (import `?raw`), para
+  `neo4j/consultas` — lidas do próprio arquivo (import `?raw`), para
   acompanharem o que a orientadora mandar — e linha de status (linhas · tempos do
   Neo4j · tempo total). **Ajuste do autor (2026-10-15):** o site não lê mais a pasta
-  `neo4j/` — ela é só o registro do material da orientadora. Os exemplos foram
+  `neo4j/` (que depois foi retirada do repositório). Os exemplos foram
   copiados sem mudança para [src/data/consultasExemplo.js](src/data/consultasExemplo.js)
   (`CONSULTAS_EXEMPLO`; conferido: idênticos ao que o console lia), que também exporta
   `CONSULTA_ANO_HABILIDADES` — a consulta do "Ver o grafo desta turma" da Home (N9)
@@ -1943,7 +1956,8 @@ Como ficou:
   a linha. Linha de status: `linhas · Neo4j: pronto em X ms, lido em Y ms · total no
   navegador: Z ms` (+ `avisos: N`); antes da 1.ª execução, "Ctrl+Enter executa ·
   somente leitura".
-- **Exemplos** lidos do próprio [neo4j/consultas](neo4j/consultas) (import `?raw`):
+- **Exemplos** lidos do próprio `neo4j/consultas` (import `?raw`; hoje vêm do
+  `consultasExemplo.js` — ajuste de 2026-10-15 acima):
   cada `// título` abre um exemplo. Os títulos aparecem como estão no arquivo
   (inclusive "habiludade irma"); se a orientadora trocar o arquivo, o menu acompanha.
 - **Resultado** (vidro do painel, mais opaco — 92%, para a tabela ler firme; z-index
@@ -2621,6 +2635,209 @@ vizinhos* (+ *conectar os novos*, se trouxe nós); `MATCH ()-[r:TEM_UNIDADE]->()
 → *pontas das relações do resultado*. No perfil: só identidade, "Alterar senha" e
 acessibilidade.
 
+---
+
+#### N11 — Globo da Home com dados do Neo4j (objetos de conhecimento)
+
+*Planejada em 2026-10-15.*
+
+**Objetivo:** o grafo-globo da 2.ª seção da Home ("Cada matéria tem sua rede.",
+[GraphSection.jsx](src/components/GraphSection.jsx)) deixa de usar os **15 nós e 21
+arestas escritos no código** — conteúdo do protótipo ("Pensamento Computacional",
+"Algoritmo", matérias, rótulos como "base para"/"apoia") — e passa a mostrar a rede
+real do Neo4j, montada sobre os **objetos de conhecimento**. É o último dado de grafo
+que ainda vive no código (contra a D17).
+
+**Dados de hoje** (conferidos no Neo4j em 2026-10-15): 5 `UnidadeTematica` · 17
+`ObjetoConhecimento` · 17 `TEM_OBJETO` (cada objeto pertence a uma unidade; "Números"
+tem 6). As descrições dos objetos vão de 14 a 120 caracteres (ex.: "Quantificação de
+elementos de uma coleção: estimativas, contagem um a um, …").
+
+**O que fazer:**
+- **Consulta** em [resumoGrafo.js](src/data/resumoGrafo.js) (mesmo padrão da N9, com
+  `parameters` e `descricao`): `MATCH (ut:UnidadeTematica)-[r:TEM_OBJETO]->
+  (oc:ObjetoConhecimento) RETURN ut, r, oc LIMIT $limite`, convertida pela
+  `extrairGrafo` (N4) — nós e relações reais, chave `elementId`.
+- **Nós do globo:** as **unidades temáticas como polos** (o papel do "Pensamento
+  Computacional", hoje o único `hub`) e os **objetos de conhecimento** em volta da sua
+  unidade; arestas = as relações `TEM_OBJETO` de verdade.
+- **Posições calculadas, não escritas à mão** (saem os vetores `vec` fixos): cada
+  unidade recebe um ponto bem espalhado na esfera (espiral de Fibonacci — o mesmo
+  ângulo áureo do `montarGrafo`) e os seus objetos se distribuem numa calota em volta
+  dela. Determinístico (ordem por nome): o globo sai igual a cada visita e cresce
+  sozinho quando a orientadora carregar mais dados.
+- **Rótulos:** a legenda curta da tabela de estilo ([estiloGrafo.js](src/data/estiloGrafo.js)
+  — objeto encurtado em 28 caracteres, a mesma do canvas) e o texto completo no hover.
+  O rótulo da aresta no hover passa a ser o **tipo** da relação (`TEM_OBJETO`), como
+  no canvas e no Browser.
+- **Carregando / Neo4j fora do ar:** o globo (wireframe) aparece sem nós, e giro,
+  deslize e painel seguem iguais; na falha, aviso discreto no estilo da grade ("Não foi
+  possível carregar a rede agora."). Sem mock (D14/D17).
+- **Textos da seção** que falam do mock — pill "Passe o mouse nas **matérias**…",
+  título "Cada matéria tem sua rede.", parágrafo sobre computação × português ×
+  ciências: ajustar ao que o grafo mostra. **O texto final é do autor.**
+- Intocados: a animação de scroll (giro 360°, deslize, painel de texto), o hover e o
+  tema.
+
+**Decidir com o autor antes de implementar:**
+1. **Quais nós entram.** Recomendado: unidades temáticas + objetos de conhecimento (22
+   nós, 17 relações reais). Alternativas: só objetos (não há relação entre eles — seria
+   preciso inventar uma "mesma unidade", contra a D16/D17); objetos + habilidades (39
+   nós com `DESENVOLVE`: os códigos `EF01MA01…` dizem pouco numa vitrine e o globo fica
+   cheio).
+2. **Limite** para quando o grafo crescer (proposta: 30 nós; passando disso, ficam as
+   unidades e os objetos com mais habilidades). Atenção ao ponto 1 da orientadora: hoje
+   a "Números" de anos diferentes viraria um nó só.
+3. **Cor dos pontinhos:** manter o visual atual (pílulas neutras, polo verde) ou pintar
+   o pontinho com a cor do rótulo (`--no-unidade` / `--no-objeto`), conversando com a
+   legenda da página de grafos.
+4. **Clique num nó** (hoje o globo só tem hover): abrir a página de grafos com a
+   consulta daquele objeto exigiria o console aceitar parâmetros (as consultas do site
+   usam sempre `parameters`). Proposta: fica fora da N11.
+5. Os textos novos da seção.
+
+**Como testar (autor):** o globo mostra as 5 unidades e os 17 objetos (os mesmos que o
+Browser devolve para `MATCH (ut:UnidadeTematica)-[r:TEM_OBJETO]->(oc) RETURN ut, r,
+oc`); hover em "Números" acende os seus 6 objetos e as 6 arestas, com o rótulo
+`TEM_OBJETO`; hover em "Medidas de tempo" acende "Grandezas e medidas"; descrições
+longas encurtadas, com o texto completo no hover; giro e deslize do scroll iguais a
+antes; tema escuro; widget A/A; Neo4j parado → a Home abre e o globo fica vazio, com o
+aviso.
+
+**Pronto quando:** nenhum nó ou aresta do globo vem do código (`GraphSection.jsx` sem
+`NODES`/`EDGES`) e os testes passam. Registrar como nota na **D16** (a Home inteira
+passa a vir do grafo).
+
+---
+
+#### N12 — Física igual à do Neo4j Browser + layout hierárquico
+
+*Planejada em 2026-10-15.*
+
+**Objetivo:** o grafo da página de grafos se comporta como o do Neo4j Browser:
+(1) a física passa a ser a do layout **"Force-based"** do Browser; (2) a página ganha o
+**"Hierarchical layout"**, com o mesmo algoritmo e os mesmos parâmetros, e um seletor
+entre os dois, como o do Browser.
+
+**De onde vêm os números.** Extraídos em 2026-10-15 do próprio Browser servido pelo
+Neo4j 2026.09 do autor (`localhost:7474/browser/`) — a classe `d3ForceLayout` do pacote
+de visualização (`vendor-neo4j-ndl`) e o worker `HierarchicalLayout`. O código foi só
+**lido** (nada instalado). A implementação **reproduz parâmetros e comportamento, sem
+copiar código do Browser**; as duas peças de código aberto que ele embute — **d3-force**
+(licença ISC) na física e **dagre 0.8.14** (MIT) no hierárquico — podem ser portadas,
+com a nota de licença. O Browser trabalha em pixels do dispositivo (multiplica as
+distâncias pelo `devicePixelRatio`); o canvas daqui trabalha em pixels CSS, então
+valem os números com `devicePixelRatio = 1`. O Browser oferece **só esses dois
+layouts**, e o padrão é o de forças. (A física das telas de modelo de dados e de
+importação do Browser é outra — repulsão −200, molas até 0,2 — e não vale aqui.)
+
+**1. Física "Force-based" — Browser × hoje**
+
+| | Neo4j Browser | EduGraph hoje (G5/N5) |
+|---|---|---|
+| Motor | d3-force: velocidade × 0,6 a cada passo (`velocityDecay` 0,4); alpha começa em 1 e para abaixo de 0,05, caindo ≈ 2,28% por passo (1 − 0,001^(1/300)) | alpha × 0,988 por quadro, para em 0,012; damping 0,86 |
+| Repulsão | `forceManyBody`, força −400 (aproximação de Barnes–Hut, θ = 0,9) | min(2800/d², 12) · alpha, todos os pares |
+| Colisão | `forceCollide`, raio = tamanho + 25 | centros a ≥ rA + rB + 10, empurrão 0,35 |
+| Molas | `forceLink`: distância = tamA + tamB + 90; força = 1,2 / (min(gA, gB) + (max(gA, gB) − 1)/100), limitada a [0,06; 1] (g = nº de relações do nó) | comprimento por tipo de relação (150/130/120/280), força 0,028 |
+| Centro | `forceX`/`forceY` para (0, 0), força 0,03 | gravidade 0,0045 |
+| Tamanho do nó nas contas | 25 (padrão) | raios 19/16/13/11 (tabela de estilo) |
+| 1.ª carga | nós sem posição num círculo de raio 45·√n; **pré-cálculo antes do 1.º desenho**: até 200 passos (ou 300 ms) com alpha fixo em 1 e repulsão dobrada (−800), depois até 100 ms com −400 até esfriar; o que sobrar anima | espiral de ângulo áureo por anel de rótulo; tudo animado; enquadra a 420 ms |
+| Mudança no grafo (expansão) | reaquece para alpha 1 | reaquece para 0,8; nós novos a 90 px da origem |
+| Arrastar um nó | o nó **fica preso onde foi solto** (`pinned`); reaquece para 0,2 | o nó volta à física ao soltar; reaquece para ≥ 0,25 |
+| Aleatoriedade | gerador fixo (semente 1): a mesma entrada dá sempre o mesmo desenho | — |
+
+**2. Layout hierárquico do Browser**
+- Algoritmo **dagre** (desenho em camadas, de Sugiyama): ranqueamento `tight-tree`, de
+  cima para baixo (`TB`), `nodesep` 75 e `ranksep` 75; cada nó ocupa uma caixa de
+  tamanho × 2,63 (1/0,38) — 66 px com o tamanho 25. A NVL aceita outras direções e um
+  2.º empacotamento, mas **a interface do Browser não os oferece** (fica `down`/`bin`).
+- **Uma aresta por par de nós** (o sentido da 1.ª relação decide quem fica acima; laços
+  ignorados). Na árvore: Ano no topo → unidades → objetos → habilidades.
+- Relação que atravessa mais de um nível (ex.: o atalho `DESENVOLVE_HABILIDADE`,
+  Ano → Habilidade) é desenhada **dobrada**, pelos pontos intermediários que o dagre
+  calcula (pontos alinhados são removidos).
+- Partes desconectadas (duas árvores, nós soltos): cada uma é arranjada sozinha e
+  depois **empacotada** (`bin`): a maior primeiro, caixas com 100 px de folga.
+- O grafo **não sai do lugar**: o resultado é deslocado para o centroide das posições
+  anteriores, e a troca é uma **transição animada de 400 ms**. Sem física no
+  hierárquico; o layout é refeito a cada mudança no grafo (consulta nova, expansão,
+  desfazer).
+- Seletor do Browser: dois botões com ícone, "Force-based layout" e "Hierarchical
+  layout"; a escolha fica salva.
+
+**O que fazer:**
+- **Física** ([GrafoCanvas.jsx](src/components/grafo/GrafoCanvas.jsx)): trocar o
+  `fisica()` pelo modelo da tabela (as cinco forças e o passo de simulação do d3-force,
+  implementados aqui, com o gerador fixo), sem mexer no resto do motor: render sob
+  demanda da P2 (o loop dorme quando alpha < 0,05 e nada mais se mexe), câmera,
+  hit-test, HiDPI e a API imperativa (`reaquecer`, `assentar`, `enquadrar`…).
+- **Semente e pré-cálculo** ([Grafos.jsx](src/pages/Grafos.jsx), `montarGrafo`): círculo
+  de 45·√n no lugar da espiral por anel; pré-cálculo antes do 1.º desenho, como no
+  Browser.
+- **Hierárquico:** módulo novo `src/data/layoutHierarquico.js`, puro (sem React), que
+  recebe nós e relações e devolve posições + pontos de dobra das arestas; o canvas faz
+  a transição de 400 ms e desenha as arestas dobradas (conferir no Browser se a dobra é
+  reta ou curva).
+- **Seletor** na coluna de controles do palco (junto de +/−/recentrar e da paleta): dois
+  botões, "Layout de forças" e "Layout hierárquico" (`aria-pressed`, ícones no espírito
+  dos do Browser). A escolha vai para o `edugraphPrefs` (`layout`, validado no
+  `lerPrefs`); o padrão é **forças**, como no Browser.
+- **Tabela de estilo** ([estiloGrafo.js](src/data/estiloGrafo.js)): sai o comprimento de
+  mola por tipo de relação (no Browser a distância depende do tamanho dos nós, não da
+  relação); o tracejado fica.
+- **Acessibilidade (D6):** "Desativar animações e física" → forças: pré-cálculo até
+  esfriar, sem animar; hierárquico: salta para as posições, sem a transição.
+- **DECISOES.md** (com parágrafo de monografia): **D18** — o motor deixa de ser fiel ao
+  protótipo e passa a ser fiel ao Neo4j Browser (revê a **D3**, inclusive o argumento
+  das "molas semânticas" do parágrafo de monografia, e a **D4**); e a forma escolhida
+  para ter o dagre (item 1 abaixo).
+
+**Decidir com o autor antes de implementar:**
+1. **Como ter o dagre.** Só o mesmo algoritmo deixa o hierárquico *exatamente* igual:
+   (a) **instalar o pacote** do dagre (MIT) — exceção às regras "sem dependência nova"
+   e "sem biblioteca de grafos" (D3), e a instalação precisa da permissão do autor;
+   (b) **trazer o código-fonte** do dagre para dentro do projeto, com a licença — sem
+   `npm install`, mas ~3 mil linhas de terceiros no repositório; (c) escrever um
+   hierárquico próprio — **não** fica idêntico. O empacotamento `bin` é um algoritmo
+   pequeno (MIT) que dá para escrever aqui em qualquer opção. Conferir qual versão
+   publicada corresponde à 0.8.14 que o Browser embute.
+2. **Tamanho dos nós nas contas:** o Browser usa 25 para todos; os raios desenhados aqui
+   são 19/16/13/11. Proposta: usar 25 nas contas (espaçamento idêntico ao do Browser)
+   e manter o desenho atual — ou usar os nossos raios (grafo mais compacto, não
+   idêntico).
+3. **Nó arrastado fica preso** onde foi solto, como no Browser? Muda a sensação de hoje
+   (ele volta para a física). Se sim, decidir como soltá-lo de novo.
+4. **Expansão:** adotar também a câmera do Browser (100 ms depois, afasta só o
+   necessário para caberem os nós novos, sem mover o centro) e o lugar onde os nós novos
+   nascem — o Browser não dá posição a eles; **conferir lado a lado** de onde surgem.
+5. **Consulta nova:** no Browser cada resultado começa do zero (1.ª carga com
+   pré-cálculo); aqui os nós que já estavam na tela mantêm a posição (N5). E o enquadrar
+   a 420 ms (D4): com o pré-cálculo o grafo já chega arrumado — enquadrar logo depois?
+6. **Ocultar um rótulo pela legenda (N6) no hierárquico:** refazer o layout só com os
+   visíveis (proposta) ou manter as posições.
+
+**Fora do escopo** (observado no Browser e registrado): o 2×clique num nó já expandido
+**recolhe** a expansão (lá é alternância; aqui existe o "Desfazer"); o visual dos nós do
+Browser (tamanho 25, rótulo dentro do círculo); limites de zoom.
+
+**Como testar (autor):** lado a lado com o Browser, nas 6 consultas válidas de exemplo,
+nos **dois** layouts:
+- **Forças:** mesma "cara" (espaçamento, forma da árvore, quem fica perto de quem); o
+  grafo já aparece arrumado, sem "explosão" inicial; arrastar um nó (como decidido no
+  item 3); 2×clique expande e acomoda como no Browser; repetir a consulta dá o mesmo
+  desenho.
+- **Hierárquico** ("arvore completa"): Ano no topo, depois as 5 unidades, os 17 objetos
+  e as 22 habilidades, na mesma ordem dentro de cada nível que o Browser; o atalho
+  `DESENVOLVE_HABILIDADE` dobrado como lá; trocar de layout anima em ~0,4 s e o grafo
+  não pula de lugar; um resultado com partes soltas empacotado como no Browser.
+- **Seletor:** troca nos dois sentidos; a escolha sobrevive ao recarregar; "Desativar
+  animações" sem animação nos dois layouts; tema escuro; widget A/A; formas e paletas.
+- **Medidor da P1** (dev): grafo parado = 0 desenhos/s nos dois layouts (o render sob
+  demanda continua valendo).
+
+**Pronto quando:** os dois layouts reproduzem o Browser nas consultas de exemplo, os
+testes passam e a D18 (com a decisão do dagre) está registrada.
+
 ## 5. Como ler o protótipo final (arquivo "bundled")
 
 > **A pasta `design/` foi retirada do repositório em 2026-10-15.** Os protótipos eram
@@ -2753,7 +2970,7 @@ src/
 │   │                          #   e por tipo de relação (mola, tracejado); padrão p/ rótulo novo (N5)
 │   ├── resumoGrafo.js         # agregados da Home no Neo4j: habilidades, unidades temáticas, anos (N9)
 │   ├── consultasExemplo.js    # consultas Cypher de exemplo (menu do console) + a do "Ver o grafo desta
-│   │                          #   turma"; cópia das de teste da orientadora (neo4j/ é só o registro dela)
+│   │                          #   turma"; cópia das de teste da orientadora (a pasta neo4j/ saiu do repo)
 │   ├── vizinhanca.js          # conexões de um nó no Neo4j por tipo e sentido; retrato do nó (N7);
 │   │                          #   expandirNo: vizinhos (até 100) + "conectar" os novos (N8)
 │   ├── extrairGrafo.js        # resultado → nós + relações (puro) e as consultas extras do Browser:

@@ -83,7 +83,17 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:7474/)",
       "Bash(ps -eo pid,args)",
       "Bash(kill 27560 27559 27543)",
-      "Bash(sed -n '/^├── data\\\\//,/^├── pages\\\\//p' ESTADO_ATUAL.md)"
+      "Bash(sed -n '/^├── data\\\\//,/^├── pages\\\\//p' ESTADO_ATUAL.md)",
+      "Bash(curl -s -m 5 http://localhost:7474/browser/)",
+      "Bash(curl -s -m 5 -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:7474/)",
+      "Bash(mkdir -p /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/browser)",
+      "Bash(curl -s -m 5 http://localhost:7474/browser/ -o index.html)",
+      "Bash(grep -o -i 'version[^,;]\\\\{0,60\\\\}' index.html)",
+      "Bash(curl -s -m 10 http://localhost:7474/browser/assets/index-CTJCQXau.js -o index.js)",
+      "Bash(python3 -I /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/crawl.py /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/browser/chunks)",
+      "Bash(python3 -I - vendor-neo4j-ndl.5-UEwjcv.js HierarchicalLayout.worker.js)",
+      "Bash(python3 -I - HierarchicalLayout.worker.js)",
+      "Bash(grep -o 'Qs=\\(e,t,n,r=Ws\\)=>.\\\\{1500\\\\}' types.CyXJvY_z.js)"
     ],
     "additionalDirectories": [
       "/home/lorenzo/tcc_implementacao/TCC/.claude/skills"
