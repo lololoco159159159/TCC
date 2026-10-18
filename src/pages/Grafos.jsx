@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import SiteHeader from '../components/SiteHeader'
 import Footer from '../components/Footer'
+import FontSizeWidget from '../components/FontSizeWidget'
 import ConsoleCypher from '../components/grafo/ConsoleCypher'
 import ResultadoCypher from '../components/grafo/ResultadoCypher'
 import GrafoCanvas from '../components/grafo/GrafoCanvas'
@@ -13,6 +14,7 @@ import { executarCypher } from '../data/neo4j'
 import { completarGrafo, extrairGrafo } from '../data/extrairGrafo'
 import { estiloRelacao, visualDoNo } from '../data/estiloGrafo'
 import { conexoesDoNo, expandirNo, retratoDoNo } from '../data/vizinhanca'
+import { posicaoFilotaxia, posicaoInicial } from '../data/simulacaoForcas'
 
 // Página "Grafos" — a tela que exibe o grafo de conhecimento. Protótipo:
 // design/prototipo_grafo.html. Está em transição para o Neo4j (integração,
@@ -42,6 +44,9 @@ import { conexoesDoNo, expandirNo, retratoDoNo } from '../data/vizinhanca'
 //    expansão); o perfil mock do header (GrafoPerfil, G10) ficou só com a
 //    identidade e a acessibilidade — as "Minhas turmas" eram dados do mock.
 //    As contas vão sair do site em roadmap próprio.
+//  - N11: a física e o layout passaram a ser os do Neo4j Browser (D18): o
+//    "Force-based layout" (padrão) e o "Hierarchical layout", escolhidos pelo
+//    seletor da coluna de controles (preferência `layout`, salva).
 
 const PAINEL_PADRAO = { x: 12, w: 392, esc: false }
 
@@ -51,13 +56,14 @@ const ATRASO_ASSENTAR = 30 // a prop semAnim precisa chegar ao canvas antes do s
 const DEBOUNCE_PREFS_MS = 150 // o arrasto do painel muda o estado a cada pointermove
 const VISTOS_MAX = 5 // chips "Vistos por último" no painel
 const HISTORICO_EXPANSAO_MAX = 10 // snapshots do Desfazer
-const DISTANCIA_NASCIMENTO = 90 // px da origem em que nascem os nós trazidos por uma expansão
+const ATRASO_CAMERA_EXPANSAO = 100 // Browser: 100 ms depois da expansão, afasta a câmera para caberem os nós novos
 const DIREITA_GAVETA_COM_LEGENDA = 14 + 228 + 10 // legenda: right 14 + largura 228; mais 10 de folga
+const LAYOUTS = ['forca', 'hierarquico'] // os dois layouts do Neo4j Browser (N11)
 
 // Lê localStorage['edugraphPrefs'] com validação campo a campo (prefs
 // corrompidas viram padrão). Roda uma vez, na carga do módulo (só browser).
 function lerPrefs() {
-  const padrao = { paleta: 'padrao', formas: false, semAnim: false, painel: PAINEL_PADRAO }
+  const padrao = { paleta: 'padrao', formas: false, semAnim: false, painel: PAINEL_PADRAO, layout: 'forca' }
   try {
     const p = JSON.parse(localStorage.getItem('edugraphPrefs') || '{}')
     return {
@@ -65,6 +71,7 @@ function lerPrefs() {
       formas: typeof p.formas === 'boolean' ? p.formas : false,
       semAnim: typeof p.semAnim === 'boolean' ? p.semAnim : false,
       painel: p.painel && typeof p.painel === 'object' ? { ...PAINEL_PADRAO, ...p.painel } : PAINEL_PADRAO,
+      layout: LAYOUTS.includes(p.layout) ? p.layout : 'forca',
     }
   } catch {
     return padrao
@@ -72,27 +79,18 @@ function lerPrefs() {
 }
 const PREFS = lerPrefs()
 
-// Monta o grafo do CANVAS a partir do grafo do resultado (N4/N5) — porte do
-// montarGrafo da G3: posição inicial em espiral de ângulo áureo (2.399963 rad
-// entre nós consecutivos), à distância do anel do rótulo (tabela de estilo: o
-// Ano no meio, as habilidades por fora) mais uma variação de 0–96px, com
-// ±15px de ruído; e o nó que já estava na tela MANTÉM a posição (repetir a
-// consulta ou alternar "conectar nós" não faz o grafo pular). Cor, raio,
-// forma, fonte, legenda e tooltip saem prontos de visualDoNo(); a aresta
-// guarda o tipo da relação (mola e tracejado vêm dele no canvas).
-function montarGrafo({ nos, relacoes }, antigos) {
+// Monta o grafo do CANVAS a partir do grafo do resultado (N4/N5). N11: como no
+// Neo4j Browser, uma consulta nova começa do zero — os nós nascem num círculo de
+// raio 45·√n em volta da origem (src/data/simulacaoForcas.js) e o canvas faz o
+// pré-cálculo da física antes do 1.º desenho. Cor, raio, forma, fonte, legenda
+// e tooltip saem prontos de visualDoNo(); a aresta guarda o tipo da relação (o
+// tracejado vem dele no canvas).
+function montarGrafo({ nos, relacoes }) {
   const novos = new Map()
-  let idx = 0
+  let i = 0
   nos.forEach((no) => {
-    const velho = antigos.get(no.id)
-    const angulo = idx++ * 2.399963
-    const dist = visualDoNo(no).anel + (idx % 5) * 24
-    novos.set(
-      no.id,
-      velho
-        ? noDoCanvas(no, velho.x, velho.y)
-        : noDoCanvas(no, Math.cos(angulo) * dist + (Math.random() - 0.5) * 30, Math.sin(angulo) * dist + (Math.random() - 0.5) * 30),
-    )
+    const p = posicaoInicial(i++, nos.size)
+    novos.set(no.id, noDoCanvas(no, p.x, p.y))
   })
   return { nos: novos, arestas: [...relacoes.values()].map(arestaDoCanvas) }
 }
@@ -125,12 +123,13 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
   const [paletaAberta, setPaletaAberta] = useState(false)
   const [formas, setFormas] = useState(PREFS.formas) // formas em vez de cores (G10)
   const [semAnim, setSemAnim] = useState(PREFS.semAnim) // desativar animações e física (G10)
+  const [layout, setLayout] = useState(PREFS.layout) // 'forca' | 'hierarquico', como no Neo4j Browser (N11)
   const [perfilAberto, setPerfilAberto] = useState(false)
   const seq = useRef(0) // descarta respostas fora de ordem
   const nosRef = useRef(new Map()) // nós do grafo ATUAL (estabilidade de posição + closures assíncronas)
   const histExp = useRef([]) // snapshots pré-expansão (G8; volta a encher com a expansão da N8)
   const selRef = useRef(null) // espelho de selecionadoId para closures assíncronas
-  const canvasApi = useRef(null) // API do canvas: { centrarEm, enquadrar, reaquecer, assentar, zoomMais, zoomMenos }
+  const canvasApi = useRef(null) // API do canvas: { centrarEm, enquadrar, reaquecer, assentar, afastarParaCaber, zoomMais, zoomMenos }
   const ultimaConsulta = useRef('') // texto da última execução do console (o "Tentar novamente" do erro)
 
   // Seleciona um nó (N7): registra nos "vistos", abre o painel com o retrato do
@@ -166,10 +165,11 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
   // Expande um nó do desenho (N8), como o Neo4j Browser: SEMPRE consulta o
   // banco (expandirNo — os vizinhos, até 100, e, com a chave "Conectar nós"
   // ligada, as relações entre os que chegaram e os que já estavam na tela) e
-  // funde ao grafo sem repetir. Nós novos nascem num círculo de 90px ao redor
-  // da origem e a física os assenta (reaquecer 0.8, SEM re-enquadrar: `versao`
-  // não muda). Antes de fundir, tira um snapshot para o Desfazer (até 10) —
-  // fiel à G8. Falha aparece no painel, sem derrubar o palco.
+  // funde ao grafo sem repetir. N11, como o Browser: os nós novos nascem na
+  // espiral do d3 perto do centro (pelo índice), a física reaquece em 1 (SEM
+  // re-enquadrar: `versao` não muda) e, 100 ms depois, a câmera afasta só o
+  // necessário para eles caberem. Antes de fundir, tira um snapshot para o
+  // Desfazer (até 10) — fiel à G8. Falha aparece no painel, sem derrubar o palco.
   async function expandir(id, aposExpandir) {
     const origem = nosRef.current.get(id)
     if (!origem || expandindo) return
@@ -182,11 +182,8 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
       const foto = { nos: [...nosRef.current.values()].map((n) => ({ ...n })), arestas: grafo.arestas.map((a) => ({ ...a })) }
       const novosNos = new Map(nosRef.current)
       nos.forEach((no) => {
-        const ang = Math.random() * Math.PI * 2
-        novosNos.set(
-          no.id,
-          noDoCanvas(no, origem.x + Math.cos(ang) * DISTANCIA_NASCIMENTO, origem.y + Math.sin(ang) * DISTANCIA_NASCIMENTO),
-        )
+        const p = posicaoFilotaxia(novosNos.size)
+        novosNos.set(no.id, noDoCanvas(no, p.x, p.y))
       })
       const jaTem = new Set(grafo.arestas.map((a) => a.id))
       const arestasNovas = [...relacoes.values()]
@@ -198,7 +195,11 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
         setDesfaziveis(histExp.current.length)
         nosRef.current = novosNos
         setGrafo((g) => ({ ...g, nos: novosNos, arestas: [...g.arestas, ...arestasNovas] }))
-        canvasApi.current?.reaquecer(0.8)
+        canvasApi.current?.reaquecer(1)
+        if (nos.size) {
+          const idsNovos = [...nos.keys()]
+          setTimeout(() => canvasApi.current?.afastarParaCaber(idsNovos), ATRASO_CAMERA_EXPANSAO)
+        }
       }
       setTempoMs(consultas.reduce((s, c) => s + c.ms, 0))
       setExpandindo(false)
@@ -211,7 +212,9 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
   }
 
   // Desfaz a última expansão: restaura o snapshot (posições inclusas) e
-  // reaquece de leve (0.5). A seleção só sobrevive se o nó ainda existe.
+  // reaquece em 1 (N11: o Browser reaquece assim em toda mudança no grafo; o
+  // snapshot já está assentado, então quase nada se mexe). A seleção só
+  // sobrevive se o nó ainda existe.
   function desfazerExpansao() {
     const foto = histExp.current.pop()
     if (!foto) return
@@ -221,7 +224,7 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
     nosRef.current = nos
     setGrafo((g) => ({ ...g, nos, arestas }))
     if (!(selRef.current && nos.has(selRef.current))) desselecionar()
-    canvasApi.current?.reaquecer(0.5)
+    canvasApi.current?.reaquecer(1)
   }
 
   // Vai até um nó a partir do painel (conexões / vistos), como no protótipo:
@@ -265,10 +268,10 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
       const r = await executarCypher(consulta, {}, { canal: 'console' })
       const grafoDoResultado = await completarGrafo(extrairGrafo(r.linhas), { conectar })
       if (meuSeq !== seq.current) return
-      // N5: o grafo do resultado vai para o canvas (versao nova → reaquece a
-      // física e enquadra a 420ms); resultado novo zera o histórico de
-      // expansões, como o recorte novo da G8
-      const montado = montarGrafo(grafoDoResultado, nosRef.current)
+      // N5: o grafo do resultado vai para o canvas (versao nova → N11: começa
+      // do zero, com o pré-cálculo do Browser, e enquadra logo depois);
+      // resultado novo zera o histórico de expansões, como o recorte novo da G8
+      const montado = montarGrafo(grafoDoResultado)
       nosRef.current = montado.nos
       histExp.current = []
       setDesfaziveis(0)
@@ -335,13 +338,13 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
   useEffect(() => {
     const t = setTimeout(() => {
       try {
-        localStorage.setItem('edugraphPrefs', JSON.stringify({ paleta, formas, semAnim, painel }))
+        localStorage.setItem('edugraphPrefs', JSON.stringify({ paleta, formas, semAnim, painel, layout }))
       } catch {
         /* sem storage */
       }
     }, DEBOUNCE_PREFS_MS)
     return () => clearTimeout(t)
-  }, [paleta, formas, semAnim, painel])
+  }, [paleta, formas, semAnim, painel, layout])
 
   // modo "formas em vez de cores": o atributo no <html> troca a forma dos
   // pontinhos DOM (classes .eg-forma-* no index.css); o canvas recebe via prop
@@ -352,14 +355,6 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
     return () => el.removeAttribute('data-formas')
   }, [formas])
 
-  // popover de paleta aberto: avisa pelo <html> para o FontSizeWidget (global,
-  // renderizado no App) deslizar para baixo e não ser coberto pelo popover
-  useEffect(() => {
-    const el = document.documentElement
-    if (paletaAberta) el.setAttribute('data-paleta-aberta', '1')
-    else el.removeAttribute('data-paleta-aberta')
-    return () => el.removeAttribute('data-paleta-aberta')
-  }, [paletaAberta])
 
   // paleta para daltonismo: sobrescreve no <html> os tokens --no-* de cada
   // rótulo (vale para o canvas e todos os pontinhos DOM de uma vez); a limpeza
@@ -447,6 +442,8 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
   // a barra do resultado (Tabela/Relações/JSON) ocupa o topo do palco: zoom,
   // resumo e "Desfazer" descem para baixo dela (barra: top 12 + ~42px de altura)
   const topoOverlays = status === 'pronto' && resultado ? 66 : 14
+  // zoom/layout/paleta: só com o desenho à vista (o resultado aberto o cobre)
+  const mostrarControlesGrafo = status === 'pronto' && temGrafo && !(resultado && resultadoAberto)
   const offsetPainel = painel.esc ? 0 : painel.x + painel.w // largura ocupada pelo painel no palco
 
   return (
@@ -483,6 +480,7 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
             nos={grafoVisivel.nos}
             arestas={grafoVisivel.arestas}
             versao={grafo.versao}
+            layout={layout}
             selecionadoId={selecionadoNoDesenho}
             onSelecionar={(id) => {
               const no = id ? grafoVisivel.nos.get(id) : null
@@ -494,60 +492,6 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
             semAnim={semAnim}
             formas={formas}
           />
-
-          {/* controles de zoom + recentrar (topo-direita, sobre o canvas) */}
-          {status === 'pronto' && temGrafo && (
-            <div
-              style={{
-                position: 'absolute',
-                top: topoOverlays,
-                right: 14,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-                alignItems: 'flex-end',
-              }}
-            >
-              <button
-                type="button"
-                className="eg-grafo-zoom"
-                title="Aproximar"
-                onClick={() => canvasApi.current?.zoomMais()}
-                style={{ fontSize: 17, fontWeight: 600 }}
-              >
-                +
-              </button>
-              <button
-                type="button"
-                className="eg-grafo-zoom"
-                title="Afastar"
-                onClick={() => canvasApi.current?.zoomMenos()}
-                style={{ fontSize: 19 }}
-              >
-                −
-              </button>
-              <button
-                type="button"
-                className="eg-grafo-zoom"
-                title="Recentrar o grafo"
-                onClick={() => canvasApi.current?.enquadrar()}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 9V5a2 2 0 0 1 2-2h4" />
-                  <path d="M15 3h4a2 2 0 0 1 2 2v4" />
-                  <path d="M21 15v4a2 2 0 0 1-2 2h-4" />
-                  <path d="M9 21H5a2 2 0 0 1-2-2v-4" />
-                  <circle cx="12" cy="12" r="2.4" />
-                </svg>
-              </button>
-              <PaletaPopover
-                aberta={paletaAberta}
-                aoAlternar={() => setPaletaAberta((a) => !a)}
-                {...acessibilidade}
-              />
-            </div>
-          )}
 
           {/* legenda "Tipos de nó" (N6): os rótulos do grafo da tela; ocultar é
               só no desenho */}
@@ -654,6 +598,105 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
             aoTentarNovamente={() => executarConsulta(ultimaConsulta.current)}
             aoLimpar={voltarAoInicio}
           />
+
+          {/* coluna de controles do palco (topo-direita): zoom + recentrar,
+              layout (N11), paleta e o A/A. Vem DEPOIS dos overlays de estado e
+              com o mesmo zIndex deles (32): o A/A segue clicável no convite, no
+              carregando e no erro, como o widget fixo do resto do site. Os
+              controles do grafo só aparecem com o desenho à vista (antes ficavam
+              escondidos sob o resultado aberto, que é zIndex 30); o A/A some
+              enquanto o popover de paleta está aberto (ocupa o lugar dele). */}
+          <div
+            style={{
+              position: 'absolute',
+              top: topoOverlays,
+              right: 14,
+              zIndex: 32,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+              alignItems: 'flex-end',
+            }}
+          >
+            {mostrarControlesGrafo && (
+              <>
+                <button
+                  type="button"
+                  className="eg-grafo-zoom"
+                  title="Aproximar"
+                  onClick={() => canvasApi.current?.zoomMais()}
+                  style={{ fontSize: 17, fontWeight: 600 }}
+                >
+                  +
+                </button>
+                <button
+                  type="button"
+                  className="eg-grafo-zoom"
+                  title="Afastar"
+                  onClick={() => canvasApi.current?.zoomMenos()}
+                  style={{ fontSize: 19 }}
+                >
+                  −
+                </button>
+                <button
+                  type="button"
+                  className="eg-grafo-zoom"
+                  title="Recentrar o grafo"
+                  onClick={() => canvasApi.current?.enquadrar()}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 9V5a2 2 0 0 1 2-2h4" />
+                    <path d="M15 3h4a2 2 0 0 1 2 2v4" />
+                    <path d="M21 15v4a2 2 0 0 1-2 2h-4" />
+                    <path d="M9 21H5a2 2 0 0 1-2-2v-4" />
+                    <circle cx="12" cy="12" r="2.4" />
+                  </svg>
+                </button>
+                {/* seletor de layout (N11): os dois do Neo4j Browser — forças
+                    (padrão) e hierárquico; a escolha fica salva */}
+                <div role="group" aria-label="Layout do grafo" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <button
+                    type="button"
+                    className="eg-grafo-zoom"
+                    title="Layout de forças (como o Neo4j Browser)"
+                    aria-pressed={layout === 'forca'}
+                    onClick={() => setLayout('forca')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <circle cx="6" cy="7" r="2.6" />
+                      <circle cx="18" cy="9" r="2.6" />
+                      <circle cx="10" cy="18" r="2.6" />
+                      <path d="M8.6 7.5 15.4 8.5M16.3 11.2l-4.6 4.9M6.9 9.5l2 6" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    className="eg-grafo-zoom"
+                    title="Layout hierárquico (como o Neo4j Browser)"
+                    aria-pressed={layout === 'hierarquico'}
+                    onClick={() => setLayout('hierarquico')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <circle cx="12" cy="5" r="2.6" />
+                      <circle cx="6" cy="19" r="2.6" />
+                      <circle cx="18" cy="19" r="2.6" />
+                      <path d="M12 7.6V12M12 12H6v4.4M12 12h6v4.4" />
+                    </svg>
+                  </button>
+                </div>
+                <PaletaPopover
+                  aberta={paletaAberta}
+                  aoAlternar={() => setPaletaAberta((a) => !a)}
+                  {...acessibilidade}
+                />
+              </>
+            )}
+            {/* tamanho da letra (A/A) — na página de grafos mora aqui, não fixo */}
+            {!(mostrarControlesGrafo && paletaAberta) && <FontSizeWidget compacto />}
+          </div>
 
           {/* painel de contexto (G7) — zIndex 30: acima do card-convite,
               abaixo dos overlays de carregando/erro (32) */}

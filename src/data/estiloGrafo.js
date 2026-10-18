@@ -1,11 +1,12 @@
 // Tabela de estilo do grafo (N5 — ESTADO_ATUAL.md §4.5): o equivalente ao
 // "estilo" do Neo4j Browser. Para cada RÓTULO de nó: a cor (token CSS --no-*,
 // com contraparte escura no index.css), o raio, a forma (modo "formas em vez de
-// cores", D6), a fonte da legenda, a propriedade usada como legenda, as que vão
-// no tooltip e o anel da semente (distância ao centro na posição inicial — o
-// Ano no meio, as habilidades por fora; a física assenta o resto). Para cada
-// TIPO de relação: o comprimento de repouso da mola da física (D3: a geometria
-// reflete a semântica) e se a linha é tracejada.
+// cores", D6), a fonte da legenda, a propriedade usada como legenda e as que vão
+// no tooltip. Para cada TIPO de relação: se a linha é tracejada.
+// N11 (D18): saíram o "anel da semente" dos rótulos e o comprimento de mola das
+// relações — a física passou a ser a do Neo4j Browser, em que a posição inicial
+// é um círculo e a distância das molas depende do tamanho dos nós, não do tipo
+// da relação (src/data/simulacaoForcas.js). O raio continua: é o do DESENHO.
 // Rótulo ou tipo que não estiver aqui (a orientadora vai acrescentar outros)
 // cai no PADRÃO: o site nunca quebra por causa de um rótulo novo — só o desenha
 // em cinza, até ele ganhar uma linha nesta tabela.
@@ -15,7 +16,6 @@ export const ESTILO_NO = {
     cor: '--no-ano',
     raio: 19,
     forma: 'losango',
-    anel: 0,
     legenda: 'nome',
     fonte: { peso: 700, tamanho: 13, mono: false },
   },
@@ -23,7 +23,6 @@ export const ESTILO_NO = {
     cor: '--no-unidade',
     raio: 16,
     forma: 'quadrado',
-    anel: 150,
     legenda: 'nome',
     fonte: { peso: 700, tamanho: 12, mono: false },
   },
@@ -31,7 +30,6 @@ export const ESTILO_NO = {
     cor: '--no-objeto',
     raio: 13,
     forma: 'triangulo',
-    anel: 280,
     legenda: 'descricao',
     fonte: { peso: 600, tamanho: 11.5, mono: false },
   },
@@ -39,7 +37,6 @@ export const ESTILO_NO = {
     cor: '--no-habilidade',
     raio: 11,
     forma: 'circulo',
-    anel: 400,
     legenda: 'codigo',
     dica: ['codigo', 'descricao'], // tooltip: "EF01MA17 — Reconhecer períodos do dia..."
     fonte: { peso: 600, tamanho: 10.5, mono: true },
@@ -50,21 +47,15 @@ const ESTILO_NO_PADRAO = {
   cor: '--no-outro',
   raio: 12,
   forma: 'circulo',
-  anel: 220,
   legenda: null, // escolhida pelas propriedades do nó (PROPS_LEGENDA)
   fonte: { peso: 600, tamanho: 11.5, mono: false },
 }
 
-export const ESTILO_RELACAO = {
-  TEM_UNIDADE: { mola: 150 },
-  TEM_OBJETO: { mola: 130 },
-  DESENVOLVE: { mola: 120 },
-  // atalho Ano → Habilidade (aparece com "conectar nós do resultado"): mola
-  // longa, para não dobrar a árvore puxando as habilidades para o meio
-  DESENVOLVE_HABILIDADE: { mola: 280 },
-}
+// tipos de relação com estilo próprio (hoje nenhum é tracejado; a legenda
+// mostra a linha tracejada só se algum tipo da tela pedir)
+export const ESTILO_RELACAO = {}
 
-const ESTILO_RELACAO_PADRAO = { mola: 150, tracejado: false } // 150 = o padrão do protótipo
+const ESTILO_RELACAO_PADRAO = { tracejado: false }
 
 // tokens de cor que o canvas resolve via getComputedStyle (ele não entende var())
 export const TOKENS_COR_NO = [...new Set([...Object.values(ESTILO_NO).map((e) => e.cor), ESTILO_NO_PADRAO.cor])]
@@ -86,8 +77,8 @@ const texto = (v) => {
 const encurtar = (s) => (s.length > LEGENDA_MAX ? `${s.slice(0, LEGENDA_MAX - 1)}…` : s)
 
 // Como um nó do Neo4j aparece no canvas: rótulo principal (o 1.º que tiver
-// estilo na tabela; senão o 1.º que vier), cor, raio, forma, fonte, anel da
-// semente, legenda curta e o texto completo do tooltip (`dica`).
+// estilo na tabela; senão o 1.º que vier), cor, raio, forma, fonte, legenda
+// curta e o texto completo do tooltip (`dica`).
 export function visualDoNo(no) {
   const tipo = no.rotulos.find((r) => ESTILO_NO[r]) || no.rotulos[0] || '(sem rótulo)'
   const e = estiloNo(tipo)
@@ -103,7 +94,6 @@ export function visualDoNo(no) {
     r: e.raio,
     forma: e.forma,
     fonte: e.fonte,
-    anel: e.anel,
     label: encurtar(completo),
     dica: dica || completo,
   }

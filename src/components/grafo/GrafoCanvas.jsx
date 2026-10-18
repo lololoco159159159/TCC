@@ -1,39 +1,55 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import { useTheme } from '../../context/useTheme'
 import { TOKENS_COR_NO, estiloRelacao } from '../../data/estiloGrafo'
+import { TAMANHO_NO, criarSimulacao, posicaoInicial } from '../../data/simulacaoForcas'
+import { chaveDobra, layoutHierarquico } from '../../data/layoutHierarquico'
 
-// Canvas 2D do grafo de conhecimento — porte fiel do motor do protótipo
+// Canvas 2D do grafo de conhecimento — porte do motor do protótipo
 // (design/prototipo_grafo.html). Etapas G4+G5: render (grid pontilhado com
-// parallax, câmera com aproximação suave, arestas com seta — tracejadas em
-// progrideDe —, nós por tipo com rótulo+halo, enquadrar fit-to-view) + FÍSICA
-// (fisica(): repulsão + anti-colisão + molas por relação + gravidade ao centro,
-// com esfriamento por alpha; assentar(N) resolve o layout de uma vez para o
-// modo "sem animação" da G10). Etapa G6: interações de ponteiro — hit-test no
-// mundo, hover (tooltip + vizinhos, cursor pointer/grab), clique seleciona
-// (estado no pai, via onSelecionar), arrastar nó (reaquece a física), pan no
-// vazio (soltar sem mover desseleciona), wheel-zoom ancorado no cursor (clamp
-// [0.18, 3]) e a API imperativa { centrarEm, enquadrar, reaquecer, assentar,
-// zoomMais, zoomMenos } para os botões da página, a busca e o painel. Etapa G8:
-// 2×clique seleciona + expande (onExpandir); reaquecer(nivel) assenta a
-// expansão/desfazer sem re-enquadrar. As cores vêm dos tokens CSS
-// (claro/escuro), resolvidas por getComputedStyle. Etapa P1 (§4.4): medidor de
-// desempenho dev-only. Etapa P2: o loop de desenho deixou de ser perpétuo —
-// RENDERIZAÇÃO SOB DEMANDA. O motor só fica acordado enquanto há movimento
-// (física quente, arraste, câmera interpolando) ou um pedido pendente; quando
-// não há, ele dorme e volta a zero desenho por segundo. Todo ponto que muda
-// algo visível chama pedirFrame(), o único lugar que agenda um rAF.
+// parallax, câmera com aproximação suave, arestas com seta, nós com
+// rótulo+halo, enquadrar fit-to-view) + física. Etapa G6: interações de
+// ponteiro — hit-test no mundo, hover (tooltip + vizinhos, cursor
+// pointer/grab), clique seleciona (estado no pai, via onSelecionar), arrastar
+// nó, pan no vazio (soltar sem mover desseleciona), wheel-zoom ancorado no
+// cursor (clamp [0.18, 3]) e a API imperativa { centrarEm, enquadrar,
+// reaquecer, assentar, afastarParaCaber, zoomMais, zoomMenos } para os botões
+// da página e o painel. Etapa G8: 2×clique seleciona + expande (onExpandir).
+// As cores vêm dos tokens CSS (claro/escuro), resolvidas por getComputedStyle.
+// Etapa P1 (§4.4): medidor de desempenho dev-only. Etapa P2: RENDERIZAÇÃO SOB
+// DEMANDA — o motor só fica acordado enquanto há movimento (física quente,
+// arraste, transição, câmera interpolando) ou um pedido pendente; quando não
+// há, ele dorme e volta a zero desenho por segundo. Todo ponto que muda algo
+// visível chama pedirFrame(), o único lugar que agenda um rAF.
 // Etapa N5 (integração com o Neo4j, §4.5): o canvas desenha o grafo de QUALQUER
 // consulta. Cor, raio, forma, fonte e legenda de cada nó vêm da tabela de estilo
-// (src/data/estiloGrafo.js), já resolvidos no nó pela página (montarGrafo);
-// a mola de cada aresta e o tracejado vêm do tipo da relação; o rótulo da
-// aresta em destaque é o próprio tipo (como no Neo4j Browser) e o tooltip
-// mostra o texto completo do nó (quebrado em até 4 linhas). Física, câmera,
-// tempos e a renderização sob demanda ficaram intocados (D3/D4).
+// (src/data/estiloGrafo.js), já resolvidos no nó pela página (montarGrafo); o
+// tracejado vem do tipo da relação; o rótulo da aresta em destaque é o próprio
+// tipo (como no Neo4j Browser) e o tooltip mostra o texto completo do nó.
+// Etapa N11 (D18): o layout passou a ser o do Neo4j Browser, com os dois modos
+// que ele oferece (prop `layout`):
+//  - 'forca' — a física do "Force-based layout" (src/data/simulacaoForcas.js:
+//    as forças do d3 com os parâmetros do Browser). Consulta nova = 1.ª carga
+//    do Browser: pré-cálculo antes do 1.º desenho, depois anima o que sobrar;
+//    nó arrastado fica PRESO onde foi solto; mudança no grafo reaquece em 1.
+//  - 'hierarquico' — o "Hierarchical layout" (src/data/layoutHierarquico.js),
+//    refeito a cada mudança no grafo, com transição de 400 ms e as arestas
+//    longas desenhadas dobradas.
+// Trocar de modo é uma transição de 400 ms; voltar às forças retoma as posições
+// que elas tinham, como no Browser. Tudo o que muda o grafo é aplicado DENTRO do
+// quadro (sincronizar()), para nunca simular um conjunto de nós desatualizado.
 
 // Limites do zoom da câmera (clamp do protótipo). Atenção: o fit-to-view do
 // enquadrar() usa a própria faixa 0.2–1.5 — é OUTRO limite, não unificar.
 const ZOOM_MIN = 0.18
 const ZOOM_MAX = 3
+
+// Constantes do Neo4j Browser (N11)
+const DURACAO_TRANSICAO = 400 // ms — troca de layout e hierárquico refeito
+const ALPHA_ARRASTE = 0.2 // arrastar um nó reaquece a física neste nível
+const suavizar = (t) => t * t * (3 - 2 * t) // curva da transição (smoothstep, como no Browser)
+// "afastar para caber" depois de uma expansão: folga, em px de tela, entre os
+// nós e a borda do espaço livre (o Browser não expõe a dele; valor escolhido aqui)
+const MARGEM_AJUSTE = 40
 
 // ---------------------------------------------------------------------------
 // Medidor de desempenho (P1 do §4.4) — SÓ em desenvolvimento.
@@ -103,11 +119,30 @@ function quebrarLinhas(ctx, texto, largura, maxLinhas) {
   return cortadas
 }
 
+// ponto que fica na metade do comprimento de uma poligonal (chip da aresta dobrada)
+function pontoMedio(pts) {
+  let total = 0
+  for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y)
+  let falta = total / 2
+  for (let i = 1; i < pts.length; i++) {
+    const d = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y)
+    if (d >= falta && d > 0) {
+      const t = falta / d
+      return { x: pts[i - 1].x + (pts[i].x - pts[i - 1].x) * t, y: pts[i - 1].y + (pts[i].y - pts[i - 1].y) * t }
+    }
+    falta -= d
+  }
+  return pts[pts.length - 1]
+}
+
+const hierVazio = () => ({ dobras: new Map(), visiveis: false, movidos: new Set() })
+
 const GrafoCanvas = forwardRef(function GrafoCanvas(
   {
     nos,
     arestas,
     versao,
+    layout = 'forca',
     semAnim = false,
     formas = false,
     selecionadoId = null,
@@ -129,10 +164,22 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
   const alvoCam = useRef(null)
   const paleta = useRef(null)
   const temaLido = useRef('') // tema cujos tokens estão em `paleta`
-  const alpha = useRef(0) // "temperatura" da simulação (esfria a cada frame)
   const hoverRef = useRef(null) // nó sob o ponteiro (só o canvas precisa saber — não re-renderiza)
   const selecionadoRef = useRef(null) // espelho da prop para o loop de desenho
-  const dragRef = useRef(null) // nó em arraste — a física não integra a posição dele
+  const dragRef = useRef(null) // nó em arraste
+
+  // Estado do layout (N11). Tudo em refs: o React não re-renderiza por nada disto.
+  const sim = useRef(null) // a física das forças (uma por consulta: o gerador recomeça)
+  if (!sim.current) sim.current = criarSimulacao()
+  const versaoSim = useRef(versao) // consulta que a física/o layout já conhecem
+  const simDe = useRef({ nos, arestas }) // conjunto de nós/relações que a física/o layout já conhecem
+  const layoutAplicado = useRef(layout) // modo em vigor no desenho
+  const forcaPronta = useRef(true) // as forças já fizeram a 1.ª carga desta consulta?
+  const forcaDesatualizada = useRef(false) // o grafo mudou enquanto o hierárquico estava na tela
+  const posForca = useRef(null) // posições das forças guardadas ao entrar no hierárquico
+  const hier = useRef(hierVazio()) // dobras das arestas longas (e se já podem ser desenhadas)
+  const transicao = useRef(null) // { inicio, de, para, depois } — 400 ms entre posições
+  const pendente = useRef({ aquecer: 0, assentar: 0 }) // pedidos da página, aplicados no quadro
 
   // Acumuladores do medidor (P1). São REFS, não estado: medir não pode causar
   // re-render, ou a medida mudaria o que ela está medindo.
@@ -146,8 +193,10 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
   const sujo = useRef(true) // o primeiro quadro sempre acontece (grid inicial)
 
   // dados/props sempre atuais para o loop de desenho (sem religar o RAF a cada render)
-  const dados = useRef({ nos, arestas })
-  dados.current = { nos, arestas }
+  const dados = useRef({ nos, arestas, versao })
+  dados.current = { nos, arestas, versao }
+  const layoutRef = useRef(layout)
+  layoutRef.current = layout
   const semAnimRef = useRef(semAnim)
   semAnimRef.current = semAnim
   const formasRef = useRef(formas)
@@ -160,90 +209,202 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
   const offsetRef = useRef(offsetEsquerda)
   offsetRef.current = offsetEsquerda
 
-  // Física do layout — porte fiel do protótipo. A cada iteração: repulsão entre
-  // todos os pares (com anti-colisão garantindo raio+raio+10px entre centros),
-  // molas por aresta com comprimento de repouso por relação, gravidade ao
-  // centro, damping e esfriamento (alpha). Muta os nós do Map em `dados` — os
-  // mesmos objetos do estado da página; o React não re-renderiza por isso, e
-  // não precisa: só o canvas lê x/y, a cada frame. N5: o comprimento de repouso
-  // vem da tabela de estilo (tipo sem estilo: 150, o padrão do protótipo).
-  function fisica() {
-    const { nos: mapa, arestas: ars } = dados.current
-    const ns = [...mapa.values()]
-    for (let i = 0; i < ns.length; i++) {
-      for (let j = i + 1; j < ns.length; j++) {
-        const a = ns[i]
-        const b = ns[j]
-        let dx = b.x - a.x
-        let dy = b.y - a.y
-        const d = Math.hypot(dx, dy) || 1
-        const f = Math.min(2800 / (d * d), 12) * alpha.current
-        dx /= d
-        dy /= d
-        a.vx -= dx * f
-        a.vy -= dy * f
-        b.vx += dx * f
-        b.vy += dy * f
-        const min = a.r + b.r + 10
-        if (d < min) {
-          const e = (min - d) * 0.35
-          a.vx -= dx * e
-          a.vy -= dy * e
-          b.vx += dx * e
-          b.vy += dy * e
-        }
+  // posição para onde o nó vai (fim da transição em curso) — enquadrar e
+  // centrar miram o destino, não o meio do caminho
+  const posAlvo = (n) => transicao.current?.para.get(n.id) || n
+
+  // ---- transição de 400 ms entre dois conjuntos de posições (Browser) ----
+  function iniciarTransicao(para, depois) {
+    const de = new Map()
+    dados.current.nos.forEach((n, id) => de.set(id, { x: n.x, y: n.y }))
+    transicao.current = { inicio: performance.now(), de, para, depois }
+    pedirFrame()
+  }
+  function aplicarTransicao(agora) {
+    const tr = transicao.current
+    const t = Math.min(1, (agora - tr.inicio) / DURACAO_TRANSICAO)
+    const e = suavizar(t)
+    const { nos: ns } = dados.current
+    tr.para.forEach((p, id) => {
+      const n = ns.get(id)
+      const o = tr.de.get(id)
+      if (!n || !o) return
+      n.x = o.x + (p.x - o.x) * e
+      n.y = o.y + (p.y - o.y) * e
+    })
+    if (t >= 1) terminarTransicao()
+  }
+  function terminarTransicao() {
+    const tr = transicao.current
+    if (!tr) return
+    transicao.current = null
+    const { nos: ns } = dados.current
+    tr.para.forEach((p, id) => {
+      const n = ns.get(id)
+      if (n) {
+        n.x = p.x
+        n.y = p.y
       }
+    })
+    tr.depois?.()
+  }
+
+  // refaz o hierárquico com os nós/relações atuais (com transição ou de uma vez)
+  function recalcularHierarquico(animar) {
+    const { nos: ns, arestas: ars } = dados.current
+    const r = layoutHierarquico([...ns.values()], ars, { tamanho: TAMANHO_NO })
+    hier.current = { dobras: r.dobras, visiveis: false, movidos: new Set() }
+    // as dobras só aparecem com os nós já no lugar (no meio da transição elas não batem)
+    const mostrarDobras = () => (hier.current.visiveis = true)
+    if (animar) iniciarTransicao(r.posicoes, mostrarDobras)
+    else {
+      transicao.current = null
+      r.posicoes.forEach((p, id) => {
+        const n = ns.get(id)
+        if (n) {
+          n.x = p.x
+          n.y = p.y
+        }
+      })
+      mostrarDobras()
     }
-    ars.forEach((ar) => {
-      const a = mapa.get(ar.a)
-      const b = mapa.get(ar.b)
-      if (!a || !b) return
-      let dx = b.x - a.x
-      let dy = b.y - a.y
-      const d = Math.hypot(dx, dy) || 1
-      const f = (d - estiloRelacao(ar.rel).mola) * 0.028 * alpha.current
-      dx /= d
-      dy /= d
-      a.vx += dx * f
-      a.vy += dy * f
-      b.vx -= dx * f
-      b.vy -= dy * f
-    })
-    ns.forEach((n) => {
-      n.vx -= n.x * 0.0045 * alpha.current
-      n.vy -= n.y * 0.0045 * alpha.current
-      n.vx *= 0.86
-      n.vy *= 0.86
-      if (dragRef.current && dragRef.current.id === n.id) return
-      n.x += n.vx
-      n.y += n.vy
-    })
-    alpha.current *= 0.988
+    pedirFrame()
   }
 
-  // assenta o layout de imediato (modo "sem animação" — preferência da G10)
-  function assentar(iteracoes) {
-    alpha.current = 1
-    for (let i = 0; i < iteracoes; i++) fisica()
-    alpha.current = 0
-    pedirFrame() // as posições mudaram de uma vez: um quadro mostra o resultado
-  }
-
-  // recorte novo: reaquece a simulação (alpha = 1) e enquadra depois que o
-  // layout abriu (~420ms, como o protótipo); sem animação, assenta na hora
-  useEffect(() => {
+  // consulta nova (prop `versao`): começa do zero, como um quadro novo do Browser
+  function novaConsulta() {
+    const { nos: ns, arestas: ars } = dados.current
     hoverRef.current = null // id antigo esmaeceria o grafo novo inteiro até o mouse mexer
-    if (semAnimRef.current) {
-      assentar(260)
-      enquadrar()
-      return undefined
+    transicao.current = null
+    posForca.current = null
+    sim.current = criarSimulacao()
+    simDe.current = { nos: ns, arestas: ars }
+    layoutAplicado.current = layoutRef.current
+    hier.current = hierVazio()
+    forcaDesatualizada.current = false
+    forcaPronta.current = true
+    if (!ns.size) return
+    if (layoutAplicado.current === 'forca') {
+      sim.current.definir([...ns.values()], ars)
+      // 1.ª carga: o grafo já chega arrumado; sem animação, chega assentado
+      sim.current.preCalcular({ ateEsfriar: semAnimRef.current })
+    } else {
+      forcaPronta.current = false // as forças fazem a 1.ª carga quando o modo for trocado
+      recalcularHierarquico(!semAnimRef.current)
     }
-    alpha.current = 1
-    pedirFrame() // física quente: o loop se mantém acordado sozinho a partir daqui
-    const t = setTimeout(enquadrar, 420)
-    return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [versao])
+    enquadrar() // logo depois do pré-cálculo (decisão do autor na N11)
+  }
+
+  // troca de modo (prop `layout`)
+  function trocarLayout() {
+    const { nos: ns, arestas: ars } = dados.current
+    terminarTransicao()
+    layoutAplicado.current = layoutRef.current
+    simDe.current = { nos: ns, arestas: ars }
+    if (!ns.size) return
+    const animar = !semAnimRef.current
+    if (layoutAplicado.current === 'hierarquico') {
+      // guarda o estado das forças: o Browser as retoma ao voltar. A física
+      // fica em pausa (o quadro só a avança no modo forças) e, se ainda estava
+      // quente, continua de onde parou na volta.
+      posForca.current = new Map(
+        [...ns].map(([id, n]) => [id, { x: n.x, y: n.y, vx: n.vx, vy: n.vy, fx: n.fx, fy: n.fy }]),
+      )
+      recalcularHierarquico(animar)
+      return
+    }
+    // de volta às forças
+    const lista = [...ns.values()]
+    const exibidas = new Map(lista.map((n) => [n.id, { x: n.x, y: n.y }]))
+    if (!forcaPronta.current) {
+      // o grafo chegou no hierárquico: a 1.ª carga das forças acontece agora
+      lista.forEach((n, i) => {
+        const p = posicaoInicial(i, lista.length)
+        Object.assign(n, { x: p.x, y: p.y, vx: 0, vy: 0, fx: undefined, fy: undefined })
+      })
+      sim.current.definir(lista, ars)
+      sim.current.preCalcular({ ateEsfriar: semAnimRef.current })
+      forcaPronta.current = true
+    } else {
+      // volta às posições das forças; quem chegou durante o hierárquico nasce
+      // na espiral do d3 (definir() posiciona os nós sem lugar) e a física
+      // reaquece, como o Browser faz com nós novos
+      const guardadas = posForca.current || new Map()
+      lista.forEach((n) => {
+        const g = guardadas.get(n.id)
+        if (g) Object.assign(n, g)
+        else Object.assign(n, { x: NaN, y: NaN, vx: 0, vy: 0, fx: undefined, fy: undefined })
+      })
+      sim.current.definir(lista, ars)
+      if (forcaDesatualizada.current) sim.current.aquecer(1)
+      if (semAnimRef.current) sim.current.assentar()
+    }
+    forcaDesatualizada.current = false
+    posForca.current = null
+    hier.current = hierVazio()
+    if (animar) {
+      const para = new Map(lista.map((n) => [n.id, { x: n.x, y: n.y }]))
+      lista.forEach((n) => Object.assign(n, exibidas.get(n.id)))
+      iniciarTransicao(para) // a física continua (se ainda quente) quando a transição termina
+    }
+    pedirFrame()
+  }
+
+  // Aplica ao motor o que mudou desde o último quadro: consulta nova, troca de
+  // modo ou mudança no conjunto de nós/relações (expansão, desfazer, ocultar
+  // pela legenda). Roda no começo de cada quadro — assim nenhum passo da física
+  // usa um conjunto de nós desatualizado, mesmo que a página tenha pedido algo
+  // (reaquecer, por exemplo) antes de o React entregar as props novas.
+  function sincronizar() {
+    const d = dados.current
+    if (d.versao !== versaoSim.current) {
+      versaoSim.current = d.versao
+      novaConsulta()
+      return
+    }
+    if (layoutRef.current !== layoutAplicado.current) {
+      trocarLayout()
+      return
+    }
+    if (d.nos === simDe.current.nos && d.arestas === simDe.current.arestas) return
+    simDe.current = { nos: d.nos, arestas: d.arestas }
+    if (layoutAplicado.current === 'forca') sim.current.definir([...d.nos.values()], d.arestas)
+    else {
+      forcaDesatualizada.current = true
+      recalcularHierarquico(!semAnimRef.current)
+    }
+  }
+
+  // pedidos da página (reaquecer/assentar), aplicados depois de sincronizar()
+  function aplicarPendentes() {
+    const p = pendente.current
+    if (p.aquecer) {
+      if (layoutAplicado.current === 'forca') {
+        sim.current.aquecer(p.aquecer)
+        if (semAnimRef.current) sim.current.assentar() // sem animação: resolve na hora
+      }
+      p.aquecer = 0
+    }
+    if (p.assentar) {
+      terminarTransicao()
+      if (layoutAplicado.current === 'forca') sim.current.assentar(p.assentar)
+      p.assentar = 0
+    }
+  }
+
+  // assenta o layout de imediato (ligar o modo "sem animação" com um grafo em cena)
+  function assentar(maxPassos) {
+    pendente.current.assentar = maxPassos || Infinity
+    pedirFrame()
+  }
+
+  // reaquece a física sem re-enquadrar (expansão/desfazer: 1, como o Browser
+  // faz em toda mudança no grafo); no hierárquico não há física — o layout é
+  // refeito sozinho quando o grafo muda
+  function reaquecer(nivel) {
+    pendente.current.aquecer = Math.max(pendente.current.aquecer, nivel)
+    pedirFrame()
+  }
 
   // largura ocupada pelo painel de contexto (G7) — enquadrar/centrarEm miram
   // o centro do espaço LIVRE à direita dele, como no protótipo
@@ -257,10 +418,11 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     let x1 = -1e9
     let y1 = -1e9
     ns.forEach((n) => {
-      x0 = Math.min(x0, n.x)
-      y0 = Math.min(y0, n.y)
-      x1 = Math.max(x1, n.x)
-      y1 = Math.max(y1, n.y)
+      const p = posAlvo(n)
+      x0 = Math.min(x0, p.x)
+      y0 = Math.min(y0, p.y)
+      x1 = Math.max(x1, p.x)
+      y1 = Math.max(y1, p.y)
     })
     const cv = canvasRef.current
     if (!cv) return
@@ -272,6 +434,44 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     pedirFrame()
   }
 
+  // Depois de uma expansão, como o Browser: afasta a câmera SÓ o necessário para
+  // caberem os nós que estão na tela mais os que chegaram — sem mover o centro e
+  // sem nunca aproximar.
+  function afastarParaCaber(idsNovos) {
+    const cv = canvasRef.current
+    if (!cv) return
+    sincronizar()
+    const { nos: ns } = dados.current
+    if (!ns.size) return
+    const rt = cv.getBoundingClientRect()
+    const L = offsetPainel()
+    const c = cam.current
+    const meiaDireita = rt.width / 2 - MARGEM_AJUSTE
+    const meiaEsquerda = rt.width / 2 - L - MARGEM_AJUSTE
+    const meiaAltura = rt.height / 2 - MARGEM_AJUSTE
+    const novos = new Set(idsNovos)
+    const naTela = (n) => {
+      const sx = rt.width / 2 + (n.x - c.x) * c.k
+      const sy = rt.height / 2 + (n.y - c.y) * c.k
+      return sx >= L && sx <= rt.width && sy >= 0 && sy <= rt.height
+    }
+    let k = c.k
+    ns.forEach((n) => {
+      if (!novos.has(n.id) && !naTela(n)) return
+      const p = posAlvo(n)
+      const dx = p.x - c.x
+      const dy = p.y - c.y
+      if (dx > 0 && meiaDireita > 0) k = Math.min(k, meiaDireita / (dx + n.r))
+      if (dx < 0 && meiaEsquerda > 0) k = Math.min(k, meiaEsquerda / (n.r - dx))
+      if (dy !== 0 && meiaAltura > 0) k = Math.min(k, meiaAltura / (Math.abs(dy) + n.r))
+    })
+    k = Math.max(ZOOM_MIN, k)
+    if (k < c.k - 1e-3) {
+      alvoCam.current = { x: c.x, y: c.y, k }
+      pedirFrame()
+    }
+  }
+
   // aproxima/afasta em passos (botões +/− da página), com os clamps do protótipo
   function zoomCam(fator) {
     const c = cam.current
@@ -279,23 +479,14 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     pedirFrame()
   }
 
-  // leva a câmera até um nó (busca, painel da G7, deep-link da G11)
+  // leva a câmera até um nó (painel da G7, vistos, expansão)
   function centrarEm(id) {
     const n = dados.current.nos.get(id)
     if (!n) return
+    const p = posAlvo(n)
     const k = Math.max(cam.current.k, 1)
-    alvoCam.current = { x: n.x - offsetPainel() / (2 * k), y: n.y, k }
+    alvoCam.current = { x: p.x - offsetPainel() / (2 * k), y: p.y, k }
     pedirFrame()
-  }
-
-  // reaquece a simulação sem re-enquadrar (expansão 0.8 / desfazer 0.5, G8);
-  // no modo sem animação assenta o layout de uma vez, como o protótipo
-  function reaquecer(nivel) {
-    if (semAnimRef.current) assentar(nivel >= 0.8 ? 160 : 120)
-    else {
-      alpha.current = Math.max(alpha.current, nivel)
-      pedirFrame()
-    }
   }
 
   useImperativeHandle(ref, () => ({
@@ -303,6 +494,7 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     enquadrar,
     reaquecer,
     assentar, // usado ao ligar o modo "sem animação" com um grafo em cena (G10)
+    afastarParaCaber, // câmera do Browser depois de uma expansão (N11)
     zoomMais: () => zoomCam(1.35),
     zoomMenos: () => zoomCam(1 / 1.35),
   }))
@@ -375,12 +567,18 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       })
     }
     const k = cam.current.k
+    // hierárquico (N11): arestas longas seguem os pontos de dobra — menos as
+    // que tocam um nó arrastado depois do layout (os pontos não batem mais)
+    const H = hier.current
+    const usarDobras = layoutAplicado.current === 'hierarquico' && H.visiveis
 
     // ---- arestas (com seta; tracejada se o tipo pedir, na tabela de estilo) ----
     ars.forEach((ar) => {
       const a = ns.get(ar.a)
       const b = ns.get(ar.b)
       if (!a || !b) return
+      const dobra =
+        usarDobras && !H.movidos.has(ar.a) && !H.movidos.has(ar.b) ? H.dobras.get(chaveDobra(ar.a, ar.b)) : null
       const destaque = foco && (ar.a === foco || ar.b === foco)
       ctx.globalAlpha = foco ? (destaque ? 0.95 : 0.1) : 0.55
       ctx.strokeStyle = destaque ? C.arestaDestaque : C.aresta
@@ -388,13 +586,16 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       ctx.setLineDash(estiloRelacao(ar.rel).tracejado ? [6 / k, 5 / k] : [])
       ctx.beginPath()
       ctx.moveTo(a.x, a.y)
+      if (dobra) dobra.forEach((p) => ctx.lineTo(p.x, p.y))
       ctx.lineTo(b.x, b.y)
       ctx.stroke()
       ctx.setLineDash([])
+      // a seta segue o último trecho (numa aresta dobrada, o que chega em b)
+      const ultimo = dobra && dobra.length ? dobra[dobra.length - 1] : a
       if (k > 0.45) {
-        const d = Math.hypot(b.x - a.x, b.y - a.y) || 1
-        const ux = (b.x - a.x) / d
-        const uy = (b.y - a.y) / d
+        const d = Math.hypot(b.x - ultimo.x, b.y - ultimo.y) || 1
+        const ux = (b.x - ultimo.x) / d
+        const uy = (b.y - ultimo.y) / d
         const px = b.x - ux * (b.r + 5 / k)
         const py = b.y - uy * (b.r + 5 / k)
         const s = (destaque ? 7 : 5.5) / Math.sqrt(k)
@@ -408,8 +609,9 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       }
       // chip com o tipo da relação (como o Neo4j Browser), só na aresta em destaque
       if (destaque && k > 0.5) {
-        const mx = (a.x + b.x) / 2
-        const my = (a.y + b.y) / 2
+        const meio = dobra && dobra.length ? pontoMedio([a, ...dobra, b]) : { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+        const mx = meio.x
+        const my = meio.y
         const rot = ar.rel
         ctx.font = `500 ${10 / k}px "JetBrains Mono", monospace`
         const tw = ctx.measureText(rot).width
@@ -510,31 +712,35 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
   }
 
   // O motor continua acordado enquanto houver algo em movimento: física quente,
-  // arraste em curso, câmera interpolando — ou um pedido de redesenho pendente.
-  // Com o grafo vazio a física não conta (o alpha do recorte novo esquenta a
-  // simulação mesmo sem nós, e manteria o loop girando ~6s à toa).
+  // transição, arraste em curso, câmera interpolando — ou um pedido de
+  // redesenho pendente. Com o grafo vazio a física não conta.
   function precisaContinuar() {
     if (sujo.current) return true
     if (alvoCam.current) return true
+    if (transicao.current) return true
     if (semAnimRef.current) return false // sem animação: nada evolui sozinho
     if (dragRef.current) return true
-    return alpha.current > 0.012 && dados.current.nos.size > 0
+    return layoutAplicado.current === 'forca' && sim.current.rodando
   }
 
   // Pede um quadro. Se o motor estiver dormindo, acorda; se já estiver acordado,
   // só marca que o próximo quadro tem trabalho a fazer. É o ÚNICO ponto do
-  // arquivo que agenda um requestAnimationFrame.
+  // arquivo que agenda um requestAnimationFrame (além do reagendamento no fim
+  // do próprio quadro).
   function pedirFrame() {
     sujo.current = true
     if (!rafRef.current) rafRef.current = requestAnimationFrame(quadro)
   }
 
-  // um quadro: HiDPI + física + câmera com aproximação suave (lerp 0.14/frame)
+  // um quadro: mudanças do grafo + HiDPI + física/transição + câmera com
+  // aproximação suave (lerp 0.14/frame)
   function quadro() {
     rafRef.current = 0
     const cv = canvasRef.current
     if (!cv) return // desmontado entre o agendamento e a execução: o motor dorme
     sujo.current = false // o pedido está sendo atendido AGORA
+    sincronizar()
+    aplicarPendentes()
     // Re-resolve os tokens quando o data-theme do <html> troca. Lemos o
     // atributo aqui (e não num efeito atrelado ao ThemeContext) porque o
     // efeito do filho roda ANTES de o Provider aplicar o atributo — a
@@ -557,9 +763,14 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       cv.width = Math.round(rt.width * dpr)
       cv.height = Math.round(rt.height * dpr)
     }
-    // física roda enquanto a simulação está quente (ou durante um arraste)
+    // transição em curso (layout) OU um passo da física das forças
     const t0 = MEDIR ? performance.now() : 0
-    if (!semAnimRef.current && (alpha.current > 0.012 || dragRef.current)) fisica()
+    if (transicao.current) {
+      if (semAnimRef.current) terminarTransicao()
+      else aplicarTransicao(performance.now())
+    } else if (!semAnimRef.current && layoutAplicado.current === 'forca' && sim.current.rodando) {
+      sim.current.passo()
+    }
     const msFisica = MEDIR ? performance.now() - t0 : 0
     const a = alvoCam.current
     if (a) {
@@ -579,8 +790,9 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     const t1 = MEDIR ? performance.now() : 0
     desenhar(cv, rt)
     if (MEDIR) acumular(msFisica, performance.now() - t1)
-    // fim do quadro: só reagenda se ainda houver movimento — senão, dorme
-    if (precisaContinuar()) rafRef.current = requestAnimationFrame(quadro)
+    // fim do quadro: só reagenda se ainda houver movimento — senão, dorme. (Se
+    // algo neste quadro já pediu outro — enquadrar, transição —, não duplica.)
+    if (!rafRef.current && precisaContinuar()) rafRef.current = requestAnimationFrame(quadro)
   }
 
   // Montagem: primeiro quadro + os dois observadores que precisam ACORDAR o
@@ -610,13 +822,14 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Rede de segurança: qualquer mudança de dado ou de prop que altere o desenho
-  // pede um quadro. A página já reaquece a física ao expandir/desfazer, mas
-  // seleção, formas, recortes fundidos e o zoom A/A não passam por lá.
+  // Toda mudança de dado ou de prop que altere o desenho pede um quadro — e o
+  // quadro aplica o que mudou (sincronizar): consulta nova (versao), troca de
+  // modo (layout), expansão/desfazer/legenda (nos/arestas), seleção, formas,
+  // sem animação e o zoom A/A.
   useEffect(() => {
     pedirFrame()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nos, arestas, selecionadoId, formas, semAnim, fontZoom])
+  }, [nos, arestas, versao, layout, selecionadoId, formas, semAnim, fontZoom])
 
   // Relatório do medidor (P1): fecha uma janela a cada 2s, publica em
   // window.__grafoPerf e loga uma linha. Com a renderização sob demanda (P2), a
@@ -694,6 +907,7 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       const n = acertar(p)
       moveu = false
       if (n) {
+        terminarTransicao() // pegar um nó no meio da transição: ela termina na hora
         dragRef.current = { id: n.id, dx: n.x - p.x, dy: n.y - p.y }
         alvoCam.current = null
       } else {
@@ -707,12 +921,19 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       if (dragRef.current) {
         const n = dados.current.nos.get(dragRef.current.id)
         if (n) {
-          n.x = p.x + dragRef.current.dx
-          n.y = p.y + dragRef.current.dy
-          n.vx = 0
-          n.vy = 0
+          const x = p.x + dragRef.current.dx
+          const y = p.y + dragRef.current.dy
+          if (layoutAplicado.current === 'forca') {
+            // como no Browser: o nó fica PRESO onde for solto (fx/fy) e a
+            // física reaquece em 0,2 — os vizinhos acompanham
+            Object.assign(n, { fx: x, fy: y, x, y, vx: 0, vy: 0 })
+            if (!semAnimRef.current) sim.current.aquecer(ALPHA_ARRASTE)
+          } else {
+            n.x = x
+            n.y = y
+            hier.current.movidos.add(n.id)
+          }
         }
-        if (!semAnimRef.current) alpha.current = Math.max(alpha.current, 0.25) // vizinhos acompanham
         moveu = true
         pedirFrame()
         return

@@ -119,6 +119,12 @@ sessões baseadas em token."
 **Quando:** Etapa 7 (G1), resolvendo um "a definir" antigo · **Onde:**
 [src/components/GrafoCanvas.jsx](src/components/GrafoCanvas.jsx)
 
+> **Revista pela D18 (2026-10-18, N11):** o motor continua próprio e sem biblioteca,
+> mas a física passou a ser a do Neo4j Browser (as forças do d3-force, reimplementadas
+> e verificadas como idênticas), e ganhou um layout hierárquico. As molas não dependem
+> mais do tipo de relação — o argumento das "molas semânticas" abaixo descreve o motor
+> do protótipo, não o atual.
+
 **O problema.** Como renderizar o grafo interativo? Bibliotecas prontas (D3.js,
 Cytoscape.js, vis.js, react-force-graph) entregam rápido, mas impõem sua aparência,
 seu modelo de interação e uma dependência pesada.
@@ -161,6 +167,10 @@ controle integral sobre o comportamento interativo especificado no protótipo."
 > **Nota (2026-10-15):** a pasta `design/` com os protótipos foi retirada do
 > repositório — era o exemplo de referência da migração e não é mais usada. O método
 > abaixo continua valendo como registro de como a interface foi construída.
+>
+> **Revista pela D18 (2026-10-18, N11):** no motor do grafo, a referência de
+> fidelidade passou do protótipo para o Neo4j Browser (parâmetros lidos da própria
+> ferramenta, física verificada número a número).
 
 **O problema.** O design aprovado vive em protótipos HTML "bundled"
 (design/prototipo_final.html e prototipo_grafo.html). Como transformá-los em app
@@ -728,6 +738,13 @@ foram suspensos até que o modelo as contemple."
 [src/pages/Grafos.jsx](src/pages/Grafos.jsx), [src/App.jsx](src/App.jsx); apagados
 `src/data/mockFuseki.js` e `src/components/grafo/GrafoFiltros.jsx`
 
+> **Exceção (2026-10-18, decisão do autor):** o grafo-globo da seção "Cada matéria tem
+> sua rede." da Home ([src/components/GraphSection.jsx](src/components/GraphSection.jsx))
+> continua com os nós e arestas escritos no código, como conteúdo ilustrativo da seção
+> (como os depoimentos) — faz mais sentido que puxá-los do Neo4j. Na fala para a banca
+> abaixo, "nenhum dado do grafo no código" vale para tudo o que vem do grafo da
+> orientadora; o globo é ilustração, não consulta.
+
 **O problema.** Depois da N9, o mock do Fuseki (D1) só sobrevivia em três lugares: a
 barra de filtros antiga (sem uso desde a N3), o perfil mock ("Minhas turmas", com os
 anos 5.º–9.º e as matérias do mock) e os rótulos de turma da página. As turmas eram
@@ -779,5 +796,93 @@ ao banco."
 
 ---
 
-*Última atualização: 2026-10-15. Novas decisões: adicionar ao fim da lista como
+## D18 — O grafo se arruma como no Neo4j Browser: física idêntica (d3-force) e layout hierárquico próprio (revê D3 e D4)
+
+**Quando:** 2026-10-18, N11 do roadmap (ESTADO_ATUAL.md §4.5), pedido e decisões do
+autor · **Onde:** [src/data/simulacaoForcas.js](src/data/simulacaoForcas.js) (física),
+[src/data/layoutHierarquico.js](src/data/layoutHierarquico.js) (hierárquico),
+[src/components/grafo/GrafoCanvas.jsx](src/components/grafo/GrafoCanvas.jsx) (modos,
+transições, arraste), [src/pages/Grafos.jsx](src/pages/Grafos.jsx) (seletor, preferência
+`layout`, semente e expansão), [src/data/estiloGrafo.js](src/data/estiloGrafo.js)
+(saíram as molas por relação e o "anel" da semente)
+
+**O problema.** O motor do canvas foi portado do protótipo (D3, D4): uma física própria
+em que o comprimento das molas dependia do tipo de relação. Com a integração ao Neo4j
+(D14), a referência de quem usa o site passou a ser o **Neo4j Browser** — a ferramenta
+oficial de consulta, a mesma que a orientadora usa para montar o grafo. O autor pediu
+que o grafo se arrumasse *igual* ao do Browser e que o site oferecesse o layout
+hierárquico, *exatamente* como o Browser oferece. "Igual" precisava de um critério
+verificável, e não de uma impressão visual.
+
+**A decisão.** (1) **De onde vêm os números:** do próprio Browser servido pelo Neo4j
+2026.09 — a classe `d3ForceLayout` do pacote de visualização e o worker do layout
+hierárquico. O código foi apenas **lido**: o site reproduz parâmetros e comportamento,
+sem copiar código da ferramenta. (2) **Física:** as forças do d3-force, que o Browser
+embute (licença ISC), foram reimplementadas no projeto — repulsão −400 com a aproximação
+de Barnes–Hut, colisão (tamanho + 25), molas de comprimento tamA + tamB + 90 com força
+dependente do grau dos nós, atração ao centro 0,03, `velocityDecay` 0,4, parada em
+alpha 0,05 e o gerador pseudoaleatório de semente fixa —, com o **pré-cálculo de 1.ª
+carga** do Browser (até 200 passos com repulsão dobrada antes do 1.º desenho). Decisões
+do autor: tamanho 25 nas contas (o padrão do Browser), nó arrastado fica preso,
+consulta nova recomeça do zero e a expansão segue o Browser (nós novos perto do centro,
+reaquecimento em 1, câmera que só afasta). **A equivalência foi verificada
+numericamente:** a mesma entrada, nesta física e no d3 extraído do Browser, dá
+coordenadas idênticas (diferença de 0 px no grafo real de 45 nós e 66 relações). (3)
+**Hierárquico:** escrito no projeto, sem dependência nova (decisão do autor), seguindo as
+etapas do dagre que o Browser usa — quebra de ciclos, níveis por caminho mais longo e
+"árvore justa", nós fictícios nas arestas longas, redução de cruzamentos por baricentro
+e coordenada x pelo método de Brandes–Köpf — com a configuração do Browser: de cima para
+baixo, separações de 75 px, caixa de 2,63 × tamanho por nó, uma aresta por par, partes
+desconectadas empacotadas, o grafo mantido no lugar (centroide) e transição de 400 ms.
+Fica **parecido, não idêntico** (detalhes internos do dagre ficaram de fora). (4) Um
+**seletor de dois botões** troca os modos, e a escolha fica salva. Revê a **D3**: o
+motor continua próprio, mas o argumento das "molas semânticas" deixa de valer — a
+distância das molas passa a depender do tamanho dos nós, e a geometria reflete a
+topologia do grafo, como no Browser. Revê a **D4**: no motor do grafo, a fidelidade
+passa do protótipo à ferramenta oficial.
+
+**Alternativas rejeitadas.** (a) *Instalar o dagre* (0.8.5 ou `@dagrejs/dagre` 3.x):
+dependência nova (contra a D3) e, ainda assim, não a versão do Browser — a 0.8.14 que ele
+embute não está publicada; o autor preferiu a implementação própria. (b) *Instalar o
+d3-force:* dependência sem necessidade — as cinco forças cabem num módulo do projeto e o
+resultado é idêntico. (c) *Copiar o código do Browser:* reproduzir parâmetros e
+comportamento, sim; copiar código de uma ferramenta de terceiros, não. (d) *Ajustar as
+constantes da física antiga "a olho" até parecer o Browser:* sem garantia nenhuma; a
+leitura dos parâmetros mais a comparação número a número é que dá a garantia. (e)
+*Manter a física do protótipo:* o grafo do site não se arrumaria como o do Browser, que é
+a referência de quem monta e consulta o grafo.
+
+**Para a banca.** *"O grafo se arruma exatamente como no Neo4j Browser. Li os parâmetros
+do layout no próprio código que o Neo4j entrega, reimplementei no projeto as forças do
+d3 que ele usa e comparei as duas simulações número a número no grafo real: a diferença
+foi zero. O layout hierárquico segue o mesmo algoritmo em camadas do Browser, também
+implementado no projeto, sem biblioteca nova."*
+
+**Monografia** *(cap. de Implementação, seção de visualização do grafo — retoma a D3 e
+a D4; citar Barnes & Hut, 1986; Sugiyama, Tagawa & Toda, 1981; Gansner et al., 1993;
+Brandes & Köpf, 2001; e a biblioteca d3-force):*
+"Com a integração ao banco de grafos, a referência de comportamento da visualização
+passou a ser o Neo4j Browser, ferramenta oficial de consulta do sistema gerenciador. Os
+parâmetros do layout dirigido por forças foram obtidos por inspeção do código da própria
+ferramenta, distribuído pelo servidor de banco de dados, e a simulação foi reimplementada
+segundo o algoritmo da biblioteca d3-force, que a ferramenta incorpora: repulsão entre
+vértices com a aproximação de Barnes–Hut (BARNES; HUT, 1986), restrição de colisão,
+molas cuja rigidez decresce com o grau dos vértices e atração ao centro, sob resfriamento
+exponencial e com um gerador pseudoaleatório de semente fixa, que torna o resultado
+determinístico. A equivalência foi verificada numericamente: submetidas ao mesmo grafo e
+às mesmas posições iniciais, a implementação deste trabalho e a da ferramenta de
+referência produziram coordenadas idênticas. Implementou-se ainda um layout hierárquico
+em camadas, segundo a abordagem de Sugiyama, Tagawa e Toda (1981) — quebra de ciclos,
+atribuição de níveis com o refinamento por árvore geradora justa (GANSNER et al., 1993),
+inserção de vértices fictícios nas arestas longas, redução de cruzamentos pela
+heurística do baricentro e posicionamento horizontal pelo método de Brandes e Köpf
+(2001) —, com a configuração de espaçamento e de empacotamento de componentes
+desconexos adotada pela ferramenta. Em relação ao motor portado do protótipo, a mudança
+substitui o comprimento de mola definido pelo tipo semântico da relação por um
+comprimento dependente do tamanho dos vértices, de modo que a geometria do desenho passa
+a refletir a topologia do grafo, como na ferramenta de referência."
+
+---
+
+*Última atualização: 2026-10-18. Novas decisões: adicionar ao fim da lista como
 D<N+1>, seguindo o formato do cabeçalho — **sempre com o parágrafo de monografia**.*

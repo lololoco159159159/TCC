@@ -17,9 +17,12 @@
        20  GradeCard com popover aberto (Home)
        30  painel de contexto, resultado do console e popovers do palco
            (grafos) + balão de matérias
-       32  overlays de estado do palco (carregando/erro/vazio)
+       32  overlays de estado do palco (carregando/erro) + a coluna de controles
+           do palco (vem depois deles no DOM e fica por cima: o A/A dela segue
+           clicável em qualquer estado)
        40  barra do console Cypher (grafos; era a de busca/filtros até a N3)
-      120  widget A/A (fixo, site inteiro — definido neste arquivo)
+      120  widget A/A fixo (Home e telas de conta — definido neste arquivo; na
+           página de grafos ele fica na coluna de controles do palco)
   190/200  backdrop / dropdown do perfil (grafos)
    ============================================================================ */
 
@@ -300,8 +303,8 @@ input::placeholder {
 
 /* ---- Widget A/A de tamanho de fonte ---- */
 
-/* wrapper do widget A/A — some (fade) enquanto o popover de paleta (grafos)
-   está aberto: deslizar para baixo caía em cima da legenda "Tipos de nó" */
+/* wrapper do widget A/A fixo (Home e telas de conta; na página de grafos o
+   widget é a versão compacta da coluna de controles do palco) */
 .eg-font-widget {
   position: fixed;
   right: 14px;
@@ -312,12 +315,6 @@ input::placeholder {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  transition: opacity 0.2s ease;
-}
-
-:root[data-paleta-aberta='1'] .eg-font-widget {
-  opacity: 0;
-  pointer-events: none;
 }
 
 .eg-font-btn:hover {
@@ -423,7 +420,8 @@ input::placeholder {
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
-.eg-grafo-zoom:hover {
+.eg-grafo-zoom:hover,
+.eg-grafo-zoom[aria-pressed='true'] {
   border-color: var(--green);
   color: var(--green);
 }

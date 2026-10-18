@@ -15,15 +15,44 @@ const estiloBotaoBase = {
   transition: 'transform .12s ease, opacity .2s ease',
 }
 
-// Widget de acessibilidade fixo no meio da lateral direita:
-// um "A" grande (aumenta a fonte) sobre um "A" pequeno (diminui),
-// com o percentual atual entre eles. O zoom é aplicado no #eg-root.
-// A posição vem da classe .eg-font-widget (index.css): quando o popover de
-// paleta da página de grafos está aberto (atributo data-paleta-aberta no
-// <html>), o widget some com fade (deslizar cobria a legenda "Tipos de nó")
-// e reaparece ao fechar.
-function FontSizeWidget() {
+// Widget de acessibilidade: um "A" grande (aumenta a fonte) sobre um "A"
+// pequeno (diminui), com o percentual atual entre eles. O zoom é aplicado no
+// #eg-root. Duas apresentações:
+//  - padrão: fixo no meio da lateral direita (classe .eg-font-widget, no
+//    index.css) — Home e telas de conta, montado pelo App;
+//  - `compacto`: na coluna de controles do palco da página de grafos, com os
+//    botões 34×34 dos outros controles (.eg-grafo-zoom). Ajuste de 2026-10-18: o
+//    widget fixo caía em cima dessa coluna.
+function FontSizeWidget({ compacto = false }) {
   const { setFont, fontPct, fonteNoMaximo, fonteNoMinimo } = useTheme()
+
+  if (compacto) {
+    return (
+      <div role="group" aria-label="Tamanho da letra" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+        <button
+          type="button"
+          onClick={() => setFont(1)}
+          title="Aumentar tamanho da letra"
+          className="eg-grafo-zoom"
+          style={{ font: "700 17px/1 'Figtree', sans-serif", opacity: fonteNoMaximo ? 0.35 : 1 }}
+        >
+          A
+        </button>
+        <span style={{ font: "600 10px/1 'JetBrains Mono', monospace", letterSpacing: '0.05em', color: 'var(--muted)' }}>
+          {fontPct}
+        </span>
+        <button
+          type="button"
+          onClick={() => setFont(-1)}
+          title="Diminuir tamanho da letra"
+          className="eg-grafo-zoom"
+          style={{ font: "700 11px/1 'Figtree', sans-serif", opacity: fonteNoMinimo ? 0.35 : 1 }}
+        >
+          A
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="eg-font-widget">

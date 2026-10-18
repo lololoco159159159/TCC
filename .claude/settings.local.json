@@ -93,7 +93,20 @@
       "Bash(python3 -I /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/crawl.py /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/browser/chunks)",
       "Bash(python3 -I - vendor-neo4j-ndl.5-UEwjcv.js HierarchicalLayout.worker.js)",
       "Bash(python3 -I - HierarchicalLayout.worker.js)",
-      "Bash(grep -o 'Qs=\\(e,t,n,r=Ws\\)=>.\\\\{1500\\\\}' types.CyXJvY_z.js)"
+      "Bash(grep -o 'Qs=\\(e,t,n,r=Ws\\)=>.\\\\{1500\\\\}' types.CyXJvY_z.js)",
+      "Bash(curl -s -m 20 http://localhost:7474/browser/assets/vendor-neo4j-ndl.5-UEwjcv.js -o ndl.js)",
+      "Bash(curl -s -m 10 http://localhost:7474/browser/assets/HierarchicalLayout.worker-B8BqfX6a.js -o worker.js)",
+      "Bash(python3 -I - /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/browser/ndl.js)",
+      "Bash(python3 -I - /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/browser/ndl.js /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/browser/d3_regiao.js)",
+      "Bash(python3 -I /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/extrair_ref.py /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/browser/ndl.js /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/ref/d3ref.mjs)",
+      "Bash(node --input-type=module -e 'import\\('\\\\''/tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/ref/d3ref.mjs'\\\\''\\).then\\(m => console.log\\(Object.keys\\(m\\)\\)\\)')",
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_fisica.mjs)",
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_hier.mjs)",
+      "Bash(node --cpu-prof --cpu-prof-dir=/tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/prof -e ' *)",
+      "Bash(node --input-type=module -e ' *)",
+      "Bash(grep -n \"^## D3\\\\|^## D4\\\\|^\\\\*\\\\*Quando:\\\\*\\\\* Etapa 7 \\(G1\\)\\\\|^\\\\[src/components/GrafoCanvas.jsx\\\\]\\\\|Nota \\(2026-10-15\\)\\\\|O método$\\\\|^abaixo continua\\\\|Última atualização\" guia/DECISOES.md)",
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_aa.mjs)",
+      "Bash(grep -n \"recarregar; o medidor da P1 em 0 desenhos/s\\\\|\\\\`32\\\\` overlays de estado\\\\|\\\\`120\\\\` widget A/A\" ESTADO_ATUAL.md)"
     ],
     "additionalDirectories": [
       "/home/lorenzo/tcc_implementacao/TCC/.claude/skills"
