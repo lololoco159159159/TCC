@@ -122,7 +122,7 @@ export function LegendaTipos({ rotulos, tiposTracejados, aoAlternar }) {
 
 // ---- Gaveta Cypher (N10; era a gaveta SPARQL do mock, G9) ----
 // As consultas que o SITE fez no Neo4j por conta própria — completar o
-// resultado do console (pontas, conectar nós), conexões do painel, expansão —
+// resultado do console (as pontas que faltavam), conexões do painel, expansão —
 // com os parâmetros, as linhas que voltaram e o tempo; a mais recente em cima.
 // A do console não entra: quem a escreveu foi a pessoa, e ela já está lá. A
 // gaveta se inscreve sozinha no cliente (observarConsultas): uma consulta

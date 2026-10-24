@@ -49,7 +49,10 @@ import { posicaoFilotaxia, posicaoInicial } from '../data/simulacaoForcas'
 //    "Force-based layout" (padrão) e o "Hierarchical layout", escolhidos pelo
 //    seletor da coluna de controles (preferência `layout`, salva).
 //  - N13: a BUSCA DO PROFESSOR (BuscaProfessor) entra acima do console, que
-//    continua visível: Ano → Matéria → Pergunta, tudo vindo do Neo4j.
+//    continua visível: Ano → Matéria → Pergunta, tudo vindo do Neo4j. N14: o
+//    "Ver no grafo" dela entrega a consulta pronta (com parâmetros) e o palco a
+//    executa pelo mesmo trajeto do console (executarConsulta); a mesma consulta,
+//    com os valores escritos, aparece na caixa do console.
 
 const PAINEL_PADRAO = { x: 12, w: 392, esc: false }
 
@@ -108,8 +111,11 @@ const arestaDoCanvas = (r) => ({ id: r.id, a: r.inicio, b: r.fim, rel: r.rel, pr
 function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
   const [status, setStatus] = useState('inicio') // inicio | carregando | pronto | erro
   const [resultado, setResultado] = useState(null) // última resposta do console Cypher (N3) + `grafo` (N4)
+  // o texto com que a caixa do console começa: a consulta da Home (N9) ou a
+  // última da busca, escrita com os valores; `n` muda → o console é remontado
+  // com o texto novo (o que estava digitado lá dá lugar a ele)
+  const [textoConsole, setTextoConsole] = useState({ texto: consultaInicial || '', n: 0 })
   const [erro, setErro] = useState(null) // falha da última consulta: { origem, codigo, mensagem }
-  const [conectarNos, setConectarNos] = useState(true) // "Conectar nós do resultado", ligado como no Browser (N4)
   const [abaResultado, setAbaResultado] = useState('tabela') // última aba de conteúdo: tabela | relacoes | json
   const [resultadoAberto, setResultadoAberto] = useState(false) // fechado = aba "Grafo" (o desenho); sobrevive às execuções
   const [ocultos, setOcultos] = useState(() => new Set()) // rótulos ocultos no desenho pela legenda (N6; só na sessão)
@@ -133,7 +139,9 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
   const histExp = useRef([]) // snapshots pré-expansão (G8; volta a encher com a expansão da N8)
   const selRef = useRef(null) // espelho de selecionadoId para closures assíncronas
   const canvasApi = useRef(null) // API do canvas: { centrarEm, enquadrar, reaquecer, assentar, afastarParaCaber, zoomMais, zoomMenos }
-  const ultimaConsulta = useRef('') // texto da última execução do console (o "Tentar novamente" do erro)
+  // última execução no palco (o "Tentar novamente" do erro): { consulta,
+  // parametros, descricao }
+  const ultimaConsulta = useRef(null)
 
   // Seleciona um nó (N7): registra nos "vistos", abre o painel com o retrato do
   // nó (rótulos e TODAS as propriedades, como o inspetor do Neo4j Browser) e
@@ -166,10 +174,10 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
   }
 
   // Expande um nó do desenho (N8), como o Neo4j Browser: SEMPRE consulta o
-  // banco (expandirNo — os vizinhos, até 100, e, com a chave "Conectar nós"
-  // ligada, as relações entre os que chegaram e os que já estavam na tela) e
-  // funde ao grafo sem repetir. N11, como o Browser: os nós novos nascem na
-  // espiral do d3 perto do centro (pelo índice), a física reaquece em 1 (SEM
+  // banco (expandirNo — os vizinhos, até 100, com a relação de cada um ao nó;
+  // sem o "conectar", D20) e funde ao grafo sem repetir. N11, como o Browser:
+  // os nós novos nascem na espiral do d3 perto do centro (pelo índice), a
+  // física reaquece em 1 (SEM
   // re-enquadrar: `versao` não muda) e, 100 ms depois, a câmera afasta só o
   // necessário para eles caberem. Antes de fundir, tira um snapshot para o
   // Desfazer (até 10) — fiel à G8. Falha aparece no painel, sem derrubar o palco.
@@ -180,7 +188,7 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
     setExpandindo(true)
     setErroExpansao(null)
     try {
-      const { nos, relacoes, consultas } = await expandirNo(id, new Set(nosRef.current.keys()), { conectar: conectarNos })
+      const { nos, relacoes, consultas } = await expandirNo(id, new Set(nosRef.current.keys()))
       if (meuSeq !== seq.current) return
       const foto = { nos: [...nosRef.current.values()].map((n) => ({ ...n })), arestas: grafo.arestas.map((a) => ({ ...a })) }
       const novosNos = new Map(nosRef.current)
@@ -257,19 +265,21 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
   // palco (Tabela/JSON). Canal 'console': uma execução nova cancela a anterior
   // ainda em voo — o cancelamento chega como origem 'cancelada' e é ignorado.
   // N4: a resposta vira "nós + relações" (extrairGrafo) e é completada com as
-  // consultas extras do Browser (completarGrafo: pontas que faltam, limite de
-  // nós e, se a chave estiver ligada, as relações entre os nós do resultado);
-  // o grafo aparece em texto na aba "Relações" e desenhado no canvas (N5).
-  // `conectar` vem por parâmetro porque a chave refaz a consulta logo depois de
-  // mudar o estado (o valor novo ainda não chegou a este closure).
-  async function executarConsulta(consulta, conectar = conectarNos) {
+  // consultas extras do Browser (completarGrafo: pontas que faltam e limite de
+  // nós); o grafo aparece em texto na aba "Relações" e desenhado no canvas (N5).
+  // Sem a chave "Conectar nós do resultado" (D20): o desenho mostra só as
+  // relações que a consulta devolveu.
+  // N14: a busca do professor também passa por aqui, com os parâmetros da
+  // pergunta e a descrição que a põe na gaveta Cypher. Console e busca dividem o
+  // palco e o canal 'palco': uma execução nova de qualquer um cancela a anterior.
+  async function executarConsulta(consulta, { parametros = {}, descricao = '' } = {}) {
     const meuSeq = ++seq.current // as consultas extras rodam fora do canal: a guarda descarta resposta velha
-    ultimaConsulta.current = consulta
+    ultimaConsulta.current = { consulta, parametros, descricao }
     setStatus('carregando')
     setErro(null)
     try {
-      const r = await executarCypher(consulta, {}, { canal: 'console' })
-      const grafoDoResultado = await completarGrafo(extrairGrafo(r.linhas), { conectar })
+      const r = await executarCypher(consulta, parametros, { canal: 'palco', descricao })
+      const grafoDoResultado = await completarGrafo(extrairGrafo(r.linhas))
       if (meuSeq !== seq.current) return
       // N5: o grafo do resultado vai para o canvas (versao nova → N11: começa
       // do zero, com o pré-cálculo do Browser, e enquadra logo depois);
@@ -293,12 +303,18 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
     }
   }
 
-  // Chave "Conectar nós do resultado" (N4): com um resultado na tela, refaz a
-  // última consulta já com a opção nova — os números mudam na hora.
-  function alternarConectar() {
-    const novo = !conectarNos
-    setConectarNos(novo)
-    if (status === 'pronto' && ultimaConsulta.current) executarConsulta(ultimaConsulta.current, novo)
+  // N14: o "Ver no grafo" da busca — executa a consulta (com parâmetros) e
+  // escreve no console a mesma consulta com os valores no lugar deles, para o
+  // autor ver o Cypher gerado (e poder mudá-lo e executar de novo)
+  const verBusca = ({ consulta, parametros, descricao, escrita }) => {
+    setTextoConsole((t) => ({ texto: escrita, n: t.n + 1 }))
+    executarConsulta(consulta, { parametros, descricao })
+  }
+
+  // "Tentar novamente" do card de erro: refaz a última execução como ela foi
+  function repetirUltima() {
+    const u = ultimaConsulta.current
+    if (u) executarConsulta(u.consulta, u)
   }
 
   // "Voltar ao início" (card de erro): limpa o palco — resultado e desenho
@@ -465,18 +481,17 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
           />
         </SiteHeader>
 
-        {/* ============ BUSCA DO PROFESSOR (N13): Ano → Matéria → Pergunta ============ */}
-        <BuscaProfessor />
+        {/* ============ BUSCA DO PROFESSOR (N13/N14): Ano → Matéria → Pergunta → campos ============ */}
+        <BuscaProfessor aoVerNoGrafo={verBusca} ocupado={status === 'carregando'} />
 
         {/* ============ CONSOLE CYPHER (N3; no lugar da barra de filtros) ============ */}
         <ConsoleCypher
+          key={textoConsole.n}
           status={status}
           resultado={resultado}
           erro={erro}
           aoExecutar={executarConsulta}
-          conectar={conectarNos}
-          aoAlternarConectar={alternarConectar}
-          consultaInicial={consultaInicial}
+          consultaInicial={textoConsole.texto}
         />
 
         {/* ============ ÁREA DE TRABALHO: canvas + overlays de estado ============ */}
@@ -601,7 +616,7 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
           <GrafoEstados
             status={status}
             erro={erro}
-            aoTentarNovamente={() => executarConsulta(ultimaConsulta.current)}
+            aoTentarNovamente={repetirUltima}
             aoLimpar={voltarAoInicio}
           />
 

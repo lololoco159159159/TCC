@@ -1611,7 +1611,7 @@ layout hierárquico do Neo4j Browser.
 - [x] **N11** — Física igual à do Neo4j Browser + layout hierárquico *(2026-10-18)*
 - [x] **N12** — Busca do professor: modelo e consultas (sem tela) *(2026-10-24)*
 - [x] **N13** — Busca do professor: a barra (Ano, Matéria, Pergunta), ao lado do console Cypher *(2026-10-24)*
-- [ ] **N14** — Busca do professor: os campos da pergunta, com o filtro por texto
+- [x] **N14** — Busca do professor: os campos da pergunta, com o filtro por texto *(2026-10-24)*
 - [ ] **N15** — Busca do professor: link compartilhável, botão da Home e fechamento
 
 **N1–N10 finalizadas e testadas pelo autor** (confirmado em 2026-10-15). N11 planejada
@@ -2917,11 +2917,15 @@ quando chegarem as respostas de [guia/reuniao_orientadora.txt](guia/reuniao_orie
 
 ##### Decisões — fluxo e tela
 
-1. A busca entra no topo do palco **junto do console Cypher** (z-index 40): **os dois
+1. A busca entra no topo do palco **junto do console Cypher** (z-index 40 — desde a N14,
+   só a barra da busca, para a lista dos campos passar por cima do console): **os dois
    ficam visíveis** — o autor usa o console e ele só sai bem depois (decisão do autor,
    2026-10-24). Como os dois dividem a barra fica para a N13.
-2. O console continua como está, com a chave "Conectar nós do resultado". Na busca, o
-   "conectar" fica sempre ligado (o padrão do Browser).
+2. ~~O console continua como está, com a chave "Conectar nós do resultado". Na busca, o
+   "conectar" fica sempre ligado (o padrão do Browser).~~ **Revista em 2026-10-24 (D20,
+   decisão do autor):** a chave saiu, e o grafo vem **sempre sem o "conectar"** — no
+   console, na busca e na expansão. O desenho mostra só as relações que a consulta
+   devolveu (sem o Ano ligado direto às habilidades no "O ano inteiro").
 3. Ordem: **Ano → Matéria → Pergunta → campos da pergunta → "Ver no grafo"**. Os três
    primeiros são seletores lado a lado; os campos aparecem quando a pergunta é escolhida.
 4. A Matéria só abre depois do Ano e lista **só as matérias que têm algo naquele ano**.
@@ -2939,7 +2943,12 @@ quando chegarem as respostas de [guia/reuniao_orientadora.txt](guia/reuniao_orie
 professor escolhe, e o ano e a matéria são os da barra. Ordem no menu, com a consulta de
 origem (o título dela em [consultasExemplo.js](src/data/consultasExemplo.js)):
 
-7. **A partir de habilidades** (4 perguntas):
+**Cada pergunta mostra só os campos dela** (decisão do autor, 2026-10-24, depois da N14):
+caminho e irmãs → uma habilidade; ligação → duas; objeto → um objeto de conhecimento;
+unidade → uma unidade temática; "preciso ensinar", "habilidades do ano" e "ano inteiro"
+→ nenhum (o ano e a matéria já bastam).
+
+7. **A partir de habilidades** (3 perguntas):
    - **Caminho até uma habilidade** — campo: *Habilidade*. Mostra Ano → unidade temática →
      objeto de conhecimento → habilidade. *(de "de onde vem a habilidade")*
    - **Habilidades irmãs** — campo: *Habilidade*. A habilidade, o objeto de conhecimento
@@ -2949,14 +2958,16 @@ origem (o título dela em [consultasExemplo.js](src/data/consultasExemplo.js)):
      matéria e só pelo ano escolhido — as unidades são compartilhadas entre anos, e sem
      essa trava o caminho poderia subir por outro ano. *(de "caminho entre 2
      habilidades")*
-   - **Habilidades que preciso ensinar no ano** — campo: *Habilidades*, **várias** de uma
-     vez. O caminho de cada uma desde o ano. *(de "professor colocar as habilidades que
-     precisa ensinar no ano", com o `)` que faltava)*
 8. **Um objeto de conhecimento e as suas habilidades** — campo: *Objeto de
    conhecimento*. Mostra o objeto, as habilidades do ano e a unidade de cima.
 9. **Uma unidade temática inteira** — campo: *Unidade temática*. Mostra a unidade, os
    objetos dela e as habilidades do ano escolhido. *(de "geometria completa")*
-10. **Sem campo** (3 perguntas):
+10. **Sem campo** (4 perguntas):
+    - **Habilidades que preciso ensinar no ano** — sem campo: o ano e a matéria já dizem
+      quais são. O caminho de cada habilidade do ano desde o ano. *(de "professor colocar
+      as habilidades que precisa ensinar no ano", com o `)` que faltava.)* ~~Campo
+      *Habilidades*, várias de uma vez~~ — saiu em 2026-10-24. **Hoje dá a mesma árvore que
+      "O ano inteiro"** (a mesma consulta, `ARVORE_DO_ANO`).
     - **As habilidades do ano** — o ano ligado direto às habilidades dele na matéria (o
       atalho Ano → Habilidade). *(de "ano direto p habilidade")*
     - **O ano inteiro nesta matéria** — Ano → unidades → objetos → habilidades da
@@ -2967,9 +2978,10 @@ origem (o título dela em [consultasExemplo.js](src/data/consultasExemplo.js)):
 11. Cada pergunta é uma entrada de um módulo do código (`src/data/filtrosDeBusca.js`): título em
     linguagem de professor, explicação de uma linha, os campos e a consulta Cypher com
     parâmetros. Pergunta nova = uma entrada nova. Cada campo diz de que lista do recorte
-    escolhe (unidade, objeto ou habilidade), o rótulo quando o título da matéria não serve
-    ("Primeira habilidade") e se escolhe **várias**; a pergunta pode exigir campos
-    **diferentes** entre si (a ligação).
+    escolhe (unidade, objeto ou habilidade) e o rótulo quando o título da matéria não serve
+    ("Primeira habilidade"); a pergunta pode exigir campos **diferentes** entre si (a
+    ligação). (O campo de **várias** escolhas saiu em 2026-10-24, junto com a única
+    pergunta que o usava.)
 
 ##### Decisões — de onde vêm as opções (nada guardado no código)
 
@@ -2987,9 +2999,11 @@ origem (o título dela em [consultasExemplo.js](src/data/consultasExemplo.js)):
 15. O ano é **amarrado pelas habilidades** (o atalho Ano → Habilidade), porque as unidades
     e os objetos são compartilhados entre anos (pergunta 5 da reunião). Matéria sem o
     atalho (pergunta 2): a tabela diz como achar o ano.
-16. Todas as listas dos campos saem desse recorte. A **cascata** (escolher a unidade
+16. Todas as listas dos campos saem desse recorte. ~~A **cascata** (escolher a unidade
     filtra os objetos; o objeto filtra as habilidades) também é feita no navegador, sem
-    consulta nova.
+    consulta nova.~~ **A cascata saiu em 2026-10-24** (decisão do autor): cada pergunta
+    mostra só o campo que pede, e a lista inteira do recorte é estreitada pelo filtro por
+    texto.
 17. O recorte fica **só na memória da página**, como o grafo desenhado: some ao
     recarregar. Um cache por (ano, matéria) evita consultar de novo ao voltar a um recorte
     na mesma visita. **Nada vai para o `localStorage`.**
@@ -3013,8 +3027,7 @@ origem (o título dela em [consultasExemplo.js](src/data/consultasExemplo.js)):
     ordem alfabética do português — o Neo4j põe "Álgebra" no fim).
 25. Cada opção mostra o código/nome em destaque e, embaixo, de onde vem (ex.: "Medidas de
     tempo · Grandezas e medidas"); o trecho digitado fica marcado.
-26. Campo vazio = a lista inteira (do recorte ou da cascata), para quem prefere escolher
-    olhando.
+26. Campo vazio = a lista inteira do recorte, para quem prefere escolher olhando.
 27. Nada encontrado: "Nada encontrado com 'xyz' neste ano e matéria."
 28. Teclado: ↑/↓ percorre, Enter escolhe, Esc fecha; mouse também. Padrão de
     acessibilidade *combobox* (ARIA).
@@ -3026,7 +3039,10 @@ origem (o título dela em [consultasExemplo.js](src/data/consultasExemplo.js)):
     2026-10-20); nos caminhos de tamanho variável o filtro é feito sobre
     `relationships(p)`, porque ali o Neo4j ignora tipo dinâmico (testado).
 31. Toda consulta da busca aparece na gaveta Cypher, com descrição ("busca · recorte",
-    "busca · caminho até a habilidade").
+    "busca · caminho até a habilidade"). **E a do "Ver no grafo" aparece também escrita no
+    console Cypher** (pedido do autor, 2026-10-24): a mesma consulta, com os valores no
+    lugar dos parâmetros e um cabeçalho em comentário (a pergunta, o ano, a matéria e o
+    que foi escolhido) — dá para ler, mudar e executar de novo.
 32. **Link compartilhável**: `?busca=caminho&ano=EF1&materia=matematica&habilidade=EF01MA17`
     — abrir o link refaz a busca. Habilidade vai pelo código (chave de negócio); unidade
     e objeto, que não têm id estável (ponto 2 da lista da orientadora), vão pelo
@@ -3054,11 +3070,11 @@ e objetos compartilhados entre anos (pergunta 5 → confirma a amarração pelas
   respeita acentos, várias palavras e a ordem.
 - **N13 — A barra:** Ano, Matéria e Pergunta **junto do console Cypher, que continua
   visível**; estados de carregando, Neo4j fora do ar e recorte vazio.
-- **N14 — Os campos da pergunta:** o campo com filtro por texto (combobox), a cascata e o
-  "Ver no grafo" levando o resultado ao canvas. Também o campo de **várias** habilidades
-  (as escolhidas viram etiquetas removíveis), as perguntas com **dois** campos (a ligação:
-  as duas precisam ser diferentes) e o "Teste de erro", que vai direto ao "Ver no grafo"
-  e mostra o card de erro.
+- **N14 — Os campos da pergunta:** o campo com filtro por texto (combobox) e o "Ver no
+  grafo" levando o resultado ao canvas; as perguntas com **dois** campos (a ligação: as
+  duas precisam ser diferentes) e o "Teste de erro", que vai direto ao "Ver no grafo" e
+  mostra o card de erro. (A cascata e o campo de várias habilidades chegaram a ser feitos e
+  saíram no mesmo dia — ver "Depois da N14".)
 - **N15 — Link, Home e fechamento:** o link compartilhável, o botão da Home e o
   fechamento da **D19** no DECISOES.md. A D19 (o fluxo da busca: de onde vem cada opção,
   quantas consultas e por quê — com parágrafo de monografia) **já foi escrita em
@@ -3194,6 +3210,266 @@ erro claro; o "Teste de erro" é recusado pelo Neo4j (`ErroCypher`, origem `neo4
 página em HTML: as 9 perguntas no seletor, na ordem. **Teste do autor** (junto com o da
 N13): abrir o seletor "O que você quer ver?" e conferir as 9 perguntas e as explicações —
 rodar cada uma só será possível na N14.
+
+##### N14 — Feito (2026-10-24)
+
+Arquivo novo [src/components/grafo/CampoBusca.jsx](src/components/grafo/CampoBusca.jsx) (o
+campo com filtro por texto); alterados [BuscaProfessor.jsx](src/components/grafo/BuscaProfessor.jsx)
+(os campos, o filtro da cascata e o "Ver no grafo"), [Grafos.jsx](src/pages/Grafos.jsx) (a
+busca executa pelo mesmo trajeto do console), [ConsoleCypher.jsx](src/components/grafo/ConsoleCypher.jsx)
+(perdeu o z-index), [GrafoEstados.jsx](src/components/grafo/GrafoEstados.jsx) (o convite),
+[filtrosDeBusca.js](src/data/filtrosDeBusca.js) (`camposFaltando()`),
+[neo4j.js](src/data/neo4j.js) (comentário do canal) e [index.css](src/index.css) (classes
+do campo e a escala de z-index).
+
+Como ficou:
+- **Escolhida a pergunta, aparece uma 2.ª linha na barra da busca:** o filtro da cascata,
+  os campos da pergunta e o botão **"Ver no grafo"**. Perguntas sem campo ("As
+  habilidades do ano", "O ano inteiro", "Teste de erro") mostram só o botão.
+- **O campo (decisões 19–28)** segue o padrão *combobox* das WAI-ARIA Authoring Practices:
+  - **Abrir e filtrar:** clicar na caixa abre a lista inteira (campo vazio = tudo). Digitar
+    filtra a cada tecla, no navegador: sem acento, sem maiúscula, todas as palavras, e o que
+    *começa* com o texto vem primeiro.
+  - **Cada opção mostra:** o código ou nome, o texto da habilidade e "de onde vem", com o
+    trecho digitado marcado em verde. Sem resultado: "Nada encontrado com 'xyz' neste ano e
+    matéria."
+  - **Teclado:** ↓/↑ percorrem (a lista rola junto), Enter escolhe, Esc fecha só a lista —
+    não tira a seleção do grafo. O mouse também funciona.
+  - **O escolhido aparece na caixa** ("EF01MA17 — Reconhecer períodos do dia…"). Ao entrar
+    de novo, a caixa fica livre para digitar e o escolhido passa ao placeholder.
+  - **Limite:** a lista desenha até 100 opções de uma vez ("Mostrando 100 de N — digite
+    para filtrar").
+- ~~**Várias habilidades** ("Habilidades que preciso ensinar no ano")~~ — *saiu no mesmo
+  dia: a pergunta ficou sem campo (ver "Depois da N14 — só os campos de cada pergunta").*
+  - As escolhidas viravam **etiquetas** com "×" dentro da caixa, e a lista continuava
+    aberta para escolher mais.
+  - Escolher de novo uma já escolhida a tirava, e Backspace na caixa vazia tirava a última.
+- **Dois campos** ("Ligação entre duas habilidades"): o que um escolheu não aparece na lista
+  do outro — as duas sempre diferentes.
+- ~~**Cascata (decisão 16): "Filtrar as listas"**~~ — *saiu no mesmo dia: cada pergunta
+  mostra só o campo que pede (ver "Depois da N14 — só os campos de cada pergunta").* Eram
+  dois seletores, "Qualquer unidade temática" e "Qualquer objeto de conhecimento":
+  - Só aparecem os seletores que estreitam algum campo da pergunta.
+  - A unidade estreita os objetos e as habilidades; o objeto, as habilidades. Trocar a
+    unidade solta o objeto que não for dela.
+  - **Só estreita as listas:** o que já foi escolhido continua escolhido — a ligação pode
+    juntar habilidades de unidades diferentes.
+- **Limpar e manter:**
+  - Trocar o ano ou a matéria limpa campos e filtros (decisão 5).
+  - Trocar a pergunta **mantém** o que tiver o mesmo nome: a habilidade do "Caminho"
+    continua escolhida nas "Irmãs" e na 1.ª da "Ligação".
+- **"Ver no grafo"** só liga com todos os campos escolhidos (decisão 6). Enquanto o palco
+  consulta, vira "Buscando…".
+  - A linha de estado diz o passo: "falta escolher: habilidade" ou "clique em Ver no grafo".
+  - A página executa a consulta pelo **mesmo trajeto do console** (extrair → completar →
+    canvas, com painel, expandir, desfazer, legenda e layouts), ~~com o "conectar" sempre
+    ligado (decisão 2)~~ — sem o "conectar" desde a D20, logo depois (ver abaixo).
+  - A consulta aparece na **gaveta Cypher** com a descrição ("busca · caminho até uma
+    habilidade"…, decisão 31).
+  - O **"Teste de erro"** abre o card de erro do Neo4j (sem "Tentar novamente": o erro é da
+    consulta).
+- **Console e busca dividem o palco:**
+  - Os dois usam o canal `palco`: uma execução nova de qualquer um cancela a anterior.
+  - A linha de status do console mostra o que estiver no palco.
+  - ~~A chave "Conectar nós do resultado" só refaz um resultado do console.~~ (A chave saiu
+    na D20.)
+  - O "Tentar novamente" do card de erro refaz a última execução, de qualquer um dos dois.
+- **Camadas:**
+  - A barra do console **perdeu o z-index 40**: nada nela abre por cima do palco.
+  - Assim a lista dos campos (na barra da busca, 40) passa por cima do console e do palco,
+    sem criar um nível novo (regra da escala).
+- **Convite do palco:** "Explore o grafo." — fala primeiro da busca (escolher e "Ver no
+  grafo") e depois do console.
+
+Verificado:
+- `npm run lint` (0/0) e `npm run build` (JS 301,88 → **312,89 kB**; CSS 8,08 → 8,39 kB).
+- `npm run dev`: 200 nos módulos novos e alterados.
+- **Testes do assistente** (sem navegador — não há DOM de teste no projeto, e nada foi
+  instalado):
+  - **Dados (Node, Neo4j real):** os testes da N12 de novo (41 verificações).
+  - **Página em HTML (N13):** a barra inicial.
+  - **Página e campos em HTML (12 verificações):**
+    - O campo fechado: `role="combobox"`, `aria-expanded`, `aria-autocomplete`, rótulo
+      ligado à caixa e placeholder de dica.
+    - O escolhido escrito na caixa — inclusive quando a cascata o tirou da lista.
+    - As 4 etiquetas com "×" e o "Mais uma…".
+    - A barra da busca no 40 e a do console sem z-index.
+    - Nada de campo nem botão antes da pergunta; o convite novo e o console intacto.
+    - Uma consulta do console ainda em voo é **cancelada** pela da busca (canal `palco`).
+- **Não testado pelo assistente:** abrir a lista, digitar, teclado, mouse e o desenho só
+  rodam no navegador.
+
+**Teste do autor:**
+1. Escolher "1º Ano" → "Matemática" → "Caminho até uma habilidade": aparecem "Filtrar as
+   listas" (unidade e objeto), o campo **Habilidade** e "Ver no grafo" desligado; a linha diz
+   "falta escolher: habilidade".
+2. Clicar no campo: a lista com as 22 habilidades (código, texto e de onde vem). Digitar
+   "medidas tempo" e depois "ef01ma1": a lista diminui na hora, com o trecho marcado.
+   Digitar "xyz": "Nada encontrado…".
+3. Teclado: ↓/↑ (a lista rola), Enter escolhe, Esc fecha (com um nó selecionado no grafo, o
+   Esc no campo **não** o tira). A caixa mostra "EF01MA17 — …".
+4. "Ver no grafo": o desenho de 4 nós e 3 relações (Ano → unidade → objeto → habilidade,
+   sem o Ano ligado direto à habilidade — D20); a consulta "busca · caminho até uma
+   habilidade" na gaveta Cypher; o painel, expandir e desfazer funcionam no resultado.
+5. ~~Cascata: em "Filtrar as listas", "Grandezas e medidas" → o seletor de objeto e a
+   lista de habilidades só com os dela; trocar para outra unidade solta o objeto.~~ (A
+   cascata saiu.)
+6. Trocar a pergunta para "Habilidades irmãs": a habilidade continua escolhida; "Ver no
+   grafo" → EF01MA16/17/18 (se a escolhida for a EF01MA16).
+7. "Ligação entre duas habilidades": EF01MA01 na 1.ª — ela some da lista da 2.ª; EF01MA21
+   na 2.ª → 7 nós passando pelo 1º Ano.
+8. ~~"Habilidades que preciso ensinar no ano": escolher EF01MA06, 07, 08 e 19 (a lista
+   fica aberta); tirar uma pelo "×" e outra com Backspace; recolocar; "Ver no grafo" → 11
+   nós.~~ Agora sem campo: "Ver no grafo" → 45 nós, como "O ano inteiro".
+9. "Um objeto…", "Uma unidade…", "As habilidades do ano" (23 nós) e "O ano inteiro" (45
+   nós e 44 relações, **sem** o Ano ligado direto às habilidades — D20).
+10. "Teste de erro" → "Ver no grafo": o card "O Neo4j recusou a consulta" com o
+    `SyntaxError`.
+11. Trocar o ano ou a matéria: campos e filtros limpos.
+12. A lista abre **por cima** do console e do palco; o console continua funcionando
+    (Executar, Exemplos — sem a chave "Conectar", que saiu na D20); tema escuro e A/A.
+
+##### Depois da N14 — sem o "Conectar nós do resultado" (2026-10-24, D20)
+
+Pedido do autor: "O ano inteiro nesta matéria" mostrava o Ano ligado **direto** a cada
+habilidade — o "conectar" trazia o atalho `DESENVOLVE_HABILIDADE`, que a consulta não pede:
+66 relações em vez de 44. **A chave saiu, e o grafo vem sempre como se ela estivesse
+desligada** — no console, na busca e na expansão (ver a **D20** no
+[DECISOES.md](guia/DECISOES.md), com o parágrafo de monografia; revê a decisão 2 acima).
+
+Alterados:
+- [extrairGrafo.js](src/data/extrairGrafo.js) — `completarGrafo()` ficou só com as pontas
+  que faltam e o limite de 300 nós.
+- [vizinhanca.js](src/data/vizinhanca.js) — `expandirNo()` traz os vizinhos e a relação de
+  cada um ao nó, sem o "conectar os novos" (uma consulta por expansão, não duas).
+- [ConsoleCypher.jsx](src/components/grafo/ConsoleCypher.jsx) — saiu a chave; a linha de
+  status ocupa a largura toda.
+- [Grafos.jsx](src/pages/Grafos.jsx) — saíram o estado da chave e o "refazer ao alternar";
+  `executarConsulta(consulta, { parametros, descricao })`.
+- [ResultadoCypher.jsx](src/components/grafo/ResultadoCypher.jsx) — a aba Relações não
+  mostra mais "conectar nós do resultado: ligado/desligado" (só as pontas, quando houver).
+- Comentários em [neo4j.js](src/data/neo4j.js) e [GrafoOverlays.jsx](src/components/grafo/GrafoOverlays.jsx).
+
+O código do "conectar" foi **retirado**, não escondido (está no histórico do git). Quem
+quiser ver o atalho Ano → Habilidade tem a pergunta "As habilidades do ano" (a consulta
+"ano direto p habilidade" da orientadora), que o devolve de propósito.
+
+Verificado:
+- `npm run lint` (0/0) e `npm run build` (JS 312,89 → **311,02 kB**).
+- **Dados (Node, Neo4j real), 42 verificações.** O desenho de cada pergunta tem agora
+  exatamente as relações que a consulta devolveu, sem a consulta extra de "conectar":
+  - **"O ano inteiro":** 45 nós e 44 relações, só TEM_UNIDADE, TEM_OBJETO e DESENVOLVE.
+  - **Nenhuma pergunta traz `DESENVOLVE_HABILIDADE`**, fora "As habilidades do ano".
+  - **Caminho:** 4 nós e 3 relações.
+  - **Expandir "Medidas de tempo" na árvore:** só as relações do objeto e uma consulta só.
+- **Página em HTML:** o console sem a chave, com a caixa, os Exemplos e o Executar.
+
+##### Depois da N14 — só os campos de cada pergunta, e a consulta no console (2026-10-24)
+
+Pedido do autor, depois de testar a N14:
+
+1. **Os campos de cada pergunta:**
+
+   | Pergunta | Campos |
+   |---|---|
+   | Caminho até uma habilidade | uma habilidade |
+   | Habilidades irmãs | uma habilidade |
+   | Ligação entre duas habilidades | duas habilidades |
+   | Habilidades que preciso ensinar no ano | nenhum (o ano e a matéria já bastam) |
+   | Um objeto de conhecimento e as suas habilidades | um objeto de conhecimento |
+   | Uma unidade temática inteira | uma unidade temática |
+   | As habilidades do ano · O ano inteiro nesta matéria | nenhum (já era assim) |
+
+2. **"Ao gerar o grafo com a consulta, ela aparece na barra de busca Cypher para eu ver o
+   código gerado."**
+
+Como ficou:
+- **Saiu o "Filtrar as listas" (a cascata, decisão 16).** As perguntas de habilidade e a
+  de objeto mostram só o campo delas, com a lista inteira do recorte e o filtro por texto.
+- **"Habilidades que preciso ensinar no ano" ficou sem campo.** Ela mostra o caminho de
+  cada habilidade do ano desde o ano, ou seja, **a mesma árvore que "O ano inteiro nesta
+  matéria"** (45 nós, 44 relações) — as duas usam a mesma consulta (`ARVORE_DO_ANO`). A
+  diferença hoje é só o nome; fica para o autor decidir se as duas continuam.
+- **Saiu o campo de várias escolhas** (as etiquetas com "×"): nenhuma pergunta o usa mais.
+  Saíram o código dele no CampoBusca, o `varias` dos campos e as classes de CSS.
+- **A consulta no console:** o "Ver no grafo" executa a consulta como antes (com
+  parâmetros) e escreve na caixa do console **a mesma consulta com os valores no lugar dos
+  parâmetros**, com um cabeçalho em comentário Cypher. Por exemplo:
+
+  ```
+  // Busca: Caminho até uma habilidade · 1º Ano · Matemática
+  // Habilidade: EF01MA17
+  MATCH p = (a:Ano {codigo: 'EF1'})-[:TEM_UNIDADE]->(:UnidadeTematica)
+        -[:TEM_OBJETO]->(:ObjetoConhecimento)-[:DESENVOLVE]->(h)
+  WHERE elementId(h) = '4:…:39'
+  RETURN p
+  ```
+
+  - **Executada pelo "Executar"**, ela dá o mesmo grafo.
+  - **Texto de antes:** o que estava digitado no console dá lugar a ela (a página remonta
+    o console).
+  - **"Teste de erro":** aparece a consulta com o erro de sintaxe.
+  - **Como é feita:** `consultaEscrita()` em [filtrosDeBusca.js](src/data/filtrosDeBusca.js)
+    (parte 5). O rótulo/relação da tabela entra onde há `$any([$m.…])`, e valores entre
+    aspas, com escape, no resto.
+  - **Segurança:** o Neo4j continua recebendo a versão com parâmetros (decisões 29–30). A
+    escrita é para ler, e os valores dela vêm da tabela do código e do recorte, nunca do
+    que foi digitado.
+
+Alterados: [filtrosDeBusca.js](src/data/filtrosDeBusca.js) (perguntas, `opcoesDoCampo()`
+sem cascata, `camposFaltando()`, `consultaEscrita()`), [CampoBusca.jsx](src/components/grafo/CampoBusca.jsx)
+(só uma escolha), [BuscaProfessor.jsx](src/components/grafo/BuscaProfessor.jsx) (sem o
+filtro; o cabeçalho da consulta escrita), [Grafos.jsx](src/pages/Grafos.jsx) (o texto do
+console), [ConsoleCypher.jsx](src/components/grafo/ConsoleCypher.jsx) (comentário) e
+[index.css](src/index.css) (saiu `.eg-campo-tirar`).
+
+Verificado:
+- `npm run lint` (0/0) e `npm run build` (JS 311,02 → **308,98 kB**; CSS 8,39 → 8,30 kB).
+- **Dados (Node, Neo4j real), 49 verificações:**
+  - Os campos de cada pergunta, exatamente como na tabela acima.
+  - **A consulta escrita das 8 perguntas, executada como texto e sem parâmetros (com o
+    cabeçalho em comentário), dá os mesmos nós e relações** da consulta com parâmetros.
+  - Nenhum `$` sobra na escrita.
+  - Um valor com aspas e barra vira texto Cypher seguro.
+  - "Preciso ensinar": 45 nós e 44 relações.
+- **Páginas em HTML:**
+  - O campo sem etiquetas e a página sem o "Filtrar as listas".
+  - O console mostra o texto que recebe (a escrita da busca, 6 linhas; e a consulta da
+    Home, N9).
+
+**Teste do autor:**
+1. Cada pergunta mostra só os campos da tabela acima.
+2. "Ver no grafo" em "Caminho até uma habilidade" (EF01MA17): o console passa a mostrar a
+   consulta com o cabeçalho; clicar em "Executar" dá o mesmo desenho (4 nós, 3 relações).
+3. O mesmo na "Ligação" (os dois `elementId` escritos) e no "Teste de erro" (a consulta
+   com o erro).
+
+##### Ajuste: a "Ligação" sem o aviso de produto cartesiano (2026-10-24)
+
+O autor viu, no resultado da "Ligação entre duas habilidades", o aviso do Neo4j
+`Neo.ClientNotification.Statement.CartesianProduct` ("This query builds a cartesian product
+between disconnected patterns"). A causa era o `MATCH (h1), (h2) WHERE elementId(…)` antes
+do `shortestPath`: dois padrões soltos no mesmo MATCH. Era inofensivo (1 nó × 1 nó), mas
+o aviso aparecia.
+
+**A correção:** as duas pontas foram para o WHERE do próprio `shortestPath`, num MATCH só:
+
+```
+MATCH p = shortestPath((h1)-[*..10]-(h2))
+WHERE elementId(h1) = $habilidade AND elementId(h2) = $habilidade2
+  AND all(r IN relationships(p) WHERE type(r) IN [...])
+  AND all(n IN nodes(p) WHERE NOT n:Ano OR n.codigo = $ano)
+RETURN p
+```
+
+**Testado contra o Neo4j real**, com 4 variantes:
+- MATCH só (a escolhida), dois MATCH separados, `WITH` entre eles e `SHORTEST 1` do GQL.
+  Todas tiram o aviso e dão o mesmo caminho (7 nós, 6 relações, pelo 1º Ano).
+- O tempo no Neo4j é o mesmo da consulta antiga, 1 a 3 ms; o `SHORTEST 1` foi o mais
+  lento.
+- Nenhuma outra pergunta gera aviso.
+- O teste de dados (49 verificações) agora também confere que **nenhuma pergunta volta
+  com aviso do Neo4j**.
 
 ### 4.6 Limpeza do código — etapas (L0–L2) · FINALIZADO
 
@@ -3399,7 +3675,8 @@ Particularidades:
   intermediários novos): `1–8` camadas internas da landing · `20` GradeCard aberto ·
   `30` painel de contexto/resultado do console/popovers do palco/balão de matérias ·
   `32` overlays de estado + coluna de controles do palco (depois deles no DOM) ·
-  `40` barras da busca do professor e do console Cypher (a do console era a de filtros até a N3) ·
+  `40` barra da busca do professor (a lista dos campos abre por cima do console — que ficou
+  sem z-index na N14 — e do palco) ·
   `120` widget A/A fixo (Home e telas de conta; nos grafos ele fica na coluna) ·
   `190/200` backdrop/dropdown do perfil.
 - **Segredos** (senha do Neo4j): só no `.env.local` (não versionado; modelo em
@@ -3440,7 +3717,9 @@ src/
 │   │   ├── BotaoAcessibilidade.jsx # botão flutuante: toggle "desativar animações e física"
 │   │   └── estilos.js         # estilos inline compartilhados dos cards (CARD_VIDRO, ...; A3)
 │   └── grafo/                 # componentes exclusivos da página de grafos (R7a)
-│       ├── BuscaProfessor.jsx # barra da busca do professor: Ano → Matéria → Pergunta, acima do console (N13)
+│       ├── BuscaProfessor.jsx # barra da busca do professor: Ano → Matéria → Pergunta, acima do console (N13);
+│       │                      #   filtro da cascata, campos da pergunta e "Ver no grafo" (N14)
+│       ├── CampoBusca.jsx     # campo com filtro por texto (combobox ARIA, uma escolha) (N14)
 │       ├── ConsoleCypher.jsx  # barra do console Cypher: consulta, menu de exemplos, Executar (N3)
 │       ├── ResultadoCypher.jsx # resultado do console no palco: abas Tabela/JSON + avisos do Neo4j (N3)
 │       ├── GrafoCanvas.jsx    # canvas 2D: render + layout + interações (hover/seleção/drag/pan/zoom,
@@ -3472,9 +3751,9 @@ src/
 │   │                          #   turma" + a do erro (o "Teste de erro" da busca); cópia das de teste da
 │   │                          #   orientadora (a pasta neo4j/ saiu do repo)
 │   ├── vizinhanca.js          # conexões de um nó no Neo4j por tipo e sentido; retrato do nó (N7);
-│   │                          #   expandirNo: vizinhos (até 100) + "conectar" os novos (N8)
+│   │                          #   expandirNo: vizinhos (até 100), sem o "conectar" (N8, D20)
 │   ├── extrairGrafo.js        # resultado → nós + relações (puro) e as consultas extras do Browser:
-│   │                          #   pontas que faltam, limite de 300 nós, "conectar nós" (N4)
+│   │                          #   pontas que faltam e limite de 300 nós; sem o "conectar nós" (N4, D20)
 │   ├── depoimentos.js         # 5 depoimentos (conteúdo editorial do protótipo; troca futura por Cypher)
 │   └── paletas.js             # paletas de daltonismo por rótulo, escolhidas por simulação (G9; refeitas na N6 — D15)
 ├── pages/

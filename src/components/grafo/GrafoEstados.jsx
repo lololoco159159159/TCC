@@ -9,7 +9,8 @@
 // (a de sintaxe traz a consulta e um ^ na posição — por isso o resto da
 // mensagem vai num bloco que não quebra linha). N5: o card de vazio saiu —
 // nenhum estado o aciona mais (consulta sem nós aparece na própria tabela do
-// resultado, aberto).
+// resultado, aberto). N14: o convite fala primeiro da busca do professor e
+// depois do console.
 
 // pontos do skeleton de carregamento (verbatim do protótipo)
 const SKELETON = [
@@ -87,13 +88,15 @@ function GrafoEstados({ status, erro, aoTentarNovamente, aoLimpar }) {
                 marginBottom: 16,
               }}
             >
-              Consulte o grafo em Cypher.
+              Explore o grafo.
             </h1>
             <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.65, color: 'var(--muted)' }}>
-              Use a barra acima: escreva uma consulta — ou escolha um dos{' '}
-              <strong style={{ color: 'var(--text)' }}>Exemplos</strong> — e clique em{' '}
-              <strong style={{ color: 'var(--text)' }}>Executar</strong> (ou Ctrl+Enter) para consultar o
-              Neo4j. Os nós e as relações da resposta aparecem desenhados aqui, como no Neo4j Browser.
+              Na <strong style={{ color: 'var(--text)' }}>Busca</strong>, acima, escolha o ano, a matéria e o
+              que você quer ver, e clique em <strong style={{ color: 'var(--text)' }}>Ver no grafo</strong>. Ou
+              escreva uma consulta no console <strong style={{ color: 'var(--text)' }}>Cypher</strong> — ou
+              escolha um dos <strong style={{ color: 'var(--text)' }}>Exemplos</strong> — e clique em{' '}
+              <strong style={{ color: 'var(--text)' }}>Executar</strong> (ou Ctrl+Enter). Os nós e as relações
+              da resposta aparecem desenhados aqui, como no Neo4j Browser.
             </p>
           </div>
         </div>

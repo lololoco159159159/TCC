@@ -157,10 +157,11 @@ export function observarConsultas(aoConcluir) {
  *   em vez de concatenar texto na consulta
  * @param {object} [opcoes]
  * @param {string} [opcoes.canal]  consultas do mesmo canal são exclusivas: uma
- *   nova cancela a anterior (ex.: 'console' — só a última execução importa).
+ *   nova cancela a anterior (ex.: 'palco' — console e busca do professor: só a
+ *   última execução importa).
  *   Sem canal, a consulta nunca é cancelada por outra.
  * @param {string} [opcoes.descricao]  para que o site fez a consulta (aparece
- *   na gaveta Cypher; ex.: 'conectar nós do resultado')
+ *   na gaveta Cypher; ex.: 'pontas das relações do resultado')
  * @param {AbortSignal} [opcoes.signal]  cancelamento externo
  * @param {number} [opcoes.tempoLimiteMs]  padrão 15000
  * @returns {Promise<{ campos: string[], linhas: object[], tempos: { disponivelApos:

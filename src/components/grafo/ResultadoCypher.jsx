@@ -214,7 +214,6 @@ const GrafoTexto = memo(function GrafoTexto({ grafo }) {
   const porRotulo = contarPor(nos, (n) => (n.rotulos.length ? n.rotulos : ['(sem rótulo)']))
   const porTipo = contarPor(relacoes, (r) => [r.rel])
   const pontas = grafo.extras.find((e) => e.tipo === 'pontas')
-  const conectar = grafo.extras.find((e) => e.tipo === 'conectar')
   const listadas = relacoes.length > LIMITE_RELACOES ? relacoes.slice(0, LIMITE_RELACOES) : relacoes
   return (
     <>
@@ -228,11 +227,11 @@ const GrafoTexto = memo(function GrafoTexto({ grafo }) {
             fora também ficaram de fora.
           </div>
         ) : null}
-        <div style={DETALHE}>
-          {pontas ? `pontas que faltavam: +${pontas.adicionados} nós (consulta extra, ${pontas.ms} ms) · ` : ''}
-          conectar nós do resultado:{' '}
-          {conectar ? `ligado — +${conectar.adicionados} relações (consulta extra, ${conectar.ms} ms)` : 'desligado'}
-        </div>
+        {pontas ? (
+          <div style={DETALHE}>
+            pontas que faltavam: +{pontas.adicionados} nós (consulta extra, {pontas.ms} ms)
+          </div>
+        ) : null}
         <Contagem titulo="Rótulos" itens={porRotulo} />
         <Contagem titulo="Tipos de relação" itens={porTipo} />
       </div>

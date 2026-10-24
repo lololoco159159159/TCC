@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react'
 import { CONSULTAS_EXEMPLO as EXEMPLOS } from '../../data/consultasExemplo'
-import Chave from '../Chave'
 import { MONO_LABEL } from './estilos'
 
 // Console Cypher da página de grafos (N3 — ESTADO_ATUAL.md §4.5): o lugar
@@ -10,9 +9,13 @@ import { MONO_LABEL } from './estilos'
 // re-renderiza a página inteira (o mesmo cuidado da P4). A página só recebe a
 // consulta no Executar (botão ou Ctrl/Cmd+Enter) e devolve o estado da
 // execução para a linha de status.
-// N4: a linha de status mostra também o tamanho do grafo extraído, e a chave
-// "Conectar nós do resultado" (o "Connect result nodes" do Neo4j Browser) fica
-// à direita dela — o estado mora na página, que refaz a consulta ao mudar.
+// N4: a linha de status mostra também o tamanho do grafo extraído. A chave
+// "Conectar nós do resultado" (o "Connect result nodes" do Neo4j Browser), que
+// ficava à direita dela, saiu em 2026-10-24 (D20): o grafo vem sempre só com as
+// relações que a consulta devolveu.
+// N14: a barra perdeu o z-index 40 — nada nela abre por cima do palco, e a lista
+// dos campos da busca do professor (logo acima, no 40) precisa passar por cima
+// dela. A linha de status mostra o que estiver no palco, do console ou da busca.
 
 // Exemplos do menu: src/data/consultasExemplo.js (as consultas de teste da
 // orientadora). Até este ajuste eram lidos do arquivo neo4j/consultas por import
@@ -25,8 +28,6 @@ const BARRA = {
   padding: '11px 26px 9px',
   background: 'var(--pill-bg)',
   borderBottom: '1px solid var(--pill-border)',
-  position: 'relative',
-  zIndex: 40,
 }
 const ROTULO = { ...MONO_LABEL, color: 'var(--green)', paddingTop: 15, flex: 'none' }
 const SELECT = {
@@ -54,30 +55,18 @@ const BOTAO = {
   cursor: 'pointer',
   flex: 'none',
 }
-const LINHA_STATUS = { display: 'flex', alignItems: 'flex-start', gap: 14, marginTop: 6 }
 const STATUS = {
-  flex: 1,
-  minWidth: 0,
   minHeight: 15,
+  marginTop: 6,
   font: "10.5px/1.4 'JetBrains Mono', monospace",
   color: 'var(--muted)',
 }
-const BOTAO_CHAVE = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 8,
-  flex: 'none',
-  padding: 0,
-  border: 'none',
-  background: 'transparent',
-  font: "600 11.5px/1 'Figtree', sans-serif",
-  color: 'var(--body)',
-  cursor: 'pointer',
-}
 
-// `consultaInicial` (N9): a consulta com que a página abriu (o "Ver o grafo
-// desta turma" da Home) — aparece escrita na caixa, como se tivesse sido digitada
-function ConsoleCypher({ status, resultado, erro, aoExecutar, conectar, aoAlternarConectar, consultaInicial }) {
+// `consultaInicial`: o texto com que a caixa começa, como se tivesse sido
+// digitado — a consulta com que a página abriu (N9, o "Ver o grafo desta turma"
+// da Home) ou a última da busca do professor (N14: a página remonta o console
+// com `key` para escrevê-la)
+function ConsoleCypher({ status, resultado, erro, aoExecutar, consultaInicial }) {
   const [texto, setTexto] = useState(consultaInicial || '')
   const campo = useRef(null)
   const executando = status === 'carregando'
@@ -138,21 +127,8 @@ function ConsoleCypher({ status, resultado, erro, aoExecutar, conectar, aoAltern
             aria-label="Consulta Cypher"
             placeholder="MATCH (h:Habilidade) RETURN h LIMIT 25"
           />
-          <div style={LINHA_STATUS}>
-            <div aria-live="polite" style={STATUS}>
-              {linhaStatus}
-            </div>
-            <button
-              type="button"
-              onClick={aoAlternarConectar}
-              disabled={executando}
-              aria-pressed={conectar}
-              title="Como no Neo4j Browser: desenha também as relações que existem entre os nós retornados, mesmo que a consulta não as peça. Com um resultado na tela, refaz a consulta."
-              style={executando ? { ...BOTAO_CHAVE, opacity: 0.5, cursor: 'default' } : BOTAO_CHAVE}
-            >
-              <span>Conectar nós do resultado</span>
-              <Chave ligada={conectar} />
-            </button>
+          <div aria-live="polite" style={STATUS}>
+            {linhaStatus}
           </div>
         </div>
         {/* value fixo em '': depois de escolher, o menu volta ao rótulo, e o

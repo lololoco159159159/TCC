@@ -10,9 +10,6 @@ const LIMITE_CONEXOES = 200 // conexões listadas no painel (o resto é avisado 
 const LIMITE_VIZINHOS = 100 // vizinhos trazidos por expansão (o "Max Neighbours" do Browser clássico)
 
 const CONEXOES = 'MATCH (n)-[r]-(m) WHERE elementId(n) = $id RETURN r, m LIMIT $limite'
-// relações entre os nós que chegaram na expansão e todos os da tela (os novos
-// inclusive); o padrão sem sentido acha cada uma a partir do lado novo
-const CONECTAR_NOVOS = 'MATCH (a)-[r]-(b) WHERE elementId(a) IN $novos AND elementId(b) IN $todos RETURN r'
 
 // "Retrato" de um nó para o painel e para os "vistos por último": identidade,
 // rótulos e propriedades + o visual da tabela de estilo (tipo, cor, forma,
@@ -55,10 +52,9 @@ export async function conexoesDoNo(id, opcoes = {}) {
 
 /**
  * Expande um nó do desenho (N8), como o Neo4j Browser: sempre consulta o
- * banco. (1) os vizinhos do nó, até LIMITE_VIZINHOS; (2) se `conectar` (a chave
- * "Conectar nós do resultado"), as relações entre os nós que chegaram e todos
- * os que já estão na tela — ex.: expandir um objeto de conhecimento traz as
- * habilidades dele já ligadas ao Ano.
+ * banco e traz os vizinhos do nó, até LIMITE_VIZINHOS, com as relações entre
+ * ele e cada vizinho. Sem o "conectar" (D20): as relações entre os nós que
+ * chegaram e os que já estavam na tela não vêm.
  *
  * @param {string} id  elementId do nó expandido
  * @param {Set<string>} idsNaTela  nós já no grafo (inclusive os ocultos pela legenda)
@@ -66,7 +62,7 @@ export async function conexoesDoNo(id, opcoes = {}) {
  *   só os vizinhos que ainda NÃO estão na tela; `relacoes`: todas as trazidas
  *   (quem funde descarta as que já tem); `consultas`: { tipo, ms } de cada uma
  */
-export async function expandirNo(id, idsNaTela, { conectar = true } = {}) {
+export async function expandirNo(id, idsNaTela) {
   const resp = await executarCypher(CONEXOES, { id, limite: LIMITE_VIZINHOS }, { descricao: 'expandir · vizinhos' })
   const nos = new Map()
   const relacoes = new Map()
@@ -74,16 +70,5 @@ export async function expandirNo(id, idsNaTela, { conectar = true } = {}) {
     relacoes.set(r.id, r)
     if (!idsNaTela.has(m.id)) nos.set(m.id, m)
   }
-  const consultas = [{ tipo: 'vizinhos', ms: resp.tempos.totalMs }]
-  if (conectar && nos.size) {
-    const novos = [...nos.keys()]
-    const c = await executarCypher(
-      CONECTAR_NOVOS,
-      { novos, todos: [...idsNaTela, ...novos] },
-      { descricao: 'expandir · conectar os novos' },
-    )
-    c.linhas.forEach(({ r }) => relacoes.set(r.id, r))
-    consultas.push({ tipo: 'conectar', ms: c.tempos.totalMs })
-  }
-  return { nos, relacoes, consultas }
+  return { nos, relacoes, consultas: [{ tipo: 'vizinhos', ms: resp.tempos.totalMs }] }
 }

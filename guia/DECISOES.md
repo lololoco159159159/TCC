@@ -887,18 +887,19 @@ a refletir a topologia do grafo, como na ferramenta de referência."
 ## D19 — Busca guiada do professor: ano → matéria → recorte numa consulta só, e todo o resto no navegador
 
 **Quando:** planejada em 2026-10-24 a partir das conversas de 2026-10-20 com o autor;
-N12 (modelo e consultas) e N13 (a barra) do roadmap (ESTADO_ATUAL.md §4.5, decisões 1–35
-da seção "N12–N15") · **Onde:** [src/data/filtrosDeBusca.js](src/data/filtrosDeBusca.js)
-(tabela de matérias, filtro por texto, consultas das opções e das perguntas — tudo num
-arquivo, pedido do autor), [src/components/grafo/BuscaProfessor.jsx](src/components/grafo/BuscaProfessor.jsx)
-(a barra), [src/data/resumoGrafo.js](src/data/resumoGrafo.js) (a consulta de anos, a
-mesma da Home), [src/data/consultasExemplo.js](src/data/consultasExemplo.js) (as
+N12 (modelo e consultas), N13 (a barra) e N14 (os campos e o "Ver no grafo") do roadmap
+(ESTADO_ATUAL.md §4.5, decisões 1–35 da seção "N12–N15") · **Onde:**
+[src/data/filtrosDeBusca.js](src/data/filtrosDeBusca.js) (tabela de matérias, filtro por
+texto, consultas das opções e das perguntas — tudo num arquivo, pedido do autor),
+[src/components/grafo/BuscaProfessor.jsx](src/components/grafo/BuscaProfessor.jsx) (a
+barra), [src/components/grafo/CampoBusca.jsx](src/components/grafo/CampoBusca.jsx) (o
+campo com filtro por texto), [src/pages/Grafos.jsx](src/pages/Grafos.jsx) (o palco que
+executa e desenha), [src/data/resumoGrafo.js](src/data/resumoGrafo.js) (a consulta de
+anos, a mesma da Home), [src/data/consultasExemplo.js](src/data/consultasExemplo.js) (as
 consultas de teste da orientadora, que viraram as perguntas)
 
-> **Situação em 2026-10-24:** os passos 1–4 abaixo estão na tela (N13). Os campos da
-> pergunta (passo 5) e o "Ver no grafo" (passo 6) chegam na **N14** — as funções deles já
-> existem e foram testadas contra o Neo4j real na N12. O link compartilhável e o botão da
-> Home (N15) completam esta entrada quando forem feitos.
+> **Situação em 2026-10-24:** os passos 1–6 abaixo estão na tela (N13 e N14). O link
+> compartilhável e o botão da Home (N15) completam esta entrada quando forem feitos.
 
 **O problema.** O professor precisa achar no grafo o que vai ensinar — o caminho de uma
 habilidade, uma unidade temática inteira, as habilidades de um ano — **sem saber
@@ -923,11 +924,11 @@ precisa assim:
 | 2. **Matéria** | escolher o ano | **1**, para **todas** as matérias da tabela de uma vez (`UNWIND` + `EXISTS`) | só as matérias que têm habilidade **naquele** ano; nunca vem escolhida sozinha, mesmo havendo uma só (decisão do autor) |
 | 3. **Recorte** | escolher a matéria | **1**, que traz o **recorte inteiro** | todas as unidades, objetos e habilidades do ano na matéria, cada um com quem é seu "pai"; fica na **memória da página** (cache por ano + matéria) |
 | 4. **Pergunta** | — | **nenhuma** | o cardápio é uma lista do código (`PERGUNTAS`) — 9 perguntas, uma por consulta de teste da orientadora, mais o "Teste de erro" |
-| 5. **Campos** (unidade, objeto, habilidade) | escolher a pergunta, digitar | **nenhuma** — nem a cada tecla | as listas saem do recorte; a cascata (unidade filtra objetos, objeto filtra habilidades) e o filtro por texto rodam no navegador *(N14)* |
-| 6. **Ver no grafo** | o botão | **1** (a consulta da pergunta) **+ 1** ("conectar nós do resultado") | caminhos → o mesmo trajeto do console: extrair → completar → canvas *(N14)* |
+| 5. **Campos** (unidade, objeto, habilidade) | escolher a pergunta, digitar | **nenhuma** — nem a cada tecla | as listas saem do recorte, e o filtro por texto roda no navegador; cada pergunta mostra só o campo que pede |
+| 6. **Ver no grafo** | o botão | **1** (a consulta da pergunta; sem o "conectar nós do resultado" desde a D20) | caminhos → o mesmo trajeto do console: extrair → completar → canvas |
 
 Ou seja: **até três consultas para preparar a busca** (anos, matérias do ano, recorte) e
-**uma ou duas para mostrar o resultado**; **zero** enquanto o professor escolhe e digita.
+**uma para mostrar o resultado**; **zero** enquanto o professor escolhe e digita.
 Os detalhes que sustentam o fluxo:
 
 1. **A tabela de matérias descreve o modelo, não guarda dados.** Para cada matéria: o
@@ -958,7 +959,22 @@ Os detalhes que sustentam o fluxo:
 6. **Tudo fica à vista.** Cada consulta da busca aparece na gaveta Cypher (D17), com
    descrição: "busca · anos", "busca · matérias do ano", "busca · recorte do ano e
    matéria", "busca · caminho até uma habilidade"… O **console Cypher continua na tela**,
-   logo abaixo da barra da busca (o autor o usa; sai bem depois).
+   logo abaixo da barra da busca (o autor o usa; sai bem depois), e o "Ver no grafo"
+   **escreve nele a consulta que gerou o desenho**: a mesma que foi ao Neo4j, com os
+   valores no lugar dos parâmetros e um cabeçalho em comentário (a pergunta, o ano, a
+   matéria e o que foi escolhido). Executada ali, ela dá o mesmo grafo. O Neo4j continua
+   recebendo a versão com parâmetros; a escrita é só para ler (ou mudar e executar).
+7. **Os campos seguem um padrão de acessibilidade conhecido** (N14): o *combobox* das
+   WAI-ARIA Authoring Practices — caixa de texto + lista, navegável por teclado (↓/↑,
+   Enter, Esc) e anunciada por leitores de tela. **Cada pergunta mostra só o campo que
+   pede** (decisão do autor): uma habilidade, duas (a ligação, que não deixa repetir a
+   mesma), um objeto ou uma unidade — ou nenhum. (Uma cascata de filtros — unidade →
+   objeto → habilidade — e um campo de várias habilidades chegaram a ser feitos e saíram
+   no mesmo dia: o filtro por texto já estreita a lista, e a tela ficou mais simples.)
+8. **Busca e console dividem o mesmo palco** (N14): o resultado da busca percorre
+   exatamente o trajeto de uma consulta do console (extrair → completar → canvas, com
+   painel, expandir e desfazer), e uma execução nova de qualquer um dos dois cancela a
+   anterior. Não há um segundo caminho de desenho para manter.
 
 **Alternativas rejeitadas.** (a) *Uma consulta por passo da cascata* (escolher a unidade
 → consultar os objetos dela → escolher o objeto → consultar as habilidades): uma espera
@@ -980,8 +996,8 @@ sozinha quando só há uma:* o autor preferiu que o professor sempre escolha.
 **Para a banca.** *"O professor não escreve consulta: escolhe o ano, a matéria e uma
 pergunta. Para isso o site faz três consultas pequenas — os anos, as matérias daquele
 ano e o recorte inteiro do ano na matéria, que no 1.º ano de Matemática tem uns 3 KB.
-Daí em diante tudo acontece no navegador: as listas, a cascata e a busca por texto,
-sem nenhuma consulta enquanto ele digita. O Neo4j só volta a ser consultado quando ele
+Daí em diante tudo acontece no navegador: as listas e a busca por texto, sem nenhuma
+consulta enquanto ele digita. O Neo4j só volta a ser consultado quando ele
 pede para ver o resultado no grafo. E, como o modelo é da orientadora, o site não
 assume nada sobre ele: uma tabela descreve os rótulos de cada matéria e as consultas
 recebem esses rótulos como parâmetros."*
@@ -1004,12 +1020,76 @@ seguida, uma única consulta recupera o recorte completo do ano no componente �
 temáticas, objetos de conhecimento e habilidades, com suas relações de pertinência. Como
 unidades e objetos são compartilhados entre os anos no modelo adotado, o recorte é
 ancorado nas habilidades, por meio da relação direta entre ano e habilidade. A partir
-desse recorte, mantido apenas em memória durante a sessão, as listas de opções, a
-filtragem em cascata e a busca textual — insensível a acentos e a maiúsculas e baseada na
-ocorrência de todos os termos digitados — são resolvidas no próprio navegador, sem novas
-requisições ao banco durante a digitação. O banco volta a ser consultado somente para
-obter o subgrafo que responde à pergunta, identificado pelos elementos selecionados, e
-todas as consultas emitidas permanecem registradas na interface, para auditoria."
+desse recorte, mantido apenas em memória durante a sessão, as listas de opções e a busca
+textual — insensível a acentos e a maiúsculas e baseada na ocorrência de todos os termos
+digitados — são resolvidas no próprio navegador, sem novas requisições ao banco durante a
+digitação. O banco volta a ser consultado somente para obter o subgrafo que responde à
+pergunta, identificado pelos elementos selecionados. Todas as consultas emitidas
+permanecem registradas na interface, para auditoria, e a consulta que gerou o subgrafo
+exibido é apresentada ao usuário no console Cypher, com os valores dos parâmetros já
+substituídos, de modo que possa ser lida, alterada e executada novamente."
+
+---
+
+## D20 — O grafo mostra só o que a consulta devolveu: sem o "Conectar nós do resultado" (desvio do Neo4j Browser)
+
+**Quando:** 2026-10-24, logo depois da N14, decisão do autor · **Onde:**
+[src/data/extrairGrafo.js](src/data/extrairGrafo.js) (`completarGrafo` perdeu o passo de
+conectar), [src/data/vizinhanca.js](src/data/vizinhanca.js) (`expandirNo` perdeu o
+"conectar os novos"), [src/components/grafo/ConsoleCypher.jsx](src/components/grafo/ConsoleCypher.jsx)
+(saiu a chave), [src/pages/Grafos.jsx](src/pages/Grafos.jsx) (saiu o estado da chave),
+[src/components/grafo/ResultadoCypher.jsx](src/components/grafo/ResultadoCypher.jsx) (saiu
+a linha "conectar nós do resultado" da aba Relações)
+
+**O problema.** O Neo4j Browser tem, ligada por padrão, a opção *Connect result nodes*: depois
+da consulta, ele faz uma consulta extra e desenha também as relações que existem **entre** os
+nós devolvidos, mesmo que a consulta não as tenha pedido. O site copiou isso na N4 (a chave
+"Conectar nós do resultado", ligada) e, na busca do professor, deixou a opção sempre ligada.
+No modelo da orientadora, porém, existe o **atalho Ano → Habilidade** (`DESENVOLVE_HABILIDADE`),
+que serve para amarrar o ano às habilidades (D19), e não para ser visto. Com o "conectar", a
+pergunta "O ano inteiro nesta matéria" — que devolve a árvore Ano → unidades → objetos →
+habilidades — aparecia com o Ano ligado **diretamente** a cada uma das 22 habilidades: 66
+relações em vez de 44. Essas 22 arestas repetem a hierarquia, embaralham o desenho e somem
+com a leitura em árvore, que é o que o professor quer ver.
+
+**A decisão.** O grafo vem **sempre como se a chave estivesse desligada**, e a chave **saiu
+da tela**: o desenho mostra **só as relações que a consulta devolveu**. Vale para tudo — o
+console, a busca do professor e a expansão de um nó (que agora traz os vizinhos e a relação
+de cada um ao nó expandido, sem as relações entre os que chegaram e os que já estavam na
+tela). O código do "conectar" foi **retirado**, e não só escondido (fica no histórico do
+git): uma opção sempre desligada seria código morto. As outras consultas extras do Browser
+continuam — buscar as pontas que faltam (`RETURN r`) e o limite de 300 nós. Quem **quiser**
+ver o atalho pede por ele: a pergunta "As habilidades do ano" (a consulta "ano direto p
+habilidade" da orientadora) devolve exatamente essas relações, e no console basta escrevê-las
+na consulta. Revê a N4 (a paridade com o Browser nesse ponto) e a decisão 2 da busca do
+professor (o "conectar" sempre ligado).
+
+**Alternativas rejeitadas.** (a) *Manter a chave e só desligá-la por padrão:* o autor pediu
+que ela saísse; e uma chave que muda o desenho sem a pessoa pedir algo na consulta confunde
+quem não conhece o Browser. (b) *Manter o "conectar" e esconder só a `DESENVOLVE_HABILIDADE`:*
+o site passaria a decidir sozinho que relações do modelo da orientadora aparecem — e o
+"conectar" continuaria trazendo, em outras consultas, relações que ninguém pediu. (c)
+*Desligar só na busca do professor:* o mesmo grafo sairia diferente pelo console e pela
+busca, e a expansão continuaria ligando o Ano às habilidades.
+
+**Para a banca.** *"O Neo4j Browser liga, por padrão, os nós do resultado entre si; no
+nosso modelo isso ligava o ano direto em cada habilidade e bagunçava a árvore. Por isso o
+site mostra só o que a consulta devolveu: quem quiser ver o atalho do ano para a
+habilidade tem uma pergunta própria para isso."*
+
+**Monografia** *(cap. de Implementação, seção de visualização do grafo — complementa a D18
+e a D19):*
+"A ferramenta de referência do sistema gerenciador oferece, ativada por padrão, a
+complementação do resultado com todas as relações existentes entre os vértices retornados,
+ainda que não solicitadas pela consulta. No modelo de dados adotado, essa complementação
+mostrou-se inadequada: a relação direta entre ano e habilidade, mantida no modelo para
+ancorar as habilidades ao ano escolar, passava a ser desenhada junto da hierarquia completa
+— ano, unidade temática, objeto de conhecimento e habilidade —, duplicando visualmente a
+estrutura e prejudicando a leitura em árvore. Optou-se, por isso, por exibir exclusivamente
+as relações devolvidas pela consulta, tanto nas consultas livres quanto na busca guiada e na
+expansão de vértices; a relação direta permanece acessível por uma pergunta específica do
+cardápio. A decisão privilegia a correspondência entre a pergunta formulada e o subgrafo
+exibido, em detrimento da paridade com a ferramenta de referência nesse aspecto."
 
 ---
 

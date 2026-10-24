@@ -5,9 +5,13 @@ import { Caminho, No, Relacao, executarCypher } from './neo4j'
 // Browser faz antes de desenhar. Duas partes:
 //  - extrairGrafo(): pura (sem rede) — junta o que veio no resultado;
 //  - completarGrafo(): as consultas extras do Browser — busca as pontas que
-//    faltam, aplica o limite de nós e (opcional) "conecta os nós do resultado".
+//    faltam e aplica o limite de nós.
 // O grafo aparece em texto na aba "Relações" do resultado (para conferir os
 // números) e é o que o canvas desenha (N5).
+// Sem o "Connect result nodes" do Browser (decisão do autor, 2026-10-24 — D20):
+// o desenho mostra só as relações que a consulta devolveu. Ligado, ele trazia as
+// relações que existem ENTRE os nós exibidos — na árvore, o Ano ligado direto a
+// cada habilidade (DESENVOLVE_HABILIDADE), um atalho que repete a hierarquia.
 
 const LIMITE_NOS = 300 // nós exibidos no máximo (o padrão do Browser clássico)
 
@@ -36,24 +40,20 @@ export function extrairGrafo(linhas) {
 }
 
 const BUSCAR_PONTAS = 'MATCH (n) WHERE elementId(n) IN $ids RETURN n'
-const CONECTAR = 'MATCH (a)-[r]->(b) WHERE elementId(a) IN $ids AND elementId(b) IN $ids RETURN r'
 
 /**
  * Completa o grafo extraído, como o Neo4j Browser:
  *  1) relação cujas pontas não vieram no resultado (ex.: `RETURN r`) → busca
  *     esses nós numa consulta extra;
  *  2) limita a `limite` nós — os do resultado primeiro, depois as pontas, na
- *     ordem em que apareceram; relação com ponta de fora também fica de fora;
- *  3) `conectar` (padrão do Browser, "Connect result nodes"): traz as relações
- *     que existem ENTRE os nós exibidos, mesmo que a consulta não as tenha
- *     pedido (ex.: na árvore, as DESENVOLVE_HABILIDADE do Ano).
+ *     ordem em que apareceram; relação com ponta de fora também fica de fora.
  * Só lê o banco (executarCypher usa o modo leitura).
  *
  * @returns {Promise<{ nos: Map, relacoes: Map, total: number, limite: number,
- *   conectar: boolean, extras: object[] }>}  `total`: nós antes do limite;
- *   `extras`: as consultas extras feitas ({ tipo, consulta, adicionados, ms }).
+ *   extras: object[] }>}  `total`: nós antes do limite; `extras`: as consultas
+ *   extras feitas ({ tipo, consulta, adicionados, ms }).
  */
-export async function completarGrafo({ nos, relacoes }, { conectar = true, limite = LIMITE_NOS } = {}) {
+export async function completarGrafo({ nos, relacoes }, { limite = LIMITE_NOS } = {}) {
   // ordem final: os nós do resultado, depois as pontas que faltam
   const ordem = [...nos.keys()]
   const conhecidos = new Set(ordem)
@@ -89,18 +89,5 @@ export async function completarGrafo({ nos, relacoes }, { conectar = true, limit
     if (nosFinais.has(rel.inicio) && nosFinais.has(rel.fim)) relacoesFinais.set(id, rel)
   }
 
-  // 3) conectar os nós do resultado
-  if (conectar && nosFinais.size) {
-    const resp = await executarCypher(CONECTAR, { ids: [...nosFinais.keys()] }, { descricao: 'conectar nós do resultado' })
-    let adicionados = 0
-    resp.linhas.forEach(({ r }) => {
-      if (!relacoesFinais.has(r.id)) {
-        relacoesFinais.set(r.id, r)
-        adicionados++
-      }
-    })
-    extras.push({ tipo: 'conectar', consulta: CONECTAR, adicionados, ms: resp.tempos.totalMs })
-  }
-
-  return { nos: nosFinais, relacoes: relacoesFinais, total: ordem.length, limite, conectar, extras }
+  return { nos: nosFinais, relacoes: relacoesFinais, total: ordem.length, limite, extras }
 }

@@ -154,9 +154,8 @@ export function marcarTrechos(texto, consulta) {
 // Tudo o que o professor escolhe vem do Neo4j na hora: os anos (a consulta da
 // Home), as matérias que existem no ano escolhido (a tabela acima conferida
 // contra o banco) e o RECORTE — as unidades, os objetos e as habilidades de um
-// ano numa matéria, trazidos numa única consulta. As listas dos campos e a
-// cascata (unidade → objeto → habilidade) saem desse recorte, no navegador, sem
-// consulta nova. O ano é amarrado pelas HABILIDADES (o atalho Ano → Habilidade
+// ano numa matéria, trazidos numa única consulta. As listas dos campos saem
+// desse recorte, no navegador, sem consulta nova. O ano é amarrado pelas HABILIDADES (o atalho Ano → Habilidade
 // da tabela): unidades e objetos são compartilhados entre anos no modelo da
 // orientadora, e uma unidade pendurada no ano traria também os objetos de
 // outros anos.
@@ -253,14 +252,14 @@ async function consultarRecorte(ano, idMateria) {
 }
 
 /**
- * As opções de um campo, já com a cascata aplicada (decisão 16) e no formato
- * do filtro por texto (parte 2): { id, titulo, detalhe, busca }. `detalhe` diz
- * de onde a opção vem (ex.: "Medidas de tempo · Grandezas e medidas"); `busca`
- * são os textos onde o filtro procura (decisão 23).
+ * As opções de um campo, no formato do filtro por texto (parte 2): { id,
+ * titulo, detalhe, busca }. `detalhe` diz de onde a opção vem (ex.: "Medidas
+ * de tempo · Grandezas e medidas"); `busca` são os textos onde o filtro procura
+ * (decisão 23). (A cascata da decisão 16 saiu a pedido do autor, 2026-10-24:
+ * cada pergunta mostra só o campo que ela pede.)
  * @param {'unidade'|'objeto'|'habilidade'} campo
- * @param {{ unidade?: string, objeto?: string }} [cascata]  ids já escolhidos
  */
-export function opcoesDoCampo(recorte, campo, { unidade, objeto } = {}) {
+export function opcoesDoCampo(recorte, campo) {
   const nomeUnidade = new Map(recorte.unidades.map((u) => [u.id, u.nome]))
   const nomeObjeto = new Map(recorte.objetos.map((o) => [o.id, o.nome]))
   const objetoDe = new Map(recorte.objetos.map((o) => [o.id, o]))
@@ -268,22 +267,18 @@ export function opcoesDoCampo(recorte, campo, { unidade, objeto } = {}) {
     return recorte.unidades.map((u) => ({ id: u.id, titulo: u.nome, detalhe: '', busca: [u.nome] }))
   }
   if (campo === 'objeto') {
-    return recorte.objetos
-      .filter((o) => !unidade || o.unidades.includes(unidade))
-      .map((o) => ({
-        id: o.id,
-        titulo: o.nome,
-        detalhe: o.unidades.map((id) => nomeUnidade.get(id)).join(' · '),
-        busca: [o.nome],
-      }))
+    return recorte.objetos.map((o) => ({
+      id: o.id,
+      titulo: o.nome,
+      detalhe: o.unidades.map((id) => nomeUnidade.get(id)).join(' · '),
+      busca: [o.nome],
+    }))
   }
-  return recorte.habilidades
-    .filter((h) => (!objeto || h.objetos.includes(objeto)) && (!unidade || h.objetos.some((id) => objetoDe.get(id)?.unidades.includes(unidade))))
-    .map((h) => {
-      const o = objetoDe.get(h.objetos[0])
-      const onde = o ? [nomeObjeto.get(o.id), ...o.unidades.map((id) => nomeUnidade.get(id))] : []
-      return { id: h.id, titulo: h.codigo, texto: h.texto, detalhe: onde.join(' · '), busca: [h.codigo, h.texto] }
-    })
+  return recorte.habilidades.map((h) => {
+    const o = objetoDe.get(h.objetos[0])
+    const onde = o ? [nomeObjeto.get(o.id), ...o.unidades.map((id) => nomeUnidade.get(id))] : []
+    return { id: h.id, titulo: h.codigo, texto: h.texto, detalhe: onde.join(' · '), busca: [h.codigo, h.texto] }
+  })
 }
 
 // ===========================================================================
@@ -305,13 +300,14 @@ export function opcoesDoCampo(recorte, campo, { unidade, objeto } = {}) {
 // habilidade" → caminho até uma habilidade; "ano direto p habilidade" → as
 // habilidades do ano; "caminho entre 2 habilidades" → ligação entre duas
 // habilidades; "habiludade irma" → habilidades irmãs; "professor colocar as
-// habilidades que precisa ensinar no ano" → habilidades que preciso ensinar. A
-// versão original desta última, com o erro de sintaxe, fica como "Teste de
-// erro" (fixa: não usa o ano nem a matéria).
+// habilidades que precisa ensinar no ano" → habilidades que preciso ensinar
+// (sem campo: o ano e a matéria já dizem quais são — decisão do autor,
+// 2026-10-24; por isso ela dá hoje a mesma árvore que "o ano inteiro"). A versão
+// original desta última, com o erro de sintaxe, fica como "Teste de erro" (fixa:
+// não usa o ano nem a matéria).
 //
 // Campo: { nome (o parâmetro), tipo (unidade | objeto | habilidade — de que
-// lista do recorte ele escolhe), rotulo? (quando o título da tabela não serve),
-// varias? (escolhe uma lista) }.
+// lista do recorte ele escolhe), rotulo? (quando o título da tabela não serve) }.
 // ===========================================================================
 
 // habilidades do ano escolhido, na matéria (o começo de três das consultas)
@@ -319,6 +315,11 @@ const HABILIDADES_DO_ANO = 'MATCH (a:Ano {codigo: $ano})-[:$any([$m.anoHabilidad
 // Ano → unidade → objeto → habilidade (o caminho completo de uma habilidade)
 const CAMINHO_DO_ANO = `MATCH p = (a:Ano {codigo: $ano})-[:$any([$m.anoUnidade])]->(:$any([$m.rotUnidade]))
       -[:$any([$m.unidadeObjeto])]->(:$any([$m.rotObjeto]))-[:$any([$m.objetoHabilidade])]->(h)`
+// a árvore do ano: o caminho de cada habilidade do ano, desde o ano
+const ARVORE_DO_ANO = `${HABILIDADES_DO_ANO}
+MATCH p = (a)-[:$any([$m.anoUnidade])]->(:$any([$m.rotUnidade]))
+      -[:$any([$m.unidadeObjeto])]->(:$any([$m.rotObjeto]))-[:$any([$m.objetoHabilidade])]->(h)
+RETURN p`
 
 export const PERGUNTAS = [
   {
@@ -349,22 +350,24 @@ RETURN p`,
       { nome: 'habilidade2', tipo: 'habilidade', rotulo: 'Segunda habilidade' },
     ],
     distintos: ['habilidade', 'habilidade2'], // as duas não podem ser a mesma
-    // as unidades temáticas são as mesmas em todos os anos: sem a 2.ª condição, o
-    // caminho mais curto poderia subir pelo nó de outro ano
-    consulta: `MATCH (h1), (h2) WHERE elementId(h1) = $habilidade AND elementId(h2) = $habilidade2
-MATCH p = shortestPath((h1)-[*..10]-(h2))
-WHERE all(r IN relationships(p) WHERE type(r) IN [$m.anoUnidade, $m.unidadeObjeto, $m.objetoHabilidade])
+    // as duas pontas vão no WHERE do próprio shortestPath: um `MATCH (h1), (h2)`
+    // antes dele fazia o Neo4j avisar de "produto cartesiano" (CartesianProduct —
+    // inofensivo, 1 × 1 nó, mas o aviso aparecia no resultado; testado em
+    // 2026-10-24: mesmo caminho, mesmo tempo). As unidades temáticas são as mesmas
+    // em todos os anos: sem a última condição, o caminho mais curto poderia subir
+    // pelo nó de outro ano
+    consulta: `MATCH p = shortestPath((h1)-[*..10]-(h2))
+WHERE elementId(h1) = $habilidade AND elementId(h2) = $habilidade2
+  AND all(r IN relationships(p) WHERE type(r) IN [$m.anoUnidade, $m.unidadeObjeto, $m.objetoHabilidade])
   AND all(n IN nodes(p) WHERE NOT n:Ano OR n.codigo = $ano)
 RETURN p`,
   },
   {
     id: 'ensinar',
     titulo: 'Habilidades que preciso ensinar no ano',
-    explicacao: 'De onde vem cada habilidade que você escolher',
-    campos: [{ nome: 'habilidades', tipo: 'habilidade', rotulo: 'Habilidades', varias: true }],
-    consulta: `${CAMINHO_DO_ANO}
-WHERE elementId(h) IN $habilidades
-RETURN p`,
+    explicacao: 'Todas as habilidades do ano nesta matéria, cada uma com a unidade temática e o objeto de conhecimento de onde vem',
+    campos: [],
+    consulta: ARVORE_DO_ANO,
   },
   {
     id: 'objeto',
@@ -400,10 +403,7 @@ RETURN p`,
     titulo: 'O ano inteiro nesta matéria',
     explicacao: 'Todas as unidades temáticas, objetos de conhecimento e habilidades do ano',
     campos: [],
-    consulta: `${HABILIDADES_DO_ANO}
-MATCH p = (a)-[:$any([$m.anoUnidade])]->(:$any([$m.rotUnidade]))
-      -[:$any([$m.unidadeObjeto])]->(:$any([$m.rotObjeto]))-[:$any([$m.objetoHabilidade])]->(h)
-RETURN p`,
+    consulta: ARVORE_DO_ANO,
   },
   {
     id: 'erro',
@@ -417,27 +417,64 @@ RETURN p`,
 
 export const perguntaPorId = (id) => PERGUNTAS.find((p) => p.id === id) || null
 
+// os campos da pergunta ainda sem escolha — a barra usa para dizer o que falta
+// e para ligar o "Ver no grafo" (decisão 6)
+export const camposFaltando = (pergunta, escolhas = {}) => pergunta.campos.filter((c) => !escolhas[c.nome])
+
 /**
- * A consulta pronta de uma pergunta: o texto Cypher, os parâmetros e a
- * descrição que aparece na gaveta Cypher (decisão 31).
+ * A consulta pronta de uma pergunta: o texto Cypher, os parâmetros, a
+ * descrição que aparece na gaveta Cypher (decisão 31) e a consulta escrita
+ * para o console (parte 5).
  * @param {string} idPergunta
  * @param {{ ano: string, materia: string, escolhas?: object }} busca
- *   `escolhas`: { [nome do campo]: id do recorte (elementId) — ou uma lista de
- *   ids, nos campos `varias` }
- * @returns {{ consulta: string, parametros: object, descricao: string }}
+ *   `escolhas`: { [nome do campo]: id do recorte (elementId) }
+ * @returns {{ consulta: string, parametros: object, descricao: string, escrita: string }}
  */
 export function consultaDaPergunta(idPergunta, { ano, materia, escolhas = {} }) {
   const pergunta = perguntaPorId(idPergunta)
   const m = materiaPorId(materia)
   if (!pergunta || !m) throw new Error(`Busca desconhecida: ${idPergunta} / ${materia}`)
-  const faltando = pergunta.campos.filter((c) => (c.varias ? !escolhas[c.nome]?.length : !escolhas[c.nome]))
+  const faltando = camposFaltando(pergunta, escolhas)
   if (faltando.length) throw new Error(`Falta escolher: ${faltando.map((c) => c.nome).join(', ')}`)
   if (pergunta.distintos && new Set(pergunta.distintos.map((n) => escolhas[n])).size < pergunta.distintos.length) {
     throw new Error('Escolha itens diferentes em cada campo.')
   }
   const descricao = `busca · ${pergunta.titulo.toLowerCase()}`
-  if (pergunta.fixa) return { consulta: pergunta.consulta, parametros: {}, descricao }
+  if (pergunta.fixa) return { consulta: pergunta.consulta, parametros: {}, descricao, escrita: pergunta.consulta }
   const parametros = { ano, m: parametrosDaMateria(m) }
   pergunta.campos.forEach((c) => (parametros[c.nome] = escolhas[c.nome]))
-  return { consulta: pergunta.consulta, parametros, descricao }
+  return { consulta: pergunta.consulta, parametros, descricao, escrita: consultaEscrita(pergunta.consulta, parametros) }
+}
+
+// ===========================================================================
+// 5. A consulta escrita, para o console (pedido do autor, 2026-10-24)
+// O "Ver no grafo" também escreve no console Cypher a consulta que gerou o
+// desenho, para quem quiser ler — ou mudar e executar de novo. O Neo4j recebe
+// a consulta com parâmetros (decisões 29–30); esta é a MESMA consulta com o
+// valor escrito no lugar de cada $parâmetro: o rótulo ou a relação da tabela de
+// matérias onde há $any([$m.…]) e um valor entre aspas no resto. Executada no
+// console, dá o mesmo resultado. Os valores vêm da tabela do código e do
+// recorte (ids do Neo4j) — nunca do que o professor digitou.
+// ===========================================================================
+
+const NOME_SIMPLES = /^[A-Za-z_][A-Za-z0-9_]*$/
+// rótulo ou relação: como está, ou entre crases se tiver espaço/acento
+const nomeCypher = (s) => (NOME_SIMPLES.test(s) ? s : `\`${String(s).replace(/`/g, '``')}\``)
+const valorCypher = (v) => {
+  if (Array.isArray(v)) return `[${v.map(valorCypher).join(', ')}]`
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v)
+  return `'${String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
+}
+
+/**
+ * A consulta com os valores dos parâmetros escritos no lugar deles.
+ * @param {string} consulta  com $parâmetros (e $m.… da tabela de matérias)
+ * @param {object} parametros
+ */
+export function consultaEscrita(consulta, parametros) {
+  const m = parametros.m || {}
+  return consulta
+    .replace(/\$any\(\[\$m\.(\w+)\]\)/g, (t, k) => (k in m ? nomeCypher(m[k]) : t))
+    .replace(/\$m\.(\w+)/g, (t, k) => (k in m ? valorCypher(m[k]) : t))
+    .replace(/\$(\w+)/g, (t, k) => (k !== 'm' && k in parametros ? valorCypher(parametros[k]) : t))
 }

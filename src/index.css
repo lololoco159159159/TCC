@@ -20,8 +20,8 @@
        32  overlays de estado do palco (carregando/erro) + a coluna de controles
            do palco (vem depois deles no DOM e fica por cima: o A/A dela segue
            clicável em qualquer estado)
-       40  barras da busca do professor e do console Cypher (grafos; a do console
-           era a de busca/filtros até a N3)
+       40  barra da busca do professor (grafos): a lista dos campos abre por cima
+           do console Cypher (sem z-index desde a N14) e do palco
       120  widget A/A fixo (Home e telas de conta — definido neste arquivo; na
            página de grafos ele fica na coluna de controles do palco)
   190/200  backdrop / dropdown do perfil (grafos)
@@ -91,9 +91,10 @@
   --grafo-halo: rgba(243, 237, 223, 0.92);
   --grafo-tooltip-bg: rgba(28, 38, 32, 0.94);
   --grafo-tooltip-fg: #f7f2e8;
-  /* fundo verde-claro de destaque: opção selecionada no popover de paleta e
-     hover do "Expandir conexões deste nó"; o nome vem da prévia "N vértices"
-     da barra de filtros antiga, que o usou primeiro */
+  /* fundo verde-claro de destaque: opção selecionada no popover de paleta,
+     hover do "Expandir conexões deste nó" e, na busca do professor, a opção
+     ativa dos campos; o nome vem da prévia "N vértices" da barra de filtros
+     antiga, que o usou primeiro */
   --grafo-previa-bg: #eaf2ec;
 
   /* telas de conta — fundo de vértices (A2; hex do overlay do protótipo,
@@ -495,6 +496,22 @@ input::placeholder {
 
 .eg-grafo-filtrar:disabled:hover {
   background: var(--green) !important;
+}
+
+/* campo da busca do professor (N14): a caixa acende como a do console; com algo
+   escolhido, o placeholder (que mostra o escolhido enquanto se digita) fica com a
+   cor do texto, não a de dica */
+.eg-campo-busca:focus-within {
+  border-color: var(--green) !important;
+  background: var(--pill-bg) !important;
+}
+
+.eg-campo-busca-entrada::placeholder {
+  color: var(--faint);
+}
+
+.eg-campo-busca-entrada--escolhido::placeholder {
+  color: var(--body);
 }
 
 /* painel do resultado: abre descendo a partir da barra e fecha subindo para

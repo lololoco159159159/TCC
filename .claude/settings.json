@@ -18,7 +18,15 @@
       "Bash(timeout 90 node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_n13.mjs)",
       "Bash(grep -n \"^- \\\\[ \\\\] \\\\*\\\\*N13\\\\*\\\\*\\\\|^\\(Uma 1.ª versão tinha as quatro partes\\\\|descrições na gaveta Cypher. \\\\*\\\\*Teste do autor:\\\\*\\\\* não há nada\\\\|traz a barra.$\\\\|│       ├── ConsoleCypher.jsx\\\\|\\\\`40\\\\` barra do console Cypher\" ESTADO_ATUAL.md)",
       "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_n12.mjs)",
-      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_n13.mjs)"
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_n13.mjs)",
+      "Bash(grep -iE \"^\\(jsdom|happy-dom|linkedom|react-test-renderer|@testing-library|domino|undom\\)$\")",
+      "Bash(node -e \"console.log\\(require\\('react/package.json'\\).version, require\\('react-dom/package.json'\\).version\\)\")",
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_n14.mjs)",
+      "Bash(sed -i 's|    assert.doesNotMatch\\(pagina, />Ver no grafo</\\)|    assert.doesNotMatch\\(pagina, /<span>Ver no grafo<\\\\\\\\/span>/\\) // \\(o convite cita o botão em <strong>\\)|' /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_n14.mjs)",
+      "Bash(python3 - /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_n14.mjs)",
+      "Bash(python3 - /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_n12.mjs)",
+      "Bash(python3 - /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_cartesiano.mjs /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_tempo.mjs)",
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_tempo.mjs)"
     ]
   }
 }
