@@ -18,22 +18,24 @@ Um professor de Matemática, por exemplo, pode entrar no grafo, selecionar sua d
 
 ## Estado atual
 
-Este repositório contém o **front-end React** do projeto. Por enquanto, as telas estão implementadas com dados estáticos; a integração com o servidor de grafos (Apache Jena Fuseki via SPARQL) está prevista para a segunda etapa do TCC.
+Este repositório contém o **front-end React** do projeto, já integrado ao grafo de conhecimento real: um banco **Neo4j** montado pela orientadora, consultado em **Cypher**. Hoje o grafo traz o 1.º ano de Matemática da BNCC (ano → unidades temáticas → objetos de conhecimento → habilidades) e vai crescer com outros anos e matérias. O site não guarda dados do grafo: tudo o que aparece vem do Neo4j, exceto o globo ilustrativo da seção "Cada matéria tem sua rede.", na Home.
 
-A interface está sendo migrada por partes para o protótipo final (nova paleta creme/verde/dourado e novas fontes). O andamento detalhado dessa migração — o que já foi feito e o que falta — está em [ESTADO_ATUAL.md](ESTADO_ATUAL.md).
+O andamento detalhado — o que já foi feito, o que falta e as decisões de projeto — está em [ESTADO_ATUAL.md](ESTADO_ATUAL.md) e [guia/DECISOES.md](guia/DECISOES.md).
 
 **Telas disponíveis:**
 
 | Tela | Descrição |
 |---|---|
-| Home | Apresentação do projeto com acesso ao login e cadastro |
-| Entrar | Formulário de autenticação (visual; sem back-end ainda) |
-| Criar conta | Formulário de cadastro (visual; sem back-end ainda) |
+| Home | Apresentação do projeto; os números e os cards de ano vêm do Neo4j |
+| Grafos | O grafo de conhecimento: consulta em Cypher, desenho interativo (layout de forças e hierárquico, como no Neo4j Browser), painel com os detalhes de cada nó, expandir e desfazer |
+| Entrar / Criar conta | Formulários apenas visuais — o site não tem sistema de contas |
 
 **Recursos de acessibilidade:**
 
 - **Modo claro / escuro** — toggle sol/lua na barra de navegação; o modo claro usa fundo creme com acentos verde e dourado, e o escuro inverte para fundo preto com verde e âmbar. A preferência persiste entre sessões.
-- **Tamanho de fonte** — botões A/A na lateral direita ajustam o zoom do site em 6 níveis (60% a 160%). A preferência persiste entre sessões.
+- **Tamanho de fonte** — botões A/A (na lateral direita ou, na página de grafos, na coluna de controles) ajustam o zoom do site em 6 níveis (60% a 160%). A preferência persiste entre sessões.
+- **Cores e formas no grafo** — paletas para protanopia, deuteranopia e tritanopia (cores do Color Universal Design) e formas no lugar das cores.
+- **Sem animação** — desliga a física e as animações do grafo e o fundo animado de Entrar / Criar conta.
 
 ## Contexto acadêmico
 
@@ -47,7 +49,8 @@ Esses dados alimentarão o grafo de conhecimento que esta interface visa exibir 
 - **JavaScript / JSX** — sem TypeScript por ora
 - **CSS Variables** — sistema de temas (claro/escuro) sem biblioteca de UI
 - **Google Fonts** — Spectral (títulos), Figtree (interface) e JetBrains Mono (rótulos e labels)
-- Futuro: **Apache Jena Fuseki** (servidor SPARQL) e biblioteca de visualização de grafos (Cytoscape.js, react-force-graph ou D3.js — a definir)
+- **Neo4j** — o banco de grafos, consultado em Cypher pela Query API HTTP, sempre através de um proxy (`/api/cypher`) que guarda a senha. O site pede modo somente leitura em toda consulta; impor isso também no proxy fica para a publicação
+- **Canvas 2D** — motor de visualização próprio, sem biblioteca de grafos: a física reproduz a do Neo4j Browser (as forças do d3-force, reimplementadas) e há um layout hierárquico em camadas
 
 ## Como rodar localmente
 
@@ -68,7 +71,17 @@ Na pasta do projeto, rode **uma vez**:
 npm install
 ```
 
-### 3. Subir o servidor de desenvolvimento
+### 3. Configurar o acesso ao Neo4j
+
+É preciso ter um Neo4j rodando com os dados do grafo (o script de carga é material da orientadora e não fica no repositório). Copie o modelo de configuração e preencha a senha do banco:
+
+```bash
+cp .env.example .env.local
+```
+
+O `.env.local` não vai para o git, e a senha nunca entra no código enviado ao navegador: quem a usa é o proxy do servidor de desenvolvimento.
+
+### 4. Subir o servidor de desenvolvimento
 
 ```bash
 npm run dev
@@ -90,20 +103,18 @@ npm run lint     # verifica qualidade do código
 
 ```
 src/
-├── context/
-│   └── ThemeContext.jsx     # estado global de tema e tamanho de fonte
-├── components/
-│   ├── Logo.jsx             # logo SVG do EduGraph
-│   ├── ThemeToggle.jsx      # botão sol/lua (modo claro/escuro)
-│   └── FontSizeWidget.jsx   # controles A/A de acessibilidade
-├── pages/
-│   ├── Home.jsx             # tela inicial
-│   ├── Login.jsx            # tela de Entrar
-│   └── Signup.jsx           # tela de Criar conta
-├── App.jsx                  # roteamento por estado
-├── main.jsx                 # ponto de entrada React
-└── index.css                # design system (variáveis de tema, classes .eg-*)
+├── context/            # tema (claro/escuro) e tamanho de fonte
+├── components/         # componentes compartilhados e as seções da Home
+│   ├── grafo/          # página de grafos: canvas, painel, console Cypher, overlays
+│   └── conta/          # moldura, fundo animado e botão das telas de Entrar / Criar conta
+├── data/               # acesso ao Neo4j, consultas, estilo do grafo, física e layout
+├── pages/              # Home, Grafos, Login, Signup
+├── App.jsx             # roteamento por estado
+├── main.jsx            # ponto de entrada React
+└── index.css           # design system (variáveis de tema, classes .eg-*)
 ```
+
+A estrutura completa, arquivo por arquivo, está no §7 do [ESTADO_ATUAL.md](ESTADO_ATUAL.md).
 
 ---
 

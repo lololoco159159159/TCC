@@ -60,9 +60,9 @@ const ESTILO_RELACAO_PADRAO = { tracejado: false }
 // tokens de cor que o canvas resolve via getComputedStyle (ele não entende var())
 export const TOKENS_COR_NO = [...new Set([...Object.values(ESTILO_NO).map((e) => e.cor), ESTILO_NO_PADRAO.cor])]
 
-// estilo de um rótulo (o padrão, se ele não estiver na tabela) — usado pela
-// legenda e pelas amostras de paleta (N6), que mostram cor e forma por rótulo
-export const estiloNo = (rotulo) => ESTILO_NO[rotulo] || ESTILO_NO_PADRAO
+// estilo de um rótulo (o padrão, se ele não estiver na tabela) — usado só por
+// visualDoNo(), abaixo
+const estiloNo = (rotulo) => ESTILO_NO[rotulo] || ESTILO_NO_PADRAO
 
 export const estiloRelacao = (rel) => ESTILO_RELACAO[rel] || ESTILO_RELACAO_PADRAO
 

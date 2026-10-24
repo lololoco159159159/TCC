@@ -21,7 +21,7 @@
 // de estilo).
 export const TAMANHO_NO = 25
 
-export const ALPHA_MIN = 0.05 // abaixo disso a simulação para (o loop do canvas dorme)
+const ALPHA_MIN = 0.05 // abaixo disso a simulação para (o loop do canvas dorme)
 const ALPHA_DECAY = 1 - Math.pow(0.001, 1 / 300) // ≈ 2,28% por passo (padrão do d3)
 const VELOCIDADE = 1 - 0.4 // velocityDecay 0,4: a velocidade é multiplicada por 0,6 a cada passo
 const CARGA = -400 // repulsão entre nós (forceManyBody)

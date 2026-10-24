@@ -6,8 +6,8 @@ import { visualDoNo } from './estiloGrafo'
 // e a EXPANSÃO de um nó no desenho (N8), como no Neo4j Browser.
 // Só lê o banco (executarCypher usa o modo leitura).
 
-export const LIMITE_CONEXOES = 200 // conexões listadas no painel (o resto é avisado como "200+")
-export const LIMITE_VIZINHOS = 100 // vizinhos trazidos por expansão (o "Max Neighbours" do Browser clássico)
+const LIMITE_CONEXOES = 200 // conexões listadas no painel (o resto é avisado como "200+")
+const LIMITE_VIZINHOS = 100 // vizinhos trazidos por expansão (o "Max Neighbours" do Browser clássico)
 
 const CONEXOES = 'MATCH (n)-[r]-(m) WHERE elementId(n) = $id RETURN r, m LIMIT $limite'
 // relações entre os nós que chegaram na expansão e todos os da tela (os novos

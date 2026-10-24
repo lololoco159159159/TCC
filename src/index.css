@@ -47,7 +47,6 @@
   --faint: #9a958a;
   --green: #06492d;
   --green-deep: #053c24;
-  --green-soft: #6e8c7a;
   --gold: #8c3e18;
   --edge: #d8ceb8;
   --pill-bg: #fbf8f1;
@@ -91,8 +90,10 @@
   --grafo-halo: rgba(243, 237, 223, 0.92);
   --grafo-tooltip-bg: rgba(28, 38, 32, 0.94);
   --grafo-tooltip-fg: #f7f2e8;
+  /* fundo verde-claro de destaque: opção selecionada no popover de paleta e
+     hover do "Expandir conexões deste nó"; o nome vem da prévia "N vértices"
+     da barra de filtros antiga, que o usou primeiro */
   --grafo-previa-bg: #eaf2ec;
-  --grafo-previa-borda: #cfe0d4;
 
   /* telas de conta — fundo de vértices (A2; hex do overlay do protótipo,
      iguais nos 2 temas — o protótipo não varia por tema) */
@@ -114,7 +115,6 @@
   --faint: #6e7771;
   --green: #3aa76d;
   --green-deep: #2c7a4b;
-  --green-soft: #5fb98a;
   --gold: #8e4806;
   --edge: #262c28;
   --pill-bg: #121915;
@@ -150,7 +150,6 @@
   --grafo-tooltip-bg: rgba(237, 230, 216, 0.95);
   --grafo-tooltip-fg: #121915;
   --grafo-previa-bg: #12241a;
-  --grafo-previa-borda: #1f3a2b;
 
   /* telas de conta — fundo de vértices (mesmos hex do claro; ver acima) */
   --conta-aresta: #b3a988;
@@ -363,28 +362,6 @@ input::placeholder {
 }
 
 /* ---- Popover de matérias (balão da grade "Explore por série") ---- */
-
-.eg-materia-chip {
-  font: 400 13.5px/1 'Figtree', sans-serif;
-  color: var(--body);
-  background: var(--pill-bg);
-  border: 1px solid var(--pill-border);
-  border-radius: 999px;
-  padding: 7px 14px;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
-}
-
-.eg-materia-chip:hover {
-  border-color: var(--gold);
-}
-
-.eg-materia-chip--sel {
-  background: var(--grade-card-hover);
-  border-color: var(--green);
-  color: var(--text);
-  font-weight: 600;
-}
 
 .eg-materia-fechar {
   border: none;

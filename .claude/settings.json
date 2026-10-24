@@ -8,7 +8,8 @@
       "Bash(grep -n 'Login.jsx\\\\|Signup.jsx\\\\|FontSizeWidget.jsx\\\\|components/$\\\\|├── data/\\\\|conta/' /home/lorerenzofiorot/tcc/site/ESTADO_ATUAL.md)",
       "Bash(git log *)",
       "Bash(git stash *)",
-      "Bash(git filter-branch *)"
+      "Bash(git filter-branch *)",
+      "Bash(grep -n \"^- \\\\[ \\\\] \\\\*\\\\*L2\\\\|^\\\\*\\\\*Decisão pendente para a L4:\\\\*\\\\*\\\\|^ESTADO_ATUAL.md.$\\\\|^## 5\\\\. Como ler\" ESTADO_ATUAL.md)"
     ]
   }
 }

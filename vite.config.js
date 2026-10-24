@@ -9,7 +9,7 @@ import react from '@vitejs/plugin-react'
 // .env.local (ignorado pelo git) e é lida aqui, no processo Node — como as
 // variáveis NEO4J_* não têm o prefixo VITE_, o Vite não as embute no bundle.
 // Vale para `npm run dev` e `npm run preview`; no site publicado, o mesmo
-// caminho /api/cypher será atendido pelo proxy de produção (N11).
+// caminho /api/cypher será atendido pelo proxy de produção (etapa futura).
 function proxyNeo4j(env) {
   const url = env.NEO4J_URL || 'http://localhost:7474'
   const banco = env.NEO4J_DATABASE || 'neo4j'

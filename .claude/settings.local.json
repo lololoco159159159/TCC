@@ -119,7 +119,8 @@
       "Bash(grep -E \"\\\\.\\(js|jsx|css\\)$\")",
       "Bash(grep -cE \"\\\\.\\(js|jsx|css\\)$\")",
       "Bash(python3 -I /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/props_sem_uso.py /home/lorenzo/tcc_implementacao/TCC)",
-      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/props_sem_uso.mjs)"
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/props_sem_uso.mjs)",
+      "Bash(timeout 300 npx --yes knip --no-progress)"
     ],
     "additionalDirectories": [
       "/home/lorenzo/tcc_implementacao/TCC/.claude/skills"

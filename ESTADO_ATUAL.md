@@ -69,8 +69,9 @@ A reformulação troca a identidade visual inteira:
 
 Tokens completos (claro/escuro) ficam em [src/index.css](src/index.css) — **essa é
 a autoridade da paleta**. Nomes dos tokens (do protótipo): `--bg --bg2 --text
---muted --body --faint --green --green-deep --green-soft --gold --edge --pill-bg
---pill-border`.
+--muted --body --faint --green --green-deep --gold --edge --pill-bg
+--pill-border` (`--green-soft`, que vinha do protótipo e nunca foi usado, saiu na L2 da
+§4.6).
 
 ### Aliases de compatibilidade — REMOVIDOS (A5, 2026-07-16)
 `index.css` **não define mais** os aliases dos nomes antigos (`--ink --accent
@@ -79,7 +80,7 @@ Eles existiam só para manter Login/Signup/FontSizeWidget funcionando com a
 paleta nova antes da migração; na **A5** essas telas passaram a usar os tokens
 do protótipo direto e os aliases foram removidos dos dois temas (grep
 pré-remoção incluindo strings — nenhum uso restou). O único token "extra"
-mantido é `--green-soft` (documentado na tabela acima, da paleta do protótipo).
+que tinha sido mantido, `--green-soft`, saiu na L2 da §4.6 (nunca foi usado).
 **Não reintroduzir aliases** — use sempre os tokens novos.
 
 ## 3. O que JÁ foi feito (Etapa 1 — seção "Conhecimento conectado")
@@ -2943,7 +2944,8 @@ arquivos de código (js/jsx/css) com 9.855 linhas.
 
 - [x] **L0 — Este plano** *(2026-10-24)*
 - [x] **L1 — Inventário, sem apagar nada** *(2026-10-24)* — relatório abaixo
-- [ ] **L2 — Remoção do que está sem uso** (a lista aprovada abaixo) + `/simplify` no diff
+- [x] **L2 — Remoção do que está sem uso** (a lista aprovada abaixo) + `/simplify` no diff
+  *(2026-10-24)* — relatório abaixo
 - [ ] **L3 — Reaproveitamento de componentes** (vercel-composition-patterns +
   vercel-react-best-practices) + `/simplify` no diff
 - [ ] **L4 — Organização de arquivos** (só o que o inventário justificar) + `/simplify`
@@ -3001,6 +3003,54 @@ componente próprio (movimento puro, como na R7b). `GrafoCanvas` (1.019) e `Graf
 G4… N5… N11…" — o do `GrafoCanvas` passa de 30 linhas): manter como estão (proveniência,
 como a R2 decidiu) ou enxugar para o comportamento atual, deixando a história aqui no
 ESTADO_ATUAL.md.
+
+#### Relatório da L2 (2026-10-24)
+
+**Removido**, cada item com zero ocorrências na busca antes de sair:
+- [index.css](src/index.css): os tokens `--grafo-previa-borda` e `--green-soft` (claro e
+  escuro) e as regras `.eg-materia-chip`, `:hover` e `--sel`.
+- A palavra `export` de `estiloNo` ([estiloGrafo.js](src/data/estiloGrafo.js)),
+  `LIMITE_NOS` ([extrairGrafo.js](src/data/extrairGrafo.js)), `numeroDoAno`
+  ([resumoGrafo.js](src/data/resumoGrafo.js)), `ALPHA_MIN`
+  ([simulacaoForcas.js](src/data/simulacaoForcas.js) — só a palavra; o algoritmo não
+  mudou) e `LIMITE_CONEXOES`/`LIMITE_VIZINHOS` ([vizinhanca.js](src/data/vizinhanca.js)).
+
+**Corrigido:** o comentário de `estiloNo` (dizia que a legenda e as amostras o usavam);
+no [vite.config.js](vite.config.js), o comentário que chamava o proxy de produção de
+"N11" (hoje a N11 é a física); e um comentário novo no `--grafo-previa-bg`, que ficou
+(é o fundo verde-claro da opção selecionada na paleta e do hover do "Expandir conexões") e
+só tem o nome da antiga prévia.
+
+**README atualizado** (só as partes factuais; "O que é" e "Contexto acadêmico" não
+mudaram): "Estado atual" (Neo4j/Cypher, o site não guarda dados do grafo — exceto o globo
+ilustrativo da Home), a tabela de telas (com a página de grafos; Entrar/Criar conta como
+formulários apenas visuais), acessibilidade (A/A nos dois lugares, cores e formas no grafo,
+sem animação também nas telas de conta), "Tecnologias" (Neo4j pela Query API atrás do
+proxy; motor próprio em Canvas 2D com a física do Neo4j Browser e o layout hierárquico),
+o passo novo "Configurar o acesso ao Neo4j" (`.env.example` → `.env.local`) e a
+estrutura por pastas, apontando para o §7. O texto não promete o que o código não faz: o
+modo somente leitura é pedido pelo site em toda consulta, e impô-lo no proxy fica para a
+publicação.
+
+**`/simplify`** sobre o diff da fase, com as regras do §4.6 (4 revisores: reaproveitamento,
+simplificação, eficiência e altitude). Aplicado: o comentário de `estiloNo` encurtado (ele
+listava quem *não* o usa); a descrição de `conta/` no README (lá ficam a moldura, o fundo e
+o botão; as telas estão em `pages/`); a frase do A/A; e, do revisor de altitude, as três
+afirmações do README que o código não sustentava (globo da Home, "somente leitura", sem
+animação só no grafo), o comentário do `vite.config.js` e o do `--grafo-previa-bg`.
+Mantido (com motivo): a frase "hoje o grafo traz o 1.º ano de Matemática" do README — o
+"e vai crescer" logo depois já avisa que é um retrato; e a função `estiloNo` (o revisor
+sugeriu embutir a linha em `visualDoNo`, mas ela forma par com `estiloRelacao`). Eficiência
+e reaproveitamento: nenhum achado.
+
+**Números:** lint 0/0 · 75 módulos · JS **291,35 kB** (igual) · CSS **8,60 → 8,08 kB** ·
+`npx knip` agora só aponta as duas exportações mantidas por decisão do autor
+(`ESTILO_RELACAO` e `ErroCypher`) · `npm run dev` 200 nos módulos alterados.
+
+**Teste do autor:** nada deve ter mudado na tela. Conferir a Home (o balão do card de ano
+com o botão "Ver o grafo desta turma"), a página de grafos nos dois temas (popover de paleta
+com a opção selecionada em verde-claro; hover do "Expandir conexões deste nó") e Entrar/Criar
+conta; e ler o README.
 
 ## 5. Como ler o protótipo final (arquivo "bundled")
 

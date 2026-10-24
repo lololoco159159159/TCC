@@ -9,7 +9,7 @@ import { Caminho, No, Relacao, executarCypher } from './neo4j'
 // O grafo aparece em texto na aba "Relações" do resultado (para conferir os
 // números) e é o que o canvas desenha (N5).
 
-export const LIMITE_NOS = 300 // nós exibidos no máximo (o padrão do Browser clássico)
+const LIMITE_NOS = 300 // nós exibidos no máximo (o padrão do Browser clássico)
 
 // Junta os nós e as relações que aparecem em qualquer lugar do resultado — em
 // colunas, listas, mapas ou caminhos —, sem repetir (chave: elementId) e na

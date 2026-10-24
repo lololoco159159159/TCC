@@ -14,7 +14,7 @@ const ANOS = 'MATCH (a:Ano) RETURN a.codigo AS codigo, a.nome AS nome'
 
 // número do ano a partir do código (EF1 → 1): o modelo não guarda o número
 // como propriedade; 0 quando o código não tem dígito
-export const numeroDoAno = (codigo) => Number(String(codigo ?? '').replace(/\D/g, '')) || 0
+const numeroDoAno = (codigo) => Number(String(codigo ?? '').replace(/\D/g, '')) || 0
 
 // banda de estatísticas: { habilidades, unidades, anos: [1, …] (números, em ordem) }
 export async function estatisticasDoGrafo() {
