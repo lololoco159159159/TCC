@@ -1,6 +1,7 @@
 // Consultas Cypher de exemplo do site (ESTADO_ATUAL.md §4.5): o menu
 // "Exemplos…" do console da página de grafos (N3) e a consulta que o "Ver o grafo
-// desta turma" da Home abre (N9). São as consultas de teste que a orientadora
+// desta turma" da Home abre (N9); a busca do professor as refaz com campos
+// (src/data/filtrosDeBusca.js). São as consultas de teste que a orientadora
 // passou, copiadas sem mudança — inclusive os títulos e a 7.ª, que tem um erro de
 // sintaxe (falta o `)` depois de `:UnidadeTematica`) e serve para testar o card de
 // erro. O arquivo original dela (neo4j/consultas) saiu do repositório em
@@ -8,6 +9,12 @@
 
 // "ano direto p habilidade" — também é a consulta do "Ver o grafo desta turma"
 export const CONSULTA_ANO_HABILIDADES = `MATCH p = (:Ano)-[:DESENVOLVE_HABILIDADE]->(:Habilidade)
+RETURN p`
+
+// a 7.ª, com o erro de sintaxe original — também é o "Teste de erro" da busca do
+// professor (src/data/filtrosDeBusca.js)
+export const CONSULTA_COM_ERRO = `MATCH p = (:Ano)-[:TEM_UNIDADE]->(:UnidadeTematica-[:TEM_OBJETO]->(:ObjetoConhecimento)-[:DESENVOLVE]->(h:Habilidade)
+WHERE h.codigo IN ["EF01MA06", "EF01MA07", "EF01MA08", "EF01MA19"]
 RETURN p`
 
 export const CONSULTAS_EXEMPLO = [
@@ -37,10 +44,5 @@ RETURN p`,
     consulta: `MATCH p = (:Habilidade {codigo:"EF01MA16"})<-[:DESENVOLVE]-(:ObjetoConhecimento)-[:DESENVOLVE]->(:Habilidade)
 RETURN p`,
   },
-  {
-    titulo: 'professor colocar as habilidades que precisa ensinar no ano',
-    consulta: `MATCH p = (:Ano)-[:TEM_UNIDADE]->(:UnidadeTematica-[:TEM_OBJETO]->(:ObjetoConhecimento)-[:DESENVOLVE]->(h:Habilidade)
-WHERE h.codigo IN ["EF01MA06", "EF01MA07", "EF01MA08", "EF01MA19"]
-RETURN p`,
-  },
+  { titulo: 'professor colocar as habilidades que precisa ensinar no ano', consulta: CONSULTA_COM_ERRO },
 ]

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import SiteHeader from '../components/SiteHeader'
 import Footer from '../components/Footer'
 import FontSizeWidget from '../components/FontSizeWidget'
+import BuscaProfessor from '../components/grafo/BuscaProfessor'
 import ConsoleCypher from '../components/grafo/ConsoleCypher'
 import ResultadoCypher from '../components/grafo/ResultadoCypher'
 import GrafoCanvas from '../components/grafo/GrafoCanvas'
@@ -47,6 +48,8 @@ import { posicaoFilotaxia, posicaoInicial } from '../data/simulacaoForcas'
 //  - N11: a física e o layout passaram a ser os do Neo4j Browser (D18): o
 //    "Force-based layout" (padrão) e o "Hierarchical layout", escolhidos pelo
 //    seletor da coluna de controles (preferência `layout`, salva).
+//  - N13: a BUSCA DO PROFESSOR (BuscaProfessor) entra acima do console, que
+//    continua visível: Ano → Matéria → Pergunta, tudo vindo do Neo4j.
 
 const PAINEL_PADRAO = { x: 12, w: 392, esc: false }
 
@@ -461,6 +464,9 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
             {...acessibilidade}
           />
         </SiteHeader>
+
+        {/* ============ BUSCA DO PROFESSOR (N13): Ano → Matéria → Pergunta ============ */}
+        <BuscaProfessor />
 
         {/* ============ CONSOLE CYPHER (N3; no lugar da barra de filtros) ============ */}
         <ConsoleCypher

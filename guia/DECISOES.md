@@ -884,5 +884,134 @@ a refletir a topologia do grafo, como na ferramenta de referência."
 
 ---
 
-*Última atualização: 2026-10-18. Novas decisões: adicionar ao fim da lista como
+## D19 — Busca guiada do professor: ano → matéria → recorte numa consulta só, e todo o resto no navegador
+
+**Quando:** planejada em 2026-10-24 a partir das conversas de 2026-10-20 com o autor;
+N12 (modelo e consultas) e N13 (a barra) do roadmap (ESTADO_ATUAL.md §4.5, decisões 1–35
+da seção "N12–N15") · **Onde:** [src/data/filtrosDeBusca.js](src/data/filtrosDeBusca.js)
+(tabela de matérias, filtro por texto, consultas das opções e das perguntas — tudo num
+arquivo, pedido do autor), [src/components/grafo/BuscaProfessor.jsx](src/components/grafo/BuscaProfessor.jsx)
+(a barra), [src/data/resumoGrafo.js](src/data/resumoGrafo.js) (a consulta de anos, a
+mesma da Home), [src/data/consultasExemplo.js](src/data/consultasExemplo.js) (as
+consultas de teste da orientadora, que viraram as perguntas)
+
+> **Situação em 2026-10-24:** os passos 1–4 abaixo estão na tela (N13). Os campos da
+> pergunta (passo 5) e o "Ver no grafo" (passo 6) chegam na **N14** — as funções deles já
+> existem e foram testadas contra o Neo4j real na N12. O link compartilhável e o botão da
+> Home (N15) completam esta entrada quando forem feitos.
+
+**O problema.** O professor precisa achar no grafo o que vai ensinar — o caminho de uma
+habilidade, uma unidade temática inteira, as habilidades de um ano — **sem saber
+Cypher**. Até aqui só existia o console, que exige escrever a consulta. Três restrições
+moldaram a solução: (1) o **modelo do grafo é da orientadora e não muda** — o site é que
+se adapta a ele, inclusive a rótulos diferentes por matéria (a Gramática deve vir com
+`UnidadeTematicaGram`, `ObjetoConhecimentoGram`…); (2) o site **não guarda dados do
+grafo** (D17), então anos, matérias, unidades, objetos e habilidades têm de vir do Neo4j
+na hora; (3) no modelo da orientadora, **unidades temáticas e objetos de conhecimento são
+compartilhados entre os anos** (um nó "Geometria" só, ligado a todos os anos) — partir do
+ano pela unidade traria objetos e habilidades de outros anos. Faltava decidir **quantas
+consultas** a busca faz, **em que momento** e **o que fica no navegador**, de modo que a
+escolha fosse instantânea e a carga sobre o servidor (o da UFES), pequena.
+
+**A decisão.** O professor monta a busca **só escolhendo opções**, em cascata: **Ano →
+Matéria → Pergunta → campos da pergunta → "Ver no grafo"**. Cada passo busca o que
+precisa assim:
+
+| Passo | O que dispara | Consulta ao Neo4j? | O que ela traz / onde fica |
+|---|---|---|---|
+| 1. **Ano** | abrir a página | **1**: `MATCH (a:Ano) RETURN a.codigo, a.nome` (a mesma da Home) | os anos do grafo, ordenados no navegador pelo número (o modelo não o guarda) |
+| 2. **Matéria** | escolher o ano | **1**, para **todas** as matérias da tabela de uma vez (`UNWIND` + `EXISTS`) | só as matérias que têm habilidade **naquele** ano; nunca vem escolhida sozinha, mesmo havendo uma só (decisão do autor) |
+| 3. **Recorte** | escolher a matéria | **1**, que traz o **recorte inteiro** | todas as unidades, objetos e habilidades do ano na matéria, cada um com quem é seu "pai"; fica na **memória da página** (cache por ano + matéria) |
+| 4. **Pergunta** | — | **nenhuma** | o cardápio é uma lista do código (`PERGUNTAS`) — 9 perguntas, uma por consulta de teste da orientadora, mais o "Teste de erro" |
+| 5. **Campos** (unidade, objeto, habilidade) | escolher a pergunta, digitar | **nenhuma** — nem a cada tecla | as listas saem do recorte; a cascata (unidade filtra objetos, objeto filtra habilidades) e o filtro por texto rodam no navegador *(N14)* |
+| 6. **Ver no grafo** | o botão | **1** (a consulta da pergunta) **+ 1** ("conectar nós do resultado") | caminhos → o mesmo trajeto do console: extrair → completar → canvas *(N14)* |
+
+Ou seja: **até três consultas para preparar a busca** (anos, matérias do ano, recorte) e
+**uma ou duas para mostrar o resultado**; **zero** enquanto o professor escolhe e digita.
+Os detalhes que sustentam o fluxo:
+
+1. **A tabela de matérias descreve o modelo, não guarda dados.** Para cada matéria: o
+   nome a mostrar, o rótulo de cada nível, a relação que liga um nível ao de baixo, o
+   atalho Ano → Habilidade e a propriedade que dá o texto de cada nó. Matéria nova = uma
+   entrada nova; entrada cujos rótulos ainda não existem no banco, ou sem nada no ano,
+   **não aparece** (o passo 2 confere a tabela contra o banco). Os rótulos e as relações
+   entram nas consultas **como parâmetros** (`$any([...])`, Cypher 25), nunca como texto
+   montado.
+2. **O ano é amarrado pelas habilidades.** Como unidades e objetos são compartilhados, o
+   recorte parte do **atalho Ano → Habilidade** (`DESENVOLVE_HABILIDADE`) e sobe para o
+   objeto e a unidade de cada habilidade. As perguntas seguem a mesma regra — e a "ligação
+   entre duas habilidades", que usa caminho mais curto, só pode passar pelo ano escolhido.
+3. **O recorte é uma consulta só.** Medido no 1.º ano de Matemática: 22 habilidades, 17
+   objetos e 5 unidades, ~3 KB e ~12 ms no Neo4j. Vem com teto (2.000 linhas) e aviso se
+   passar. Fica em cache **na memória** durante a visita (voltar a um ano/matéria já visto
+   não consulta de novo; se a consulta falhar, sai do cache e "Tentar de novo" refaz);
+   some ao recarregar, e **nada vai para o `localStorage`** (D17).
+4. **O filtro por texto é local e sem intervalo de tempo.** O professor digita o código
+   ou parte do texto e só ficam as opções que contêm o que ele escreveu — sem acento e sem
+   maiúscula ("numeros" acha "Números"), todas as palavras em qualquer ordem, primeiro as
+   que começam com o texto. Como os dados já estão no navegador, a lista se atualiza a
+   cada tecla, **sem debounce** e sem ir ao Neo4j.
+5. **A escolha vai à consulta final pelo id do nó.** Cada opção do recorte carrega o
+   `elementId` do nó, que vai como parâmetro da pergunta — preciso mesmo se dois objetos
+   tiverem o mesmo nome. (O link compartilhável, N15, usará o código da habilidade e o
+   nome da unidade/objeto, porque o `elementId` não é garantido entre sessões.)
+6. **Tudo fica à vista.** Cada consulta da busca aparece na gaveta Cypher (D17), com
+   descrição: "busca · anos", "busca · matérias do ano", "busca · recorte do ano e
+   matéria", "busca · caminho até uma habilidade"… O **console Cypher continua na tela**,
+   logo abaixo da barra da busca (o autor o usa; sai bem depois).
+
+**Alternativas rejeitadas.** (a) *Uma consulta por passo da cascata* (escolher a unidade
+→ consultar os objetos dela → escolher o objeto → consultar as habilidades): uma espera
+de rede a cada escolha e mais carga no servidor, para listas que cabem inteiras em ~3 KB.
+(b) *Buscar no Neo4j enquanto o professor digita:* exigiria intervalo de tempo
+(~250 ms) e cancelamento das consultas antigas, e uma consulta por pausa na digitação —
+só valeria se o recorte não coubesse no navegador. (c) *Índice de texto completo no
+Neo4j:* exigiria criar um índice no banco da orientadora, cujo modelo não muda; e é
+desnecessário neste tamanho — fica como caminho se um recorte passar do teto. (d)
+*Carregar o grafo inteiro de uma vez:* cresce com o grafo (todos os anos e matérias) para
+usar só um pedaço. (e) *Listas de anos e matérias fixas no código:* dado do grafo guardado
+no site (contra a D17), que envelheceria a cada carga nova da orientadora. (f) *Amarrar o
+ano pela unidade temática* (Ano → Unidade → Objeto → Habilidade): com unidades e objetos
+compartilhados, traria habilidades de outros anos. (g) *Montar a consulta juntando texto*
+com os rótulos da matéria ou com o que foi digitado: abre espaço para injeção de Cypher;
+tudo vai como parâmetro, e o texto digitado nem sai do navegador. (h) *Escolher a matéria
+sozinha quando só há uma:* o autor preferiu que o professor sempre escolha.
+
+**Para a banca.** *"O professor não escreve consulta: escolhe o ano, a matéria e uma
+pergunta. Para isso o site faz três consultas pequenas — os anos, as matérias daquele
+ano e o recorte inteiro do ano na matéria, que no 1.º ano de Matemática tem uns 3 KB.
+Daí em diante tudo acontece no navegador: as listas, a cascata e a busca por texto,
+sem nenhuma consulta enquanto ele digita. O Neo4j só volta a ser consultado quando ele
+pede para ver o resultado no grafo. E, como o modelo é da orientadora, o site não
+assume nada sobre ele: uma tabela descreve os rótulos de cada matéria e as consultas
+recebem esses rótulos como parâmetros."*
+
+**Monografia** *(cap. de Implementação, seção da interface de consulta para o professor —
+retoma a D14 e a D17; se for o caso, citar o padrão *combobox* das WAI-ARIA Authoring
+Practices, usado nos campos da N14):*
+"Para que o professor consulte o grafo sem recorrer à linguagem Cypher, foi
+implementada uma busca guiada em cascata, na qual o usuário seleciona sucessivamente o
+ano escolar, o componente curricular e uma pergunta de um cardápio predefinido, cujas
+consultas parametrizadas derivam das consultas de validação fornecidas pela orientação.
+Como o modelo de dados é mantido externamente e varia entre componentes curriculares, a
+aplicação não codifica rótulos nem relações nas consultas: uma tabela descritiva
+registra, para cada componente, os rótulos dos níveis hierárquicos, os tipos de relação
+entre eles e as propriedades textuais, e esses valores são passados ao banco como
+parâmetros, por meio dos rótulos e tipos dinâmicos do Cypher. A obtenção das opções foi
+organizada para minimizar a comunicação com o servidor: a lista de anos e a dos
+componentes com conteúdo no ano escolhido são obtidas por uma consulta cada, e, em
+seguida, uma única consulta recupera o recorte completo do ano no componente — unidades
+temáticas, objetos de conhecimento e habilidades, com suas relações de pertinência. Como
+unidades e objetos são compartilhados entre os anos no modelo adotado, o recorte é
+ancorado nas habilidades, por meio da relação direta entre ano e habilidade. A partir
+desse recorte, mantido apenas em memória durante a sessão, as listas de opções, a
+filtragem em cascata e a busca textual — insensível a acentos e a maiúsculas e baseada na
+ocorrência de todos os termos digitados — são resolvidas no próprio navegador, sem novas
+requisições ao banco durante a digitação. O banco volta a ser consultado somente para
+obter o subgrafo que responde à pergunta, identificado pelos elementos selecionados, e
+todas as consultas emitidas permanecem registradas na interface, para auditoria."
+
+---
+
+*Última atualização: 2026-10-24. Novas decisões: adicionar ao fim da lista como
 D<N+1>, seguindo o formato do cabeçalho — **sempre com o parágrafo de monografia**.*

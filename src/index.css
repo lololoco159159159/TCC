@@ -20,7 +20,8 @@
        32  overlays de estado do palco (carregando/erro) + a coluna de controles
            do palco (vem depois deles no DOM e fica por cima: o A/A dela segue
            clicável em qualquer estado)
-       40  barra do console Cypher (grafos; era a de busca/filtros até a N3)
+       40  barras da busca do professor e do console Cypher (grafos; a do console
+           era a de busca/filtros até a N3)
       120  widget A/A fixo (Home e telas de conta — definido neste arquivo; na
            página de grafos ele fica na coluna de controles do palco)
   190/200  backdrop / dropdown do perfil (grafos)
