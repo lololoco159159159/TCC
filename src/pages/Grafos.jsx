@@ -291,8 +291,9 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
       setExpandindo(false)
       if (!(selRef.current && montado.nos.has(selRef.current))) desselecionar()
       setGrafo((g) => ({ ...montado, versao: g.versao + 1 }))
+      // sem nós, a página não troca de aba sozinha (pedido do autor, 2026-10-24):
+      // o resultado fica aberto ou fechado como a pessoa deixou
       setResultado({ ...r, grafo: grafoDoResultado })
-      if (montado.nos.size === 0) setResultadoAberto(true) // sem nada para desenhar, a aba "Grafo" não serve: abre
       setTempoMs(r.tempos.totalMs)
       setStatus('pronto')
     } catch (e) {

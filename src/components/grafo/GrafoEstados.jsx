@@ -8,9 +8,9 @@
 // Neo4j/Cypher/Executar, e o card de erro mostra o código do erro + a mensagem
 // (a de sintaxe traz a consulta e um ^ na posição — por isso o resto da
 // mensagem vai num bloco que não quebra linha). N5: o card de vazio saiu —
-// nenhum estado o aciona mais (consulta sem nós aparece na própria tabela do
-// resultado, aberto). N14: o convite fala primeiro da busca do professor e
-// depois do console.
+// nenhum estado o aciona mais (consulta sem nós aparece nas abas do resultado;
+// desde 2026-10-24 a página não as abre sozinha). N14: o convite fala primeiro
+// da busca do professor e depois do console.
 
 // pontos do skeleton de carregamento (verbatim do protótipo)
 const SKELETON = [

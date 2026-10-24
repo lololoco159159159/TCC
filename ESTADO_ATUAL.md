@@ -3471,6 +3471,21 @@ RETURN p
 - O teste de dados (49 verificações) agora também confere que **nenhuma pergunta volta
   com aviso do Neo4j**.
 
+##### Ajuste: resultado sem grafo não abre a Tabela sozinho (2026-10-24)
+
+Pedido do autor: quando a consulta não trazia nós, a página abria sozinha o resultado na
+aba **Tabela** (regra da N5: "sem nada para desenhar, a aba Grafo não serve"). A linha saiu
+de [Grafos.jsx](src/pages/Grafos.jsx): o resultado fica **aberto ou fechado como a pessoa
+deixou**.
+- **Sem nós:** a aba "Grafo" mostra o palco vazio.
+- **Os números:** a linha de status do console diz "grafo: 0 nós, 0 relações".
+- **Tabela, Relações e JSON** continuam a um clique na barra do resultado. Na aba
+  Relações aparece "A consulta não trouxe nós nem relações — nada para desenhar".
+
+Verificado: `npm run lint` (0/0) e `npm run build`. **Teste do autor:** no console,
+`RETURN 1 AS x` (nada para desenhar) → a tela continua no grafo (vazio); clicar em
+"Tabela" mostra a linha com `x = 1`.
+
 ### 4.6 Limpeza do código — etapas (L0–L2) · FINALIZADO
 
 *Planejado em 2026-10-24, a pedido do autor; **finalizado na L2, em 2026-10-24**, por
