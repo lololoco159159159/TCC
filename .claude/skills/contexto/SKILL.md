@@ -45,8 +45,11 @@ skill — o objetivo é entender o estado do trabalho antes de qualquer tarefa.
   ar, então tudo o que aparece vem do Neo4j. O `mockFuseki.js` foi apagado na
   N10 (D17); o antigo plano Apache Jena Fuseki/SPARQL (D1) é só registro
   histórico. Não propor mock nem dados locais como plano B.
-- **Não haverá sistema de usuários** (D2): Login/Signup/perfil mock não devem
-  ser alterados — vão deixar de existir num roadmap próprio.
+- **Não haverá sistema de usuários** (D2): Login/Signup **continuam no site como
+  telas sem uso funcional** (esclarecimento do autor, 2026-10-24) e podem ser
+  limpas como o resto do código.
+- **O modelo do grafo da orientadora não muda — o site se adapta a ele** (matérias
+  novas virão com rótulos próprios, ex.: `UnidadeTematicaGram`).
 - O trabalho acontece em **duas máquinas**: tudo que importa para continuar
   precisa estar nos arquivos versionados (ESTADO_ATUAL.md, guia/DECISOES.md),
   nunca apenas na conversa ou no CLAUDE.md. A outra máquina precisa do seu

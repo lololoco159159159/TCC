@@ -106,7 +106,20 @@
       "Bash(node --input-type=module -e ' *)",
       "Bash(grep -n \"^## D3\\\\|^## D4\\\\|^\\\\*\\\\*Quando:\\\\*\\\\* Etapa 7 \\(G1\\)\\\\|^\\\\[src/components/GrafoCanvas.jsx\\\\]\\\\|Nota \\(2026-10-15\\)\\\\|O método$\\\\|^abaixo continua\\\\|Última atualização\" guia/DECISOES.md)",
       "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_aa.mjs)",
-      "Bash(grep -n \"recarregar; o medidor da P1 em 0 desenhos/s\\\\|\\\\`32\\\\` overlays de estado\\\\|\\\\`120\\\\` widget A/A\" ESTADO_ATUAL.md)"
+      "Bash(grep -n \"recarregar; o medidor da P1 em 0 desenhos/s\\\\|\\\\`32\\\\` overlays de estado\\\\|\\\\`120\\\\` widget A/A\" ESTADO_ATUAL.md)",
+      "Bash(ls .claude/skills/ ~/.claude/skills/ 2>/dev/null; cat skills-lock.json 2>/dev/null | head -40; ls ~/.agents/skills 2>/dev/null | head)",
+      "Read(//home/lorenzo/.claude/skills/**)",
+      "Read(//home/lorenzo/.agents/**)",
+      "WebFetch(domain:skills.sh)",
+      "WebSearch",
+      "WebFetch(domain:claudelog.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(grep -n \"^## 4\\\\. O que FALTA\\\\|FOCO ATUAL \\(desde 2026-10-09\\)\\\\|^3\\\\. \\\\*\\\\*FOCO ATUAL\\\\|N11 \\(física e layout$\\\\|hierárquico do Neo4j Browser\\) feita em 2026-10-18\\\\|^### 4\\\\.5\\\\|Home e Entrar/Criar conta com o$\\\\|widget de sempre\\\\.$\\\\|^## 5\\\\. Como ler\\\\|^Última atualização\" ESTADO_ATUAL.md)",
+      "Bash(grep -E \"\\\\.\\(js|jsx|css\\)$\")",
+      "Bash(grep -cE \"\\\\.\\(js|jsx|css\\)$\")",
+      "Bash(python3 -I /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/props_sem_uso.py /home/lorenzo/tcc_implementacao/TCC)",
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/props_sem_uso.mjs)"
     ],
     "additionalDirectories": [
       "/home/lorenzo/tcc_implementacao/TCC/.claude/skills"

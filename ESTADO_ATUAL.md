@@ -2892,6 +2892,116 @@ coluna inteira, com o A/A embaixo da paleta e nada sobreposto; abrir a paleta (o
 e fechar (volta); A/A funciona no carregando e no erro; Home e Entrar/Criar conta com o
 widget de sempre.
 
+### 4.6 Limpeza e organização do código — etapas (L0–L5)
+
+*Planejado em 2026-10-24, a pedido do autor.* Com a integração (N1–N11) de pé e a busca
+do professor (N12) esperando as respostas da orientadora
+([guia/reuniao_orientadora.txt](guia/reuniao_orientadora.txt)), o código passa por uma
+limpeza: tirar o que não se usa mais, reaproveitar componentes e organizar arquivos.
+Mesma filosofia da revisão R0–R7 (§4.2): **zero mudança de comportamento ou visual**.
+
+**Ferramentas (escolhidas pelo autor):**
+1. **knip** — inventário de arquivos, exportações e dependências sem uso. Roda com
+   `npx knip` (cache temporário; o `package.json` não muda — autorizado pelo autor). As
+   skills de código morto da comunidade foram descartadas: todas com menos de 130
+   instalações, e a maioria só embrulha o knip.
+2. **vercel-composition-patterns** e **vercel-react-best-practices** (já instaladas) —
+   reaproveitamento de componentes (L3).
+3. **`/simplify`** (embutido no Claude Code) — revisão do diff de cada fase (L2–L4),
+   antes do commit do autor, com as regras abaixo.
+
+O plugin oficial `code-simplifier` ficou de fora: traz padrões internos da Anthropic
+(`function` em vez de arrow, tipos do TypeScript, apagar comentários "óbvios") que
+conflitam com o §6.
+
+**Restrições invioláveis:**
+- Zero mudança de comportamento ou visual. Bug achado no caminho → anotado no
+  relatório, não corrigido junto.
+- Remoção só com **zero ocorrências na busca**, inclusive em textos montados
+  (`eg-forma-${…}`, `var(--no-${…})`, keyframes em `animation:` inline, seletores
+  `data-*`). O knip dá candidatos, não veredito.
+- Sem dependência nova. Não renomear contratos: chaves do `localStorage`
+  (`edugraphPrefs` — paleta, formas, semAnim, painel, layout —, `eg_theme`, `eg_font`), a
+  API imperativa do canvas, `/api/cypher`, `No`/`Relacao`/`Caminho`/`ErroCypher` e os
+  textos das consultas da orientadora.
+- Comentários que explicam o porquê ficam (são material do TCC): nem o `/simplify` nem
+  as skills apagam comentário por ser "óbvio"; só se corrige o que está desatualizado
+  (como na R2). Anotações de histórico ("era a gaveta SPARQL", "N5: …") são proveniência
+  e ficam.
+- Fora do escopo: o globo da Home (dados locais, por decisão do autor); `depoimentos.js`
+  (conteúdo editorial); os algoritmos de `simulacaoForcas.js` e `layoutHierarquico.js` (a
+  física é verificada como idêntica à do Browser — D18 —, e mudá-la exige refazer a
+  comparação). Desempenho (memo, useCallback…) fica para a P3–P4 (§4.4).
+- **Telas de conta (esclarecimento do autor, 2026-10-24):** Login e Signup **continuam no
+  site**, só sem uso funcional (não haverá sistema de contas). Entram na limpeza como o
+  resto: o que elas não usam pode sair.
+- Uma etapa por sessão: `npm run lint` (0/0) · `npm run build` (bundle igual ou menor —
+  anotar) · `npm run dev` (200) · teste do autor · registro aqui · commit do autor (§0).
+
+**Linha de base (2026-10-24):** lint 0/0 · 75 módulos · JS 291,35 kB · CSS 8,60 kB · 45
+arquivos de código (js/jsx/css) com 9.855 linhas.
+
+- [x] **L0 — Este plano** *(2026-10-24)*
+- [x] **L1 — Inventário, sem apagar nada** *(2026-10-24)* — relatório abaixo
+- [ ] **L2 — Remoção do que está sem uso** (a lista aprovada abaixo) + `/simplify` no diff
+- [ ] **L3 — Reaproveitamento de componentes** (vercel-composition-patterns +
+  vercel-react-best-practices) + `/simplify` no diff
+- [ ] **L4 — Organização de arquivos** (só o que o inventário justificar) + `/simplify`
+- [ ] **L5 — Fechamento**: relatório (próxima Etapa no §3, com os números antes/depois),
+  §6/§7 sincronizados e **D19** no DECISOES.md (limpeza com análise estática + skills,
+  com parágrafo de monografia — retoma a D11)
+
+#### Relatório da L1 (2026-10-24)
+
+Como foi feito: `npx knip`; busca no código das classes `.eg-*`, das variáveis `--*` e
+dos `@keyframes` do `index.css` (o knip não lê CSS); análise das props de componente com
+o parser do Babel que já está no `node_modules` — props passadas e não declaradas, e
+declaradas e nunca lidas (o detector foi conferido num exemplo artificial); busca de
+comentários e documentação desatualizados.
+
+Já está limpo: **nenhum arquivo sem uso e nenhuma dependência sobrando** (knip),
+**nenhuma prop sobrando** nos 35 componentes e todos os `@keyframes` em uso.
+
+**Para remover na L2 (aprovado pelo autor):**
+
+| Item | Onde | Evidência |
+|---|---|---|
+| `--grafo-previa-borda` | index.css (claro e escuro) | zero usos; sobra da prévia "N vértices" da barra de filtros (saiu na N3/N10) |
+| `--green-soft` | index.css (claro e escuro) | zero usos desde sempre; guardado "para Login/Signup", que não o usam |
+| `.eg-materia-chip` e `.eg-materia-chip--sel` | index.css | zero usos desde a N9 (o balão perdeu as matérias); na N12 a matéria vira seletor |
+| `export` de `estiloNo`, `LIMITE_NOS`, `numeroDoAno`, `ALPHA_MIN`, `LIMITE_CONEXOES`, `LIMITE_VIZINHOS` | estiloGrafo, extrairGrafo, resumoGrafo, simulacaoForcas, vizinhanca | ninguém importa; usados só no próprio arquivo — sai só a palavra `export` |
+| comentário de `estiloNo` ("usado pela legenda e pelas amostras de paleta") | estiloGrafo.js | desatualizado: só a própria tabela de estilo o usa |
+| README: "Estado atual", tabela de telas e "Tecnologias" | README.md | ainda falam em dados estáticos, Fuseki/SPARQL e biblioteca de visualização "a definir". As partes de visão ("O que é", "Contexto acadêmico") são texto do autor e não mudam |
+
+**Mantidos (decisão do autor):** a tabela vazia `ESTILO_RELACAO` e o caminho do tracejado
+(ponto de extensão: uma relação de progressão entre anos seria uma linha na tabela) e o
+`export class ErroCypher` (contrato documentado do cliente, §4.5). **Falsos positivos:**
+as classes `.eg-forma-*` (montadas no `PontoNo`) e os comentários "era a gaveta SPARQL",
+"N10: …" (proveniência, R2).
+
+**Candidatos para a L3 (reaproveitar):** as duas pílulas do palco (resumo e "Desfazer
+expansão", no `Grafos.jsx`) repetem a mesma receita de vidro; os botões da coluna de
+controles repetem 5 vezes o estilo de centralização; a prop booleana `compacto` do
+`FontSizeWidget` (padrão que a composition-patterns desaconselha); 6 rótulos em fonte
+mono escritos à mão iguais ao `MONO_LABEL`; ícones SVG inline (6 no `GrafoPainel`, 4 na
+página) — ver quais se repetem. Não entram (decisões da R6): os padrões de
+Esc/clique-fora e os `<select>`; as superfícies de vidro do painel, do resultado e do
+card de conta (blur e opacidade diferentes — variações, não duplicação).
+
+**Candidatos para a L4 (organizar):** os 6 componentes usados só pela Home soltos em
+`src/components/` (GraphSection, HeroSection, StatsBand, TestimonialsSection, GradeCard,
+MateriaPopover) → `components/home/`, como já existem `grafo/` e `conta/` (critério de
+domínio da D11; nomes mantidos); `src/data/` mistura acesso ao Neo4j, configuração
+visual, motor de layout e conteúdo editorial — separar o motor (`simulacaoForcas`,
+`layoutHierarquico`); a coluna de controles (~110 das 726 linhas do `Grafos.jsx`) como
+componente próprio (movimento puro, como na R7b). `GrafoCanvas` (1.019) e `GrafoPainel`
+(640) ficam inteiros (coesão — D3/D11).
+
+**Decisão pendente para a L4:** os cabeçalhos de histórico no topo dos arquivos ("Etapa
+G4… N5… N11…" — o do `GrafoCanvas` passa de 30 linhas): manter como estão (proveniência,
+como a R2 decidiu) ou enxugar para o comportamento atual, deixando a história aqui no
+ESTADO_ATUAL.md.
+
 ## 5. Como ler o protótipo final (arquivo "bundled")
 
 > **A pasta `design/` foi retirada do repositório em 2026-10-15.** Os protótipos eram

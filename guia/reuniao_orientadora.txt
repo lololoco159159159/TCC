@@ -1,12 +1,4 @@
-PAUTA PARA A REUNIÃO COM A ORIENTADORA - EduGraph
-Preparado em 18/10/2026
-
-
-1. O QUE ESTOU PLANEJANDO: A BUSCA DO PROFESSOR
-
-A ideia é o professor não ver nada de código: ele só escolhe opções.
-
-Fluxo:
+FLUXO PREVISTO
   1) escolhe o Ano;
   2) escolhe a Matéria (só aparecem as que existem naquele ano);
   3) escolhe o que quer ver, por exemplo:
@@ -17,54 +9,26 @@ Fluxo:
        - o ano inteiro naquela matéria;
   4) preenche o que a busca pede, escolhendo em listas
      (unidade -> objeto -> habilidade) ou digitando para filtrar;
-  5) clica em "Ver no grafo".
 
-Por que começar por Ano e Matéria:
-  - a matéria diz quais rótulos usar (UnidadeTematica e
-    ObjetoConhecimento na Matemática; UnidadeTematicaGram e
-    ObjetoConhecimentoGram na Gramática);
-  - dentro de um ano e uma matéria as listas são pequenas (1.º ano de
-    Matemática: 5 unidades, 17 objetos, 22 habilidades). O site busca
-    a lista do recorte no Neo4j uma vez e filtra enquanto o professor
-    digita, inclusive sem acento ("numeros" acha "números").
+PERGUNTAS
 
-O que o site guarda no código: nenhum dado do grafo. Só uma tabela que
-descreve como o modelo está organizado: para cada matéria, o rótulo de
-cada nível e a relação que liga um nível ao outro. Anos, unidades,
-objetos e habilidades continuam vindo do Neo4j. Cada matéria nova é
-uma entrada nessa tabela.
-
-O modelo do grafo continua como está; o site é que se adapta a ele.
-
-
-2. PERGUNTAS (o site precisa destas respostas)
-
-  1) Quais são os nomes exatos dos rótulos e das relações da
-     Gramática? E das próximas matérias que vão entrar?
-     Hoje, na Matemática:
-       Ano -[TEM_UNIDADE]-> UnidadeTematica -[TEM_OBJETO]->
-       ObjetoConhecimento -[DESENVOLVE]-> Habilidade
-       mais o atalho Ano -[DESENVOLVE_HABILIDADE]-> Habilidade
-
+  1) Quais são os nomes exatos dos rótulos e das relações de materias
+  diferentes (gram por ex)
      Resposta:
-
 
   2) Toda matéria vai ter o atalho Ano -> Habilidade (como o
      DESENVOLVE_HABILIDADE da Matemática)?
-
      Resposta:
 
-
+PRINCIPAL
   3) "Habilidade" vai ser um rótulo só para todas as matérias, ou
      também um por matéria (ex.: HabilidadeGram)?
-
      Resposta:
 
 
   4) Como saber o ano de uma habilidade que vale para vários anos?
      A BNCC de Língua Portuguesa tem habilidades como EF15LP01
      (do 1.º ao 5.º ano). Ela vai ficar ligada a cada um desses anos?
-
      Resposta:
 
 
@@ -78,19 +42,3 @@ O modelo do grafo continua como está; o site é que se adapta a ele.
 
      Resposta:
 
-
-
-3. OUTROS PONTOS JÁ ANOTADOS (se der tempo)
-
-  - Não há restrição de unicidade (ex.: Habilidade.codigo) nem um id
-    estável para unidades temáticas e objetos de conhecimento.
-  - Não há nó de componente curricular (a matéria só aparece no código
-    da habilidade, ex.: MA) nem relação de progressão entre anos.
-  - As descrições das habilidades estão truncadas.
-  - A consulta de teste 7 ("professor colocar as habilidades que
-    precisa ensinar no ano") tem um erro de sintaxe: falta ")" depois
-    de :UnidadeTematica.
-  - Se um dia for preciso buscar por texto em todo o grafo (todos os
-    anos e matérias de uma vez), um índice de texto completo no Neo4j
-    resolveria acentos e relevância. Não é necessário para o fluxo
-    acima.
