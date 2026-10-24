@@ -30,9 +30,10 @@ export async function estatisticasDoGrafo() {
   }
 }
 
-// grade da Home: um item por Ano do grafo ({ codigo, nome }), em ordem de ano
-export async function anosDoGrafo() {
-  const { linhas } = await executarCypher(ANOS, {}, { descricao: 'Home · turmas da grade' })
+// grade da Home: um item por Ano do grafo ({ codigo, nome }), em ordem de ano.
+// N12: a busca do professor usa a mesma consulta, com a própria descrição na gaveta
+export async function anosDoGrafo({ descricao = 'Home · turmas da grade' } = {}) {
+  const { linhas } = await executarCypher(ANOS, {}, { descricao })
   return linhas.sort(
     (a, b) => numeroDoAno(a.codigo) - numeroDoAno(b.codigo) || String(a.codigo).localeCompare(String(b.codigo)),
   )

@@ -1565,7 +1565,7 @@ nome}`, `UnidadeTematica{nome}`, `ObjetoConhecimento{descricao}`,
 `Habilidade{codigo, descricao}`. Sem constraints/índices.
 
 **Direção técnica:** detalhada no roadmap abaixo (arquitetura, contrato, regras e
-etapas N0–N11). Em resumo: **Query API HTTP** com `fetch` (sem dependência nova),
+etapas N0–N15). Em resumo: **Query API HTTP** com `fetch` (sem dependência nova),
 sempre através de um **proxy do lado servidor** que guarda a senha — a edição
 Community não tem usuário só-leitura e o site vai para o ar. A UI foi construída
 sobre o modelo do protótipo (habilidade/conceito/disciplina; `desenvolve`/
@@ -1586,7 +1586,7 @@ fixas), **D10** (recorte 5.º–9.º).
    [src/data/consultasExemplo.js](src/data/consultasExemplo.js)) tem erro de sintaxe
    (falta `)` depois de `:UnidadeTematica`).
 
-#### Roadmap da integração — etapas N0–N11
+#### Roadmap da integração — etapas N0–N15
 
 *Proposto em 2026-10-09.* A ordem segue um princípio simples: **primeiro provar que
 os dados chegam** (N1–N3), **depois provar que foram entendidos** (N4) e **só então
@@ -1609,6 +1609,10 @@ layout hierárquico do Neo4j Browser.
 - [x] **N9** — Home com dados do Neo4j *(2026-10-15)*
 - [x] **N10** — Remoção do mock *(2026-10-15)*
 - [x] **N11** — Física igual à do Neo4j Browser + layout hierárquico *(2026-10-18)*
+- [x] **N12** — Busca do professor: modelo e consultas (sem tela) *(2026-10-24)*
+- [ ] **N13** — Busca do professor: a barra (Ano, Matéria, Pergunta), ao lado do console Cypher
+- [ ] **N14** — Busca do professor: os campos da pergunta, com o filtro por texto
+- [ ] **N15** — Busca do professor: link compartilhável, botão da Home e fechamento
 
 **N1–N10 finalizadas e testadas pelo autor** (confirmado em 2026-10-15). N11 planejada
 em 2026-10-15 e feita em 2026-10-18 (detalhes no fim desta seção) — falta o teste do
@@ -1620,9 +1624,11 @@ arestas do grafo-globo da seção "Cada matéria tem sua rede."
 conteúdo ilustrativo da seção — faz mais sentido que puxá-los do Neo4j. É a única
 exceção à D17 (nota lá).
 
-**Fora deste roadmap** (registrado para não se perder): o redesenho dos filtros, da
-busca e do deep-link sobre o modelo novo; a remoção do sistema de contas (roadmap
-próprio); os pontos de modelagem para a orientadora (lista acima).
+**Fora deste roadmap** (registrado para não se perder): os pontos de modelagem para a
+orientadora (lista acima). (A busca e o link compartilhável entraram no roadmap como
+N12–N15, planejadas em 2026-10-24. Sobre as contas, o autor esclareceu em 2026-10-24
+que Login e Signup continuam no site como telas sem uso funcional — não há remoção
+prevista.)
 
 **Arquitetura**
 
@@ -2893,23 +2899,209 @@ coluna inteira, com o A/A embaixo da paleta e nada sobreposto; abrir a paleta (o
 e fechar (volta); A/A funciona no carregando e no erro; Home e Entrar/Criar conta com o
 widget de sempre.
 
-### 4.6 Limpeza e organização do código — etapas (L0–L5)
+---
 
-*Planejado em 2026-10-24, a pedido do autor.* Com a integração (N1–N11) de pé e a busca
-do professor (N12) esperando as respostas da orientadora
-([guia/reuniao_orientadora.txt](guia/reuniao_orientadora.txt)), o código passa por uma
-limpeza: tirar o que não se usa mais, reaproveitar componentes e organizar arquivos.
-Mesma filosofia da revisão R0–R7 (§4.2): **zero mudança de comportamento ou visual**.
+#### N12–N15 — Busca do professor
+
+*Planejada em 2026-10-24, a partir das conversas de 2026-10-20 com o autor.* O
+professor monta a busca **só escolhendo opções**, sem ver código: escolhe o ano, a
+matéria e a pergunta, e depois preenche o que a pergunta pede. O console Cypher continua
+na tela, ao lado da busca (o autor o usa; sai bem depois). Premissas: o modelo do grafo
+da orientadora **não
+muda** (o site se adapta) e o site **não guarda dados do grafo** (D17) — guarda só
+consultas e a descrição de como o modelo está organizado.
+
+**Pode começar antes da reunião** com a orientadora: a Matemática já é conhecida, e a
+Gramática (e as próximas matérias) entram como uma entrada nova na tabela de matérias
+quando chegarem as respostas de [guia/reuniao_orientadora.txt](guia/reuniao_orientadora.txt).
+
+##### Decisões — fluxo e tela
+
+1. A busca entra no topo do palco **junto do console Cypher** (z-index 40): **os dois
+   ficam visíveis** — o autor usa o console e ele só sai bem depois (decisão do autor,
+   2026-10-24). Como os dois dividem a barra fica para a N13.
+2. O console continua como está, com a chave "Conectar nós do resultado". Na busca, o
+   "conectar" fica sempre ligado (o padrão do Browser).
+3. Ordem: **Ano → Matéria → Pergunta → campos da pergunta → "Ver no grafo"**. Os três
+   primeiros são seletores lado a lado; os campos aparecem quando a pergunta é escolhida.
+4. A Matéria só abre depois do Ano e lista **só as matérias que têm algo naquele ano**.
+   Ela **nunca vem escolhida automaticamente**: mesmo com uma matéria só, o professor
+   escolhe (decisão do autor, 2026-10-24).
+5. Trocar o Ano ou a Matéria limpa os campos já preenchidos (o recorte mudou).
+6. "Ver no grafo" só fica ativo com todos os campos da pergunta preenchidos. O resultado
+   vai para o que já existe: canvas (forças/hierárquico), painel, expandir, desfazer,
+   legenda e gaveta Cypher.
+
+##### Decisões — as perguntas (cardápio inicial)
+
+7. **Caminho até uma habilidade** — campo: *Habilidade*. Mostra Ano → unidade temática →
+   objeto de conhecimento → habilidade.
+8. **Uma unidade temática inteira** — campo: *Unidade temática*. Mostra a unidade, os
+   objetos dela e as habilidades do ano escolhido.
+9. **Um objeto de conhecimento e as suas habilidades** — campo: *Objeto de
+   conhecimento*. Mostra o objeto, as habilidades do ano e a unidade de cima.
+10. **O ano inteiro nesta matéria** — sem campo. Mostra Ano → unidades → objetos →
+    habilidades da matéria.
+11. Cada pergunta é uma entrada de um módulo do código (`src/data/filtrosDeBusca.js`): título em
+    linguagem de professor, explicação de uma linha, os campos e a consulta Cypher com
+    parâmetros. Pergunta nova = uma entrada nova. Ficam para depois: "habilidades irmãs"
+    e "ligação entre duas habilidades".
+
+##### Decisões — de onde vêm as opções (nada guardado no código)
+
+12. **Anos:** consulta ao Neo4j (a mesma da Home, N9).
+13. **Matérias:** uma **tabela de matérias** no código (`src/data/filtrosDeBusca.js`)
+    descreve como o modelo da orientadora se organiza — para cada matéria, o nome a
+    mostrar, o rótulo de cada nível, a relação entre os níveis e o atalho Ano → Habilidade.
+    Nenhum dado do grafo fica nela. O site confere a tabela contra o banco: matéria cujos
+    rótulos não existem ou que não tem nada no ano escolhido **não aparece**. Matéria nova
+    = uma entrada nova (hoje só a Matemática).
+14. Escolhidos Ano e Matéria, o site faz **uma única consulta** que traz o **recorte
+    inteiro**: as unidades, os objetos e as habilidades daquele ano naquela matéria, cada
+    um com código/nome/descrição e a quem pertence. Medido no 1.º ano de Matemática: 22
+    habilidades, ~3 KB, ~12 ms no Neo4j.
+15. O ano é **amarrado pelas habilidades** (o atalho Ano → Habilidade), porque as unidades
+    e os objetos são compartilhados entre anos (pergunta 5 da reunião). Matéria sem o
+    atalho (pergunta 2): a tabela diz como achar o ano.
+16. Todas as listas dos campos saem desse recorte. A **cascata** (escolher a unidade
+    filtra os objetos; o objeto filtra as habilidades) também é feita no navegador, sem
+    consulta nova.
+17. O recorte fica **só na memória da página**, como o grafo desenhado: some ao
+    recarregar. Um cache por (ano, matéria) evita consultar de novo ao voltar a um recorte
+    na mesma visita. **Nada vai para o `localStorage`.**
+18. Limite de segurança: o recorte vem com teto (proposta: 2.000 itens) e um aviso se
+    passar — um ano/matéria desse tamanho pediria busca no servidor.
+
+##### Decisões — a busca por texto dentro de um campo
+
+19. O professor digita no próprio campo (código ou parte do texto) e **só aparecem as
+    opções que contêm o que ele escreveu**.
+20. O filtro roda **no navegador, a cada tecla**, sobre o recorte já carregado:
+    **nenhuma consulta ao Neo4j enquanto ele digita** e, por isso, **sem intervalo de
+    tempo (debounce)** — a lista se atualiza na hora. (Intervalo de ~250 ms com
+    cancelamento só valeria para uma busca no servidor, que este fluxo não usa.)
+21. **Ignora maiúsculas e acentos**: "numeros" acha "Números"; "ef01ma1" acha EF01MA10…
+22. **Várias palavras**: a opção aparece se contiver **todas** as palavras digitadas, em
+    qualquer ordem ("tempo medidas" acha "Medidas de tempo").
+23. Onde procura: habilidade — código e descrição; objeto — descrição; unidade — nome.
+24. Ordem das opções: primeiro as que **começam** com o que foi digitado, depois as que só
+    **contêm**; dentro de cada grupo, ordem natural (EF01MA01 antes de EF01MA02; nomes em
+    ordem alfabética do português — o Neo4j põe "Álgebra" no fim).
+25. Cada opção mostra o código/nome em destaque e, embaixo, de onde vem (ex.: "Medidas de
+    tempo · Grandezas e medidas"); o trecho digitado fica marcado.
+26. Campo vazio = a lista inteira (do recorte ou da cascata), para quem prefere escolher
+    olhando.
+27. Nada encontrado: "Nada encontrado com 'xyz' neste ano e matéria."
+28. Teclado: ↑/↓ percorre, Enter escolhe, Esc fecha; mouse também. Padrão de
+    acessibilidade *combobox* (ARIA).
+
+##### Decisões — consultas e integração
+
+29. Consultas **sempre com parâmetros**. O texto digitado nem vai ao Neo4j.
+30. Rótulos e relações da matéria entram como parâmetros (`$any(...)`, testado em
+    2026-10-20); nos caminhos de tamanho variável o filtro é feito sobre
+    `relationships(p)`, porque ali o Neo4j ignora tipo dinâmico (testado).
+31. Toda consulta da busca aparece na gaveta Cypher, com descrição ("busca · recorte",
+    "busca · caminho até a habilidade").
+32. **Link compartilhável**: `?busca=caminho&ano=EF1&materia=matematica&habilidade=EF01MA17`
+    — abrir o link refaz a busca. Habilidade vai pelo código (chave de negócio); unidade
+    e objeto, que não têm id estável (ponto 2 da lista da orientadora), vão pelo
+    nome/descrição.
+33. **Home**: o "Ver o grafo desta turma" abre a busca com o Ano preenchido e a pergunta
+    "O ano inteiro nesta matéria" — a matéria fica para o professor escolher (decisão 4) —,
+    no lugar da consulta escrita no console (N9).
+34. Neo4j fora do ar: aviso na barra ("Não foi possível carregar os anos agora") e nenhum
+    dado local.
+35. Sem dependência nova; tema escuro, A/A, sem animação e paletas continuam valendo.
+
+**O que depende das respostas da reunião:** os rótulos e as relações da Gramática
+(pergunta 1 → entrada na tabela); o atalho Ano → Habilidade em toda matéria (pergunta 2 →
+como amarrar o ano); `Habilidade` único ou por matéria (pergunta 3 → campo da tabela);
+habilidade de vários anos (pergunta 4 → aparece em cada ano a que estiver ligada); unidades
+e objetos compartilhados entre anos (pergunta 5 → confirma a amarração pelas habilidades).
+
+##### Etapas
+
+- **N12 — Modelo e consultas (sem tela):** tudo num arquivo só,
+  `src/data/filtrosDeBusca.js` (pedido do autor): a tabela de matérias (Matemática), as
+  consultas de anos, matérias do ano e recorte, as 4 perguntas e o filtro de texto (função
+  pura). Testado no Node contra o Neo4j real: as 4 perguntas devolvem o esperado; o filtro
+  respeita acentos, várias palavras e a ordem.
+- **N13 — A barra:** Ano, Matéria e Pergunta **junto do console Cypher, que continua
+  visível**; estados de carregando, Neo4j fora do ar e recorte vazio.
+- **N14 — Os campos da pergunta:** o campo com filtro por texto (combobox), a cascata e o
+  "Ver no grafo" levando o resultado ao canvas.
+- **N15 — Link, Home e fechamento:** o link compartilhável, o botão da Home e a **D19** no
+  DECISOES.md (busca guiada sobre o modelo da orientadora, com o filtro local — com
+  parágrafo de monografia).
+
+Regras de sempre: uma etapa por sessão, lint 0/0 · build · dev, teste do autor, registro
+aqui e commit do autor (§0).
+
+##### N12 — Feito (2026-10-24)
+
+Arquivo novo **[src/data/filtrosDeBusca.js](src/data/filtrosDeBusca.js)** — tudo da busca
+num arquivo só (pedido do autor), sem tela (nenhum componente o importa ainda — o bundle
+não mudou, e o knip vai apontá-lo como "sem uso" até a N13). Quatro partes:
+1. **Tabela de matérias** (hoje só a Matemática): nome, títulos dos campos, rótulos de
+   cada nível, as quatro relações (Ano → unidade, unidade → objeto, objeto → habilidade e o
+   atalho Ano → Habilidade) e a propriedade que dá o texto de cada nível;
+   `parametrosDaMateria()` a converte no parâmetro `$m` das consultas.
+2. **Filtro por texto**, puro: `filtrarOpcoes()` (sem acento e sem maiúscula; todas as
+   palavras, em qualquer ordem; quem começa com o texto vem antes) e `marcarTrechos()` (o
+   trecho digitado, marcado também no texto com acento).
+3. **Opções**: `anosDaBusca()` (a consulta de anos da Home, com descrição própria na
+   gaveta), `materiasDoAno(ano)` (as da tabela que têm habilidade no ano — uma consulta para
+   todas, com `EXISTS`), `carregarRecorte(ano, matéria)` (**uma consulta**: unidades,
+   objetos e habilidades do ano, amarrados pelas habilidades; teto de 2.000 linhas com
+   aviso; ordem natural do português; cache da visita, que guarda a promessa e esquece se a
+   consulta falhar) e `opcoesDoCampo(recorte, campo, cascata)` (as opções de cada campo, com
+   a cascata aplicada e o "de onde vem").
+4. **Perguntas**: as 4 do cardápio (caminho até uma habilidade, unidade inteira, objeto e
+   suas habilidades, o ano inteiro) e `consultaDaPergunta()` (texto + parâmetros +
+   descrição para a gaveta; erro claro se faltar um campo). As consultas devolvem caminhos,
+   que seguem o mesmo trajeto do console (extrairGrafo → completarGrafo → canvas). Cada
+   salto é um tipo dinâmico de um passo só, porque em caminho de tamanho variável o Neo4j
+   ignora o tipo dinâmico.
+
+(Uma 1.ª versão tinha as quatro partes em quatro arquivos; o autor pediu um só.)
+
+Alterado: [resumoGrafo.js](src/data/resumoGrafo.js) — `anosDoGrafo()` aceita a descrição
+que aparece na gaveta (a Home continua com a dela).
+
+Verificado: `npm run lint` (0/0), `npm run build` (JS 291,35 → 291,37 kB — a opção nova
+do `anosDoGrafo`; CSS igual) e `npm run dev` (o servidor do teste). Teste do assistente no
+Node contra o Neo4j real (Vite do projeto, sem instalar nada), **29 verificações**: anos
+(`EF1 · 1º Ano`); matérias do 1.º ano (só Matemática; uma Gramática com rótulos que ainda
+não existem não aparece; ano sem dados → nenhuma); recorte (5 unidades, 17 objetos, 22
+habilidades, "Álgebra" na ordem certa, EF01MA01…22; o mesmo recorte de novo não consulta o
+Neo4j); cascata ("Grandezas e medidas" → 3 objetos e 5 habilidades; "Medidas de tempo" →
+EF01MA16/17/18); filtro ("numeros" acha "Números", "tempo medidas" acha "Medidas de
+tempo", "ef01ma1" acha EF01MA10…19, campo vazio = tudo, quem começa vem antes, trecho
+marcado com acento); as 4 perguntas pelo trajeto do console — caminho até EF01MA17: 4 nós
+e 3 relações (4 com "conectar", igual à consulta de referência 3); unidade "Grandezas e
+medidas": 9 nós e 8 relações; objeto "Medidas de tempo": 5 nós e 4 relações; o ano
+inteiro: 45 nós e 44 relações (66 com "conectar", igual à "árvore completa"); e as
+descrições na gaveta Cypher. **Teste do autor:** não há nada na tela nesta etapa; a N13
+traz a barra.
+
+### 4.6 Limpeza do código — etapas (L0–L2) · FINALIZADO
+
+*Planejado em 2026-10-24, a pedido do autor; **finalizado na L2, em 2026-10-24**, por
+decisão do autor — as etapas seguintes que estavam no plano (reaproveitar componentes,
+organizar arquivos e o fechamento) foram cortadas.* Com a integração (N1–N11) de pé e a
+busca do professor (N12) esperando as respostas da orientadora
+([guia/reuniao_orientadora.txt](guia/reuniao_orientadora.txt)), o código passou por uma
+limpeza: tirar o que não se usa mais. Mesma filosofia da revisão R0–R7 (§4.2): **zero
+mudança de comportamento ou visual**.
 
 **Ferramentas (escolhidas pelo autor):**
 1. **knip** — inventário de arquivos, exportações e dependências sem uso. Roda com
    `npx knip` (cache temporário; o `package.json` não muda — autorizado pelo autor). As
    skills de código morto da comunidade foram descartadas: todas com menos de 130
    instalações, e a maioria só embrulha o knip.
-2. **vercel-composition-patterns** e **vercel-react-best-practices** (já instaladas) —
-   reaproveitamento de componentes (L3).
-3. **`/simplify`** (embutido no Claude Code) — revisão do diff de cada fase (L2–L4),
-   antes do commit do autor, com as regras abaixo.
+2. **`/simplify`** (embutido no Claude Code) — revisão do diff da L2, antes do commit do
+   autor, com as regras abaixo.
 
 O plugin oficial `code-simplifier` ficou de fora: traz padrões internos da Anthropic
 (`function` em vez de arrow, tipos do TypeScript, apagar comentários "óbvios") que
@@ -2946,12 +3138,8 @@ arquivos de código (js/jsx/css) com 9.855 linhas.
 - [x] **L1 — Inventário, sem apagar nada** *(2026-10-24)* — relatório abaixo
 - [x] **L2 — Remoção do que está sem uso** (a lista aprovada abaixo) + `/simplify` no diff
   *(2026-10-24)* — relatório abaixo
-- [ ] **L3 — Reaproveitamento de componentes** (vercel-composition-patterns +
-  vercel-react-best-practices) + `/simplify` no diff
-- [ ] **L4 — Organização de arquivos** (só o que o inventário justificar) + `/simplify`
-- [ ] **L5 — Fechamento**: relatório (próxima Etapa no §3, com os números antes/depois),
-  §6/§7 sincronizados e **D19** no DECISOES.md (limpeza com análise estática + skills,
-  com parágrafo de monografia — retoma a D11)
+
+**Roteiro finalizado na L2** (decisão do autor, 2026-10-24).
 
 #### Relatório da L1 (2026-10-24)
 
@@ -2980,29 +3168,6 @@ Já está limpo: **nenhum arquivo sem uso e nenhuma dependência sobrando** (kni
 `export class ErroCypher` (contrato documentado do cliente, §4.5). **Falsos positivos:**
 as classes `.eg-forma-*` (montadas no `PontoNo`) e os comentários "era a gaveta SPARQL",
 "N10: …" (proveniência, R2).
-
-**Candidatos para a L3 (reaproveitar):** as duas pílulas do palco (resumo e "Desfazer
-expansão", no `Grafos.jsx`) repetem a mesma receita de vidro; os botões da coluna de
-controles repetem 5 vezes o estilo de centralização; a prop booleana `compacto` do
-`FontSizeWidget` (padrão que a composition-patterns desaconselha); 6 rótulos em fonte
-mono escritos à mão iguais ao `MONO_LABEL`; ícones SVG inline (6 no `GrafoPainel`, 4 na
-página) — ver quais se repetem. Não entram (decisões da R6): os padrões de
-Esc/clique-fora e os `<select>`; as superfícies de vidro do painel, do resultado e do
-card de conta (blur e opacidade diferentes — variações, não duplicação).
-
-**Candidatos para a L4 (organizar):** os 6 componentes usados só pela Home soltos em
-`src/components/` (GraphSection, HeroSection, StatsBand, TestimonialsSection, GradeCard,
-MateriaPopover) → `components/home/`, como já existem `grafo/` e `conta/` (critério de
-domínio da D11; nomes mantidos); `src/data/` mistura acesso ao Neo4j, configuração
-visual, motor de layout e conteúdo editorial — separar o motor (`simulacaoForcas`,
-`layoutHierarquico`); a coluna de controles (~110 das 726 linhas do `Grafos.jsx`) como
-componente próprio (movimento puro, como na R7b). `GrafoCanvas` (1.019) e `GrafoPainel`
-(640) ficam inteiros (coesão — D3/D11).
-
-**Decisão pendente para a L4:** os cabeçalhos de histórico no topo dos arquivos ("Etapa
-G4… N5… N11…" — o do `GrafoCanvas` passa de 30 linhas): manter como estão (proveniência,
-como a R2 decidiu) ou enxugar para o comportamento atual, deixando a história aqui no
-ESTADO_ATUAL.md.
 
 #### Relatório da L2 (2026-10-24)
 
@@ -3187,6 +3352,10 @@ src/
 │   ├── simulacaoForcas.js     # física do "Force-based layout" do Neo4j Browser (forças do d3; idêntica — N11, D18)
 │   ├── layoutHierarquico.js   # "Hierarchical layout" do Browser: camadas de Sugiyama, como o dagre (N11, D18)
 │   ├── resumoGrafo.js         # agregados da Home no Neo4j: habilidades, unidades temáticas, anos (N9)
+│   ├── filtrosDeBusca.js      # busca do professor (N12), sem tela: tabela de matérias (como o modelo da
+│   │                          #   orientadora se organiza; nenhum dado do grafo), filtro por texto (sem acento,
+│   │                          #   todas as palavras), opções (anos, matérias do ano, o recorte — 1 consulta,
+│   │                          #   cache da visita — e a cascata) e as 4 perguntas com a consulta de cada uma
 │   ├── consultasExemplo.js    # consultas Cypher de exemplo (menu do console) + a do "Ver o grafo desta
 │   │                          #   turma"; cópia das de teste da orientadora (a pasta neo4j/ saiu do repo)
 │   ├── vizinhanca.js          # conexões de um nó no Neo4j por tipo e sentido; retrato do nó (N7);

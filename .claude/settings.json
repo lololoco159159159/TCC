@@ -9,7 +9,12 @@
       "Bash(git log *)",
       "Bash(git stash *)",
       "Bash(git filter-branch *)",
-      "Bash(grep -n \"^- \\\\[ \\\\] \\\\*\\\\*L2\\\\|^\\\\*\\\\*Decisão pendente para a L4:\\\\*\\\\*\\\\|^ESTADO_ATUAL.md.$\\\\|^## 5\\\\. Como ler\" ESTADO_ATUAL.md)"
+      "Bash(grep -n \"^- \\\\[ \\\\] \\\\*\\\\*L2\\\\|^\\\\*\\\\*Decisão pendente para a L4:\\\\*\\\\*\\\\|^ESTADO_ATUAL.md.$\\\\|^## 5\\\\. Como ler\" ESTADO_ATUAL.md)",
+      "Bash(grep -n \"^### 4\\\\.6\\\\|^2\\\\. \\\\*\\\\*vercel-composition\\\\|^3\\\\. \\\\*\\\\*\\\\`/simplify\\\\`\\\\|^- \\\\[.\\\\] \\\\*\\\\*L[0-5]\\\\|^\\\\*\\\\*Candidatos para a L3\\\\|^\\\\*\\\\*Candidatos para a L4\\\\|^\\\\*\\\\*Decisão pendente para a L4\\\\|^#### Relatório da L2\" ESTADO_ATUAL.md)",
+      "Bash(grep -n \"^#### Roadmap da integração\\\\|^- \\\\[x\\\\] \\\\*\\\\*N11\\\\*\\\\*\\\\|^\\\\*\\\\*N1–N10 finalizadas\\\\|em 2026-10-15 e feita em 2026-10-18\\\\|^### 4\\\\.6 Limpeza\\\\|^widget de sempre\\\\.$\\\\|etapas N0–N11\\)\" ESTADO_ATUAL.md)",
+      "Bash(npm run *)",
+      "Bash(timeout 120 node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_n12.mjs)",
+      "Bash(sed -i 's/^const confere = \\(nome, fn\\) => {$/const confere = async \\(nome, fn\\) => {/; s/^  fn\\(\\)$/  await fn\\(\\)/; s/^\\\\\\(\\\\s*\\\\\\)confere\\(/\\\\1await confere\\(/' /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_n12.mjs)"
     ]
   }
 }
