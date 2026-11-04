@@ -500,8 +500,9 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
   }))
 
   // forma do nó — modo "formas em vez de cores" (G10, daltonismo total). N5: a
-  // forma de cada rótulo vem da tabela de estilo (n.forma). Quadrado e
-  // triângulo com as constantes do protótipo; o losango é novo (4.º rótulo).
+  // forma de cada nível vem da tabela de estilo (n.forma). Quadrado e
+  // triângulo com as constantes do protótipo; o losango é novo (4.º rótulo) e o
+  // hexágono, da Disciplina (D21), com os vértices nos lados como no CSS.
   function tracarNo(ctx, n, r) {
     if (!formasRef.current || n.forma === 'circulo') {
       ctx.arc(n.x, n.y, r, 0, 7)
@@ -518,6 +519,16 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
       ctx.lineTo(n.x + s, n.y)
       ctx.lineTo(n.x, n.y + s)
       ctx.lineTo(n.x - s, n.y)
+      ctx.closePath()
+      return
+    }
+    if (n.forma === 'hexagono') {
+      const s = r * 1.08
+      for (let i = 0; i < 6; i++) {
+        const a = (Math.PI / 3) * i
+        if (i) ctx.lineTo(n.x + s * Math.cos(a), n.y + s * Math.sin(a))
+        else ctx.moveTo(n.x + s, n.y)
+      }
       ctx.closePath()
       return
     }

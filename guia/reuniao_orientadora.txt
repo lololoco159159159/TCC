@@ -1,44 +1,86 @@
-FLUXO PREVISTO
-  1) escolhe o Ano;
-  2) escolhe a Matéria (só aparecem as que existem naquele ano);
-  3) escolhe o que quer ver, por exemplo:
-       - caminho até uma habilidade (de que ano, unidade temática e
-         objeto de conhecimento ela vem);
-       - uma unidade temática inteira;
-       - um objeto de conhecimento e as suas habilidades;
-       - o ano inteiro naquela matéria;
-  4) preenche o que a busca pede, escolhendo em listas
-     (unidade -> objeto -> habilidade) ou digitando para filtrar;
-
-PERGUNTAS
-
-  1) Quais são os nomes exatos dos rótulos e das relações de materias
-  diferentes (gram por ex)
-     Resposta:
-
-  2) Toda matéria vai ter o atalho Ano -> Habilidade (como o
-     DESENVOLVE_HABILIDADE da Matemática)?
-     Resposta:
-
-PRINCIPAL
-  3) "Habilidade" vai ser um rótulo só para todas as matérias, ou
-     também um por matéria (ex.: HabilidadeGram)?
-     Resposta:
+(ano{1ano})              -  - - (2ano)
+   I
+(disciplina{matematica})  - - - (ciencia) 
+   I
+(UnidadeTematicaMat)      - - - (unidadeTematicaCien)
+   I
+(objetoCOnhecimentoMat)   - - - (objetoConhecimentoCien)
+   I
+(habilidadeMat)           - - - (habildiadeCienc)
 
 
-  4) Como saber o ano de uma habilidade que vale para vários anos?
-     A BNCC de Língua Portuguesa tem habilidades como EF15LP01
-     (do 1.º ao 5.º ano). Ela vai ficar ligada a cada um desses anos?
-     Resposta:
+1 ano contem duas disciplinas/materia
+matematica I ciencia 
+cada materia tem sua unidade tematica propria, como unidadeTematicaCien
+cada unidade tematica tem seu grupo de ObjetoConhecimento, sendo o de  ciencia 
+objetoConhecimentoCien.
+as habilidades seguem a mesma logica, um grupo de habilidadeCienc.
 
+2 ano 
+matematica 
 
-  5) As unidades temáticas e os objetos de conhecimento são criados
-     sem o ano (MERGE só pelo nome). Quando entrar o 2.º ano,
-     "Números" vai ser o mesmo nó nos dois anos, e os objetos e as
-     habilidades dos dois anos vão ficar pendurados nele. É assim que
-     deve ficar?
-     (Se for, o site separa os anos pelas habilidades, usando o atalho
-     Ano -> Habilidade; por isso a pergunta 2 importa.)
+exemplo da rosiane alterado pela ia para funcionar com um unico prompt:
 
-     Resposta:
+MERGE (a:Ano {codigo:"EF1"})
+SET a.nome = "1º Ano"
+WITH a
+UNWIND [
+  // ===== NÚMEROS =====
+  {ut:"Números", oc:"Contagem de rotina; Contagem ascendente e descendente; Reconhecimento de números no contexto diário", habs:[
+    {codigo:"EF01MA01", descricao:"Utilizar números naturais como indicador de quantidade ou de ordem..."}]},
+  {ut:"Números", oc:"Quantificação de elementos de uma coleção: estimativas, contagem um a um, pareamento ou outros agrupamentos e comparação", habs:[
+    {codigo:"EF01MA02", descricao:"Contar de maneira exata ou aproximada..."},
+    {codigo:"EF01MA03", descricao:"Estimar e comparar quantidades de objetos..."}]},
+  {ut:"Números", oc:"Leitura, escrita e comparação de números naturais (até 100); Reta numérica", habs:[
+    {codigo:"EF01MA04", descricao:"Contar a quantidade de objetos até 100..."},
+    {codigo:"EF01MA05", descricao:"Comparar números naturais..."}]},
+  {ut:"Números", oc:"Construção de fatos básicos da adição", habs:[
+    {codigo:"EF01MA06", descricao:"Construir fatos básicos da adição..."}]},
+  {ut:"Números", oc:"Composição e decomposição de números naturais", habs:[
+    {codigo:"EF01MA07", descricao:"Compor e decompor números..."}]},
+  {ut:"Números", oc:"Problemas envolvendo diferentes significados da adição e da subtração", habs:[
+    {codigo:"EF01MA08", descricao:"Resolver e elaborar problemas de adição e subtração..."}]},
 
+  // ===== ÁLGEBRA =====
+  {ut:"Álgebra", oc:"Padrões figurais e numéricos", habs:[
+    {codigo:"EF01MA09", descricao:"Organizar e ordenar objetos por atributos..."}]},
+  {ut:"Álgebra", oc:"Sequências recursivas", habs:[
+    {codigo:"EF01MA10", descricao:"Descrever elementos ausentes em sequências..."}]},
+
+  // ===== GEOMETRIA =====
+  {ut:"Geometria", oc:"Localização de objetos e pessoas no espaço", habs:[
+    {codigo:"EF01MA11", descricao:"Descrever localização em relação à própria posição..."},
+    {codigo:"EF01MA12", descricao:"Descrever localização segundo ponto de referência..."}]},
+  {ut:"Geometria", oc:"Figuras geométricas espaciais", habs:[
+    {codigo:"EF01MA13", descricao:"Relacionar figuras espaciais a objetos..."}]},
+  {ut:"Geometria", oc:"Figuras geométricas planas", habs:[
+    {codigo:"EF01MA14", descricao:"Identificar e nomear figuras planas..."}]},
+
+  // ===== GRANDEZAS E MEDIDAS =====
+  {ut:"Grandezas e medidas", oc:"Medidas de comprimento, massa e capacidade", habs:[
+    {codigo:"EF01MA15", descricao:"Comparar comprimentos, capacidades ou massas..."}]},
+  {ut:"Grandezas e medidas", oc:"Medidas de tempo", habs:[
+    {codigo:"EF01MA16", descricao:"Relatar sequência de acontecimentos..."},
+    {codigo:"EF01MA17", descricao:"Reconhecer períodos do dia..."},
+    {codigo:"EF01MA18", descricao:"Produzir a escrita de uma data..."}]},
+  {ut:"Grandezas e medidas", oc:"Sistema monetário brasileiro", habs:[
+    {codigo:"EF01MA19", descricao:"Reconhecer valores de moedas e cédulas..."}]},
+
+  // ===== PROBABILIDADE E ESTATÍSTICA =====
+  {ut:"Probabilidade e estatística", oc:"Noção de acaso", habs:[
+    {codigo:"EF01MA20", descricao:"Classificar eventos envolvendo o acaso..."}]},
+  {ut:"Probabilidade e estatística", oc:"Leitura de tabelas e gráficos", habs:[
+    {codigo:"EF01MA21", descricao:"Ler dados em tabelas e gráficos..."}]},
+  {ut:"Probabilidade e estatística", oc:"Coleta e organização de informações", habs:[
+    {codigo:"EF01MA22", descricao:"Realizar pesquisa e organizar dados..."}]}
+] AS item
+MERGE (ut:UnidadeTematica {nome: item.ut})
+MERGE (a)-[:TEM_UNIDADE]->(ut)
+MERGE (oc:ObjetoConhecimento {descricao: item.oc})
+MERGE (ut)-[:TEM_OBJETO]->(oc)
+WITH a, oc, item
+UNWIND item.habs AS hab
+MERGE (h:Habilidade {codigo: hab.codigo})
+SET h.descricao = hab.descricao
+MERGE (oc)-[:DESENVOLVE]->(h)
+MERGE (a)-[:DESENVOLVE_HABILIDADE]->(h)

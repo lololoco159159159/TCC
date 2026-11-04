@@ -18,7 +18,7 @@ Um professor de Matemática, por exemplo, pode entrar no grafo, selecionar sua d
 
 ## Estado atual
 
-Este repositório contém o **front-end React** do projeto, já integrado ao grafo de conhecimento real: um banco **Neo4j** montado pela orientadora, consultado em **Cypher**. Hoje o grafo traz o 1.º ano de Matemática da BNCC (ano → unidades temáticas → objetos de conhecimento → habilidades) e vai crescer com outros anos e matérias. O site não guarda dados do grafo: tudo o que aparece vem do Neo4j, exceto o globo ilustrativo da seção "Cada matéria tem sua rede.", na Home.
+Este repositório contém o **front-end React** do projeto, já integrado ao grafo de conhecimento real: um banco **Neo4j** montado pela orientadora, consultado em **Cypher**. Hoje o grafo traz o 1.º ano de Matemática e de Ciências da BNCC (ano → disciplina → unidades temáticas → objetos de conhecimento → habilidades) e vai crescer com outros anos e matérias — que aparecem no site, já com as cores do seu nível, sem mudar o código. O site não guarda dados do grafo: tudo o que aparece vem do Neo4j, exceto o globo ilustrativo da seção "Cada matéria tem sua rede.", na Home.
 
 O andamento detalhado — o que já foi feito, o que falta e as decisões de projeto — está em [ESTADO_ATUAL.md](ESTADO_ATUAL.md) e [guia/DECISOES.md](guia/DECISOES.md).
 

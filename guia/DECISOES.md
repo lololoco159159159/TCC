@@ -607,6 +607,14 @@ versão publicada exibe exclusivamente dados do repositório definitivo."
 (`LegendaTipos`, `OpcoesAcessibilidade`), [src/index.css](src/index.css) (tokens
 `--no-X-padrao`, classes `.eg-forma-*`)
 
+> **Revista pela D21 (2026-11-04), com o modelo novo do grafo:**
+> - **Estilo por nível:** cor, forma e legenda passaram a ser do nível do nó (Ano,
+>   Disciplina, Unidade temática, Objeto de conhecimento, Habilidade), tirado do começo do
+>   rótulo, e não mais de cada rótulo.
+> - **A 5.ª cor, da Disciplina:** escolhida com este mesmo método. As 4 cores de cada
+>   paleta ficaram, e o ΔE mínimo simulado passou a 24,8 · 18,3 · 17,2.
+> - **O hexágono** entrou como forma da Disciplina.
+
 **O problema.** As camadas de acessibilidade da D6 (paletas CUD, formas, modo sem
 animação) e a legenda com filtro da D7 foram feitas para os 3 tipos do mock
 (habilidade, conceito, disciplina). O grafo da orientadora tem 4 rótulos (Ano,
@@ -900,6 +908,14 @@ consultas de teste da orientadora, que viraram as perguntas)
 
 > **Situação em 2026-10-24:** os passos 1–6 abaixo estão na tela (N13 e N14). O link
 > compartilhável e o botão da Home (N15) completam esta entrada quando forem feitos.
+>
+> **Revista pela D21 (2026-11-04), com o modelo novo do grafo:**
+> - **As matérias vêm do Neo4j:** são as Disciplinas ligadas ao ano. A "tabela de matérias"
+>   do item 1 saiu.
+> - **As consultas andam pelas relações:** os tipos vão escritos no texto, e não mais como
+>   parâmetros por matéria.
+> - **O resto do fluxo vale como está:** as três consultas para montar as opções, o recorte
+>   inteiro, o filtro no navegador e a amarração do ano pelas habilidades.
 
 **O problema.** O professor precisa achar no grafo o que vai ensinar — o caminho de uma
 habilidade, uma unidade temática inteira, as habilidades de um ano — **sem saber
@@ -1093,5 +1109,145 @@ exibido, em detrimento da paridade com a ferramenta de referência nesse aspecto
 
 ---
 
-*Última atualização: 2026-10-24. Novas decisões: adicionar ao fim da lista como
+## D21 — Modelo novo do grafo (Disciplina e rótulos por matéria): o site anda pelas relações e tira a cor do nível (revê D15 e D19)
+
+**Quando:** 2026-11-03 (o modelo, combinado com a orientadora e carregado pelo autor no
+Neo4j) e 2026-11-04 (o site adaptado), N16 do roadmap (ESTADO_ATUAL.md §4.5) · **Onde:**
+[src/data/filtrosDeBusca.js](src/data/filtrosDeBusca.js) (a descrição do modelo, as
+consultas da busca), [src/data/estiloGrafo.js](src/data/estiloGrafo.js) (os níveis e
+`nivelDoRotulo`), [src/data/paletas.js](src/data/paletas.js) (a 5.ª cor),
+[src/index.css](src/index.css) (`--no-disciplina`, `.eg-forma-hexagono`),
+[src/data/resumoGrafo.js](src/data/resumoGrafo.js) (os números da Home),
+[src/data/consultasExemplo.js](src/data/consultasExemplo.js) (as consultas de teste),
+[src/components/grafo/GrafoOverlays.jsx](src/components/grafo/GrafoOverlays.jsx),
+[src/components/grafo/GrafoPainel.jsx](src/components/grafo/GrafoPainel.jsx),
+[src/components/grafo/GrafoCanvas.jsx](src/components/grafo/GrafoCanvas.jsx)
+
+**O problema.** O grafo chegou com um modelo novo, combinado com a orientadora
+([guia/reuniao_orientadora.txt](guia/reuniao_orientadora.txt)):
+`Ano -[:TEM_DISCIPLINA]-> Disciplina -[:TEM_UNIDADE]-> UnidadeTematica… -[:TEM_OBJETO]->
+ObjetoConhecimento… -[:DESENVOLVE]-> Habilidade…`, mais o atalho `Ano
+-[:DESENVOLVE_HABILIDADE]-> Habilidade…`.
+- Entrou um nível, a **Disciplina** (Matemática `MA`, Ciências `CI`), entre o Ano e as
+  unidades.
+- **Cada matéria passou a ter os seus rótulos:** `UnidadeTematicaMat`,
+  `UnidadeTematicaCien`, `HabilidadeMat`, `HabilidadeCien`…
+- A Matemática do 1º ano foi migrada para o modelo, e Ciências do 1º ano foi carregada
+  (comando do autor, 2026-11-03).
+
+O site parou:
+- **A busca:** uma tabela de matérias no código dizia os rótulos de cada uma, e as consultas
+  pediam o Ano ligado direto às unidades.
+- **A Home:** contava `:Habilidade` e `:UnidadeTematica`.
+- **As consultas de teste:** usavam os rótulos antigos.
+- **As cores:** eram por rótulo exato — `HabilidadeMat` caía no cinza dos rótulos
+  desconhecidos.
+
+E o problema iria se repetir a cada matéria nova, porque o modelo prevê uma família de
+rótulos por matéria. O autor pediu que as cores fossem automáticas: toda disciplina,
+unidade, objeto ou habilidade que chegar deve vir com a cor certa.
+
+**A decisão.** Duas regras, uma para as consultas e outra para o desenho, que tornam o site
+independente dos rótulos de cada matéria:
+
+1. **As consultas andam pelas relações do modelo, não pelos rótulos.** As relações são as
+   mesmas em toda matéria; os rótulos, não. As consultas da busca, da Home e das perguntas
+   só citam `Ano` e `Disciplina` e navegam por `TEM_DISCIPLINA`, `TEM_UNIDADE`,
+   `TEM_OBJETO`, `DESENVOLVE` e `DESENVOLVE_HABILIDADE`.
+   - **A tabela de matérias saiu:** as matérias do ano vêm do Neo4j — as Disciplinas
+     ligadas ao ano que têm alguma habilidade nele. Matéria nova entra na busca sem mudar
+     o código.
+   - **O ano continua amarrado pelo atalho Ano → Habilidade:** a Disciplina, as unidades e
+     os objetos são compartilhados entre os anos, e descer pela Disciplina traria o que é
+     de outros anos (D19).
+   - **Tipos de relação escritos na consulta:** antes, os parâmetros com
+     `$any([$m.…])` existiam para trocar os rótulos de cada matéria; agora os tipos vão
+     escritos direto no texto, como nas consultas da orientadora. A "Ligação" voltou a
+     filtrá-los dentro do próprio `shortestPath`.
+   - **Verificação:** as 9 perguntas foram testadas nas duas matérias, sem nenhum aviso do
+     Neo4j.
+2. **A cor sai do NÍVEL, e o nível sai do começo do rótulo.** A tabela de estilo passou de
+   "um estilo por rótulo" para "um estilo por nível": Ano, Disciplina, Unidade temática,
+   Objeto de conhecimento e Habilidade.
+   - **O nível de um rótulo** é o do nome que o abre, sem diferenciar maiúsculas:
+     `HabilidadeCien` → habilidade, `unidadeTematicaLP` → unidade. "Ano" tem de ser exato,
+     por ser curto demais para servir de começo.
+   - **Toda matéria usa as mesmas cores por nível.** Uma matéria que ainda não existe — uma
+     `HabilidadeLP`, uma `UnidadeTematicaGeo` — já chega com a cor, a forma e o tamanho do
+     nível.
+   - **Rótulo de fora do modelo** continua em cinza, como antes. O site nunca quebra por
+     causa de um rótulo.
+   - **A legenda agrupa por nível:** as habilidades das duas matérias ficam num item só. O
+     painel mostra o nível e o rótulo real (`HABILIDADE` + `:HabilidadeCien`).
+   - **A Disciplina ganhou cor, forma e tamanho:** rosa (`#be185d` no claro, `#ec4899` no
+     escuro), a mais distante das outras quatro nos dois temas (ΔE ≥ 51, contra o mínimo de
+     31 entre elas); forma **hexágono** no modo "formas em vez de cores"; tamanho entre o
+     do Ano e o da unidade.
+3. **As paletas para daltonismo foram refeitas para 5 níveis com o método da D15:**
+   simulação de Machado, Oliveira e Fernandes (2009) e ΔE CIE76. O cálculo reproduziu
+   exatamente os números da D15 antes da mudança.
+   - **As 4 cores de cada paleta ficaram** (continuidade para quem já usa).
+   - **A 5.ª é a que sobra com o maior ΔE mínimo:** azul-céu na protanopia, laranja na
+     deuteranopia e na tritanopia. Nas três, o grupo de 5 resultante é o melhor grupo de 5
+     possível entre as 6 cores do CUD.
+   - **O ΔE mínimo simulado cai** (protanopia 24,8; deuteranopia 18,3; tritanopia 17,2),
+     o preço de pôr 5 cores num conjunto de 6. Continua bem acima do limiar de diferença
+     perceptível, ≥ 19,8 contra o cinza, e o modo de formas segue como alternativa.
+
+**Regra de carga que sai daqui** (para a orientadora e para as próximas matérias):
+- **Rótulos:** todo rótulo de unidade, objeto ou habilidade começa pelo nome do nível
+  (`UnidadeTematica…`, `ObjetoConhecimento…`, `Habilidade…`).
+- **Disciplina:** é `:Disciplina {codigo, nome}`.
+- **Relações:** são as cinco acima.
+
+Quem seguir a regra aparece no site — na busca, na Home e nas cores — sem uma linha de
+código nova.
+
+**Alternativas rejeitadas.**
+- **(a) Manter a tabela de matérias e acrescentar uma entrada por matéria:** toda matéria
+  nova exigiria mudar o código; e, com a Disciplina no grafo, a lista de matérias passaria
+  a existir em dois lugares.
+- **(b) Uma cor por matéria** (Matemática azul, Ciências verde…): o pedido era que a cor
+  dissesse o tipo do nó; além disso, o número de cores cresceria com as matérias, e as
+  paletas para daltonismo (6 cores do CUD) não comportariam.
+- **(c) Descobrir o nível pela estrutura** (quem recebe `DESENVOLVE` é habilidade…): o
+  canvas recebe nós de qualquer consulta do console, muitas vezes sem as relações; o rótulo
+  está sempre no nó.
+- **(d) Uma tabela de rótulos conhecidos** (`HabilidadeMat`, `HabilidadeCien`…): voltaria a
+  exigir código para cada matéria nova — o contrário do pedido.
+- **(e) Refazer as paletas do zero, com 5 cores escolhidas livremente:** trocaria cores que
+  quem usa as paletas já conhece; e manter as 4 já dava o melhor grupo de 5 nas três
+  deficiências.
+
+**Para a banca.** *"O grafo ganhou o nível Disciplina e rótulos por matéria. Para não ter
+de mexer no site a cada matéria nova, adotei duas regras. As consultas andam pelas
+relações, que são as mesmas em toda matéria, e as matérias vêm do próprio grafo. A cor de
+cada nó sai do começo do rótulo: tudo que começa com 'Habilidade' tem a cor de
+habilidade. Quando a orientadora carregar Língua Portuguesa, ela aparece na busca e já
+colorida. As paletas para daltonismo foram recalculadas para cinco cores com o mesmo
+método de simulação de antes."*
+
+**Monografia** *(cap. de Implementação, seções de integração com o banco de grafos e de
+visualização — retoma a D15, a D17 e a D19; citar Machado, Oliveira e Fernandes, 2009, e
+Okabe e Ito, 2008):*
+"Com a evolução do modelo de dados, que passou a incluir o componente curricular como
+nível próprio da hierarquia e a empregar rótulos específicos por componente para unidades
+temáticas, objetos de conhecimento e habilidades, a aplicação foi reorganizada para
+depender o mínimo possível desses rótulos. As consultas passaram a percorrer o grafo pelos
+tipos de relação que estruturam o modelo, comuns a todos os componentes. A lista de
+componentes de cada ano passou a ser obtida do próprio banco, a partir dos vértices de
+componente curricular ligados ao ano. Na visualização, o estilo de cada vértice passou a
+ser determinado pelo nível hierárquico, inferido do prefixo do rótulo, de modo que
+componentes incorporados futuramente recebem automaticamente a cor, a forma e o tamanho
+correspondentes ao seu nível, sem alteração do código. As paletas destinadas a pessoas com
+deficiência na visão de cores foram recalculadas para cinco níveis pelo mesmo
+procedimento adotado anteriormente: a simulação de protanopia, deuteranopia e tritanopia
+(MACHADO; OLIVEIRA; FERNANDES, 2009) seguida da maximização da menor diferença perceptual
+(ΔE CIE76) entre as cores do conjunto de Okabe e Ito (2008). Preservaram-se as quatro cores
+já em uso em cada paleta e escolheu-se a quinta de modo a obter, em cada deficiência, o
+melhor conjunto de cinco cores possível."
+
+---
+
+*Última atualização: 2026-11-04. Novas decisões: adicionar ao fim da lista como
 D<N+1>, seguindo o formato do cabeçalho — **sempre com o parágrafo de monografia**.*

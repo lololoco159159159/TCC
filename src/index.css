@@ -69,17 +69,21 @@
   /* página de grafos (fundo da área de trabalho / canvas) */
   --grafo-bg: #f3eddf;
 
-  /* página de grafos — cores por rótulo de nó (N5/N6; um por rótulo da tabela de
-     estilo, src/data/estiloGrafo.js). A cor de fábrica fica em --no-X-padrao
+  /* página de grafos — cores por NÍVEL de nó (N5/N6; um por nível da tabela de
+     estilo, src/data/estiloGrafo.js — D21: o nível sai do começo do rótulo, e
+     toda matéria usa as mesmas cores). A cor de fábrica fica em --no-X-padrao
      (com contraparte escura); --no-X aponta para ela e é o que a paleta de
      daltonismo sobrescreve no <html> — assim a amostra "Padrão" do popover
      mostra as cores de fábrica mesmo com outra paleta ativa. --no-outro: rótulo
-     sem estilo (as paletas não o trocam). */
+     de fora do modelo (as paletas não o trocam). A Disciplina (D21) é rosa: a
+     cor mais distante das outras quatro nos dois temas. */
   --no-ano-padrao: #c2410c;
+  --no-disciplina-padrao: #be185d;
   --no-unidade-padrao: #7c4dff;
   --no-objeto-padrao: #2563eb;
   --no-habilidade-padrao: #1b9e77;
   --no-ano: var(--no-ano-padrao);
+  --no-disciplina: var(--no-disciplina-padrao);
   --no-unidade: var(--no-unidade-padrao);
   --no-objeto: var(--no-objeto-padrao);
   --no-habilidade: var(--no-habilidade-padrao);
@@ -138,9 +142,10 @@
   /* página de grafos */
   --grafo-bg: #0c110e;
 
-  /* página de grafos — cores de fábrica por rótulo (os --no-X apontam para
+  /* página de grafos — cores de fábrica por nível (os --no-X apontam para
      estes, definidos uma vez no tema claro) e traços do canvas */
   --no-ano-padrao: #f97316;
+  --no-disciplina-padrao: #ec4899;
   --no-unidade-padrao: #9d85ff;
   --no-objeto-padrao: #60a5fa;
   --no-habilidade-padrao: #2fbf93;
@@ -623,11 +628,13 @@ input::placeholder {
 
 /* pontinhos de rótulo (legenda, opções de paleta): a FORMA vem da tabela de
    estilo (N6) pela classe .eg-forma-<forma>; no modo "formas em vez de cores"
-   (data-formas no <html>) cada uma vira a mesma forma do canvas */
+   (data-formas no <html>) cada uma vira a mesma forma do canvas. O hexágono é
+   da Disciplina (D21). */
 .eg-forma-circulo,
 .eg-forma-quadrado,
 .eg-forma-triangulo,
-.eg-forma-losango {
+.eg-forma-losango,
+.eg-forma-hexagono {
   border-radius: 50%;
 }
 
@@ -643,6 +650,11 @@ input::placeholder {
 :root[data-formas='1'] .eg-forma-losango {
   border-radius: 0;
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+:root[data-formas='1'] .eg-forma-hexagono {
+  border-radius: 0;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
 }
 
 /* linhas com interruptor (formas / sem animação) */

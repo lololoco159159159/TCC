@@ -3,64 +3,37 @@ import { anosDoGrafo } from './resumoGrafo'
 import { CONSULTA_COM_ERRO } from './consultasExemplo'
 
 // Filtros de busca do professor (N12 — ESTADO_ATUAL.md §4.5). Tudo o que a busca
-// guiada precisa, sem tela, num arquivo só (pedido do autor). Quatro partes:
-//  1. a TABELA DE MATÉRIAS — como o modelo do grafo da orientadora se organiza;
+// guiada precisa, sem tela, num arquivo só (pedido do autor). Cinco partes:
+//  1. o MODELO — como o grafo da orientadora se organiza;
 //  2. o FILTRO POR TEXTO — o que o professor digita, filtrado no navegador;
 //  3. as OPÇÕES — anos, matérias do ano e o recorte, vindos do Neo4j;
-//  4. as PERGUNTAS — o cardápio e a consulta pronta de cada uma.
-// Nada aqui é dado do grafo (D17): anos, unidades, objetos e habilidades vêm
-// sempre do Neo4j; este arquivo guarda só consultas e a descrição do modelo.
+//  4. as PERGUNTAS — o cardápio e a consulta pronta de cada uma;
+//  5. a CONSULTA ESCRITA — a mesma consulta com os valores, para o console.
+// Nada aqui é dado do grafo (D17): anos, matérias, unidades, objetos e
+// habilidades vêm sempre do Neo4j; este arquivo guarda só consultas.
 
 // ===========================================================================
-// 1. Tabela de matérias (decisão 13)
-// Descreve COMO o modelo da orientadora se organiza em cada matéria — o rótulo
-// de cada nível, a relação que liga um nível ao de baixo, o atalho Ano →
-// Habilidade e a propriedade que dá nome a cada nó. O modelo dela não muda; é
-// esta tabela que se adapta a ele. Matéria nova = uma entrada nova (com os nomes
-// que a orientadora usar, ex.: UnidadeTematicaGram / ObjetoConhecimentoGram para
-// a Gramática). Uma entrada cujos rótulos ainda não existem no banco, ou sem
-// nada no ano escolhido, simplesmente não aparece para o professor
-// (materiasDoAno, abaixo).
+// 1. O modelo do grafo (o modelo novo da orientadora, 2026-11-03 — D21)
+//   (:Ano)-[:TEM_DISCIPLINA]->(:Disciplina {codigo, nome})
+//     -[:TEM_UNIDADE]->(unidade temática {nome})
+//     -[:TEM_OBJETO]->(objeto de conhecimento {descricao})
+//     -[:DESENVOLVE]->(habilidade {codigo, descricao})
+//   e o atalho (:Ano)-[:DESENVOLVE_HABILIDADE]->(habilidade)
+// Cada matéria tem os seus rótulos (UnidadeTematicaMat, UnidadeTematicaCien…),
+// mas as consultas daqui não citam rótulo nenhum além de Ano e Disciplina: andam
+// pelas RELAÇÕES, que são as mesmas em toda matéria. Por isso uma disciplina
+// nova entra na busca sozinha, sem mudar o código — basta seguir o modelo. (Até
+// 2026-11-03 uma "tabela de matérias" no código dizia os rótulos de cada uma; a
+// Disciplina no grafo a tornou desnecessária.)
+// O ano é amarrado pelo atalho Ano → Habilidade: a Disciplina, as unidades e os
+// objetos são compartilhados entre os anos (um nó "Matemática" para todos), e
+// descer pela Disciplina traria também o que é de outros anos.
 // ===========================================================================
 
-export const MATERIAS = [
-  {
-    id: 'matematica', // vai na URL da busca (N15)
-    nome: 'Matemática',
-    // títulos dos campos que o professor vê (e o plural, para os totais do recorte)
-    titulos: { unidade: 'Unidade temática', objeto: 'Objeto de conhecimento', habilidade: 'Habilidade' },
-    plurais: { unidade: 'unidades temáticas', objeto: 'objetos de conhecimento', habilidade: 'habilidades' },
-    rotulos: { unidade: 'UnidadeTematica', objeto: 'ObjetoConhecimento', habilidade: 'Habilidade' },
-    relacoes: {
-      anoUnidade: 'TEM_UNIDADE', // Ano → unidade
-      unidadeObjeto: 'TEM_OBJETO', // unidade → objeto
-      objetoHabilidade: 'DESENVOLVE', // objeto → habilidade
-      // atalho Ano → Habilidade: é por ele que o ano é amarrado, porque unidades e
-      // objetos são compartilhados entre anos (pergunta 5 da reunião)
-      anoHabilidade: 'DESENVOLVE_HABILIDADE',
-    },
-    // propriedade que dá o texto de cada nível
-    propriedades: { unidade: 'nome', objeto: 'descricao', habilidadeCodigo: 'codigo', habilidadeTexto: 'descricao' },
-  },
-]
-
-export const materiaPorId = (id) => MATERIAS.find((m) => m.id === id) || null
-
-// a entrada da tabela no formato de parâmetro Cypher ($m.…): rótulos e
-// relações entram nas consultas como valores, nunca como texto montado
-export const parametrosDaMateria = (m) => ({
-  rotUnidade: m.rotulos.unidade,
-  rotObjeto: m.rotulos.objeto,
-  rotHabilidade: m.rotulos.habilidade,
-  anoUnidade: m.relacoes.anoUnidade,
-  unidadeObjeto: m.relacoes.unidadeObjeto,
-  objetoHabilidade: m.relacoes.objetoHabilidade,
-  anoHabilidade: m.relacoes.anoHabilidade,
-  propUnidade: m.propriedades.unidade,
-  propObjeto: m.propriedades.objeto,
-  propCodigo: m.propriedades.habilidadeCodigo,
-  propTexto: m.propriedades.habilidadeTexto,
-})
+// títulos dos campos que o professor vê (os mesmos em toda matéria) e o plural,
+// para os totais do recorte
+export const TITULOS = { unidade: 'Unidade temática', objeto: 'Objeto de conhecimento', habilidade: 'Habilidade' }
+export const PLURAIS = { unidade: 'unidades temáticas', objeto: 'objetos de conhecimento', habilidade: 'habilidades' }
 
 // ===========================================================================
 // 2. Filtro por texto (decisões 19–27)
@@ -152,13 +125,11 @@ export function marcarTrechos(texto, consulta) {
 // ===========================================================================
 // 3. Opções (decisões 12–18)
 // Tudo o que o professor escolhe vem do Neo4j na hora: os anos (a consulta da
-// Home), as matérias que existem no ano escolhido (a tabela acima conferida
-// contra o banco) e o RECORTE — as unidades, os objetos e as habilidades de um
-// ano numa matéria, trazidos numa única consulta. As listas dos campos saem
-// desse recorte, no navegador, sem consulta nova. O ano é amarrado pelas HABILIDADES (o atalho Ano → Habilidade
-// da tabela): unidades e objetos são compartilhados entre anos no modelo da
-// orientadora, e uma unidade pendurada no ano traria também os objetos de
-// outros anos.
+// Home), as matérias do ano escolhido (as Disciplinas ligadas a ele que têm
+// alguma habilidade nele) e o RECORTE — as unidades, os objetos e as
+// habilidades de um ano numa matéria, trazidos numa única consulta. As listas
+// dos campos saem desse recorte, no navegador, sem consulta nova. O ano é
+// amarrado pelas HABILIDADES (o atalho Ano → Habilidade — ver a parte 1).
 // ===========================================================================
 
 const TETO_RECORTE = 2000 // linhas; passou disso, o recorte vem cortado e avisa (decisão 18)
@@ -169,30 +140,29 @@ const comparar = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base'
 
 export const anosDaBusca = () => anosDoGrafo({ descricao: 'busca · anos' })
 
-// as matérias da tabela que têm alguma habilidade no ano — uma consulta para
-// todas; rótulo que ainda não existe no banco simplesmente não acha nada
-const MATERIAS_DO_ANO = `UNWIND $materias AS m
-RETURN m.id AS id,
-  EXISTS { MATCH (:Ano {codigo: $ano})-[:$any([m.anoHabilidade])]->(:$any([m.rotHabilidade]))<-[:$any([m.objetoHabilidade])]-(:$any([m.rotObjeto])) } AS temDados`
+// as matérias (Disciplinas) ligadas ao ano que têm alguma habilidade nele
+const MATERIAS_DO_ANO = `MATCH (a:Ano {codigo: $ano})-[:TEM_DISCIPLINA]->(d:Disciplina)
+WHERE EXISTS { (d)-[:TEM_UNIDADE]->()-[:TEM_OBJETO]->()-[:DESENVOLVE]->(h)<-[:DESENVOLVE_HABILIDADE]-(a) }
+RETURN d.codigo AS codigo, d.nome AS nome`
 
 /**
  * @param {string} ano  código do Ano (ex.: 'EF1')
- * @returns {Promise<{ id: string, nome: string }[]>}  na ordem da tabela
+ * @returns {Promise<{ codigo: string, nome: string }[]>}  em ordem alfabética
+ *   (`codigo`: o da Disciplina, ex.: 'MA')
  */
-export async function materiasDoAno(ano, tabela = MATERIAS) {
-  const materias = tabela.map((m) => ({ id: m.id, ...parametrosDaMateria(m) }))
-  const { linhas } = await executarCypher(MATERIAS_DO_ANO, { ano, materias }, { descricao: 'busca · matérias do ano' })
-  const comDados = new Set(linhas.filter((l) => l.temDados).map((l) => l.id))
-  return tabela.filter((m) => comDados.has(m.id)).map((m) => ({ id: m.id, nome: m.nome }))
+export async function materiasDoAno(ano) {
+  const { linhas } = await executarCypher(MATERIAS_DO_ANO, { ano }, { descricao: 'busca · matérias do ano' })
+  return linhas
+    .map((l) => ({ codigo: String(l.codigo ?? ''), nome: String(l.nome ?? l.codigo ?? '') }))
+    .sort((a, b) => comparar(a.nome, b.nome))
 }
 
-// o recorte: uma linha por (habilidade do ano, objeto, unidade)
-const RECORTE = `MATCH (:Ano {codigo: $ano})-[:$any([$m.anoHabilidade])]->(h:$any([$m.rotHabilidade]))
-      <-[:$any([$m.objetoHabilidade])]-(o:$any([$m.rotObjeto]))
-      <-[:$any([$m.unidadeObjeto])]-(u:$any([$m.rotUnidade]))
-RETURN elementId(u) AS idUnidade, u[$m.propUnidade] AS unidade,
-       elementId(o) AS idObjeto, o[$m.propObjeto] AS objeto,
-       elementId(h) AS idHabilidade, h[$m.propCodigo] AS codigo, h[$m.propTexto] AS texto
+// o recorte: uma linha por (habilidade do ano, objeto, unidade) da matéria
+const RECORTE = `MATCH (:Ano {codigo: $ano})-[:DESENVOLVE_HABILIDADE]->(h)
+      <-[:DESENVOLVE]-(o)<-[:TEM_OBJETO]-(u)<-[:TEM_UNIDADE]-(:Disciplina {codigo: $disciplina})
+RETURN elementId(u) AS idUnidade, u.nome AS unidade,
+       elementId(o) AS idObjeto, o.descricao AS objeto,
+       elementId(h) AS idHabilidade, h.codigo AS codigo, h.descricao AS texto
 LIMIT $limite`
 
 // cache da visita: voltar a um recorte já visto não consulta de novo. Fica só
@@ -203,27 +173,27 @@ const recortes = new Map()
 
 /**
  * As unidades, os objetos e as habilidades de um ano numa matéria.
+ * @param {string} ano  código do Ano (ex.: 'EF1')
+ * @param {string} materia  código da Disciplina (ex.: 'MA')
  * @returns {Promise<{ ano, materia, unidades: object[], objetos: object[],
  *   habilidades: object[], cortado: boolean }>}
  *   unidade { id, nome } · objeto { id, nome, unidades: [id] } ·
  *   habilidade { id, codigo, texto, objetos: [id] } — cada lista em ordem natural
  */
-export function carregarRecorte(ano, idMateria) {
-  const chave = `${ano}\u0000${idMateria}`
+export function carregarRecorte(ano, materia) {
+  const chave = `${ano}\u0000${materia}`
   if (!recortes.has(chave)) {
-    const pedido = consultarRecorte(ano, idMateria)
+    const pedido = consultarRecorte(ano, materia)
     pedido.catch(() => recortes.delete(chave))
     recortes.set(chave, pedido)
   }
   return recortes.get(chave)
 }
 
-async function consultarRecorte(ano, idMateria) {
-  const materia = materiaPorId(idMateria)
-  if (!materia) throw new Error(`Matéria desconhecida: ${idMateria}`)
+async function consultarRecorte(ano, materia) {
   const { linhas } = await executarCypher(
     RECORTE,
-    { ano, m: parametrosDaMateria(materia), limite: TETO_RECORTE + 1 },
+    { ano, disciplina: materia, limite: TETO_RECORTE + 1 },
     { descricao: 'busca · recorte do ano e matéria' },
   )
   const cortado = linhas.length > TETO_RECORTE
@@ -243,7 +213,7 @@ async function consultarRecorte(ano, idMateria) {
   }
   return {
     ano,
-    materia: idMateria,
+    materia,
     unidades: [...unidades.values()].sort((a, b) => comparar(a.nome, b.nome)),
     objetos: [...objetos.values()].sort((a, b) => comparar(a.nome, b.nome)),
     habilidades: [...habilidades.values()].sort((a, b) => comparar(a.codigo, b.codigo)),
@@ -287,11 +257,10 @@ export function opcoesDoCampo(recorte, campo) {
 // linha, os campos que ele preenche (escolhidos no recorte, parte 3) e a
 // consulta Cypher, sempre com parâmetros. O resultado são caminhos (`RETURN
 // p`), que seguem pelo mesmo trajeto do console: extrairGrafo → completarGrafo
-// → canvas. Pergunta nova = uma entrada nova. Os rótulos e as relações vêm da
-// tabela de matérias ($m.…) e o ano é amarrado pelas habilidades do ano, como no
-// recorte. Cada salto do caminho é um tipo dinâmico de UM passo: num caminho de
-// tamanho variável o Neo4j ignora o tipo dinâmico (testado em 2026-10-20) —
-// por isso a "ligação entre duas habilidades" filtra as relações do caminho.
+// → canvas. Pergunta nova = uma entrada nova. As consultas andam pelas relações
+// do modelo (parte 1), sem rótulo de matéria: valem para qualquer disciplina. O
+// ano é amarrado pelas habilidades do ano, como no recorte, e a matéria pela
+// Disciplina ($disciplina = o código dela, ex.: 'MA').
 //
 // As perguntas cobrem todas as consultas de teste da orientadora
 // (consultasExemplo.js), trocando os códigos fixos por campos que o professor
@@ -307,18 +276,15 @@ export function opcoesDoCampo(recorte, campo) {
 // não usa o ano nem a matéria).
 //
 // Campo: { nome (o parâmetro), tipo (unidade | objeto | habilidade — de que
-// lista do recorte ele escolhe), rotulo? (quando o título da tabela não serve) }.
+// lista do recorte ele escolhe), rotulo? (quando o título de TITULOS não serve) }.
 // ===========================================================================
 
-// habilidades do ano escolhido, na matéria (o começo de três das consultas)
-const HABILIDADES_DO_ANO = 'MATCH (a:Ano {codigo: $ano})-[:$any([$m.anoHabilidade])]->(h:$any([$m.rotHabilidade]))'
-// Ano → unidade → objeto → habilidade (o caminho completo de uma habilidade)
-const CAMINHO_DO_ANO = `MATCH p = (a:Ano {codigo: $ano})-[:$any([$m.anoUnidade])]->(:$any([$m.rotUnidade]))
-      -[:$any([$m.unidadeObjeto])]->(:$any([$m.rotObjeto]))-[:$any([$m.objetoHabilidade])]->(h)`
-// a árvore do ano: o caminho de cada habilidade do ano, desde o ano
+// habilidades do ano escolhido (o começo de três das consultas)
+const HABILIDADES_DO_ANO = 'MATCH (a:Ano {codigo: $ano})-[:DESENVOLVE_HABILIDADE]->(h)'
+// a árvore do ano na matéria: o caminho de cada habilidade do ano, desde o ano
 const ARVORE_DO_ANO = `${HABILIDADES_DO_ANO}
-MATCH p = (a)-[:$any([$m.anoUnidade])]->(:$any([$m.rotUnidade]))
-      -[:$any([$m.unidadeObjeto])]->(:$any([$m.rotObjeto]))-[:$any([$m.objetoHabilidade])]->(h)
+MATCH p = (a)-[:TEM_DISCIPLINA]->(:Disciplina {codigo: $disciplina})-[:TEM_UNIDADE]->()
+      -[:TEM_OBJETO]->()-[:DESENVOLVE]->(h)
 RETURN p`
 
 export const PERGUNTAS = [
@@ -327,7 +293,8 @@ export const PERGUNTAS = [
     titulo: 'Caminho até uma habilidade',
     explicacao: 'De que unidade temática e objeto de conhecimento a habilidade vem',
     campos: [{ nome: 'habilidade', tipo: 'habilidade' }],
-    consulta: `${CAMINHO_DO_ANO}
+    consulta: `MATCH p = (:Ano {codigo: $ano})-[:TEM_DISCIPLINA]->(:Disciplina {codigo: $disciplina})
+      -[:TEM_UNIDADE]->()-[:TEM_OBJETO]->()-[:DESENVOLVE]->(h)
 WHERE elementId(h) = $habilidade
 RETURN p`,
   },
@@ -336,8 +303,8 @@ RETURN p`,
     titulo: 'Habilidades irmãs',
     explicacao: 'As outras habilidades do ano que saem do mesmo objeto de conhecimento',
     campos: [{ nome: 'habilidade', tipo: 'habilidade' }],
-    consulta: `MATCH (:Ano {codigo: $ano})-[:$any([$m.anoHabilidade])]->(irma:$any([$m.rotHabilidade]))
-MATCH p = (h)<-[:$any([$m.objetoHabilidade])]-(:$any([$m.rotObjeto]))-[:$any([$m.objetoHabilidade])]->(irma)
+    consulta: `MATCH (:Ano {codigo: $ano})-[:DESENVOLVE_HABILIDADE]->(irma)
+MATCH p = (h)<-[:DESENVOLVE]-()-[:DESENVOLVE]->(irma)
 WHERE elementId(h) = $habilidade
 RETURN p`,
   },
@@ -352,14 +319,11 @@ RETURN p`,
     distintos: ['habilidade', 'habilidade2'], // as duas não podem ser a mesma
     // as duas pontas vão no WHERE do próprio shortestPath: um `MATCH (h1), (h2)`
     // antes dele fazia o Neo4j avisar de "produto cartesiano" (CartesianProduct —
-    // inofensivo, 1 × 1 nó, mas o aviso aparecia no resultado; testado em
-    // 2026-10-24: mesmo caminho, mesmo tempo). As unidades temáticas são as mesmas
-    // em todos os anos: sem a última condição, o caminho mais curto poderia subir
-    // pelo nó de outro ano
-    consulta: `MATCH p = shortestPath((h1)-[*..10]-(h2))
+    // inofensivo, 1 × 1 nó; testado em 2026-10-24). O caminho só anda pelas
+    // relações da hierarquia — sobe até a unidade (ou a Disciplina) comum e desce;
+    // sem o Ano no meio, ele não tem como passar por outro ano
+    consulta: `MATCH p = shortestPath((h1)-[:TEM_UNIDADE|TEM_OBJETO|DESENVOLVE*..10]-(h2))
 WHERE elementId(h1) = $habilidade AND elementId(h2) = $habilidade2
-  AND all(r IN relationships(p) WHERE type(r) IN [$m.anoUnidade, $m.unidadeObjeto, $m.objetoHabilidade])
-  AND all(n IN nodes(p) WHERE NOT n:Ano OR n.codigo = $ano)
 RETURN p`,
   },
   {
@@ -375,7 +339,7 @@ RETURN p`,
     explicacao: 'O objeto, as habilidades do ano e a unidade temática de cima',
     campos: [{ nome: 'objeto', tipo: 'objeto' }],
     consulta: `${HABILIDADES_DO_ANO}
-MATCH p = (:$any([$m.rotUnidade]))-[:$any([$m.unidadeObjeto])]->(o)-[:$any([$m.objetoHabilidade])]->(h)
+MATCH p = ()-[:TEM_OBJETO]->(o)-[:DESENVOLVE]->(h)
 WHERE elementId(o) = $objeto
 RETURN p`,
   },
@@ -385,7 +349,7 @@ RETURN p`,
     explicacao: 'A unidade, os objetos de conhecimento dela e as habilidades do ano',
     campos: [{ nome: 'unidade', tipo: 'unidade' }],
     consulta: `${HABILIDADES_DO_ANO}
-MATCH p = (u)-[:$any([$m.unidadeObjeto])]->(:$any([$m.rotObjeto]))-[:$any([$m.objetoHabilidade])]->(h)
+MATCH p = (u)-[:TEM_OBJETO]->()-[:DESENVOLVE]->(h)
 WHERE elementId(u) = $unidade
 RETURN p`,
   },
@@ -394,8 +358,8 @@ RETURN p`,
     titulo: 'As habilidades do ano',
     explicacao: 'O ano ligado direto às habilidades dele nesta matéria',
     campos: [],
-    consulta: `MATCH p = (a:Ano {codigo: $ano})-[:$any([$m.anoHabilidade])]->(h:$any([$m.rotHabilidade]))
-WHERE EXISTS { (h)<-[:$any([$m.objetoHabilidade])]-(:$any([$m.rotObjeto])) }
+    consulta: `MATCH p = (:Ano {codigo: $ano})-[:DESENVOLVE_HABILIDADE]->(h)
+WHERE EXISTS { (:Disciplina {codigo: $disciplina})-[:TEM_UNIDADE]->()-[:TEM_OBJETO]->()-[:DESENVOLVE]->(h) }
 RETURN p`,
   },
   {
@@ -427,21 +391,22 @@ export const camposFaltando = (pergunta, escolhas = {}) => pergunta.campos.filte
  * para o console (parte 5).
  * @param {string} idPergunta
  * @param {{ ano: string, materia: string, escolhas?: object }} busca
- *   `escolhas`: { [nome do campo]: id do recorte (elementId) }
+ *   `materia`: o código da Disciplina (ex.: 'MA'); `escolhas`: { [nome do
+ *   campo]: id do recorte (elementId) }
  * @returns {{ consulta: string, parametros: object, descricao: string, escrita: string }}
  */
 export function consultaDaPergunta(idPergunta, { ano, materia, escolhas = {} }) {
   const pergunta = perguntaPorId(idPergunta)
-  const m = materiaPorId(materia)
-  if (!pergunta || !m) throw new Error(`Busca desconhecida: ${idPergunta} / ${materia}`)
+  if (!pergunta) throw new Error(`Busca desconhecida: ${idPergunta}`)
+  const descricao = `busca · ${pergunta.titulo.toLowerCase()}`
+  if (pergunta.fixa) return { consulta: pergunta.consulta, parametros: {}, descricao, escrita: pergunta.consulta }
+  if (!ano || !materia) throw new Error('Falta escolher: ano, matéria')
   const faltando = camposFaltando(pergunta, escolhas)
   if (faltando.length) throw new Error(`Falta escolher: ${faltando.map((c) => c.nome).join(', ')}`)
   if (pergunta.distintos && new Set(pergunta.distintos.map((n) => escolhas[n])).size < pergunta.distintos.length) {
     throw new Error('Escolha itens diferentes em cada campo.')
   }
-  const descricao = `busca · ${pergunta.titulo.toLowerCase()}`
-  if (pergunta.fixa) return { consulta: pergunta.consulta, parametros: {}, descricao, escrita: pergunta.consulta }
-  const parametros = { ano, m: parametrosDaMateria(m) }
+  const parametros = { ano, disciplina: materia }
   pergunta.campos.forEach((c) => (parametros[c.nome] = escolhas[c.nome]))
   return { consulta: pergunta.consulta, parametros, descricao, escrita: consultaEscrita(pergunta.consulta, parametros) }
 }
@@ -451,15 +416,11 @@ export function consultaDaPergunta(idPergunta, { ano, materia, escolhas = {} }) 
 // O "Ver no grafo" também escreve no console Cypher a consulta que gerou o
 // desenho, para quem quiser ler — ou mudar e executar de novo. O Neo4j recebe
 // a consulta com parâmetros (decisões 29–30); esta é a MESMA consulta com o
-// valor escrito no lugar de cada $parâmetro: o rótulo ou a relação da tabela de
-// matérias onde há $any([$m.…]) e um valor entre aspas no resto. Executada no
-// console, dá o mesmo resultado. Os valores vêm da tabela do código e do
-// recorte (ids do Neo4j) — nunca do que o professor digitou.
+// valor de cada $parâmetro escrito no lugar dele, entre aspas. Executada no
+// console, dá o mesmo resultado. Os valores vêm da barra (o ano e a matéria) e
+// do recorte (ids do Neo4j) — nunca do que o professor digitou.
 // ===========================================================================
 
-const NOME_SIMPLES = /^[A-Za-z_][A-Za-z0-9_]*$/
-// rótulo ou relação: como está, ou entre crases se tiver espaço/acento
-const nomeCypher = (s) => (NOME_SIMPLES.test(s) ? s : `\`${String(s).replace(/`/g, '``')}\``)
 const valorCypher = (v) => {
   if (Array.isArray(v)) return `[${v.map(valorCypher).join(', ')}]`
   if (typeof v === 'number' || typeof v === 'boolean') return String(v)
@@ -468,13 +429,9 @@ const valorCypher = (v) => {
 
 /**
  * A consulta com os valores dos parâmetros escritos no lugar deles.
- * @param {string} consulta  com $parâmetros (e $m.… da tabela de matérias)
+ * @param {string} consulta  com $parâmetros
  * @param {object} parametros
  */
 export function consultaEscrita(consulta, parametros) {
-  const m = parametros.m || {}
-  return consulta
-    .replace(/\$any\(\[\$m\.(\w+)\]\)/g, (t, k) => (k in m ? nomeCypher(m[k]) : t))
-    .replace(/\$m\.(\w+)/g, (t, k) => (k in m ? valorCypher(m[k]) : t))
-    .replace(/\$(\w+)/g, (t, k) => (k !== 'm' && k in parametros ? valorCypher(parametros[k]) : t))
+  return consulta.replace(/\$(\w+)/g, (t, k) => (k in parametros ? valorCypher(parametros[k]) : t))
 }

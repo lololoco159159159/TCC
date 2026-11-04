@@ -3,13 +3,17 @@ import { executarCypher } from './neo4j'
 // Agregados do grafo para a Home (N9 — ESTADO_ATUAL.md §4.5): a banda de
 // estatísticas e a grade "Encontre as habilidades da sua turma" deixam de vir
 // do mock e passam a ser consultas Cypher no Neo4j — tudo o que a Home mostra
-// sai do que o grafo da orientadora tem (hoje, o 1.º ano de Matemática; quando
-// EF2, EF3… forem carregados, aparecem sozinhos). Só lê o banco.
+// sai do que o grafo da orientadora tem (hoje, o 1.º ano de Matemática e de
+// Ciências; quando EF2, EF3… forem carregados, aparecem sozinhos). Só lê o banco.
+// D21 (2026-11-03): no modelo novo cada matéria tem os seus rótulos
+// (HabilidadeMat, HabilidadeCien…), então a contagem anda pelas relações do
+// modelo — habilidade é quem um Ano desenvolve; unidade, quem uma Disciplina
+// tem — e conta toda matéria, inclusive as que ainda vão chegar.
 
 // (COLLECT { } e não [(a:Ano) | …]: a compreensão de padrão exige uma relação)
-const ESTATISTICAS =
-  'RETURN COUNT { (:Habilidade) } AS habilidades, COUNT { (:UnidadeTematica) } AS unidades, ' +
-  'COLLECT { MATCH (a:Ano) RETURN a.codigo } AS anos'
+const ESTATISTICAS = `RETURN size(COLLECT { MATCH (:Ano)-[:DESENVOLVE_HABILIDADE]->(h) RETURN DISTINCT h }) AS habilidades,
+       size(COLLECT { MATCH (:Disciplina)-[:TEM_UNIDADE]->(u) RETURN DISTINCT u }) AS unidades,
+       COLLECT { MATCH (a:Ano) RETURN a.codigo } AS anos`
 const ANOS = 'MATCH (a:Ano) RETURN a.codigo AS codigo, a.nome AS nome'
 
 // número do ano a partir do código (EF1 → 1): o modelo não guarda o número

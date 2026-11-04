@@ -13,7 +13,7 @@
 > formato do cabeçalho — inclusive o **parágrafo de monografia** (tom acadêmico,
 > com o capítulo onde encaixa).
 
-Última atualização: 2026-10-24.
+Última atualização: 2026-11-04.
 
 ---
 
@@ -1613,6 +1613,7 @@ layout hierárquico do Neo4j Browser.
 - [x] **N13** — Busca do professor: a barra (Ano, Matéria, Pergunta), ao lado do console Cypher *(2026-10-24)*
 - [x] **N14** — Busca do professor: os campos da pergunta, com o filtro por texto *(2026-10-24)*
 - [ ] **N15** — Busca do professor: link compartilhável, botão da Home e fechamento
+- [x] **N16** — Modelo novo do grafo (Disciplina, rótulos por matéria, Ciências do 1º ano) e cores automáticas por nível *(2026-11-04; D21)*
 
 **N1–N10 finalizadas e testadas pelo autor** (confirmado em 2026-10-15). N11 planejada
 em 2026-10-15 e feita em 2026-10-18 (detalhes no fim desta seção) — falta o teste do
@@ -2986,12 +2987,15 @@ unidade → uma unidade temática; "preciso ensinar", "habilidades do ano" e "an
 ##### Decisões — de onde vêm as opções (nada guardado no código)
 
 12. **Anos:** consulta ao Neo4j (a mesma da Home, N9).
-13. **Matérias:** uma **tabela de matérias** no código (`src/data/filtrosDeBusca.js`)
+13. ~~**Matérias:** uma **tabela de matérias** no código (`src/data/filtrosDeBusca.js`)
     descreve como o modelo da orientadora se organiza — para cada matéria, o nome a
     mostrar, o rótulo de cada nível, a relação entre os níveis e o atalho Ano → Habilidade.
     Nenhum dado do grafo fica nela. O site confere a tabela contra o banco: matéria cujos
     rótulos não existem ou que não tem nada no ano escolhido **não aparece**. Matéria nova
-    = uma entrada nova (hoje só a Matemática).
+    = uma entrada nova (hoje só a Matemática).~~ **Revista na N16 (D21, 2026-11-04):** com
+    o nó Disciplina no grafo, as **matérias do ano vêm do Neo4j** (as Disciplinas ligadas
+    ao ano que têm habilidade nele) e a tabela saiu. Matéria nova que siga o modelo aparece
+    sozinha.
 14. Escolhidos Ano e Matéria, o site faz **uma única consulta** que traz o **recorte
     inteiro**: as unidades, os objetos e as habilidades daquele ano naquela matéria, cada
     um com código/nome/descrição e a quem pertence. Medido no 1.º ano de Matemática: 22
@@ -3035,9 +3039,13 @@ unidade → uma unidade temática; "preciso ensinar", "habilidades do ano" e "an
 ##### Decisões — consultas e integração
 
 29. Consultas **sempre com parâmetros**. O texto digitado nem vai ao Neo4j.
-30. Rótulos e relações da matéria entram como parâmetros (`$any(...)`, testado em
+30. ~~Rótulos e relações da matéria entram como parâmetros (`$any(...)`, testado em
     2026-10-20); nos caminhos de tamanho variável o filtro é feito sobre
-    `relationships(p)`, porque ali o Neo4j ignora tipo dinâmico (testado).
+    `relationships(p)`, porque ali o Neo4j ignora tipo dinâmico (testado).~~ **Revista na
+    N16 (D21):** as consultas **andam pelas relações do modelo**, que são as mesmas em toda
+    matéria, e não citam rótulo de matéria. Os tipos de relação vão escritos no texto, e a
+    "Ligação" os filtra dentro do próprio `shortestPath`. Os valores (ano, matéria, ids)
+    continuam como parâmetros.
 31. Toda consulta da busca aparece na gaveta Cypher, com descrição ("busca · recorte",
     "busca · caminho até a habilidade"). **E a do "Ver no grafo" aparece também escrita no
     console Cypher** (pedido do autor, 2026-10-24): a mesma consulta, com os valores no
@@ -3060,6 +3068,12 @@ unidade → uma unidade temática; "preciso ensinar", "habilidades do ano" e "an
 como amarrar o ano); `Habilidade` único ou por matéria (pergunta 3 → campo da tabela);
 habilidade de vários anos (pergunta 4 → aparece em cada ano a que estiver ligada); unidades
 e objetos compartilhados entre anos (pergunta 5 → confirma a amarração pelas habilidades).
+**Respondido pelo modelo novo (2026-11-03 — N16, D21):**
+- **Perguntas 1 e 3:** cada matéria tem os seus rótulos, inclusive a Habilidade
+  (`HabilidadeMat`, `HabilidadeCien`), sob um nó Disciplina.
+- **Pergunta 2:** o atalho Ano → Habilidade foi mantido nas duas matérias.
+- **Pergunta 5:** unidades, objetos e a própria Disciplina são compartilhados entre os
+  anos, e a amarração pelas habilidades continua.
 
 ##### Etapas
 
@@ -3486,6 +3500,122 @@ Verificado: `npm run lint` (0/0) e `npm run build`. **Teste do autor:** no conso
 `RETURN 1 AS x` (nada para desenhar) → a tela continua no grafo (vazio); clicar em
 "Tabela" mostra a linha com `x = 1`.
 
+#### N16 — Modelo novo do grafo e cores automáticas (2026-11-04) · D21
+
+**O modelo novo no Neo4j (2026-11-03).** O autor rodou o comando preparado pelo
+assistente: validado antes só com `EXPLAIN`, sem gravar nada, com um comando de desfazer
+junto. Ele tem três partes:
+1. Cria o grupo **Disciplina**: `{codigo:"MA", nome:"Matemática"}` e
+   `{codigo:"CI", nome:"Ciências"}`, ligados ao 1º Ano por `TEM_DISCIPLINA`.
+2. Leva a **Matemática do 1º ano** para o modelo novo: os mesmos nós, com os rótulos
+   `UnidadeTematicaMat`, `ObjetoConhecimentoMat` e `HabilidadeMat`, e as unidades saindo
+   da Disciplina.
+3. Carrega **Ciências do 1º ano** (BNCC: 3 unidades, 3 objetos, EF01CI01–06, com o texto
+   oficial conferido).
+
+O comando fica fora do repositório, como o script de carga da orientadora. O grafo passou
+a 59 nós e 86 relações. A estrutura e a regra de rótulos estão no §6.
+
+**O que o site mudou** (pedido do autor: "funcione com a nova atualização" e "cores
+automáticas, para que toda disciplina, objeto, unidade ou habilidade nova já receba as
+cores certas"):
+- **Busca** ([filtrosDeBusca.js](src/data/filtrosDeBusca.js),
+  [BuscaProfessor.jsx](src/components/grafo/BuscaProfessor.jsx)):
+  - **A tabela de matérias saiu:** a Matéria lista as **Disciplinas do ano, vindas do
+    Neo4j**, em ordem alfabética (Ciências, Matemática), e continua sem vir escolhida
+    (decisão 4).
+  - **As consultas andam pelas relações** (`TEM_DISCIPLINA`, `TEM_UNIDADE`, `TEM_OBJETO`,
+    `DESENVOLVE`, `DESENVOLVE_HABILIDADE`), sem rótulo de matéria. O parâmetro
+    `$disciplina` é o código (`MA`/`CI`).
+  - **O que se vê no desenho:** o "Caminho" e "O ano inteiro" passam pela Disciplina (Ano
+    → Matemática → unidade…). A "Ligação" sobe até a unidade ou a Disciplina comum, sem o
+    Ano, com os tipos filtrados no próprio `shortestPath`.
+  - **Títulos e plurais dos campos** viraram constantes (`TITULOS`, `PLURAIS`), iguais em
+    toda matéria.
+- **Cores automáticas** ([estiloGrafo.js](src/data/estiloGrafo.js)):
+  - **A tabela de estilo é por nível**, e o nível sai do começo do rótulo
+    (`nivelDoRotulo`, sem diferenciar maiúsculas; "Ano" exato).
+  - **Matéria futura** (`HabilidadeLP`, `UnidadeTematicaGeo`) já chega colorida; rótulo
+    de fora do modelo segue cinza.
+  - **`visualDoNo`** devolve `tipo` (o nome do nível — o que a legenda agrupa e o
+    "ocultar" usa) e `nivel`.
+- **A Disciplina:**
+  - **Cor:** rosa `#be185d` / `#ec4899` (claro/escuro), a mais distante das outras quatro
+    nos dois temas ([index.css](src/index.css)).
+  - **Forma:** **hexágono** no modo formas, no canvas
+    ([GrafoCanvas.jsx](src/components/grafo/GrafoCanvas.jsx)) e na classe
+    `.eg-forma-hexagono`.
+  - **Tamanho:** raio 17,5, entre o Ano e a unidade.
+- **Paletas para daltonismo** ([paletas.js](src/data/paletas.js)): a 5.ª cor, com o método
+  da D15 (reproduzido antes, com os mesmos números).
+  - **A 5.ª cor:** protanopia + azul-céu; deuteranopia e tritanopia + laranja. As 4 cores
+    de antes ficaram.
+  - **ΔE mínimo simulado:** 24,8 · 18,3 · 17,2 (≥ 19,8 contra o cinza).
+- **Legenda, amostras e painel:**
+  - **Amostras:** 5 pontinhos por paleta, e o botão de cores com 5 bolinhas em roda
+    ([GrafoOverlays.jsx](src/components/grafo/GrafoOverlays.jsx)).
+  - **Painel:** mostra o nível e o rótulo real (`HABILIDADE` + `:HabilidadeCien`), e o
+    link da BNCC vale para todo nível do modelo
+    ([GrafoPainel.jsx](src/components/grafo/GrafoPainel.jsx)).
+- **Home:**
+  - **Números:** a faixa conta pelas relações (habilidade = o que um Ano desenvolve;
+    unidade = o que uma Disciplina tem): 28 habilidades e 8 unidades, as duas matérias
+    ([resumoGrafo.js](src/data/resumoGrafo.js)).
+  - **"Ver o grafo desta turma"** usa a consulta "ano direto" nova.
+- **Consultas de teste da orientadora** ([consultasExemplo.js](src/data/consultasExemplo.js)):
+  - As 6 que funcionavam foram reescritas no modelo novo, com a mesma pergunta e os mesmos
+    códigos. A "árvore completa" e o "ano direto" valem para todas as matérias.
+  - A 7.ª, a do erro de sintaxe, ficou como veio.
+- **Console:** o exemplo da caixa vazia virou `MATCH (d:Disciplina) RETURN d LIMIT 25`.
+
+Verificado:
+- `npm run lint` (0/0), `npm run build` (JS 308,94 → **308,31 kB**; CSS 8,30 → 8,55 kB) e
+  `npm run dev` (200 nos módulos alterados).
+- **Testes do assistente** (Node com o Vite e o React do projeto, contra o Neo4j real, sem
+  instalar nada):
+  - **Dados — 36 verificações:**
+    - As matérias do 1º ano vêm do banco (Ciências e Matemática; ano sem dados → nenhuma).
+    - Recortes de Matemática (5/17/22) e de Ciências (3/3/6), sem vazar uma na outra.
+    - As 9 perguntas nas duas matérias, todas sem aviso do Neo4j e só com rótulos da
+      matéria escolhida. Por exemplo: Ciências, "O ano inteiro", 14 nós; Matemática, 46
+      nós; a "Ligação" sobe até a Disciplina.
+    - A consulta escrita de cada uma, executada como texto, dá o mesmo grafo.
+  - **Cores — 13 verificações:**
+    - 14 rótulos (de hoje, futuros, com maiúscula trocada e de fora do modelo).
+    - Os 59 nós reais, nenhum em cinza (Ano 1 · Disciplina 2 · Unidade temática 8 · Objeto
+      de conhecimento 20 · Habilidade 28).
+    - As paletas com 5 tokens e o ΔE recalculado; o CSS dos dois temas e o hexágono.
+    - A legenda com 5 itens, as 20 amostras, o botão com 5 bolinhas e o painel (com e sem
+      o link da BNCC).
+  - **Página — 10 verificações** (refeitas: os testes de página da N13/N14 se perderam com
+    a pasta temporária):
+    - A barra da busca e o console, com as 9 perguntas e os 7 exemplos.
+    - O campo com opções de Ciências e o console mostrando a consulta escrita.
+    - A Home renderizando.
+  - **As 7 consultas de teste e os números da Home** contra o banco: as 6 funcionam, e a
+    do erro dá o `SyntaxError`.
+
+**Teste do autor:**
+1. **Home:** a faixa mostra 28 habilidades e 8 unidades temáticas. "Ver o grafo desta
+   turma" abre o 1º Ano ligado às 28 habilidades.
+2. **Busca:** 1º Ano → a Matéria lista **Ciências** e **Matemática**, sem vir escolhida.
+   Com Ciências, a linha mostra "1º Ano · Ciências: 3 unidades temáticas · 3 objetos de
+   conhecimento · 6 habilidades".
+3. **"O ano inteiro nesta matéria" em Ciências:** 14 nós com as cores por nível — Ano
+   laranja, Ciências rosa, unidades roxas, objetos azuis, habilidades verdes. A legenda tem
+   5 itens.
+4. **O mesmo em Matemática** (46 nós), com as mesmas cores por nível.
+5. **No console, "Exemplos… → arvore completa":** as duas matérias juntas (59 nós),
+   nenhum nó cinza.
+6. **Clicar numa habilidade de Ciências:** o painel mostra "HABILIDADE", o chip
+   `:HabilidadeCien` e o link da BNCC.
+7. **Paletas** (Protanopia/Deuteranopia/Tritanopia): 5 pontinhos em cada uma, a
+   Disciplina recolorida, o botão de cores com 5 bolinhas. **Formas em vez de cores:** a
+   Disciplina vira hexágono.
+8. **Tema escuro:** a Disciplina em rosa claro.
+9. **"Ligação entre duas habilidades"** (EF01CI01 → EF01CI06): o caminho sobe até
+   "Ciências". O "Teste de erro" continua dando o card de erro.
+
 ### 4.6 Limpeza do código — etapas (L0–L2) · FINALIZADO
 
 *Planejado em 2026-10-24, a pedido do autor; **finalizado na L2, em 2026-10-24**, por
@@ -3686,6 +3816,16 @@ Particularidades:
   revisão R0–R7 (decisão do autor: documentar, não renomear em massa) — ver D11.
 - Use sempre `var(--token)` (sem fallback `,#hex`) ao portar trechos do protótipo,
   porque os tokens estão definidos globalmente.
+- **Modelo do grafo (N16, D21)** — o site depende só desta regra, não dos rótulos de cada
+  matéria:
+  - **Estrutura:** `(:Ano)-[:TEM_DISCIPLINA]->(:Disciplina {codigo, nome})-[:TEM_UNIDADE]->
+    (unidade {nome})-[:TEM_OBJETO]->(objeto {descricao})-[:DESENVOLVE]->(habilidade
+    {codigo, descricao})`, mais o atalho `(:Ano)-[:DESENVOLVE_HABILIDADE]->(habilidade)`.
+  - **Consultas:** andam por essas relações.
+  - **Cores:** saem do começo do rótulo (`UnidadeTematica…`, `ObjetoConhecimento…`,
+    `Habilidade…`, sem diferenciar maiúsculas).
+  - **Matéria nova** carregada assim aparece na busca, na Home e com as cores certas, sem
+    mudar o código.
 - **Escala de z-index** (documentada no topo do `index.css`; não criar valores
   intermediários novos): `1–8` camadas internas da landing · `20` GradeCard aberto ·
   `30` painel de contexto/resultado do console/popovers do palco/balão de matérias ·
@@ -3752,25 +3892,27 @@ src/
 ├── data/
 │   ├── neo4j.js               # cliente Cypher do Neo4j: executarCypher() via proxy /api/cypher (N2);
 │   │                          #   observarConsultas(): anuncia cada consulta concluída (gaveta Cypher, N10)
-│   ├── estiloGrafo.js         # tabela de estilo: por rótulo (cor, raio, forma, legenda, tooltip)
-│   │                          #   e por tipo de relação (tracejado); padrão p/ rótulo novo (N5; mola/anel saíram na N11)
+│   ├── estiloGrafo.js         # tabela de estilo: por NÍVEL (Ano, Disciplina, Unidade, Objeto, Habilidade —
+│   │                          #   cor, raio, forma, legenda, tooltip), tirado do começo do rótulo (N16, D21);
+│   │                          #   por tipo de relação (tracejado); padrão cinza p/ rótulo de fora do modelo
 │   ├── simulacaoForcas.js     # física do "Force-based layout" do Neo4j Browser (forças do d3; idêntica — N11, D18)
 │   ├── layoutHierarquico.js   # "Hierarchical layout" do Browser: camadas de Sugiyama, como o dagre (N11, D18)
-│   ├── resumoGrafo.js         # agregados da Home no Neo4j: habilidades, unidades temáticas, anos (N9)
-│   ├── filtrosDeBusca.js      # busca do professor (N12), sem tela: tabela de matérias (como o modelo da
-│   │                          #   orientadora se organiza; nenhum dado do grafo), filtro por texto (sem acento,
-│   │                          #   todas as palavras), opções (anos, matérias do ano, o recorte — 1 consulta,
-│   │                          #   cache da visita — e a cascata) e as 9 perguntas com a consulta de cada uma
-│   │                          #   (todas as de teste da orientadora, com campos, + o "Teste de erro")
+│   ├── resumoGrafo.js         # agregados da Home no Neo4j: habilidades, unidades temáticas, anos (N9;
+│   │                          #   contados pelas relações do modelo desde a N16)
+│   ├── filtrosDeBusca.js      # busca do professor (N12), sem tela: o modelo do grafo (as relações — N16),
+│   │                          #   filtro por texto (sem acento, todas as palavras), opções (anos, matérias do
+│   │                          #   ano — as Disciplinas, do Neo4j —, o recorte: 1 consulta, cache da visita), as
+│   │                          #   9 perguntas com a consulta de cada uma e a consulta escrita (para o console)
 │   ├── consultasExemplo.js    # consultas Cypher de exemplo (menu do console) + a do "Ver o grafo desta
-│   │                          #   turma" + a do erro (o "Teste de erro" da busca); cópia das de teste da
-│   │                          #   orientadora (a pasta neo4j/ saiu do repo)
+│   │                          #   turma" + a do erro (o "Teste de erro" da busca); as de teste da orientadora,
+│   │                          #   reescritas no modelo novo na N16 (a do erro ficou como veio)
 │   ├── vizinhanca.js          # conexões de um nó no Neo4j por tipo e sentido; retrato do nó (N7);
 │   │                          #   expandirNo: vizinhos (até 100), sem o "conectar" (N8, D20)
 │   ├── extrairGrafo.js        # resultado → nós + relações (puro) e as consultas extras do Browser:
 │   │                          #   pontas que faltam e limite de 300 nós; sem o "conectar nós" (N4, D20)
 │   ├── depoimentos.js         # 5 depoimentos (conteúdo editorial do protótipo; troca futura por Cypher)
-│   └── paletas.js             # paletas de daltonismo por rótulo, escolhidas por simulação (G9; refeitas na N6 — D15)
+│   └── paletas.js             # paletas de daltonismo por nível, escolhidas por simulação (G9; refeitas na N6 — D15;
+│                              #   5.ª cor, a da Disciplina, na N16 — D21)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
 │   ├── Grafos.jsx             # página do grafo — console Cypher (N3) + grafo do Neo4j no canvas (N5) + estados + painel + expandir/desfazer + gaveta Cypher + perfil/prefs (§4.5)

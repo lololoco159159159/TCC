@@ -26,7 +26,14 @@
       "Bash(python3 - /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_n14.mjs)",
       "Bash(python3 - /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_n12.mjs)",
       "Bash(python3 - /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_cartesiano.mjs /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_tempo.mjs)",
-      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_tempo.mjs)"
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_tempo.mjs)",
+      "WebSearch",
+      "WebFetch(domain:www.tudosaladeaula.com)",
+      "WebFetch(domain:profez.com.br)",
+      "Bash(grep -n '$m\\\\b\\\\|$m\\\\.\\\\|materiaPorId\\\\|parametrosDaMateria\\\\|MATERIAS\\\\b\\\\|idMateria\\\\|$any' src/data/filtrosDeBusca.js)",
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_dados.mjs)",
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_estilo.mjs)",
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_pagina.mjs)"
     ]
   }
 }

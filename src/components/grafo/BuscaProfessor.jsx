@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import {
   PERGUNTAS,
+  PLURAIS,
+  TITULOS,
   anosDaBusca,
   camposFaltando,
   carregarRecorte,
   consultaDaPergunta,
-  materiaPorId,
   materiasDoAno,
   opcoesDoCampo,
   perguntaPorId,
@@ -140,9 +141,10 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado }) {
     </button>
   )
 
-  const m = materiaPorId(materia)
   const nomeAno = anos.dados?.find((a) => a.codigo === ano)?.nome || ano
+  // as matérias do ano vêm do Neo4j (as Disciplinas dele): { codigo, nome }
   const listaMaterias = materias.dados || []
+  const nomeMateria = listaMaterias.find((x) => x.codigo === materia)?.nome || materia
   const p = perguntaPorId(pergunta)
   const r = recorte.estado === 'pronto' && recorte.dados?.habilidades.length ? recorte.dados : null
 
@@ -154,7 +156,7 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado }) {
     const outros = new Set(p.distintos.filter((n) => n !== campo.nome).map((n) => escolhas[n]))
     return lista.filter((o) => !outros.has(o.id))
   }
-  const rotuloDe = (campo) => campo.rotulo || m.titulos[campo.tipo]
+  const rotuloDe = (campo) => campo.rotulo || TITULOS[campo.tipo]
   const escolher = (nome) => (valor) => setEscolhas((e) => ({ ...e, [nome]: valor }))
 
   const faltando = p ? camposFaltando(p, escolhas) : []
@@ -168,7 +170,7 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado }) {
     const cabecalho = p.fixa
       ? [`// Busca: ${p.titulo}`]
       : [
-          `// Busca: ${p.titulo} · ${nomeAno} · ${m.nome}`,
+          `// Busca: ${p.titulo} · ${nomeAno} · ${nomeMateria}`,
           ...p.campos.map((c) => `// ${rotuloDe(c)}: ${opcoesDoCampo(r, c.tipo).find((o) => o.id === escolhas[c.nome])?.titulo}`),
         ]
     aoVerNoGrafo({ ...pronta, escrita: `${cabecalho.join('\n')}\n${pronta.escrita}` })
@@ -184,7 +186,7 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado }) {
   else if (materias.estado === 'erro') status = <>Não foi possível carregar as matérias agora.{tentarDeNovo}</>
   else if (!listaMaterias.length) status = 'Nenhuma matéria com habilidades neste ano.'
   else if (!materia) status = 'Escolha a matéria.'
-  else if (recorte.estado === 'carregando') status = `Carregando ${nomeAno} em ${m?.nome}…`
+  else if (recorte.estado === 'carregando') status = `Carregando ${nomeAno} em ${nomeMateria}…`
   else if (recorte.estado === 'erro') status = <>Não foi possível carregar o ano nesta matéria agora.{tentarDeNovo}</>
   else if (r) {
     let passo = 'escolha o que você quer ver'
@@ -192,8 +194,8 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado }) {
     else if (p) passo = 'clique em Ver no grafo'
     status = (
       <>
-        {nomeAno} · {m.nome}: {r.unidades.length} {m.plurais.unidade} · {r.objetos.length} {m.plurais.objeto} ·{' '}
-        {r.habilidades.length} {m.plurais.habilidade}
+        {nomeAno} · {nomeMateria}: {r.unidades.length} {PLURAIS.unidade} · {r.objetos.length} {PLURAIS.objeto} ·{' '}
+        {r.habilidades.length} {PLURAIS.habilidade}
         {r.cortado ? <span style={{ color: 'var(--gold)' }}> · passou do limite e veio cortado</span> : null}
         <span style={{ color: 'var(--faint)' }}> · {passo}</span>
       </>
@@ -234,7 +236,7 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado }) {
             Matéria…
           </option>
           {listaMaterias.map((x) => (
-            <option key={x.id} value={x.id}>
+            <option key={x.codigo} value={x.codigo}>
               {x.nome}
             </option>
           ))}

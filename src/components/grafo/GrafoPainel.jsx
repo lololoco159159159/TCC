@@ -1,5 +1,4 @@
 import { Fragment, useRef, useState } from 'react'
-import { ESTILO_NO } from '../../data/estiloGrafo'
 import { MONO_LABEL } from './estilos'
 import PontoNo from './PontoNo'
 
@@ -510,9 +509,9 @@ function GrafoPainel({
             </p>
           ) : null}
 
-          {/* fonte oficial — os rótulos da tabela de estilo são os do modelo da BNCC
-              montado pela orientadora; rótulo sem estilo não ganha o link */}
-          {ESTILO_NO[no.tipo] ? (
+          {/* fonte oficial — os níveis da tabela de estilo são os do modelo da BNCC
+              montado pela orientadora; rótulo de fora do modelo não ganha o link */}
+          {no.nivel ? (
             <div style={{ borderTop: '1px solid color-mix(in srgb, var(--edge) 80%, transparent)', paddingTop: 14 }}>
               <div style={{ ...MONO_LABEL, marginBottom: 9 }}>Fonte oficial</div>
               <a

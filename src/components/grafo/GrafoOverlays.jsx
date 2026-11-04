@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ESTILO_NO } from '../../data/estiloGrafo'
+import { NIVEIS } from '../../data/estiloGrafo'
 import { observarConsultas } from '../../data/neo4j'
 import { PALETAS } from '../../data/paletas'
 import { MONO_LABEL } from './estilos'
@@ -22,15 +22,19 @@ import PontoNo from './PontoNo'
 //   • OpcoesAcessibilidade (G10) — o miolo do popover, compartilhado com o
 //     dropdown de perfil (GrafoPerfil): linhas de paleta + toggles "formas em
 //     vez de cores" e "desativar animações e física". N6: as amostras mostram
-//     os 4 rótulos da tabela de estilo; a forma dos pontinhos DOM vem das
-//     classes .eg-forma-* + data-formas no <html> (index.css).
+//     os níveis da tabela de estilo (5 desde a D21, com a Disciplina); a forma
+//     dos pontinhos DOM vem das classes .eg-forma-* + data-formas no <html>
+//     (index.css).
 
-// ---- Legenda "Tipos de nó" + ocultar por rótulo (N6) ----
-// Lista os rótulos PRESENTES no grafo da tela (`rotulos`: { tipo, cor, forma,
-// quantidade, oculto }). Ocultar acontece só no desenho — a página filtra o que
-// entrega ao canvas; uma consulta Cypher qualquer não tem como ser refiltrada
-// automaticamente, então NÃO se reconsulta. Todos os rótulos são alternáveis:
-// no modelo do Neo4j, ocultar Habilidade não esvazia o grafo (revê a D7 — D15).
+// ---- Legenda "Tipos de nó" + ocultar por tipo (N6) ----
+// Lista os tipos PRESENTES no grafo da tela (`rotulos`: { tipo, cor, forma,
+// quantidade, oculto }). Desde a D21 o tipo é o NÍVEL (Ano, Disciplina, Unidade
+// temática…): as habilidades de todas as matérias ficam juntas num item; um
+// rótulo de fora do modelo aparece com o próprio nome. Ocultar acontece só no
+// desenho — a página filtra o que entrega ao canvas; uma consulta Cypher
+// qualquer não tem como ser refiltrada automaticamente, então NÃO se reconsulta.
+// Todos os tipos são alternáveis: no modelo do Neo4j, ocultar Habilidade não
+// esvazia o grafo (revê a D7 — D15).
 export function LegendaTipos({ rotulos, tiposTracejados, aoAlternar }) {
   return (
     <div
@@ -271,7 +275,7 @@ export function GavetaCypher({ direita, visivel }) {
 // ---- Miolo de acessibilidade (paletas + formas + sem animação) ----
 // Compartilhado entre o PaletaPopover e o dropdown de perfil (GrafoPerfil).
 export function OpcoesAcessibilidade({ paleta, aoEscolherPaleta, formas, aoToggleFormas, semAnim, aoToggleSemAnim }) {
-  // amostras: um pontinho por rótulo da tabela de estilo (cor + forma). A
+  // amostras: um pontinho por nível da tabela de estilo (cor + forma). A
   // linha "Padrão" lê os tokens de FÁBRICA (--no-X-padrao, do tema atual) —
   // não os --no-X, que estão sobrescritos quando outra paleta está ativa
   const opcoes = [
@@ -283,7 +287,7 @@ export function OpcoesAcessibilidade({ paleta, aoEscolherPaleta, formas, aoToggl
   const toggles = [
     {
       titulo: 'Formas em vez de cores',
-      sub: 'daltonismo total: círculo, quadrado, triângulo e losango',
+      sub: 'daltonismo total: losango, hexágono, quadrado, triângulo e círculo',
       ligada: formas,
       ao: aoToggleFormas,
     },
@@ -319,8 +323,8 @@ export function OpcoesAcessibilidade({ paleta, aoEscolherPaleta, formas, aoToggl
               }}
             >
               <span style={{ display: 'inline-flex', gap: 3, flex: 'none' }}>
-                {Object.entries(ESTILO_NO).map(([rotulo, e]) => (
-                  <PontoNo key={rotulo} forma={e.forma} cor={pl.c[e.cor] || `var(${e.cor}-padrao)`} tamanho={10} />
+                {NIVEIS.map((e) => (
+                  <PontoNo key={e.id} forma={e.forma} cor={pl.c[e.cor] || `var(${e.cor}-padrao)`} tamanho={10} />
                 ))}
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>
@@ -385,12 +389,13 @@ export function PaletaPopover({ aberta, aoAlternar, paleta, formas, semAnim, ...
           borderColor: custom ? 'var(--green)' : undefined,
         }}
       >
-        {/* swatch com as cores ATUAIS dos 4 rótulos (tokens --no-*, já com o
-            override da paleta), um em cada canto */}
+        {/* swatch com as cores ATUAIS dos níveis (tokens --no-*, já com o
+            override da paleta), em roda — 5 desde a D21 */}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          {Object.values(ESTILO_NO).map((e, i) => (
-            <circle key={e.cor} cx={i % 2 ? 15.6 : 8.4} cy={i < 2 ? 8.4 : 15.6} r="4.4" fill={`var(${e.cor})`} opacity="0.9" />
-          ))}
+          {NIVEIS.map((e, i) => {
+            const a = -Math.PI / 2 + (2 * Math.PI * i) / NIVEIS.length
+            return <circle key={e.id} cx={12 + 6.8 * Math.cos(a)} cy={12 + 6.8 * Math.sin(a)} r="3.9" fill={`var(${e.cor})`} opacity="0.9" />
+          })}
         </svg>
       </button>
       {aberta && (
