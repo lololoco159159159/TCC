@@ -22,13 +22,13 @@ import PontoNo from './PontoNo'
 //   • OpcoesAcessibilidade (G10) — o miolo do popover, compartilhado com o
 //     dropdown de perfil (GrafoPerfil): linhas de paleta + toggles "formas em
 //     vez de cores" e "desativar animações e física". N6: as amostras mostram
-//     os níveis da tabela de estilo (5 desde a D21, com a Disciplina); a forma
+//     os níveis da tabela de estilo (6 desde a D22: Ano, Área, Componente…); a forma
 //     dos pontinhos DOM vem das classes .eg-forma-* + data-formas no <html>
 //     (index.css).
 
 // ---- Legenda "Tipos de nó" + ocultar por tipo (N6) ----
 // Lista os tipos PRESENTES no grafo da tela (`rotulos`: { tipo, cor, forma,
-// quantidade, oculto }). Desde a D21 o tipo é o NÍVEL (Ano, Disciplina, Unidade
+// quantidade, oculto }). Desde a D21 o tipo é o NÍVEL (Ano, Área, Componente, Unidade
 // temática…): as habilidades de todas as matérias ficam juntas num item; um
 // rótulo de fora do modelo aparece com o próprio nome. Ocultar acontece só no
 // desenho — a página filtra o que entrega ao canvas; uma consulta Cypher
@@ -287,7 +287,7 @@ export function OpcoesAcessibilidade({ paleta, aoEscolherPaleta, formas, aoToggl
   const toggles = [
     {
       titulo: 'Formas em vez de cores',
-      sub: 'daltonismo total: losango, hexágono, quadrado, triângulo e círculo',
+      sub: 'daltonismo total: losango, estrela, hexágono, quadrado, triângulo e círculo',
       ligada: formas,
       ao: aoToggleFormas,
     },
@@ -390,7 +390,7 @@ export function PaletaPopover({ aberta, aoAlternar, paleta, formas, semAnim, ...
         }}
       >
         {/* swatch com as cores ATUAIS dos níveis (tokens --no-*, já com o
-            override da paleta), em roda — 5 desde a D21 */}
+            override da paleta), em roda — 6 desde a D22 */}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           {NIVEIS.map((e, i) => {
             const a = -Math.PI / 2 + (2 * Math.PI * i) / NIVEIS.length

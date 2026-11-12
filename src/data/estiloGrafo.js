@@ -15,6 +15,8 @@
 // a regra (ex.: HabilidadeLP) já chega com a cor, a forma e o tamanho certos, sem
 // mudar o código. Rótulo de fora do modelo cai no PADRÃO: o site nunca quebra por
 // causa de um rótulo novo — só o desenha em cinza.
+// D22 (2026-11-11): entrou a Área de conhecimento (estrela) entre o Ano e o
+// componente, e a Disciplina passou a se chamar ComponenteCurricular — 6 níveis.
 
 // os níveis, de cima para baixo. `rotulo`: o nome que abre o rótulo do Neo4j
 // (`exato`: tem de ser igual — "Ano" é curto demais para servir de começo)
@@ -31,11 +33,21 @@ export const NIVEIS = [
     fonte: { peso: 700, tamanho: 13, mono: false },
   },
   {
-    id: 'disciplina',
-    nome: 'Disciplina',
-    rotulo: 'Disciplina',
-    cor: '--no-disciplina',
-    raio: 17.5,
+    id: 'area',
+    nome: 'Área de conhecimento',
+    rotulo: 'AreaConhecimento',
+    cor: '--no-area',
+    raio: 18,
+    forma: 'estrela',
+    legenda: 'nome',
+    fonte: { peso: 700, tamanho: 12.5, mono: false },
+  },
+  {
+    id: 'componente',
+    nome: 'Componente curricular',
+    rotulo: 'ComponenteCurricular',
+    cor: '--no-componente',
+    raio: 17,
     forma: 'hexagono',
     legenda: 'nome',
     fonte: { peso: 700, tamanho: 12.5, mono: false },

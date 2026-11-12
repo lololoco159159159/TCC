@@ -33,7 +33,15 @@
       "Bash(grep -n '$m\\\\b\\\\|$m\\\\.\\\\|materiaPorId\\\\|parametrosDaMateria\\\\|MATERIAS\\\\b\\\\|idMateria\\\\|$any' src/data/filtrosDeBusca.js)",
       "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_dados.mjs)",
       "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_estilo.mjs)",
-      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_pagina.mjs)"
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_pagina.mjs)",
+      "mcp__claude_ai_Claude_Docs__batch",
+      "mcp__claude_ai_Claude_Docs__guide",
+      "mcp__claude_ai_Claude_Docs__update",
+      "WebFetch(domain:novaescola.org.br)",
+      "Bash(mkdir -p /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad)",
+      "Bash(grep -n \"no-disciplina\\\\|eg-forma-hexagono\\\\|eg-forma-losango {$\\\\|hexágono é\" src/index.css)",
+      "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_n18.mjs)",
+      "Bash(grep -n \"\\\\*\\\\*N17\\\\*\\\\*\\\\|\\\\*\\\\*N18\\\\*\\\\*\\\\|^#### N17\\\\|^\\\\*Situação: o comando\\\\|^### 4.6 Limpeza\\\\|Modelo do grafo \\(N16, D21\\)\\\\|Estrutura:\\\\*\\\\* \\\\`\\(:Ano\\)-\\\\[:TEM_DISCIPLINA\\\\|5.ª cor, a da Disciplina\\\\|Matéria nova\\\\*\\\\* carregada\\\\|Cores:\\\\*\\\\* saem do começo\\\\|^Última atualização\" ESTADO_ATUAL.md)"
     ]
   }
 }

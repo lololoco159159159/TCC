@@ -125,7 +125,7 @@ function ConsoleCypher({ status, resultado, erro, aoExecutar, consultaInicial })
             spellCheck={false}
             autoComplete="off"
             aria-label="Consulta Cypher"
-            placeholder="MATCH (d:Disciplina) RETURN d LIMIT 25"
+            placeholder="MATCH (c:ComponenteCurricular) RETURN c LIMIT 25"
           />
           <div aria-live="polite" style={STATUS}>
             {linhaStatus}

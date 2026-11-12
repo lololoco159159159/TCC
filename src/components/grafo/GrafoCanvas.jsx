@@ -501,8 +501,9 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
 
   // forma do nó — modo "formas em vez de cores" (G10, daltonismo total). N5: a
   // forma de cada nível vem da tabela de estilo (n.forma). Quadrado e
-  // triângulo com as constantes do protótipo; o losango é novo (4.º rótulo) e o
-  // hexágono, da Disciplina (D21), com os vértices nos lados como no CSS.
+  // triângulo com as constantes do protótipo; o losango é novo (4.º rótulo), o
+  // hexágono é do Componente curricular (D21), com os vértices nos lados como no
+  // CSS, e a estrela de 5 pontas, da Área de conhecimento (D22).
   function tracarNo(ctx, n, r) {
     if (!formasRef.current || n.forma === 'circulo') {
       ctx.arc(n.x, n.y, r, 0, 7)
@@ -528,6 +529,17 @@ const GrafoCanvas = forwardRef(function GrafoCanvas(
         const a = (Math.PI / 3) * i
         if (i) ctx.lineTo(n.x + s * Math.cos(a), n.y + s * Math.sin(a))
         else ctx.moveTo(n.x + s, n.y)
+      }
+      ctx.closePath()
+      return
+    }
+    if (n.forma === 'estrela') {
+      const s = r * 1.3 // pontas; o miolo a 45% delas
+      for (let i = 0; i < 10; i++) {
+        const a = -Math.PI / 2 + (Math.PI / 5) * i
+        const d = i % 2 ? s * 0.45 : s
+        if (i) ctx.lineTo(n.x + d * Math.cos(a), n.y + d * Math.sin(a))
+        else ctx.moveTo(n.x, n.y - s)
       }
       ctx.closePath()
       return

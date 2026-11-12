@@ -1123,6 +1123,11 @@ consultas da busca), [src/data/estiloGrafo.js](src/data/estiloGrafo.js) (os nív
 [src/components/grafo/GrafoPainel.jsx](src/components/grafo/GrafoPainel.jsx),
 [src/components/grafo/GrafoCanvas.jsx](src/components/grafo/GrafoCanvas.jsx)
 
+> **Revista pela D22 (2026-11-12):** a Disciplina passou a se chamar
+> `ComponenteCurricular` e entrou a Área de conhecimento entre o Ano e ela (o Ano não se
+> liga mais direto ao componente). As duas regras desta entrada valem como estão — as
+> consultas andam pelas relações; a cor sai do começo do rótulo — e ganharam um nível.
+
 **O problema.** O grafo chegou com um modelo novo, combinado com a orientadora
 ([guia/reuniao_orientadora.txt](guia/reuniao_orientadora.txt)):
 `Ano -[:TEM_DISCIPLINA]-> Disciplina -[:TEM_UNIDADE]-> UnidadeTematica… -[:TEM_OBJETO]->
@@ -1249,5 +1254,99 @@ melhor conjunto de cinco cores possível."
 
 ---
 
-*Última atualização: 2026-11-04. Novas decisões: adicionar ao fim da lista como
+## D22 — Área de conhecimento e ComponenteCurricular: o 2º ano reaproveita os nós, a busca mostra a Área e a 6.ª cor usa preto ou amarelo conforme o tema (revê D15 e D21)
+
+**Quando:** 2026-11-11 (reunião com a orientadora; decisões do autor) e 2026-11-12 (o
+grafo, carregado pelo autor — N17 —, e o site adaptado — N18), ESTADO_ATUAL.md §4.5 ·
+**Onde:** [src/data/filtrosDeBusca.js](src/data/filtrosDeBusca.js) (`areasDoAno`,
+`componentesDaArea`, as consultas pela área),
+[src/components/grafo/BuscaProfessor.jsx](src/components/grafo/BuscaProfessor.jsx) (o
+seletor Área), [src/data/estiloGrafo.js](src/data/estiloGrafo.js) (6 níveis),
+[src/data/paletas.js](src/data/paletas.js) e [src/index.css](src/index.css)
+(`--no-area`, `--no-area-cud`, `.eg-forma-estrela`),
+[src/data/resumoGrafo.js](src/data/resumoGrafo.js),
+[src/data/consultasExemplo.js](src/data/consultasExemplo.js)
+
+**O problema.** A reunião de 2026-11-11 estendeu o modelo para receber mais anos
+([guia/reuniao_orientadora.txt](guia/reuniao_orientadora.txt)):
+- **Um nível novo, a Área de conhecimento da BNCC** (Ciências da Natureza, Matemática,
+  Linguagens, Ciências Humanas), entre o Ano e o componente.
+- **A Disciplina passou a se chamar ComponenteCurricular**, o termo da BNCC.
+- **O 2º ano usa os mesmos nós do 1º:** "não existe uma Habilidade2Mat" — o componente,
+  as unidades temáticas e os rótulos são os mesmos em todos os anos.
+
+Isso trouxe três questões: como ligar o ano ao componente sem perder de que ano é cada
+habilidade (os nós agora são compartilhados por construção); se a busca deveria mostrar
+a Área, que hoje tem um componente só em cada caso; e que cor dar a um 6.º nível, quando
+as paletas para daltonismo (D15) partem de apenas 6 cores utilizáveis do CUD.
+
+**A decisão.**
+1. **O grafo** (comando entregue ao autor, que o rodou): as 4 áreas criadas já, com
+   códigos `CN`, `MT`, `LG`, `CH`; `Ano -[:TEM_AREA]-> Área -[:TEM_COMPONENTE]->
+   ComponenteCurricular`; a ligação direta Ano → componente **saiu**. O 2º Ano liga-se só
+   às áreas em que tem conteúdo. Ciências do 2º ano reaproveitou o componente e as três
+   unidades do 1º ano e acrescentou 3 objetos e 8 habilidades.
+2. **O ano continua amarrado pelo atalho Ano → Habilidade** (D19, D21). Com área,
+   componente e unidades compartilhados, é ele que separa o 1º do 2º ano: nos testes, as
+   mesmas três unidades de Ciências aparecem nos dois anos, e cada ano só vê as suas
+   habilidades.
+3. **A busca mostra a Área** (decisão do autor), mesmo com um componente só: Ano → Área →
+   Componente → Pergunta. As listas vêm do grafo e só trazem o que tem habilidade no ano
+   escolhido — as duas áreas ainda vazias não aparecem. Nenhuma escolha vem pronta.
+4. **6 níveis no desenho, pela mesma regra da D21:** `AreaConhecimento` vira o nível
+   Área (verde-oliva, estrela); `ComponenteCurricular`, o antigo nível Disciplina (rosa,
+   hexágono).
+5. **A 6.ª cor das paletas:** com 6 níveis e 6 cores utilizáveis, a cor que sobrava em
+   cada paleta seria a da Área — mas o roxo-avermelhado, simulado na deuteranopia, fica
+   quase igual ao cinza dos rótulos sem estilo (ΔE 3,5). A Área passou a usar as **duas
+   cores do CUD que a D15 havia excluído — o preto e o amarelo —, cada uma apenas no tema
+   em que aparece**: preto no claro (contraste 18:1 com o fundo), amarelo no escuro
+   (14:1). As paletas apontam para um token (`--no-area-cud`) que o CSS define por tema.
+   ΔE mínimo simulado com 6 cores, no pior tema: 24,7 · 17,0 · 17,2, todos ≥ 19,8 contra
+   o cinza. As 5 cores de antes ficaram.
+
+**Alternativas rejeitadas.**
+- **(a) Criar só as áreas com conteúdo:** o autor preferiu as 4 já, como no diagrama da
+  reunião; as vazias não aparecem para o professor de qualquer forma.
+- **(b) Manter a ligação direta Ano → componente além da área:** duas rotas para o mesmo
+  componente; o modelo da reunião passa pela área.
+- **(c) Pular a Área na busca enquanto cada uma tiver um componente:** o autor quis o
+  seletor desde já, para a busca refletir o modelo e não mudar quando as áreas crescerem.
+- **(d) Usar a cor do CUD que sobrava:** confundiria a Área com nós de fora do modelo na
+  deuteranopia.
+- **(e) Preto (ou amarelo) nos dois temas:** some no fundo escuro (ou no creme).
+- **(f) Uma 7.ª cor fora do CUD:** sairia do conjunto validado que fundamenta a D6 e a
+  D15.
+
+**Para a banca.** *"O grafo ganhou a Área de conhecimento da BNCC, e o 2º ano reaproveita
+os mesmos nós do 1º — a mesma unidade 'Vida e evolução' serve aos dois. O que separa os
+anos é a ligação direta do ano a cada habilidade, e os testes mostram que o 1º e o 2º ano
+não se misturam. Para a cor do novo nível, as seis cores do padrão para daltonismo já
+estavam em uso; a única que sobrava se confundia com o cinza. Usei as duas cores que o
+padrão tinha e que eu havia descartado, o preto e o amarelo, cada uma só no tema em que
+aparece."*
+
+**Monografia** *(cap. de Implementação, seções de integração com o banco de grafos e de
+acessibilidade — continua a D21; citar Okabe e Ito, 2008, e Machado, Oliveira e
+Fernandes, 2009):*
+"O modelo de dados foi ampliado com o nível de área de conhecimento, conforme a BNCC,
+entre o ano escolar e o componente curricular, e passou a suportar vários anos com
+reaproveitamento dos vértices de componente, unidade temática e objeto de conhecimento:
+uma mesma unidade temática é compartilhada pelos anos em que aparece. A pertinência de
+cada habilidade ao ano permanece registrada por uma relação direta entre ano e
+habilidade, e as consultas da aplicação a utilizam para restringir os resultados ao ano
+escolhido, o que impede que conteúdos de anos distintos se misturem nos subgrafos
+exibidos. A busca guiada incorporou a escolha da área de conhecimento, com as opções
+obtidas do próprio banco. Na visualização, o sexto nível exigiu revisitar as paletas
+destinadas a pessoas com deficiência na visão de cores: como o conjunto de Okabe e Ito
+(2008) oferece seis cores utilizáveis nos dois temas e a remanescente se confundia, sob
+simulação de deuteranopia (MACHADO; OLIVEIRA; FERNANDES, 2009), com a cor neutra dos
+vértices sem estilo, adotou-se para o novo nível o preto no tema claro e o amarelo no
+tema escuro — as duas cores do mesmo conjunto anteriormente excluídas por se confundirem
+com um dos fundos —, preservando a menor diferença perceptual simulada acima de 17
+unidades de ΔE em todas as deficiências consideradas."
+
+---
+
+*Última atualização: 2026-11-12. Novas decisões: adicionar ao fim da lista como
 D<N+1>, seguindo o formato do cabeçalho — **sempre com o parágrafo de monografia**.*

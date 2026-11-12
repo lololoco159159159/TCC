@@ -13,7 +13,7 @@
 > formato do cabeçalho — inclusive o **parágrafo de monografia** (tom acadêmico,
 > com o capítulo onde encaixa).
 
-Última atualização: 2026-11-04.
+Última atualização: 2026-11-12.
 
 ---
 
@@ -1614,6 +1614,8 @@ layout hierárquico do Neo4j Browser.
 - [x] **N14** — Busca do professor: os campos da pergunta, com o filtro por texto *(2026-10-24)*
 - [ ] **N15** — Busca do professor: link compartilhável, botão da Home e fechamento
 - [x] **N16** — Modelo novo do grafo (Disciplina, rótulos por matéria, Ciências do 1º ano) e cores automáticas por nível *(2026-11-04; D21)*
+- [x] **N17** — Grafo: Área de conhecimento, "Disciplina" → "ComponenteCurricular", 2º Ano e Ciências do 2º ano *(2026-11-12 — comando do assistente, rodado pelo autor)*
+- [x] **N18** — Site no modelo da N17: Área de conhecimento na busca e nas cores, ComponenteCurricular nas consultas, o 2º Ano *(2026-11-12; D22)*
 
 **N1–N10 finalizadas e testadas pelo autor** (confirmado em 2026-10-15). N11 planejada
 em 2026-10-15 e feita em 2026-10-18 (detalhes no fim desta seção) — falta o teste do
@@ -3616,6 +3618,204 @@ Verificado:
 9. **"Ligação entre duas habilidades"** (EF01CI01 → EF01CI06): o caminho sobe até
    "Ciências". O "Teste de erro" continua dando o card de erro.
 
+#### N17 — Área de conhecimento, ComponenteCurricular, 2º Ano e Ciências do 2º ano · FEITA (2026-11-12)
+
+*Situação: o comando, a conferência e o desfazer foram entregues ao autor em 2026-11-12,
+validados só com `EXPLAIN` pelo proxy. **O autor rodou** e o banco ficou exatamente como
+planejado (conferido só com leitura): **75 nós e 108 relações** — 2 anos, 4 áreas, 2
+componentes (sem nenhum `Disciplina`), 3 ligações Ano → Área, 2 Área → Componente, as 3
+unidades de Ciências reaproveitadas, 6 objetos e 14 habilidades de Ciências, 8 delas do
+2º ano. O site veio na N18.*
+
+*Plano do comando Cypher, a partir da reunião com a orientadora de 2026-11-11
+([guia/reuniao_orientadora.txt](guia/reuniao_orientadora.txt)). O comando é entregue ao
+autor para testar e rodar; o assistente não grava no Neo4j. O site se adapta depois
+(N18).*
+
+##### O modelo que a reunião pediu
+
+```
+(:Ano)  EF1 "1º Ano", EF2 "2º Ano"
+  -[:TEM_AREA]->
+(:AreaConhecimento)  Ciências da Natureza · Matemática · Linguagens · Ciências Humanas
+  -[:TEM_COMPONENTE]->
+(:ComponenteCurricular)  Matemática (MA) · Ciências (CI)   ← era :Disciplina
+  -[:TEM_UNIDADE]->
+(UnidadeTematica<Sufixo>) -[:TEM_OBJETO]-> (ObjetoConhecimento<Sufixo>) -[:DESENVOLVE]-> (Habilidade<Sufixo>)
++ o atalho (:Ano)-[:DESENVOLVE_HABILIDADE]-> (Habilidade<Sufixo>)
+```
+
+- **Os mesmos nós entre anos** (pedido da orientadora): não existe "Habilidade2Mat". A
+  Matemática do 2º ano usa o mesmo nó `ComponenteCurricular {codigo:"MA"}` e os mesmos
+  rótulos `…Mat`; uma unidade com o mesmo nome é o mesmo nó. O que diferencia o ano é o
+  atalho Ano → Habilidade — a regra que o site já segue (D19/D21).
+- **Dois níveis novos no desenho** para o site: Área de conhecimento (nível) e a
+  Disciplina renomeada. Isso é a N18.
+
+##### Decisões do comando
+
+*Fechadas pelo autor em 2026-11-11: os códigos propostos, as 4 áreas criadas já, a
+ligação direta Ano → componente sai, e a busca mostra a Área mesmo com um componente só
+(isso é da N18). Onde abaixo há "?", vale a proposta.*
+
+1. **Área de conhecimento:** `:AreaConhecimento {codigo, nome}`, uma por área da BNCC:
+   `CN` "Ciências da Natureza", `MT` "Matemática", `LG` "Linguagens", `CH` "Ciências
+   Humanas". ? O código da área de Matemática é `MT` para não bater com o componente `MA`;
+   o nome fica o da BNCC ("Matemática"), já que o rótulo os distingue.
+2. **Criar as 4 áreas agora** (como no diagrama da reunião), mesmo sem componente em
+   Linguagens e Ciências Humanas. ? Um Ano só se liga às áreas em que tem conteúdo: EF1 →
+   CN e MT; EF2 → CN. Área sem componente não aparece em consulta nenhuma do site.
+3. **Rename:** o rótulo `Disciplina` vira `ComponenteCurricular` nos mesmos nós (sem
+   recriar: `REMOVE n:Disciplina SET n:ComponenteCurricular`). Os códigos `MA`/`CI` e os
+   nomes ficam.
+4. **Relações:** `TEM_AREA` (Ano → Área) e `TEM_COMPONENTE` (Área → Componente), as duas
+   novas. A `TEM_DISCIPLINA` (Ano → Disciplina) **sai**: no modelo novo o Ano chega ao
+   componente pela área. `TEM_UNIDADE`, `TEM_OBJETO`, `DESENVOLVE` e o atalho
+   `DESENVOLVE_HABILIDADE` não mudam. ? Nomes das relações a confirmar.
+5. **2º Ano:** `(:Ano {codigo:"EF2", nome:"2º Ano"})` — o código segue o `EF1` (a Home lê
+   o número do código).
+6. **Ciências do 2º ano:** `MERGE` em tudo — o componente `CI` e as 3 unidades
+   (`UnidadeTematicaCien {nome}`) **já existem e são reaproveitados**; entram 3 objetos
+   novos, 8 habilidades (`HabilidadeCien {codigo}`), e EF2 → cada habilidade.
+7. **Objetos com duas linhas na BNCC** ficam num nó só, separados por "; " (a convenção da
+   orientadora: "Corpo humano; Respeito à diversidade").
+8. **Um comando só, com `MERGE`** (idempotente), como os anteriores; `EXPLAIN` antes; um
+   comando de desfazer junto.
+
+##### O conteúdo — BNCC, Ciências, 2º ano
+
+| Unidade (nó reaproveitado) | Objeto de conhecimento (nó novo) | Habilidades |
+|---|---|---|
+| Matéria e energia | Propriedades e usos dos materiais; Prevenção de acidentes domésticos | EF02CI01, EF02CI02, EF02CI03 |
+| Vida e evolução | Seres vivos no ambiente; Plantas | EF02CI04, EF02CI05, EF02CI06 |
+| Terra e Universo | Movimento aparente do Sol no céu; O Sol como fonte de luz e calor | EF02CI07, EF02CI08 |
+
+Textos (conferidos em três fontes, iguais nas três; os objetos vieram de uma fonte só —
+vale o autor bater o olho na página do 2º ano da BNCC):
+- **EF02CI01** — Identificar de que materiais (metais, madeira, vidro etc.) são feitos os
+  objetos que fazem parte da vida cotidiana, como esses objetos são utilizados e com quais
+  materiais eram produzidos no passado.
+- **EF02CI02** — Propor o uso de diferentes materiais para a construção de objetos de uso
+  cotidiano, tendo em vista algumas propriedades desses materiais (flexibilidade, dureza,
+  transparência etc.).
+- **EF02CI03** — Discutir os cuidados necessários à prevenção de acidentes domésticos
+  (objetos cortantes e inflamáveis, eletricidade, produtos de limpeza, medicamentos etc.).
+- **EF02CI04** — Descrever características de plantas e animais (tamanho, forma, cor, fase
+  da vida, local onde se desenvolvem etc.) que fazem parte de seu cotidiano e
+  relacioná-las ao ambiente em que eles vivem.
+- **EF02CI05** — Investigar a importância da água e da luz para a manutenção da vida de
+  plantas em geral.
+- **EF02CI06** — Identificar as principais partes de uma planta (raiz, caule, folhas,
+  flores e frutos) e a função desempenhada por cada uma delas, e analisar as relações
+  entre as plantas, o ambiente e os demais seres vivos.
+- **EF02CI07** — Descrever as posições do Sol em diversos horários do dia e associá-las ao
+  tamanho da sombra projetada.
+- **EF02CI08** — Comparar o efeito da radiação solar (aquecimento e reflexão) em diferentes
+  tipos de superfície (água, areia, solo, superfícies escura, clara e metálica etc.).
+
+##### A forma do comando (4 partes, um só `MERGE`-chain)
+
+1. **Áreas e rename:** `MERGE` das 4 áreas; `MATCH (d:Disciplina)` → troca de rótulo;
+   `MERGE (CN)-[:TEM_COMPONENTE]->(CI)` e `(MT)-[:TEM_COMPONENTE]->(MA)`.
+2. **Anos → áreas:** `MERGE` EF1 → CN, EF1 → MT; `MERGE` EF2 (`ON CREATE SET nome`), EF2 →
+   CN; apaga as `TEM_DISCIPLINA`.
+3. **Ciências do 2º ano:** o `UNWIND` da tabela acima, no mesmo molde dos comandos
+   anteriores (unidade `MERGE` por nome → objeto por descrição → habilidade por código,
+   `SET` descrição, `MERGE (CI)-[:TEM_UNIDADE]->(u)`, `MERGE (EF2)-[:DESENVOLVE_HABILIDADE]->(h)`).
+4. **Conferência** (números esperados, partindo dos 59 nós e 86 relações de hoje): **75
+   nós** (+4 áreas, +1 ano, +3 objetos, +8 habilidades) e **108 relações** (−2
+   `TEM_DISCIPLINA`, +3 `TEM_AREA`, +2 `TEM_COMPONENTE`, +3 `TEM_OBJETO`, +8 `DESENVOLVE`,
+   +8 atalhos; as 3 `TEM_UNIDADE` de Ciências já existem). Rótulo `Disciplina`: 0.
+   `HabilidadeCien`: 14. As unidades de Ciências continuam 3.
+5. **Desfazer:** apaga `HabilidadeCien` com código `EF02…`, os 3 objetos novos, o EF2 e as
+   4 áreas (com as relações); devolve o rótulo `Disciplina` e as duas `TEM_DISCIPLINA`.
+   Serve só logo depois do teste.
+
+##### O que quebra no site até a N18 (e o que a N18 faz)
+
+- **Quebra:** a busca (matérias do ano: `TEM_DISCIPLINA`/`:Disciplina`), a Home (unidades
+  via `:Disciplina`), as perguntas "Caminho", "O ano inteiro" e "As habilidades do ano", e
+  as consultas de exemplo com `:Disciplina`. O recorte e as perguntas que só sobem até o
+  objeto continuam.
+- **N18 — o site:** (a) trocar `:Disciplina`/`TEM_DISCIPLINA` por
+  `:ComponenteCurricular` e o par `TEM_AREA`/`TEM_COMPONENTE` nas consultas; (b) nível novo
+  **Área de conhecimento** na tabela de estilo (cor, forma e tamanho — 6 níveis: as
+  paletas CUD têm exatamente 6 cores utilizáveis, então cada paleta vira o único grupo
+  possível e o ΔE mínimo cai; recalcular e registrar); (c) a barra da busca ganha o seletor
+  **Área** entre Ano e Matéria, **mesmo com um componente só** (decisão do autor,
+  2026-11-11): Ano → Área → Componente → Pergunta; (d) o 2º Ano aparece sozinho na
+  Home e na busca (as listas vêm do grafo).
+
+#### N18 — O site no modelo da N17 (2026-11-12) · D22
+
+**O que mudou** (decisões do autor de 2026-11-11: as 4 áreas, a ligação direta Ano →
+componente sai, e a busca mostra a Área mesmo com um componente só):
+- **Busca** ([filtrosDeBusca.js](src/data/filtrosDeBusca.js),
+  [BuscaProfessor.jsx](src/components/grafo/BuscaProfessor.jsx)):
+  - **A barra virou Ano → Área → Componente → Pergunta.** As áreas do ano
+    (`areasDoAno`) e os componentes da área (`componentesDaArea`) vêm do Neo4j, cada lista
+    só com o que tem habilidade naquele ano — Linguagens e Ciências Humanas, ainda vazias,
+    não aparecem. Nenhum seletor vem escolhido sozinho; cada escolha zera as de baixo.
+  - **"Matéria" virou "Componente"** na barra, como no modelo e na BNCC. Os títulos das
+    perguntas ("O ano inteiro nesta matéria") ficaram, por serem a fala do professor.
+  - **As consultas passam pela Área:** Ano → `TEM_AREA` → Área → `TEM_COMPONENTE` →
+    `:ComponenteCurricular {codigo: $componente}`. O "Caminho" e "O ano inteiro" mostram a
+    Área no desenho. O recorte e as perguntas amarram o ano pelo atalho, então Ciências do
+    1º e do 2º ano — com as mesmas unidades — não se misturam.
+  - A consulta escrita no console ganhou a Área no cabeçalho.
+- **Cores** ([estiloGrafo.js](src/data/estiloGrafo.js), [paletas.js](src/data/paletas.js),
+  [index.css](src/index.css), [GrafoCanvas.jsx](src/components/grafo/GrafoCanvas.jsx)):
+  - **6 níveis:** Ano, **Área de conhecimento** (novo), **Componente curricular** (era a
+    Disciplina; mesma cor rosa e hexágono), Unidade, Objeto, Habilidade.
+  - **A Área:** verde-oliva (`#4d7c0f` / `#a3e635`, a cor mais distante das outras nos
+    dois temas), forma **estrela**, tamanho entre o Ano e o componente.
+  - **Paletas para daltonismo:** a cor do CUD que sobrava ficaria quase igual ao cinza na
+    deuteranopia (ΔE 3,5). A Área usa as duas cores do CUD que a D15 deixou de fora, cada
+    uma no fundo em que aparece: **preto no tema claro, amarelo no escuro** (token
+    `--no-area-cud`). ΔE mínimo simulado com 6 cores, no pior tema: protanopia 24,7 ·
+    deuteranopia 17,0 · tritanopia 17,2, todos ≥ 19,8 contra o cinza. As 5 cores de
+    antes ficaram.
+  - Amostras com 6 pontinhos, botão de cores com 6 bolinhas, texto das formas com a
+    estrela ([GrafoOverlays.jsx](src/components/grafo/GrafoOverlays.jsx)).
+- **Home** ([resumoGrafo.js](src/data/resumoGrafo.js)): as unidades contam a partir do
+  `:ComponenteCurricular`. O **2º Ano aparece sozinho** na faixa e na grade de turmas (as
+  listas vêm do grafo): 36 habilidades, 8 unidades, anos 1 e 2.
+- **Consultas de exemplo** ([consultasExemplo.js](src/data/consultasExemplo.js)): a
+  "árvore completa" e "de onde vem a habilidade" passam pela Área. O texto da caixa vazia
+  do console virou `MATCH (c:ComponenteCurricular) RETURN c LIMIT 25`.
+
+Verificado:
+- `npm run lint` (0/0) e `npm run build` (JS 308,31 → **310,32 kB**; CSS 8,55 → 8,86 kB).
+- **Teste do assistente — 46 verificações** (Node, Vite e React do projeto, contra o Neo4j
+  real, só leitura):
+  - Anos (1º e 2º), áreas de cada ano (1º: Ciências da Natureza e Matemática; 2º: só
+    Ciências da Natureza) e componentes de cada área.
+  - Recortes: 1º·Matemática 5/17/22, 1º·Ciências 3/3/6, 2º·Ciências 3/3/8. **As unidades
+    de Ciências são os mesmos nós nos dois anos**, e cada ano só vê as suas habilidades.
+  - As 9 perguntas nas três combinações (24 consultas), todas sem aviso do Neo4j e sem
+    habilidade do outro ano; a consulta escrita de cada uma dá os mesmos nós.
+  - Home (36/8/[1, 2]) e as 7 consultas de exemplo (6 funcionam; a 7.ª, o erro de sintaxe).
+  - Os 75 nós do banco coloridos, **nenhum cinza** (Ano 2 · Área 4 · Componente 2 · Unidade
+    8 · Objeto 23 · Habilidade 36); paletas com 6 tokens; o CSS nos dois temas; o ΔE
+    recalculado.
+  - A página: a barra Ano → Área → Componente → Pergunta, 24 amostras, 6 bolinhas, a Home.
+- **Não testado pelo assistente:** a tela no navegador.
+
+**Teste do autor:**
+1. **Home:** a faixa mostra 36 habilidades e 8 unidades; a grade de turmas tem o 1º e o
+   2º Ano.
+2. **Busca, 1º Ano:** a Área lista Ciências da Natureza e Matemática (sem vir escolhida);
+   cada uma mostra o seu componente.
+3. **Busca, 2º Ano → Ciências da Natureza → Ciências:** "2º Ano · Ciências: 3 unidades
+   temáticas · 3 objetos de conhecimento · 8 habilidades".
+4. **"O ano inteiro nesta matéria" no 2º ano:** 17 nós — o 2º Ano, a Área (verde-oliva,
+   estrela no modo formas), Ciências (rosa), as 3 unidades, 3 objetos e as 8 habilidades
+   EF02CI. Nenhuma EF01CI.
+5. **O mesmo no 1º ano de Ciências:** as mesmas 3 unidades, com as habilidades EF01CI.
+6. **Paletas:** a Área preta no tema claro e amarela no escuro; 6 pontinhos em cada
+   paleta.
+7. **Console, "Exemplos… → arvore completa":** os dois anos, nenhum nó cinza.
+
 ### 4.6 Limpeza do código — etapas (L0–L2) · FINALIZADO
 
 *Planejado em 2026-10-24, a pedido do autor; **finalizado na L2, em 2026-10-24**, por
@@ -3816,16 +4016,20 @@ Particularidades:
   revisão R0–R7 (decisão do autor: documentar, não renomear em massa) — ver D11.
 - Use sempre `var(--token)` (sem fallback `,#hex`) ao portar trechos do protótipo,
   porque os tokens estão definidos globalmente.
-- **Modelo do grafo (N16, D21)** — o site depende só desta regra, não dos rótulos de cada
-  matéria:
-  - **Estrutura:** `(:Ano)-[:TEM_DISCIPLINA]->(:Disciplina {codigo, nome})-[:TEM_UNIDADE]->
-    (unidade {nome})-[:TEM_OBJETO]->(objeto {descricao})-[:DESENVOLVE]->(habilidade
-    {codigo, descricao})`, mais o atalho `(:Ano)-[:DESENVOLVE_HABILIDADE]->(habilidade)`.
+- **Modelo do grafo (N16, D21; N18, D22)** — o site depende só desta regra, não dos
+  rótulos de cada componente:
+  - **Estrutura:** `(:Ano)-[:TEM_AREA]->(:AreaConhecimento {codigo, nome})-[:TEM_COMPONENTE]->
+    (:ComponenteCurricular {codigo, nome})-[:TEM_UNIDADE]->(unidade {nome})-[:TEM_OBJETO]->
+    (objeto {descricao})-[:DESENVOLVE]->(habilidade {codigo, descricao})`, mais o atalho
+    `(:Ano)-[:DESENVOLVE_HABILIDADE]->(habilidade)`.
+  - **Mesmos nós entre anos:** área, componente, unidades e objetos de mesmo nome são o
+    mesmo nó em todos os anos (não existe "Habilidade2Mat"); o que diz o ano de cada
+    habilidade é o atalho. Um ano novo liga-se às áreas em que tem conteúdo.
   - **Consultas:** andam por essas relações.
-  - **Cores:** saem do começo do rótulo (`UnidadeTematica…`, `ObjetoConhecimento…`,
-    `Habilidade…`, sem diferenciar maiúsculas).
-  - **Matéria nova** carregada assim aparece na busca, na Home e com as cores certas, sem
-    mudar o código.
+  - **Cores:** saem do começo do rótulo (`AreaConhecimento`, `ComponenteCurricular`,
+    `UnidadeTematica…`, `ObjetoConhecimento…`, `Habilidade…`, sem diferenciar maiúsculas).
+  - **Componente, área ou ano novo** carregado assim aparece na busca, na Home e com as
+    cores certas, sem mudar o código.
 - **Escala de z-index** (documentada no topo do `index.css`; não criar valores
   intermediários novos): `1–8` camadas internas da landing · `20` GradeCard aberto ·
   `30` painel de contexto/resultado do console/popovers do palco/balão de matérias ·
@@ -3912,7 +4116,7 @@ src/
 │   │                          #   pontas que faltam e limite de 300 nós; sem o "conectar nós" (N4, D20)
 │   ├── depoimentos.js         # 5 depoimentos (conteúdo editorial do protótipo; troca futura por Cypher)
 │   └── paletas.js             # paletas de daltonismo por nível, escolhidas por simulação (G9; refeitas na N6 — D15;
-│                              #   5.ª cor, a da Disciplina, na N16 — D21)
+│                              #   5.ª cor na N16 — D21; 6.ª, a da Área, na N18 — D22)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
 │   ├── Grafos.jsx             # página do grafo — console Cypher (N3) + grafo do Neo4j no canvas (N5) + estados + painel + expandir/desfazer + gaveta Cypher + perfil/prefs (§4.5)

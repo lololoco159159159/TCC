@@ -6,28 +6,30 @@ import { CONSULTA_COM_ERRO } from './consultasExemplo'
 // guiada precisa, sem tela, num arquivo só (pedido do autor). Cinco partes:
 //  1. o MODELO — como o grafo da orientadora se organiza;
 //  2. o FILTRO POR TEXTO — o que o professor digita, filtrado no navegador;
-//  3. as OPÇÕES — anos, matérias do ano e o recorte, vindos do Neo4j;
+//  3. as OPÇÕES — anos, áreas, componentes e o recorte, vindos do Neo4j;
 //  4. as PERGUNTAS — o cardápio e a consulta pronta de cada uma;
 //  5. a CONSULTA ESCRITA — a mesma consulta com os valores, para o console.
-// Nada aqui é dado do grafo (D17): anos, matérias, unidades, objetos e
+// Nada aqui é dado do grafo (D17): anos, áreas, componentes, unidades, objetos e
 // habilidades vêm sempre do Neo4j; este arquivo guarda só consultas.
 
 // ===========================================================================
-// 1. O modelo do grafo (o modelo novo da orientadora, 2026-11-03 — D21)
-//   (:Ano)-[:TEM_DISCIPLINA]->(:Disciplina {codigo, nome})
+// 1. O modelo do grafo (o da orientadora — D21, 2026-11-03; D22, 2026-11-11)
+//   (:Ano)-[:TEM_AREA]->(:AreaConhecimento {codigo, nome})
+//     -[:TEM_COMPONENTE]->(:ComponenteCurricular {codigo, nome})
 //     -[:TEM_UNIDADE]->(unidade temática {nome})
 //     -[:TEM_OBJETO]->(objeto de conhecimento {descricao})
 //     -[:DESENVOLVE]->(habilidade {codigo, descricao})
 //   e o atalho (:Ano)-[:DESENVOLVE_HABILIDADE]->(habilidade)
-// Cada matéria tem os seus rótulos (UnidadeTematicaMat, UnidadeTematicaCien…),
-// mas as consultas daqui não citam rótulo nenhum além de Ano e Disciplina: andam
-// pelas RELAÇÕES, que são as mesmas em toda matéria. Por isso uma disciplina
-// nova entra na busca sozinha, sem mudar o código — basta seguir o modelo. (Até
-// 2026-11-03 uma "tabela de matérias" no código dizia os rótulos de cada uma; a
-// Disciplina no grafo a tornou desnecessária.)
-// O ano é amarrado pelo atalho Ano → Habilidade: a Disciplina, as unidades e os
-// objetos são compartilhados entre os anos (um nó "Matemática" para todos), e
-// descer pela Disciplina traria também o que é de outros anos.
+// Cada componente tem os seus rótulos (UnidadeTematicaMat, UnidadeTematicaCien…),
+// mas as consultas daqui não citam rótulo nenhum além de Ano, AreaConhecimento e
+// ComponenteCurricular: andam pelas RELAÇÕES, que são as mesmas em todo
+// componente. Por isso um componente novo entra na busca sozinho, sem mudar o
+// código — basta seguir o modelo. (Até a D22 o componente se chamava Disciplina e
+// saía direto do Ano.)
+// O ano é amarrado pelo atalho Ano → Habilidade: a área, o componente, as
+// unidades e os objetos são compartilhados entre os anos (um nó "Ciências" para
+// todos — não existe "Habilidade2Cien"), e descer por eles traria também o que é
+// de outros anos.
 // ===========================================================================
 
 // títulos dos campos que o professor vê (os mesmos em toda matéria) e o plural,
@@ -125,10 +127,10 @@ export function marcarTrechos(texto, consulta) {
 // ===========================================================================
 // 3. Opções (decisões 12–18)
 // Tudo o que o professor escolhe vem do Neo4j na hora: os anos (a consulta da
-// Home), as matérias do ano escolhido (as Disciplinas ligadas a ele que têm
-// alguma habilidade nele) e o RECORTE — as unidades, os objetos e as
-// habilidades de um ano numa matéria, trazidos numa única consulta. As listas
-// dos campos saem desse recorte, no navegador, sem consulta nova. O ano é
+// Home), as áreas do ano escolhido, os componentes da área (em cada caso, só os
+// que têm alguma habilidade naquele ano) e o RECORTE — as unidades, os objetos e
+// as habilidades de um ano num componente, trazidos numa única consulta. As
+// listas dos campos saem desse recorte, no navegador, sem consulta nova. O ano é
 // amarrado pelas HABILIDADES (o atalho Ano → Habilidade — ver a parte 1).
 // ===========================================================================
 
@@ -140,26 +142,47 @@ const comparar = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base'
 
 export const anosDaBusca = () => anosDoGrafo({ descricao: 'busca · anos' })
 
-// as matérias (Disciplinas) ligadas ao ano que têm alguma habilidade nele
-const MATERIAS_DO_ANO = `MATCH (a:Ano {codigo: $ano})-[:TEM_DISCIPLINA]->(d:Disciplina)
-WHERE EXISTS { (d)-[:TEM_UNIDADE]->()-[:TEM_OBJETO]->()-[:DESENVOLVE]->(h)<-[:DESENVOLVE_HABILIDADE]-(a) }
-RETURN d.codigo AS codigo, d.nome AS nome`
+// as áreas ligadas ao ano que têm alguma habilidade nele (área ainda sem
+// componente, como Linguagens hoje, não aparece)
+const AREAS_DO_ANO = `MATCH (a:Ano {codigo: $ano})-[:TEM_AREA]->(ar:AreaConhecimento)
+WHERE EXISTS { (ar)-[:TEM_COMPONENTE]->()-[:TEM_UNIDADE]->()-[:TEM_OBJETO]->()-[:DESENVOLVE]->(h)<-[:DESENVOLVE_HABILIDADE]-(a) }
+RETURN ar.codigo AS codigo, ar.nome AS nome`
+
+// os componentes da área que têm alguma habilidade no ano
+const COMPONENTES_DA_AREA = `MATCH (a:Ano {codigo: $ano})-[:TEM_AREA]->(:AreaConhecimento {codigo: $area})
+      -[:TEM_COMPONENTE]->(c:ComponenteCurricular)
+WHERE EXISTS { (c)-[:TEM_UNIDADE]->()-[:TEM_OBJETO]->()-[:DESENVOLVE]->(h)<-[:DESENVOLVE_HABILIDADE]-(a) }
+RETURN c.codigo AS codigo, c.nome AS nome`
+
+const emOrdem = (linhas) =>
+  linhas
+    .map((l) => ({ codigo: String(l.codigo ?? ''), nome: String(l.nome ?? l.codigo ?? '') }))
+    .sort((a, b) => comparar(a.nome, b.nome))
 
 /**
  * @param {string} ano  código do Ano (ex.: 'EF1')
  * @returns {Promise<{ codigo: string, nome: string }[]>}  em ordem alfabética
- *   (`codigo`: o da Disciplina, ex.: 'MA')
+ *   (`codigo`: o da área, ex.: 'CN')
  */
-export async function materiasDoAno(ano) {
-  const { linhas } = await executarCypher(MATERIAS_DO_ANO, { ano }, { descricao: 'busca · matérias do ano' })
-  return linhas
-    .map((l) => ({ codigo: String(l.codigo ?? ''), nome: String(l.nome ?? l.codigo ?? '') }))
-    .sort((a, b) => comparar(a.nome, b.nome))
+export async function areasDoAno(ano) {
+  const { linhas } = await executarCypher(AREAS_DO_ANO, { ano }, { descricao: 'busca · áreas do ano' })
+  return emOrdem(linhas)
 }
 
-// o recorte: uma linha por (habilidade do ano, objeto, unidade) da matéria
+/**
+ * @param {string} ano  código do Ano (ex.: 'EF1')
+ * @param {string} area  código da área (ex.: 'CN')
+ * @returns {Promise<{ codigo: string, nome: string }[]>}  em ordem alfabética
+ *   (`codigo`: o do componente, ex.: 'CI')
+ */
+export async function componentesDaArea(ano, area) {
+  const { linhas } = await executarCypher(COMPONENTES_DA_AREA, { ano, area }, { descricao: 'busca · componentes da área' })
+  return emOrdem(linhas)
+}
+
+// o recorte: uma linha por (habilidade do ano, objeto, unidade) do componente
 const RECORTE = `MATCH (:Ano {codigo: $ano})-[:DESENVOLVE_HABILIDADE]->(h)
-      <-[:DESENVOLVE]-(o)<-[:TEM_OBJETO]-(u)<-[:TEM_UNIDADE]-(:Disciplina {codigo: $disciplina})
+      <-[:DESENVOLVE]-(o)<-[:TEM_OBJETO]-(u)<-[:TEM_UNIDADE]-(:ComponenteCurricular {codigo: $componente})
 RETURN elementId(u) AS idUnidade, u.nome AS unidade,
        elementId(o) AS idObjeto, o.descricao AS objeto,
        elementId(h) AS idHabilidade, h.codigo AS codigo, h.descricao AS texto
@@ -172,29 +195,29 @@ LIMIT $limite`
 const recortes = new Map()
 
 /**
- * As unidades, os objetos e as habilidades de um ano numa matéria.
+ * As unidades, os objetos e as habilidades de um ano num componente.
  * @param {string} ano  código do Ano (ex.: 'EF1')
- * @param {string} materia  código da Disciplina (ex.: 'MA')
- * @returns {Promise<{ ano, materia, unidades: object[], objetos: object[],
+ * @param {string} componente  código do ComponenteCurricular (ex.: 'MA')
+ * @returns {Promise<{ ano, componente, unidades: object[], objetos: object[],
  *   habilidades: object[], cortado: boolean }>}
  *   unidade { id, nome } · objeto { id, nome, unidades: [id] } ·
  *   habilidade { id, codigo, texto, objetos: [id] } — cada lista em ordem natural
  */
-export function carregarRecorte(ano, materia) {
-  const chave = `${ano}\u0000${materia}`
+export function carregarRecorte(ano, componente) {
+  const chave = `${ano}\u0000${componente}`
   if (!recortes.has(chave)) {
-    const pedido = consultarRecorte(ano, materia)
+    const pedido = consultarRecorte(ano, componente)
     pedido.catch(() => recortes.delete(chave))
     recortes.set(chave, pedido)
   }
   return recortes.get(chave)
 }
 
-async function consultarRecorte(ano, materia) {
+async function consultarRecorte(ano, componente) {
   const { linhas } = await executarCypher(
     RECORTE,
-    { ano, disciplina: materia, limite: TETO_RECORTE + 1 },
-    { descricao: 'busca · recorte do ano e matéria' },
+    { ano, componente, limite: TETO_RECORTE + 1 },
+    { descricao: 'busca · recorte do ano e componente' },
   )
   const cortado = linhas.length > TETO_RECORTE
   const unidades = new Map()
@@ -213,7 +236,7 @@ async function consultarRecorte(ano, materia) {
   }
   return {
     ano,
-    materia,
+    componente,
     unidades: [...unidades.values()].sort((a, b) => comparar(a.nome, b.nome)),
     objetos: [...objetos.values()].sort((a, b) => comparar(a.nome, b.nome)),
     habilidades: [...habilidades.values()].sort((a, b) => comparar(a.codigo, b.codigo)),
@@ -258,9 +281,10 @@ export function opcoesDoCampo(recorte, campo) {
 // consulta Cypher, sempre com parâmetros. O resultado são caminhos (`RETURN
 // p`), que seguem pelo mesmo trajeto do console: extrairGrafo → completarGrafo
 // → canvas. Pergunta nova = uma entrada nova. As consultas andam pelas relações
-// do modelo (parte 1), sem rótulo de matéria: valem para qualquer disciplina. O
-// ano é amarrado pelas habilidades do ano, como no recorte, e a matéria pela
-// Disciplina ($disciplina = o código dela, ex.: 'MA').
+// do modelo (parte 1), sem rótulo de componente: valem para qualquer um. O ano é
+// amarrado pelas habilidades do ano, como no recorte, e o componente pelo
+// ComponenteCurricular ($componente = o código dele, ex.: 'MA'), alcançado pela
+// área ligada ao ano.
 //
 // As perguntas cobrem todas as consultas de teste da orientadora
 // (consultasExemplo.js), trocando os códigos fixos por campos que o professor
@@ -281,9 +305,11 @@ export function opcoesDoCampo(recorte, campo) {
 
 // habilidades do ano escolhido (o começo de três das consultas)
 const HABILIDADES_DO_ANO = 'MATCH (a:Ano {codigo: $ano})-[:DESENVOLVE_HABILIDADE]->(h)'
-// a árvore do ano na matéria: o caminho de cada habilidade do ano, desde o ano
+// a árvore do ano no componente: o caminho de cada habilidade do ano, desde o
+// ano, passando pela área e pelo componente
 const ARVORE_DO_ANO = `${HABILIDADES_DO_ANO}
-MATCH p = (a)-[:TEM_DISCIPLINA]->(:Disciplina {codigo: $disciplina})-[:TEM_UNIDADE]->()
+MATCH p = (a)-[:TEM_AREA]->(:AreaConhecimento)-[:TEM_COMPONENTE]->(:ComponenteCurricular {codigo: $componente})
+      -[:TEM_UNIDADE]->()
       -[:TEM_OBJETO]->()-[:DESENVOLVE]->(h)
 RETURN p`
 
@@ -293,8 +319,8 @@ export const PERGUNTAS = [
     titulo: 'Caminho até uma habilidade',
     explicacao: 'De que unidade temática e objeto de conhecimento a habilidade vem',
     campos: [{ nome: 'habilidade', tipo: 'habilidade' }],
-    consulta: `MATCH p = (:Ano {codigo: $ano})-[:TEM_DISCIPLINA]->(:Disciplina {codigo: $disciplina})
-      -[:TEM_UNIDADE]->()-[:TEM_OBJETO]->()-[:DESENVOLVE]->(h)
+    consulta: `MATCH p = (:Ano {codigo: $ano})-[:TEM_AREA]->(:AreaConhecimento)
+      -[:TEM_COMPONENTE]->(:ComponenteCurricular {codigo: $componente})-[:TEM_UNIDADE]->()-[:TEM_OBJETO]->()-[:DESENVOLVE]->(h)
 WHERE elementId(h) = $habilidade
 RETURN p`,
   },
@@ -320,7 +346,7 @@ RETURN p`,
     // as duas pontas vão no WHERE do próprio shortestPath: um `MATCH (h1), (h2)`
     // antes dele fazia o Neo4j avisar de "produto cartesiano" (CartesianProduct —
     // inofensivo, 1 × 1 nó; testado em 2026-10-24). O caminho só anda pelas
-    // relações da hierarquia — sobe até a unidade (ou a Disciplina) comum e desce;
+    // relações da hierarquia — sobe até a unidade (ou o componente) comum e desce;
     // sem o Ano no meio, ele não tem como passar por outro ano
     consulta: `MATCH p = shortestPath((h1)-[:TEM_UNIDADE|TEM_OBJETO|DESENVOLVE*..10]-(h2))
 WHERE elementId(h1) = $habilidade AND elementId(h2) = $habilidade2
@@ -359,7 +385,7 @@ RETURN p`,
     explicacao: 'O ano ligado direto às habilidades dele nesta matéria',
     campos: [],
     consulta: `MATCH p = (:Ano {codigo: $ano})-[:DESENVOLVE_HABILIDADE]->(h)
-WHERE EXISTS { (:Disciplina {codigo: $disciplina})-[:TEM_UNIDADE]->()-[:TEM_OBJETO]->()-[:DESENVOLVE]->(h) }
+WHERE EXISTS { (:ComponenteCurricular {codigo: $componente})-[:TEM_UNIDADE]->()-[:TEM_OBJETO]->()-[:DESENVOLVE]->(h) }
 RETURN p`,
   },
   {
@@ -374,7 +400,7 @@ RETURN p`,
     titulo: 'Teste de erro',
     explicacao: 'A consulta de teste da orientadora que tem um erro de sintaxe — serve para ver o aviso de erro',
     campos: [],
-    fixa: true, // não usa o ano nem a matéria
+    fixa: true, // não usa o ano nem o componente
     consulta: CONSULTA_COM_ERRO,
   },
 ]
@@ -390,23 +416,23 @@ export const camposFaltando = (pergunta, escolhas = {}) => pergunta.campos.filte
  * descrição que aparece na gaveta Cypher (decisão 31) e a consulta escrita
  * para o console (parte 5).
  * @param {string} idPergunta
- * @param {{ ano: string, materia: string, escolhas?: object }} busca
- *   `materia`: o código da Disciplina (ex.: 'MA'); `escolhas`: { [nome do
+ * @param {{ ano: string, componente: string, escolhas?: object }} busca
+ *   `componente`: o código do ComponenteCurricular (ex.: 'MA'); `escolhas`: { [nome do
  *   campo]: id do recorte (elementId) }
  * @returns {{ consulta: string, parametros: object, descricao: string, escrita: string }}
  */
-export function consultaDaPergunta(idPergunta, { ano, materia, escolhas = {} }) {
+export function consultaDaPergunta(idPergunta, { ano, componente, escolhas = {} }) {
   const pergunta = perguntaPorId(idPergunta)
   if (!pergunta) throw new Error(`Busca desconhecida: ${idPergunta}`)
   const descricao = `busca · ${pergunta.titulo.toLowerCase()}`
   if (pergunta.fixa) return { consulta: pergunta.consulta, parametros: {}, descricao, escrita: pergunta.consulta }
-  if (!ano || !materia) throw new Error('Falta escolher: ano, matéria')
+  if (!ano || !componente) throw new Error('Falta escolher: ano, componente')
   const faltando = camposFaltando(pergunta, escolhas)
   if (faltando.length) throw new Error(`Falta escolher: ${faltando.map((c) => c.nome).join(', ')}`)
   if (pergunta.distintos && new Set(pergunta.distintos.map((n) => escolhas[n])).size < pergunta.distintos.length) {
     throw new Error('Escolha itens diferentes em cada campo.')
   }
-  const parametros = { ano, disciplina: materia }
+  const parametros = { ano, componente }
   pergunta.campos.forEach((c) => (parametros[c.nome] = escolhas[c.nome]))
   return { consulta: pergunta.consulta, parametros, descricao, escrita: consultaEscrita(pergunta.consulta, parametros) }
 }
@@ -417,7 +443,7 @@ export function consultaDaPergunta(idPergunta, { ano, materia, escolhas = {} }) 
 // desenho, para quem quiser ler — ou mudar e executar de novo. O Neo4j recebe
 // a consulta com parâmetros (decisões 29–30); esta é a MESMA consulta com o
 // valor de cada $parâmetro escrito no lugar dele, entre aspas. Executada no
-// console, dá o mesmo resultado. Os valores vêm da barra (o ano e a matéria) e
+// console, dá o mesmo resultado. Os valores vêm da barra (o ano e o componente) e
 // do recorte (ids do Neo4j) — nunca do que o professor digitou.
 // ===========================================================================
 

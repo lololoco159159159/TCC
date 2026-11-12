@@ -12,6 +12,8 @@
 // Matemática agora usam UnidadeTematicaMat, HabilidadeMat…; a "árvore completa"
 // e o "ano direto" valem para todas as matérias). A 7.ª ficou como veio: o erro
 // de sintaxe é o que ela testa.
+// D22 (2026-11-11): o Ano chega ao componente pela área — Ano → AreaConhecimento
+// → ComponenteCurricular (era Ano → Disciplina).
 
 // "ano direto p habilidade" — também é a consulta do "Ver o grafo desta turma"
 export const CONSULTA_ANO_HABILIDADES = `MATCH p = (:Ano)-[:DESENVOLVE_HABILIDADE]->()
@@ -26,7 +28,7 @@ RETURN p`
 export const CONSULTAS_EXEMPLO = [
   {
     titulo: 'arvore completa',
-    consulta: `MATCH p = (:Ano)-[:TEM_DISCIPLINA]->(:Disciplina)-[:TEM_UNIDADE]->()-[:TEM_OBJETO]->()-[:DESENVOLVE]->()
+    consulta: `MATCH p = (:Ano)-[:TEM_AREA]->(:AreaConhecimento)-[:TEM_COMPONENTE]->(:ComponenteCurricular)-[:TEM_UNIDADE]->()-[:TEM_OBJETO]->()-[:DESENVOLVE]->()
 RETURN p`,
   },
   {
@@ -36,7 +38,7 @@ RETURN p`,
   },
   {
     titulo: 'de onde vem a habilidade',
-    consulta: `MATCH p = (:Ano)-[:TEM_DISCIPLINA]->(:Disciplina)-[:TEM_UNIDADE]->(:UnidadeTematicaMat)-[:TEM_OBJETO]->(:ObjetoConhecimentoMat)-[:DESENVOLVE]->(:HabilidadeMat {codigo:"EF01MA17"})
+    consulta: `MATCH p = (:Ano)-[:TEM_AREA]->(:AreaConhecimento)-[:TEM_COMPONENTE]->(:ComponenteCurricular)-[:TEM_UNIDADE]->(:UnidadeTematicaMat)-[:TEM_OBJETO]->(:ObjetoConhecimentoMat)-[:DESENVOLVE]->(:HabilidadeMat {codigo:"EF01MA17"})
 RETURN p`,
   },
   { titulo: 'ano direto p habilidade', consulta: CONSULTA_ANO_HABILIDADES },

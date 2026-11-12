@@ -4,10 +4,11 @@ import {
   PLURAIS,
   TITULOS,
   anosDaBusca,
+  areasDoAno,
   camposFaltando,
   carregarRecorte,
+  componentesDaArea,
   consultaDaPergunta,
-  materiasDoAno,
   opcoesDoCampo,
   perguntaPorId,
 } from '../../data/filtrosDeBusca'
@@ -30,6 +31,11 @@ import { MONO_LABEL } from './estilos'
 // saiu a pedido do autor, 2026-10-24). Trocar o ano ou a matéria limpa os
 // campos (decisão 5); trocar a pergunta mantém o que tiver o mesmo nome (a
 // habilidade do "caminho" continua escolhida nas "irmãs").
+// N18 (D22): o grafo ganhou a Área de conhecimento acima do componente, e a
+// barra também — Ano → Área → Componente → Pergunta. A Área aparece mesmo quando
+// tem um componente só (decisão do autor, 2026-11-11), e como a Matéria (decisão
+// 4) nunca vem escolhida sozinha. "Matéria" passou a se chamar "Componente", como
+// no modelo (ComponenteCurricular) e na BNCC.
 
 const BARRA = {
   flex: 'none',
@@ -115,24 +121,32 @@ function useCarga(carregar, chave, tentativa) {
 // (o botão espera)
 function BuscaProfessor({ aoVerNoGrafo, ocupado }) {
   const [ano, setAno] = useState('')
-  const [materia, setMateria] = useState('')
+  const [area, setArea] = useState('')
+  const [componente, setComponente] = useState('')
   const [pergunta, setPergunta] = useState('')
   const [escolhas, setEscolhas] = useState({}) // { [nome do campo]: id do recorte }
   const [tentativa, setTentativa] = useState(0) // "Tentar de novo" depois de uma falha
 
   const anos = useCarga(anosDaBusca, 'anos', tentativa)
-  const materias = useCarga(() => materiasDoAno(ano), ano, tentativa)
-  const recorte = useCarga(() => carregarRecorte(ano, materia), ano && materia ? `${ano}|${materia}` : '', tentativa)
+  const areas = useCarga(() => areasDoAno(ano), ano, tentativa)
+  const componentes = useCarga(() => componentesDaArea(ano, area), ano && area ? `${ano}|${area}` : '', tentativa)
+  const recorte = useCarga(() => carregarRecorte(ano, componente), ano && componente ? `${ano}|${componente}` : '', tentativa)
 
-  // trocar o ano zera a matéria (ela depende do ano e nunca vem escolhida
-  // sozinha); trocar o ano ou a matéria limpa os campos (o recorte mudou)
+  // cada escolha zera as de baixo (elas dependem dela e nunca vêm escolhidas
+  // sozinhas); trocar o ano, a área ou o componente limpa os campos (o recorte mudou)
   const aoEscolherAno = (e) => {
     setAno(e.target.value)
-    setMateria('')
+    setArea('')
+    setComponente('')
     setEscolhas({})
   }
-  const aoEscolherMateria = (e) => {
-    setMateria(e.target.value)
+  const aoEscolherArea = (e) => {
+    setArea(e.target.value)
+    setComponente('')
+    setEscolhas({})
+  }
+  const aoEscolherComponente = (e) => {
+    setComponente(e.target.value)
     setEscolhas({})
   }
   const tentarDeNovo = (
@@ -142,9 +156,11 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado }) {
   )
 
   const nomeAno = anos.dados?.find((a) => a.codigo === ano)?.nome || ano
-  // as matérias do ano vêm do Neo4j (as Disciplinas dele): { codigo, nome }
-  const listaMaterias = materias.dados || []
-  const nomeMateria = listaMaterias.find((x) => x.codigo === materia)?.nome || materia
+  // as áreas do ano e os componentes da área vêm do Neo4j: { codigo, nome }
+  const listaAreas = areas.dados || []
+  const nomeArea = listaAreas.find((x) => x.codigo === area)?.nome || area
+  const listaComponentes = componentes.dados || []
+  const nomeComponente = listaComponentes.find((x) => x.codigo === componente)?.nome || componente
   const p = perguntaPorId(pergunta)
   const r = recorte.estado === 'pronto' && recorte.dados?.habilidades.length ? recorte.dados : null
 
@@ -166,11 +182,11 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado }) {
   // a consulta vai para a página; a escrita (que aparece no console) ganha um
   // cabeçalho em comentário Cypher dizendo de que busca ela veio
   const verNoGrafo = () => {
-    const pronta = consultaDaPergunta(pergunta, { ano, materia, escolhas })
+    const pronta = consultaDaPergunta(pergunta, { ano, componente, escolhas })
     const cabecalho = p.fixa
       ? [`// Busca: ${p.titulo}`]
       : [
-          `// Busca: ${p.titulo} · ${nomeAno} · ${nomeMateria}`,
+          `// Busca: ${p.titulo} · ${nomeAno} · ${nomeArea} · ${nomeComponente}`,
           ...p.campos.map((c) => `// ${rotuloDe(c)}: ${opcoesDoCampo(r, c.tipo).find((o) => o.id === escolhas[c.nome])?.titulo}`),
         ]
     aoVerNoGrafo({ ...pronta, escrita: `${cabecalho.join('\n')}\n${pronta.escrita}` })
@@ -181,29 +197,34 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado }) {
   if (anos.estado === 'carregando') status = 'Carregando os anos…'
   else if (anos.estado === 'erro') status = <>Não foi possível carregar os anos agora.{tentarDeNovo}</>
   else if (!anos.dados?.length) status = 'O grafo ainda não tem anos.'
-  else if (!ano) status = 'Escolha o ano, a matéria e o que você quer ver.'
-  else if (materias.estado === 'carregando') status = 'Carregando as matérias do ano…'
-  else if (materias.estado === 'erro') status = <>Não foi possível carregar as matérias agora.{tentarDeNovo}</>
-  else if (!listaMaterias.length) status = 'Nenhuma matéria com habilidades neste ano.'
-  else if (!materia) status = 'Escolha a matéria.'
-  else if (recorte.estado === 'carregando') status = `Carregando ${nomeAno} em ${nomeMateria}…`
-  else if (recorte.estado === 'erro') status = <>Não foi possível carregar o ano nesta matéria agora.{tentarDeNovo}</>
+  else if (!ano) status = 'Escolha o ano, a área, o componente e o que você quer ver.'
+  else if (areas.estado === 'carregando') status = 'Carregando as áreas do ano…'
+  else if (areas.estado === 'erro') status = <>Não foi possível carregar as áreas agora.{tentarDeNovo}</>
+  else if (!listaAreas.length) status = 'Nenhuma área com habilidades neste ano.'
+  else if (!area) status = 'Escolha a área de conhecimento.'
+  else if (componentes.estado === 'carregando') status = 'Carregando os componentes da área…'
+  else if (componentes.estado === 'erro') status = <>Não foi possível carregar os componentes agora.{tentarDeNovo}</>
+  else if (!listaComponentes.length) status = 'Nenhum componente com habilidades nesta área e ano.'
+  else if (!componente) status = 'Escolha o componente curricular.'
+  else if (recorte.estado === 'carregando') status = `Carregando ${nomeAno} em ${nomeComponente}…`
+  else if (recorte.estado === 'erro') status = <>Não foi possível carregar o ano neste componente agora.{tentarDeNovo}</>
   else if (r) {
     let passo = 'escolha o que você quer ver'
     if (p && faltando.length) passo = `falta escolher: ${faltando.map(rotuloDe).join(', ').toLowerCase()}`
     else if (p) passo = 'clique em Ver no grafo'
     status = (
       <>
-        {nomeAno} · {nomeMateria}: {r.unidades.length} {PLURAIS.unidade} · {r.objetos.length} {PLURAIS.objeto} ·{' '}
+        {nomeAno} · {nomeComponente}: {r.unidades.length} {PLURAIS.unidade} · {r.objetos.length} {PLURAIS.objeto} ·{' '}
         {r.habilidades.length} {PLURAIS.habilidade}
         {r.cortado ? <span style={{ color: 'var(--gold)' }}> · passou do limite e veio cortado</span> : null}
         <span style={{ color: 'var(--faint)' }}> · {passo}</span>
       </>
     )
-  } else if (recorte.dados) status = 'Nenhuma habilidade neste ano para esta matéria.'
+  } else if (recorte.dados) status = 'Nenhuma habilidade neste ano para este componente.'
 
   const anosProntos = anos.estado === 'pronto' && anos.dados?.length > 0
-  const materiasProntas = materias.estado === 'pronto' && listaMaterias.length > 0
+  const areasProntas = areas.estado === 'pronto' && listaAreas.length > 0
+  const componentesProntos = componentes.estado === 'pronto' && listaComponentes.length > 0
 
   return (
     <div style={BARRA}>
@@ -226,16 +247,32 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado }) {
           ))}
         </select>
         <select
-          value={materia}
-          onChange={aoEscolherMateria}
-          disabled={!materiasProntas}
-          aria-label="Matéria"
-          style={materiasProntas ? SELECT : SELECT_DESLIGADO}
+          value={area}
+          onChange={aoEscolherArea}
+          disabled={!areasProntas}
+          aria-label="Área de conhecimento"
+          style={areasProntas ? SELECT : SELECT_DESLIGADO}
         >
           <option value="" disabled>
-            Matéria…
+            Área…
           </option>
-          {listaMaterias.map((x) => (
+          {listaAreas.map((x) => (
+            <option key={x.codigo} value={x.codigo}>
+              {x.nome}
+            </option>
+          ))}
+        </select>
+        <select
+          value={componente}
+          onChange={aoEscolherComponente}
+          disabled={!componentesProntos}
+          aria-label="Componente curricular"
+          style={componentesProntos ? SELECT : SELECT_DESLIGADO}
+        >
+          <option value="" disabled>
+            Componente…
+          </option>
+          {listaComponentes.map((x) => (
             <option key={x.codigo} value={x.codigo}>
               {x.nome}
             </option>
@@ -244,9 +281,9 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado }) {
         <select
           value={pergunta}
           onChange={(e) => setPergunta(e.target.value)}
-          disabled={!materia}
+          disabled={!componente}
           aria-label="O que você quer ver"
-          style={materia ? SELECT : SELECT_DESLIGADO}
+          style={componente ? SELECT : SELECT_DESLIGADO}
         >
           <option value="" disabled>
             O que você quer ver?
@@ -257,7 +294,7 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado }) {
             </option>
           ))}
         </select>
-        <span style={EXPLICACAO}>{materia && p ? p.explicacao : ''}</span>
+        <span style={EXPLICACAO}>{componente && p ? p.explicacao : ''}</span>
       </div>
       {mostraCampos && (
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 11, flexWrap: 'wrap', marginTop: 10 }}>

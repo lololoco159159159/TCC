@@ -7,12 +7,13 @@ import { executarCypher } from './neo4j'
 // Ciências; quando EF2, EF3… forem carregados, aparecem sozinhos). Só lê o banco.
 // D21 (2026-11-03): no modelo novo cada matéria tem os seus rótulos
 // (HabilidadeMat, HabilidadeCien…), então a contagem anda pelas relações do
-// modelo — habilidade é quem um Ano desenvolve; unidade, quem uma Disciplina
-// tem — e conta toda matéria, inclusive as que ainda vão chegar.
+// modelo — habilidade é quem um Ano desenvolve; unidade, quem um componente
+// curricular tem (D22; era a Disciplina) — e conta todo componente, inclusive os
+// que ainda vão chegar.
 
 // (COLLECT { } e não [(a:Ano) | …]: a compreensão de padrão exige uma relação)
 const ESTATISTICAS = `RETURN size(COLLECT { MATCH (:Ano)-[:DESENVOLVE_HABILIDADE]->(h) RETURN DISTINCT h }) AS habilidades,
-       size(COLLECT { MATCH (:Disciplina)-[:TEM_UNIDADE]->(u) RETURN DISTINCT u }) AS unidades,
+       size(COLLECT { MATCH (:ComponenteCurricular)-[:TEM_UNIDADE]->(u) RETURN DISTINCT u }) AS unidades,
        COLLECT { MATCH (a:Ano) RETURN a.codigo } AS anos`
 const ANOS = 'MATCH (a:Ano) RETURN a.codigo AS codigo, a.nome AS nome'
 

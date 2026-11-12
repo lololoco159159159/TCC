@@ -4,7 +4,7 @@
    I
 (UnidadeTematicaMat)      - - - (unidadeTematicaCien)
    I
-(objetoCOnhecimentoMat)   - - - (objetoConhecimentoCien)
+(objetoConhecimentoMat)   - - - (objetoConhecimentoCien)
    I
 (habilidadeMat)           - - - (habildiadeCienc)
 
@@ -84,3 +84,17 @@ MERGE (h:Habilidade {codigo: hab.codigo})
 SET h.descricao = hab.descricao
 MERGE (oc)-[:DESENVOLVE]->(h)
 MERGE (a)-[:DESENVOLVE_HABILIDADE]->(h)
+
+
+trocar nome de disciplina para ComponeneteCurricular
+
+ano(1ano, 2ano)
+I
+AreaConhecimento(CiênciasdaNatureza;AreaMatematica;Linguagens;CiênciasHumanas)
+I
+disciplina(ex: Matematica)
+I
+UnidadeTematicaMat
+I
+HabilidadeMat
+...
