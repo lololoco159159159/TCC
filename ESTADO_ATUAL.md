@@ -1616,6 +1616,7 @@ layout hierárquico do Neo4j Browser.
 - [x] **N16** — Modelo novo do grafo (Disciplina, rótulos por matéria, Ciências do 1º ano) e cores automáticas por nível *(2026-11-04; D21)*
 - [x] **N17** — Grafo: Área de conhecimento, "Disciplina" → "ComponenteCurricular", 2º Ano e Ciências do 2º ano *(2026-11-12 — comando do assistente, rodado pelo autor)*
 - [x] **N18** — Site no modelo da N17: Área de conhecimento na busca e nas cores, ComponenteCurricular nas consultas, o 2º Ano *(2026-11-12; D22)*
+- [x] **N19** — Home: o balão da turma lista os componentes do ano, e o "Ver o grafo desta turma" abre a busca já com ano, área e componente *(2026-11-12)*
 
 **N1–N10 finalizadas e testadas pelo autor** (confirmado em 2026-10-15). N11 planejada
 em 2026-10-15 e feita em 2026-10-18 (detalhes no fim desta seção) — falta o teste do
@@ -3058,9 +3059,11 @@ unidade → uma unidade temática; "preciso ensinar", "habilidades do ano" e "an
     e objeto, que não têm id estável (ponto 2 da lista da orientadora), vão pelo
     nome/descrição. Campo de várias: os códigos separados por vírgula
     (`habilidades=EF01MA06,EF01MA07`).
-33. **Home**: o "Ver o grafo desta turma" abre a busca com o Ano preenchido e a pergunta
+33. ~~**Home**: o "Ver o grafo desta turma" abre a busca com o Ano preenchido e a pergunta
     "O ano inteiro nesta matéria" — a matéria fica para o professor escolher (decisão 4) —,
-    no lugar da consulta escrita no console (N9).
+    no lugar da consulta escrita no console (N9).~~ **Feito de outro jeito na N19**
+    (pedido do autor, 2026-11-12): o balão da turma lista os componentes do ano; o botão
+    abre a busca com o ano, a área e o componente escolhidos, **sem pergunta**.
 34. Neo4j fora do ar: aviso na barra ("Não foi possível carregar os anos agora") e nenhum
     dado local.
 35. Sem dependência nova; tema escuro, A/A, sem animação e paletas continuam valendo.
@@ -3815,6 +3818,57 @@ Verificado:
 6. **Paletas:** a Área preta no tema claro e amarela no escuro; 6 pontinhos em cada
    paleta.
 7. **Console, "Exemplos… → arvore completa":** os dois anos, nenhum nó cinza.
+
+#### N19 — Home: os componentes da turma e a busca já filtrada (2026-11-12)
+
+Pedido do autor: "ao selecionar o ano na Home e clicar em ver o grafo dessa turma,
+apareçam os componentes curriculares desse ano como opção, como existia antes; ao clicar,
+vai para a tela de grafo com esses dois filtros já selecionados, faltando selecionar o
+resto".
+
+Como ficou:
+- **O balão da turma** ([MateriaPopover.jsx](src/components/MateriaPopover.jsx)) voltou
+  a ter **chips**, agora com os **componentes curriculares do ano vindos do Neo4j**
+  (`componentesDoAno` em [filtrosDeBusca.js](src/data/filtrosDeBusca.js): só os que têm
+  habilidade no ano, cada um com a sua área). No 1º Ano: Ciências e Matemática; no 2º:
+  Ciências.
+  - Um chip de cada vez; clicar no escolhido o solta.
+  - O visual é o dos chips do protótipo, que tinham saído na N9 (vinham do mock) e cujo
+    CSS saiu na limpeza L2: `.eg-materia-chip` voltou ao [index.css](src/index.css).
+  - Mensagens enquanto carrega, se o Neo4j falhar e se a turma não tiver componentes.
+- **"Ver o grafo desta turma"** abre a página de grafos com a **busca já filtrada**: o
+  ano e, se um chip foi escolhido, a **área** (a do componente) e o **componente**. Falta
+  escolher a pergunta e os campos. Sem chip, abre só com o ano.
+  - O caminho: [TestimonialsSection.jsx](src/components/TestimonialsSection.jsx) →
+    [App.jsx](src/App.jsx) (`buscaGrafos`, no lugar da `consultaGrafos`) →
+    [Grafos.jsx](src/pages/Grafos.jsx) (`buscaInicial`) →
+    [BuscaProfessor.jsx](src/components/grafo/BuscaProfessor.jsx) (`inicial`: os
+    seletores já começam com os valores, e as listas carregam todas de uma vez).
+  - **O que deixou de acontecer:** o botão não executa mais a consulta "ano direto" no
+    console (o comportamento da N9). O palco abre no convite, e o console vazio. A
+    consulta continua nos "Exemplos…" do console.
+
+Verificado: `npm run lint` (0/0), `npm run build` (JS 310,32 → **312,00 kB**; CSS 8,86 →
+9,28 kB). **8 verificações novas**, contra o Neo4j real:
+- Os componentes de cada turma, com a área.
+- Para cada um, a área pré-escolhida está entre as do ano, o componente entre os da área,
+  e o recorte tem habilidades.
+- O balão em HTML (carregando, o botão) e a página aberta com a busca pré-escolhida, sem
+  nada executado.
+- O CSS dos chips.
+
+As **46 da N18** passaram de novo.
+
+**Teste do autor:**
+1. Na Home, clicar no card **1º Ano**: o balão mostra os chips **Ciências** e
+   **Matemática**.
+2. Escolher **Matemática** e clicar em "Ver o grafo desta turma": a página de grafos abre
+   com **1º Ano · Matemática · Matemática** na busca e "escolha o que você quer ver" na
+   linha de estado. Escolher uma pergunta e "Ver no grafo".
+3. Voltar e fazer o mesmo no **2º Ano** com **Ciências**: a busca abre com 2º Ano ·
+   Ciências da Natureza · Ciências (8 habilidades).
+4. Sem escolher chip: a busca abre só com o ano.
+5. Clicar no chip escolhido de novo o solta; Esc ou clicar fora fecha o balão.
 
 ### 4.6 Limpeza do código — etapas (L0–L2) · FINALIZADO
 
