@@ -118,11 +118,12 @@ function useCarga(carregar, chave, tentativa) {
 
 // `aoVerNoGrafo({ consulta, parametros, descricao, escrita })`: a página executa,
 // desenha e escreve a consulta no console; `ocupado`: o palco está consultando
-// (o botão espera)
-function BuscaProfessor({ aoVerNoGrafo, ocupado }) {
-  const [ano, setAno] = useState('')
-  const [area, setArea] = useState('')
-  const [componente, setComponente] = useState('')
+// (o botão espera); `inicial` (N19): { ano, area, componente } já escolhidos ao
+// abrir — o "Ver o grafo desta turma" da Home; o resto o professor escolhe
+function BuscaProfessor({ aoVerNoGrafo, ocupado, inicial }) {
+  const [ano, setAno] = useState(inicial?.ano || '')
+  const [area, setArea] = useState(inicial?.area || '')
+  const [componente, setComponente] = useState(inicial?.componente || '')
   const [pergunta, setPergunta] = useState('')
   const [escolhas, setEscolhas] = useState({}) // { [nome do campo]: id do recorte }
   const [tentativa, setTentativa] = useState(0) // "Tentar de novo" depois de uma falha

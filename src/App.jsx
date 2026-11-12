@@ -13,16 +13,17 @@ import { useTheme } from './context/useTheme'
 // os grafos volta com os filtros novos, sobre o modelo do Neo4j.
 function App() {
   const [tela, setTela] = useState('home')
-  // consulta Cypher que a página de grafos executa ao abrir (N9: o "Ver o grafo
-  // desta turma" da Home); qualquer outra navegação zera
-  const [consultaGrafos, setConsultaGrafos] = useState(null)
+  // a busca com que a página de grafos abre (N19: o "Ver o grafo desta turma" da
+  // Home — { ano, area, componente }, os códigos do Neo4j); qualquer outra
+  // navegação zera. (Até a N19 era uma consulta Cypher executada no console.)
+  const [buscaGrafos, setBuscaGrafos] = useState(null)
   const { fontZoom } = useTheme()
 
-  // `opcoes.consulta` só vale para a página de grafos. (Os links que chamam
+  // `opcoes.busca` só vale para a página de grafos. (Os links que chamam
   // onGrafos direto do onClick passam o evento como 1.º argumento — por isso o
   // teste de tipo.)
   function irPara(novaTela, opcoes) {
-    setConsultaGrafos(novaTela === 'grafos' && typeof opcoes?.consulta === 'string' ? opcoes.consulta : null)
+    setBuscaGrafos(novaTela === 'grafos' && typeof opcoes?.busca?.ano === 'string' ? opcoes.busca : null)
     setTela(novaTela)
     window.scrollTo(0, 0)
   }
@@ -52,7 +53,7 @@ function App() {
         onHome={() => irPara('home')}
         onSignup={() => irPara('signup')}
         onGrafos={() => irPara('grafos')}
-        consultaInicial={consultaGrafos}
+        buscaInicial={buscaGrafos}
       />
     )
   } else {

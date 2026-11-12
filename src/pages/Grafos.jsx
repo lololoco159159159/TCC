@@ -108,13 +108,15 @@ function noDoCanvas(no, x, y) {
 }
 const arestaDoCanvas = (r) => ({ id: r.id, a: r.inicio, b: r.fim, rel: r.rel, props: r.props })
 
-function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
+// `buscaInicial` (N19): { ano, area, componente } com que a busca do professor
+// abre — o "Ver o grafo desta turma" da Home
+function Grafos({ onHome, onSignup, onGrafos, buscaInicial }) {
   const [status, setStatus] = useState('inicio') // inicio | carregando | pronto | erro
   const [resultado, setResultado] = useState(null) // última resposta do console Cypher (N3) + `grafo` (N4)
-  // o texto com que a caixa do console começa: a consulta da Home (N9) ou a
-  // última da busca, escrita com os valores; `n` muda → o console é remontado
-  // com o texto novo (o que estava digitado lá dá lugar a ele)
-  const [textoConsole, setTextoConsole] = useState({ texto: consultaInicial || '', n: 0 })
+  // o texto da caixa do console: a última consulta da busca, escrita com os
+  // valores; `n` muda → o console é remontado com o texto novo (o que estava
+  // digitado lá dá lugar a ele). (Até a N19 começava com a consulta da Home.)
+  const [textoConsole, setTextoConsole] = useState({ texto: '', n: 0 })
   const [erro, setErro] = useState(null) // falha da última consulta: { origem, codigo, mensagem }
   const [abaResultado, setAbaResultado] = useState('tabela') // última aba de conteúdo: tabela | relacoes | json
   const [resultadoAberto, setResultadoAberto] = useState(false) // fechado = aba "Grafo" (o desenho); sobrevive às execuções
@@ -331,14 +333,6 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
     setStatus('inicio')
   }
 
-  // N9: aberta pelo "Ver o grafo desta turma" da Home, a página já executa a
-  // consulta da turma (que também aparece escrita no console)
-  useEffect(() => {
-    if (consultaInicial) executarConsulta(consultaInicial)
-    // roda uma única vez, no mount — executarConsulta muda a cada render por design
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   // Esc limpa a seleção do grafo e fecha os popovers, como no protótipo
   useEffect(() => {
     const aoTecla = (ev) => {
@@ -483,7 +477,7 @@ function Grafos({ onHome, onSignup, onGrafos, consultaInicial }) {
         </SiteHeader>
 
         {/* ============ BUSCA DO PROFESSOR (N13/N14): Ano → Matéria → Pergunta → campos ============ */}
-        <BuscaProfessor aoVerNoGrafo={verBusca} ocupado={status === 'carregando'} />
+        <BuscaProfessor aoVerNoGrafo={verBusca} ocupado={status === 'carregando'} inicial={buscaInicial} />
 
         {/* ============ CONSOLE CYPHER (N3; no lugar da barra de filtros) ============ */}
         <ConsoleCypher

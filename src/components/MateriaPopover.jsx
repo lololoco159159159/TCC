@@ -1,19 +1,34 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { componentesDoAno } from '../data/filtrosDeBusca'
 
 // Popover ("balão") ancorado a um card de série na grade "Explore por série".
 // Sobe ao abrir (keyframe egFadeUp), com uma setinha apontando para o card. O
 // CTA "Ver o grafo desta turma →" (G11) chama onVerGrafo — a seção navega para
-// a página de grafos com a consulta da turma. Fecha no ×, clicando fora ou com
-// Esc. O grid não se mexe: o balão é position:absolute (fora do fluxo).
+// a página de grafos. Fecha no ×, clicando fora ou com Esc. O grid não se mexe:
+// o balão é position:absolute (fora do fluxo).
 // (Desvio documentado: o CTA não existe no protótipo — o balão de lá é só
 // visual; o botão materializa a integração prevista no roadmap G11.)
-// N9 (integração com o Neo4j): os chips de MATÉRIA saíram — vinham do mock, e o
-// grafo da orientadora ainda não tem componente curricular (hoje é só o 1.º ano
-// de Matemática). Voltam quando o modelo tiver o componente; até lá, o balão
-// tem só o CTA (decisão do autor).
+// N9 (integração com o Neo4j): os chips de MATÉRIA saíram — vinham do mock.
+// N19 (2026-11-12, pedido do autor): voltaram, agora com os COMPONENTES
+// CURRICULARES do ano vindos do Neo4j (os que têm habilidade nele). Escolher um
+// chip e clicar no CTA abre a busca da página de grafos já com o ano, a área e o
+// componente escolhidos, faltando a pergunta; sem chip escolhido, só o ano.
 
-function MateriaPopover({ ano, onClose, onVerGrafo, placement = 'baixo', anchorRef }) {
+function MateriaPopover({ ano, codigoAno, onClose, onVerGrafo, placement = 'baixo', anchorRef }) {
   const ref = useRef(null)
+  // { estado: carregando | pronto | erro, lista } — os componentes do ano
+  const [componentes, setComponentes] = useState({ estado: 'carregando', lista: [] })
+  const [escolhido, setEscolhido] = useState(null) // { codigo, nome, area } ou null
+
+  useEffect(() => {
+    let vivo = true
+    componentesDoAno(codigoAno)
+      .then((lista) => vivo && setComponentes({ estado: 'pronto', lista }))
+      .catch(() => vivo && setComponentes({ estado: 'erro', lista: [] }))
+    return () => {
+      vivo = false
+    }
+  }, [codigoAno])
 
   // Fecha ao clicar fora do CARD (mousedown) ou ao pressionar Esc. Usamos o card
   // (anchorRef), não só o balão: assim clicar no próprio card apenas alterna (o
@@ -36,6 +51,11 @@ function MateriaPopover({ ano, onClose, onVerGrafo, placement = 'baixo', anchorR
   }, [onClose, anchorRef])
 
   const paraCima = placement === 'cima'
+
+  let aviso = null
+  if (componentes.estado === 'carregando') aviso = 'Carregando os componentes…'
+  else if (componentes.estado === 'erro') aviso = 'Não foi possível carregar os componentes agora.'
+  else if (!componentes.lista.length) aviso = 'Esta turma ainda não tem componentes no grafo.'
 
   return (
     <div
@@ -94,11 +114,37 @@ function MateriaPopover({ ano, onClose, onVerGrafo, placement = 'baixo', anchorR
         </button>
       </div>
 
-      {/* CTA (G11 → N9): abre a página de grafos com a consulta da turma */}
+      {/* chips dos componentes curriculares do ano (N19): um de cada vez;
+          clicar de novo no escolhido o solta */}
+      {aviso ? (
+        <p aria-live="polite" style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--muted)' }}>
+          {aviso}
+        </p>
+      ) : (
+        <div role="group" aria-label="Componentes curriculares" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+          {componentes.lista.map((c) => {
+            const sel = escolhido?.codigo === c.codigo
+            return (
+              <button
+                key={c.codigo}
+                type="button"
+                aria-pressed={sel}
+                onClick={() => setEscolhido(sel ? null : c)}
+                className={sel ? 'eg-materia-chip eg-materia-chip--sel' : 'eg-materia-chip'}
+              >
+                {c.nome}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* CTA (G11 → N19): abre a busca da página de grafos já filtrada */}
       <button
         type="button"
         className="eg-grafo-filtrar"
-        onClick={() => onVerGrafo?.()}
+        onClick={() => onVerGrafo?.(escolhido)}
+        title={escolhido ? `Abre a busca com ${ano} e ${escolhido.nome}` : `Abre a busca com ${ano}`}
         style={{
           display: 'flex',
           alignItems: 'center',

@@ -180,6 +180,24 @@ export async function componentesDaArea(ano, area) {
   return emOrdem(linhas)
 }
 
+// todos os componentes do ano (de qualquer área), cada um com a sua área — o
+// balão da turma na Home (N19), que abre a busca já com o ano, a área e o
+// componente escolhidos
+const COMPONENTES_DO_ANO = `MATCH (a:Ano {codigo: $ano})-[:TEM_AREA]->(ar:AreaConhecimento)-[:TEM_COMPONENTE]->(c:ComponenteCurricular)
+WHERE EXISTS { (c)-[:TEM_UNIDADE]->()-[:TEM_OBJETO]->()-[:DESENVOLVE]->(h)<-[:DESENVOLVE_HABILIDADE]-(a) }
+RETURN c.codigo AS codigo, c.nome AS nome, ar.codigo AS area`
+
+/**
+ * @param {string} ano  código do Ano (ex.: 'EF1')
+ * @returns {Promise<{ codigo: string, nome: string, area: string }[]>}  em
+ *   ordem alfabética (`area`: o código da área do componente, ex.: 'CN')
+ */
+export async function componentesDoAno(ano) {
+  const { linhas } = await executarCypher(COMPONENTES_DO_ANO, { ano }, { descricao: 'Home · componentes da turma' })
+  const area = new Map(linhas.map((l) => [String(l.codigo ?? ''), String(l.area ?? '')]))
+  return emOrdem(linhas).map((c) => ({ ...c, area: area.get(c.codigo) }))
+}
+
 // o recorte: uma linha por (habilidade do ano, objeto, unidade) do componente
 const RECORTE = `MATCH (:Ano {codigo: $ano})-[:DESENVOLVE_HABILIDADE]->(h)
       <-[:DESENVOLVE]-(o)<-[:TEM_OBJETO]-(u)<-[:TEM_UNIDADE]-(:ComponenteCurricular {codigo: $componente})

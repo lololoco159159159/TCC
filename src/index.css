@@ -377,6 +377,30 @@ input::placeholder {
 
 /* ---- Popover de matérias (balão da grade "Explore por série") ---- */
 
+/* chips dos componentes curriculares da turma (N19: voltaram, com os dados do
+   Neo4j — o visual é o do protótipo, que saíra na limpeza L2) */
+.eg-materia-chip {
+  font: 400 13.5px/1 'Figtree', sans-serif;
+  color: var(--body);
+  background: var(--pill-bg);
+  border: 1px solid var(--pill-border);
+  border-radius: 999px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.eg-materia-chip:hover {
+  border-color: var(--gold);
+}
+
+.eg-materia-chip--sel {
+  background: var(--grade-card-hover);
+  border-color: var(--green);
+  color: var(--text);
+  font-weight: 600;
+}
+
 .eg-materia-fechar {
   border: none;
   background: none;

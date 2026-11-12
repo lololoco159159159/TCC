@@ -8,8 +8,9 @@ import MateriaPopover from './MateriaPopover'
 // (fundo/borda dourada e texto escuro). Clicar abre o MateriaPopover ancorado
 // ao card — o grid não se mexe (o balão é position:absolute, fora do fluxo).
 // Só um card fica aberto por vez (estado no pai). O CTA do balão navega para a
-// página de grafos com a consulta da turma (aoVerGrafo).
-function GradeCard({ ano, aberto, onToggle, aoVerGrafo }) {
+// página de grafos com a busca já filtrada (aoVerGrafo recebe o componente
+// escolhido no balão, ou null — N19). `codigoAno`: o código do Ano no Neo4j.
+function GradeCard({ ano, codigoAno, aberto, onToggle, aoVerGrafo }) {
   const [hover, setHover] = useState(false)
   const [placement, setPlacement] = useState('baixo')
   const cardRef = useRef(null)
@@ -50,6 +51,7 @@ function GradeCard({ ano, aberto, onToggle, aoVerGrafo }) {
       {aberto && (
         <MateriaPopover
           ano={ano}
+          codigoAno={codigoAno}
           placement={placement}
           anchorRef={cardRef}
           onClose={() => onToggle(null)}

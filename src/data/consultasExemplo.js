@@ -15,7 +15,8 @@
 // D22 (2026-11-11): o Ano chega ao componente pela área — Ano → AreaConhecimento
 // → ComponenteCurricular (era Ano → Disciplina).
 
-// "ano direto p habilidade" — também é a consulta do "Ver o grafo desta turma"
+// "ano direto p habilidade" (até a N19 era também a consulta do "Ver o grafo desta
+// turma" da Home, que hoje abre a busca já filtrada)
 export const CONSULTA_ANO_HABILIDADES = `MATCH p = (:Ano)-[:DESENVOLVE_HABILIDADE]->()
 RETURN p`
 

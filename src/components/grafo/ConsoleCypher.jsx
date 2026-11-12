@@ -63,9 +63,9 @@ const STATUS = {
 }
 
 // `consultaInicial`: o texto com que a caixa começa, como se tivesse sido
-// digitado — a consulta com que a página abriu (N9, o "Ver o grafo desta turma"
-// da Home) ou a última da busca do professor (N14: a página remonta o console
-// com `key` para escrevê-la)
+// digitado — a última consulta da busca do professor (N14: a página remonta o
+// console com `key` para escrevê-la). Até a N19 também a consulta com que a
+// página abria pelo "Ver o grafo desta turma" da Home, que hoje abre a busca.
 function ConsoleCypher({ status, resultado, erro, aoExecutar, consultaInicial }) {
   const [texto, setTexto] = useState(consultaInicial || '')
   const campo = useRef(null)

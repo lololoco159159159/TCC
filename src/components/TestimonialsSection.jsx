@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import depoimentos from '../data/depoimentos'
 import { anosDoGrafo } from '../data/resumoGrafo'
-import { CONSULTA_ANO_HABILIDADES } from '../data/consultasExemplo'
 import GradeCard from './GradeCard'
 
 // Seção "Quem ensina, sabe o que funciona." — depoimentos + grade de séries.
@@ -17,12 +16,6 @@ import GradeCard from './GradeCard'
 const N = depoimentos.length
 const clamp01 = (x) => Math.max(0, Math.min(1, x))
 const dois = (n) => String(n).padStart(2, '0')
-
-// N9 — consulta que o "Ver o grafo desta turma" abre na página de grafos: o
-// exemplo "ano direto p habilidade" (src/data/consultasExemplo.js; decisão do
-// autor). Hoje o grafo só tem o 1.º ano; quando EF2, EF3… chegarem, ela trará
-// todos os anos — aí vale filtrar pelo `codigo` do card.
-const CONSULTA_DA_TURMA = CONSULTA_ANO_HABILIDADES
 
 function TestimonialsSection({ onGrafos }) {
   const zoneRef = useRef(null)
@@ -44,9 +37,12 @@ function TestimonialsSection({ onGrafos }) {
     }
   }, [])
 
-  // "Ver o grafo desta turma" (G11 → N9): navega para a página de grafos já
-  // executando a consulta da turma no console (o App a entrega à página)
-  const verGrafoDaTurma = () => onGrafos?.({ consulta: CONSULTA_DA_TURMA })
+  // "Ver o grafo desta turma" (G11 → N9 → N19): navega para a página de grafos
+  // com a busca do professor já filtrada — o ano da turma e, se um componente
+  // foi escolhido no balão, a área e o componente (o App os entrega à página).
+  // Até a N19 ele executava a consulta "ano direto" no console.
+  const verGrafoDaTurma = (codigoAno) => (componente) =>
+    onGrafos?.({ busca: { ano: codigoAno, area: componente?.area || '', componente: componente?.codigo || '' } })
 
   // Progresso de scroll por rAF (imune a throttling de evento), como em GraphSection.
   useEffect(() => {
@@ -200,9 +196,10 @@ function TestimonialsSection({ onGrafos }) {
                     <GradeCard
                       key={a.codigo}
                       ano={a.nome || a.codigo}
+                      codigoAno={a.codigo}
                       aberto={anoAberto === a.codigo}
                       onToggle={(aberto) => setAnoAberto(aberto ? a.codigo : null)}
-                      aoVerGrafo={verGrafoDaTurma}
+                      aoVerGrafo={verGrafoDaTurma(a.codigo)}
                     />
                   ))
                 : null}

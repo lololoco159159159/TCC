@@ -916,6 +916,11 @@ consultas de teste da orientadora, que viraram as perguntas)
 >   parâmetros por matéria.
 > - **O resto do fluxo vale como está:** as três consultas para montar as opções, o recorte
 >   inteiro, o filtro no navegador e a amarração do ano pelas habilidades.
+>
+> **N19 (2026-11-12):** o botão da Home (a N15 previa) foi feito: o balão da turma lista os
+> componentes do ano, e "Ver o grafo desta turma" abre a busca já com o ano, a área e o
+> componente — o professor escolhe a pergunta. A busca hoje é Ano → Área → Componente →
+> Pergunta (D22).
 
 **O problema.** O professor precisa achar no grafo o que vai ensinar — o caminho de uma
 habilidade, uma unidade temática inteira, as habilidades de um ano — **sem saber
