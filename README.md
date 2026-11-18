@@ -114,7 +114,6 @@ src/
 └── index.css           # design system (variáveis de tema, classes .eg-*)
 ```
 
-A estrutura completa, arquivo por arquivo, está no §7 do [ESTADO_ATUAL.md](ESTADO_ATUAL.md).
 
 ---
 

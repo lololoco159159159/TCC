@@ -21,6 +21,8 @@ import { LINK_BNCC } from '../data/links'
 // 2026-11-18 (reunião com a orientadora — D23): "Para escolas" virou "Fórum",
 // entrou "Ontologias", e "BNCC" leva à página oficial do MEC numa aba nova. O
 // item ativo vale para as três páginas internas (grafos, forum, ontologias).
+// 2026-11-18 (pedido do autor): "Ajuda" saiu e entrou "Home", no meio da nav —
+// Grafos · BNCC · Home · Fórum · Ontologias —, ativo na própria Home.
 
 // largura do espaço reservado ao conteúdo de conta; cada página centraliza
 // seu conteúdo (de largura natural) no meio dele
@@ -72,13 +74,15 @@ function SiteHeader({ paginaAtiva, onHome, onGrafos, onForum, onOntologias, chil
         <a className="eg-link-nav" href={LINK_BNCC} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
           BNCC
         </a>
+        <ItemNav ativo={paginaAtiva === 'home'} ao={onHome}>
+          Home
+        </ItemNav>
         <ItemNav ativo={paginaAtiva === 'forum'} ao={onForum}>
           Fórum
         </ItemNav>
         <ItemNav ativo={paginaAtiva === 'ontologias'} ao={onOntologias}>
           Ontologias
         </ItemNav>
-        <span className="eg-link-nav">Ajuda</span>
       </nav>
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 14, minWidth: 0 }}>

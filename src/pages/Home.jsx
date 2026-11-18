@@ -13,7 +13,7 @@ function Home({ onLogin, onSignup, onGrafos, onForum, onOntologias }) {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {/* ============ HEADER (compartilhado com a página de grafos) ============ */}
-      <SiteHeader onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias}>
+      <SiteHeader paginaAtiva="home" onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias}>
         <BotoesConta onLogin={onLogin} onSignup={onSignup} />
       </SiteHeader>
 

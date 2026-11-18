@@ -93,18 +93,12 @@ function Footer({ onSignup, onGrafos, onForum, onOntologias, vidro = false }) {
             >
               Apoio
             </span>
-            <a href="#" className="eg-footer-link">
-              Central de ajuda
-            </a>
             <span className="eg-footer-link" onClick={onForum}>
               Fórum
             </span>
             <span className="eg-footer-link" onClick={onOntologias}>
               Ontologias
             </span>
-            <a href="#" className="eg-footer-link">
-              Contato
-            </a>
           </nav>
         </div>
       </div>
