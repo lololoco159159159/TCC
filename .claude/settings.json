@@ -45,7 +45,10 @@
       "Bash(sed -n '/^### 4.6 Limpeza do código/,/^### 4.7/p' ESTADO_ATUAL.md | head -140)",
       "Bash(awk -F: '$1>2700')",
       "Bash(awk '/^## D[0-9]+/{if\\(t!=\"\"\\)print t\" -> monografia:\"m; t=$0; m=0} /^\\\\*\\\\*Monografia\\\\*\\\\*/{m=1} END{print t\" -> monografia:\"m}' guia/DECISOES.md)",
-      "Bash(awk '/^## D[0-9]+/{if\\(t!=\"\"\\)print substr\\(t,1,8\\)\" m=\"m; t=$0; m=0} /^\\\\*\\\\*Monografia\\\\*\\\\*/{m=1} END{print substr\\(t,1,8\\)\" m=\"m}' guia/DECISOES.md)"
+      "Bash(awk '/^## D[0-9]+/{if\\(t!=\"\"\\)print substr\\(t,1,8\\)\" m=\"m; t=$0; m=0} /^\\\\*\\\\*Monografia\\\\*\\\\*/{m=1} END{print substr\\(t,1,8\\)\" m=\"m}' guia/DECISOES.md)",
+      "Bash(awk -F/ '{print $1}')",
+      "Bash(grep -v \":0$\")",
+      "Bash(git check-ignore *)"
     ],
     "additionalDirectories": [
       "/home/lorenzo/tcc_implementacao/TCC"

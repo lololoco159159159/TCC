@@ -22,5 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Anotações de trabalho e configurações locais (ficam só no computador)
 CLAUDE.md
 implemente.txt
+ESTADO_ATUAL.md
+guia/
+.claude/
+skills-lock.json
