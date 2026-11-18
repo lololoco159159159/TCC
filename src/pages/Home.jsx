@@ -4,43 +4,17 @@ import GraphSection from '../components/GraphSection'
 import StatsBand from '../components/StatsBand'
 import TestimonialsSection from '../components/TestimonialsSection'
 import Footer from '../components/Footer'
+import BotoesConta from '../components/BotoesConta'
 
 // Home — landing de scroll longo (protótipo final): header + hero "Conhecimento
 // conectado" + grafo-globo interativo + banda de estatísticas + depoimentos (que
 // revelam a grade "Encontre as habilidades da sua turma.") + footer.
-function Home({ onLogin, onSignup, onGrafos }) {
+function Home({ onLogin, onSignup, onGrafos, onForum, onOntologias }) {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {/* ============ HEADER (compartilhado com a página de grafos) ============ */}
-      <SiteHeader onGrafos={onGrafos}>
-        <span
-          onClick={onLogin}
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            color: 'var(--text)',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Entrar
-        </span>
-        <button
-          onClick={onSignup}
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            color: '#fff',
-            background: 'var(--green)',
-            padding: '8px 16px',
-            borderRadius: 999,
-            border: 'none',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Criar conta
-        </button>
+      <SiteHeader onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias}>
+        <BotoesConta onLogin={onLogin} onSignup={onSignup} />
       </SiteHeader>
 
       {/* Seção 1: hero "Conhecimento conectado." */}
@@ -57,7 +31,7 @@ function Home({ onLogin, onSignup, onGrafos }) {
       <TestimonialsSection onGrafos={onGrafos} />
 
       {/* Footer: fim do site */}
-      <Footer onSignup={onSignup} onGrafos={onGrafos} />
+      <Footer onSignup={onSignup} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias} />
     </div>
   )
 }

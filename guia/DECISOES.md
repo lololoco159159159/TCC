@@ -689,6 +689,10 @@ não admitem refiltragem automática no servidor."
 [src/components/GradeCard.jsx](src/components/GradeCard.jsx),
 [src/components/MateriaPopover.jsx](src/components/MateriaPopover.jsx)
 
+> **Revista pela D25 (2026-11-12, N19):** com o ComponenteCurricular no grafo (D22), as
+> matérias voltaram ao balão como **componentes curriculares vindos do Neo4j**, e o botão
+> deixou de executar a consulta no console: agora abre a busca já filtrada.
+
 **O problema.** A Home exibia números e séries do mock (37 habilidades, 8 componentes
 curriculares, 5.º–9.º ano, 8 matérias no balão). O grafo real da orientadora é, por
 ora, uma versão resumida — só o 1.º ano de Matemática, sem nó de componente
@@ -920,7 +924,7 @@ consultas de teste da orientadora, que viraram as perguntas)
 > **N19 (2026-11-12):** o botão da Home (a N15 previa) foi feito: o balão da turma lista os
 > componentes do ano, e "Ver o grafo desta turma" abre a busca já com o ano, a área e o
 > componente — o professor escolhe a pergunta. A busca hoje é Ano → Área → Componente →
-> Pergunta (D22).
+> Pergunta (D22). Registro completo, com o parágrafo de monografia: **D25**.
 
 **O problema.** O professor precisa achar no grafo o que vai ensinar — o caminho de uma
 habilidade, uma unidade temática inteira, as habilidades de um ano — **sem saber
@@ -1353,5 +1357,456 @@ unidades de ΔE em todas as deficiências consideradas."
 
 ---
 
-*Última atualização: 2026-11-12. Novas decisões: adicionar ao fim da lista como
-D<N+1>, seguindo o formato do cabeçalho — **sempre com o parágrafo de monografia**.*
+## D23 — Fórum e Ontologias: telas só de front-end, com conteúdo ilustrativo, e a BNCC pelo link oficial (revê a nota da D17)
+
+**Quando:** 2026-11-18 (reunião com a orientadora; decisões do autor), etapas P1–P3
+(ESTADO_ATUAL.md §4.7) · **Onde:** [src/pages/Forum.jsx](src/pages/Forum.jsx),
+[src/pages/Ontologias.jsx](src/pages/Ontologias.jsx),
+[src/data/forum.js](src/data/forum.js), [src/data/ontologias.js](src/data/ontologias.js),
+[src/data/links.js](src/data/links.js),
+[src/components/SiteHeader.jsx](src/components/SiteHeader.jsx),
+[src/components/Footer.jsx](src/components/Footer.jsx),
+[src/components/CabecalhoPagina.jsx](src/components/CabecalhoPagina.jsx),
+[src/components/BotoesConta.jsx](src/components/BotoesConta.jsx), [src/App.jsx](src/App.jsx)
+
+**O problema.** A orientadora pediu duas telas novas:
+- **Um fórum**, em que os professores escrevem e dialogam em conversas abertas;
+- **Uma página de ontologias**, para o site disponibilizar as ontologias criadas por ela.
+
+E, no menu, a BNCC deveria levar à página oficial. O pedido era "só o básico do básico,
+mas bonito", sem back-end. Só que um fórum sem servidor não tem onde guardar mensagens,
+o site não tem contas (D2), as ontologias reais ainda não estavam prontas, e a D17
+proíbe dados locais **do grafo**.
+
+**A decisão.**
+1. **Telas só de front-end, com conteúdo ilustrativo separado da interface.** As
+   categorias, os tópicos e as mensagens do fórum ficam em `forum.js`, e as ontologias em
+   `ontologias.js`, no molde dos depoimentos (`depoimentos.js`).
+   - **Não fere a D17:** não é dado do grafo, é conteúdo editorial — a mesma exceção do
+     globo da Home.
+   - **Sem pessoa real:** os autores são fictícios e genéricos.
+   - **Avisos na tela:** as duas páginas dizem que o conteúdo é de exemplo.
+2. **O Fórum tem a lista de conversas e a conversa** (decisão do autor; na revisão do
+   mesmo dia, as categorias e a coluna lateral saíram: "só os tópicos em discussão").
+   Clicar numa conversa a abre. A conversa é desenhada como um **caminho no grafo** —
+   cada mensagem é um nó (o avatar do autor) sobre uma aresta — e termina numa caixa
+   **"Responder"**, o próximo nó, tracejado.
+   - A resposta entra na tela como "Você", só na memória da página, e a página avisa
+     que as respostas ainda não são salvas.
+   - A busca e o "Novo tópico", que a primeira versão mostrava desligados ("em breve"),
+     saíram na revisão: num fórum de exemplo, eram botões que não faziam nada.
+3. **As Ontologias são exemplos** (5), cada um marcado como exemplo, com o "Baixar"
+   desligado. Para entrarem as reais, basta editar `ontologias.js`: com o campo
+   `arquivo` preenchido, o botão passa a baixar o arquivo.
+4. **O modelo visual é o do Clube do Hardware, na paleta do EduGraph:**
+   - **Fórum:** a lista de conversas com a última mensagem e os participantes. Na
+     revisão, ficou só ela, com os códigos da BNCC discutidos em cada conversa marcados
+     com o pontinho de Habilidade do grafo.
+   - **Ontologias:** a ideia da área de downloads, em cartões com o formato numa aba de
+     arquivo.
+   - **Estilo:** tokens, sem biblioteca nova (D8); tema escuro e A/A funcionam sem
+     ajuste.
+5. **Navegação:**
+   - **"Para escolas" virou "Fórum"**, no header e no rodapé, e entrou "Ontologias".
+   - **"BNCC"** leva à página oficial do MEC, numa aba nova.
+   - **Item ativo:** o sublinhado do header passou a valer para as três páginas
+     internas.
+   - **Reuso:** o par Entrar/Criar conta virou um componente.
+
+**Alternativas rejeitadas.**
+- **(a) Um fórum funcional com armazenamento no navegador (`localStorage`):** pareceria
+  um fórum de verdade, mas cada pessoa veria só as próprias mensagens — enganoso para uma
+  ferramenta de diálogo.
+- **(b) Usar um serviço externo de fórum ou de comentários:** dependência e dados de
+  terceiros, fora do escopo pedido.
+- **(c) Esperar as ontologias reais para fazer a página:** o pedido era entregar a tela;
+  os dados entram depois, sem mexer no código.
+- **(d) Copiar a aparência do Clube do Hardware à risca:** o pedido era o modelo de
+  organização; cores e tipografia seguem a identidade do EduGraph.
+
+**Para a banca.** *"O fórum e a página de ontologias foram pedidos como telas de
+interface, para mostrar onde o projeto vai crescer. Por isso o conteúdo é de exemplo e
+está separado do código da tela, como os depoimentos da Home: quando houver servidor para
+o fórum e as ontologias reais estiverem prontas, troca-se o arquivo de dados, e a tela
+fica igual. A própria tela avisa que é uma prévia."*
+
+**Monografia** *(cap. de Implementação, seção da interface — ou de trabalhos futuros):*
+"Além da exploração do grafo, a interface passou a incluir duas áreas voltadas à
+comunidade docente: um fórum de discussão e um repositório de ontologias. Ambas foram
+implementadas, nesta etapa, apenas na camada de apresentação, com conteúdo ilustrativo
+mantido em módulos de dados separados dos componentes, de modo que a substituição por
+dados reais — mensagens persistidas por um serviço de fórum e os arquivos das ontologias
+produzidas no projeto — não exija alterações na interface. A organização visual
+inspirou-se em fóruns de grande circulação no país — uma lista das conversas em
+andamento e, em cada conversa, a identificação de seus participantes —, adaptada à
+identidade visual da aplicação. A
+página informa explicitamente o caráter de prévia do conteúdo. O acesso à Base Nacional
+Comum Curricular passou a se dar pela página oficial do Ministério da Educação."
+
+---
+
+## D24 — O grafo cresce por comandos entregues ao autor: validados só com EXPLAIN, idempotentes, com conferência e desfazer, e com o texto da BNCC conferido
+
+**Quando:** desde a carga de Ciências do 1º ano (N16, 2026-11-03), repetido na N17
+(2026-11-11/12); regra do autor ("não insira no grafo; me mande o comando para eu testar
+antes") · **Onde:** os comandos ficam fora do repositório (ESTADO_ATUAL.md §4.5), e a forma
+de cada um está no ESTADO (N16; N17 — "Decisões do comando" e "A forma do comando"); o modo
+somente leitura em [src/data/neo4j.js](src/data/neo4j.js); o modelo em
+[guia/reuniao_orientadora.txt](guia/reuniao_orientadora.txt)
+
+**O problema.** O modelo do grafo mudou duas vezes em poucas semanas: a Disciplina e os
+rótulos por matéria (N16), e depois a Área de conhecimento, o ComponenteCurricular e o 2º
+ano (N17). Cada mudança pedia um comando Cypher que **grava** na base — e a base é a do
+projeto da orientadora, mantida pelo autor. Um comando errado estragaria o que o site
+mostra e a confiança no conteúdo: um nó duplicado, uma relação apagada a mais, o texto de
+uma habilidade diferente do da BNCC. Ao mesmo tempo, o site só lê (D14, D17): ele não pode
+ser o caminho para gravar.
+
+**A decisão.**
+1. **Quem faz o quê:** o assistente escreve o comando; **o autor o lê, roda no Neo4j
+   Browser e confere**. Nem o site nem o assistente gravam nada. O site pede o modo somente
+   leitura (`accessMode: 'READ'`) em toda consulta; impor isso também no proxy fica para a
+   publicação.
+2. **Validação sem gravar:** antes da entrega, o comando passa só por `EXPLAIN`, pelo
+   mesmo proxy de leitura.
+   - O Neo4j planeja a execução sem executar nada: confere a sintaxe, os rótulos e as
+     relações, e devolve os avisos.
+   - As contagens de nós e relações, antes e depois, confirmam que a base não mudou.
+   - Foi assim que apareceu, num dos comandos, o aviso de **produto cartesiano** (dois
+     padrões soltos no mesmo `MATCH`). Ele foi corrigido separando o `MATCH`, antes da
+     entrega.
+3. **A forma do comando:** `MERGE` em tudo, no molde do script de carga da orientadora.
+   - **Idempotência:** rodar duas vezes não duplica nada.
+   - **Reaproveitamento:** o que já existe é usado de novo. Na N17, o componente Ciências e
+     as três unidades do 1º ano serviram ao 2º.
+   - Um comando por etapa.
+4. **O que vai junto:**
+   - Uma **conferência** com os números esperados. Na N17: de 59 para 75 nós, de 86 para
+     108 relações, e o rótulo `Disciplina` zerado.
+   - Um **desfazer**, que vale logo depois do teste.
+5. **O conteúdo da BNCC:** o texto de cada habilidade e de cada objeto foi conferido em três
+   fontes públicas que reproduzem a BNCC.
+   - Quando só uma fonte trazia o dado (os objetos de Ciências do 2º ano), o autor foi
+     avisado para conferir na página oficial.
+   - Valem as convenções da orientadora; por exemplo, um objeto com duas linhas na BNCC
+     fica num nó só, separado por "; ".
+
+**Alternativas rejeitadas.**
+- **(a) O site gravar no grafo** (um formulário de carga): exigiria credencial de escrita
+  no proxy e abriria a base a erros de qualquer visitante — o contrário do modo somente
+  leitura.
+- **(b) O assistente rodar o comando direto:** seria mais rápido, mas um erro mudaria os
+  dados da orientadora sem revisão humana, e a base deixaria de ser mantida pelo autor.
+- **(c) Recriar a base do zero a cada mudança:** mais simples de escrever, mas apagaria o
+  que tivesse sido acrescentado à mão e não deixaria conferir a diferença item por item.
+- **(d) Testar o comando numa cópia da base:** exigiria outro banco e outra instalação; o
+  `EXPLAIN` checa a sintaxe e o plano sem nada novo.
+
+**Para a banca.** *"Toda mudança no grafo foi feita por um comando escrito e validado sem
+gravar nada, só com o plano de execução do próprio Neo4j. Cada comando veio com a
+conferência dos números esperados e com o comando de desfazer, e quem rodou fui eu. Os
+comandos usam MERGE: rodar de novo não duplica nada. E os textos da BNCC foram conferidos
+em mais de uma fonte."*
+
+**Monografia** *(cap. de Metodologia, seção da construção da base de dados):*
+"A base de conhecimento evoluiu de forma incremental, acompanhando as revisões do modelo
+propostas pela orientação. Cada evolução foi expressa como um comando Cypher idempotente,
+baseado em `MERGE`, de modo que execuções repetidas não produzem duplicatas e os nós
+existentes são reaproveitados. Antes da execução, o comando foi submetido apenas à análise
+do plano de consulta (`EXPLAIN`), por um canal somente leitura, o que permitiu verificar a
+sintaxe e os padrões empregados sem alterar a base. Cada comando foi acompanhado de uma
+consulta de conferência, com as contagens esperadas de nós e relações, e de um comando de
+reversão; a execução coube ao autor, preservando a revisão humana sobre os dados. Os
+enunciados das habilidades e dos objetos de conhecimento foram transcritos da BNCC
+(BRASIL, 2018) e conferidos em mais de uma fonte."
+
+---
+
+## D25 — Da Home para a busca: o balão da turma lista os componentes do Neo4j e abre a busca já filtrada (revê D16)
+
+**Quando:** 2026-11-12, N19 (ESTADO_ATUAL.md, depois da N18), pedido do autor ·
+**Onde:** [src/components/MateriaPopover.jsx](src/components/MateriaPopover.jsx),
+[src/data/filtrosDeBusca.js](src/data/filtrosDeBusca.js) (`componentesDoAno`),
+[src/components/TestimonialsSection.jsx](src/components/TestimonialsSection.jsx),
+[src/App.jsx](src/App.jsx) (`buscaGrafos`), [src/pages/Grafos.jsx](src/pages/Grafos.jsx)
+(`buscaInicial`), [src/components/grafo/BuscaProfessor.jsx](src/components/grafo/BuscaProfessor.jsx)
+(`inicial`)
+
+**O problema.** Na N9 (D16), o balão do card de ano perdeu as matérias, que vinham do
+mock. O botão "Ver o grafo desta turma" passou a abrir a página de grafos executando no
+console uma consulta fixa: o Ano ligado direto às habilidades. Depois disso, três coisas
+mudaram:
+- A D20 decidiu não mostrar esse atalho Ano → Habilidade como resultado da busca, e a
+  consulta do botão o mostrava;
+- O modelo ganhou o ComponenteCurricular (D22), a condição que a D16 deixou para as
+  matérias voltarem;
+- A busca do professor (D19) passou a existir, e o caminho que vinha da Home passava por
+  fora dela.
+
+**A decisão.**
+1. **O balão lista os componentes do ano, vindos do Neo4j.** A função `componentesDoAno`
+   traz só os componentes que têm habilidade naquele ano, cada um com a sua área.
+   - Hoje: Ciências e Matemática no 1º ano; Ciências no 2º.
+   - Um chip de cada vez; clicar de novo solta.
+   - Há mensagens para carregando, para erro e para turma sem componentes.
+2. **O botão não executa consulta: entrega o estado inicial da busca.**
+   - Ele passa `{ ano, area, componente }` até a página de grafos, e os seletores da busca
+     já começam preenchidos. Falta o professor escolher a pergunta e os campos.
+   - Sem chip escolhido, vai só o ano.
+   - O palco abre no convite e o console vazio. A consulta antiga continua nos
+     "Exemplos…" do console.
+3. **O visual:** os chips voltaram com o desenho do protótipo, e a classe `.eg-materia-chip`
+   voltou ao CSS. Ela tinha saído na limpeza L2 (D26) por estar sem uso.
+
+**Alternativas rejeitadas.**
+- **(a) Manter a consulta fixa no console:** mostrava o atalho que a D20 tirou da busca e
+  pulava a busca, que é o caminho pensado para o professor.
+- **(b) Abrir já com uma pergunta executada** (por exemplo, "O ano inteiro nesta
+  matéria"): decidiria pelo professor o que ver. O pedido foi "faltando selecionar o
+  resto".
+- **(c) Uma lista de matérias no código:** voltaria a pôr dado do grafo no site (D17), e um
+  componente novo no Neo4j não apareceria sozinho.
+
+**Para a banca.** *"Da Home, o professor escolhe a turma e o componente e cai na busca já
+filtrada: só falta dizer o que quer ver. Os componentes do balão vêm do grafo, então um
+componente novo no Neo4j aparece ali sem mexer no código."*
+
+**Monografia** *(cap. de Implementação, seção da página inicial e da navegação):*
+"A página inicial passou a servir de ponto de entrada para a busca guiada. Ao selecionar
+uma turma, o professor visualiza os componentes curriculares disponíveis para aquele ano,
+obtidos por consulta ao banco de grafos e, portanto, atualizados automaticamente à medida
+que a base cresce. A escolha de um componente não dispara uma consulta: ela é transmitida à
+página do grafo como estado inicial dos filtros, de modo que o professor encontra o ano, a
+área de conhecimento e o componente já selecionados e precisa apenas indicar a pergunta de
+seu interesse. Com isso, os caminhos de navegação convergem para uma mesma interface de
+busca."
+
+---
+
+## D26 — Limpeza do código (L0–L2): inventário com o knip, remoção só com zero ocorrências e nenhuma mudança de comportamento
+
+**Quando:** 2026-10-24, etapas L0–L2 (ESTADO_ATUAL.md §4.6); ferramentas e escopo
+escolhidos pelo autor · **Onde:** [src/index.css](src/index.css),
+[src/data/estiloGrafo.js](src/data/estiloGrafo.js),
+[src/data/extrairGrafo.js](src/data/extrairGrafo.js),
+[src/data/resumoGrafo.js](src/data/resumoGrafo.js),
+[src/data/simulacaoForcas.js](src/data/simulacaoForcas.js),
+[src/data/vizinhanca.js](src/data/vizinhanca.js), [vite.config.js](vite.config.js),
+[README.md](README.md)
+
+**O problema.** A integração com o Neo4j (N1–N11) trocou o mock e o SPARQL pelo Cypher e
+deixou sobras:
+- Variáveis de cor e classes CSS sem uso;
+- Exportações que ninguém importava;
+- Comentários desatualizados;
+- Um README que ainda falava em Fuseki, SPARQL e dados estáticos.
+
+Código morto confunde quem lê, inclusive a banca, e o README contradizia o sistema. Mas uma
+limpeza também pode quebrar o que funciona: muitos nomes de estilo são montados em tempo de
+execução (`eg-forma-${…}`, `var(--no-${…})`), e nenhuma ferramenta os enxerga.
+
+**A decisão.**
+1. **Primeiro o inventário, sem apagar nada (L1).**
+   - O **knip** listou arquivos, exportações e dependências sem uso.
+   - Como o knip não lê CSS, as classes `.eg-*`, as variáveis `--*` e os `@keyframes`
+     foram procurados um a um no código.
+   - As props dos componentes foram analisadas com o parser do Babel que já vinha no
+     projeto.
+   - O knip dá **candidatos, não veredito**.
+2. **Remoção só com zero ocorrências (L2),** inclusive em textos montados, e só da lista
+   aprovada pelo autor:
+   - Dois tokens e uma classe CSS;
+   - A palavra `export` de seis constantes usadas só no próprio arquivo;
+   - Comentários desatualizados;
+   - As partes factuais do README.
+3. **Restrições:**
+   - Nenhuma mudança de comportamento ou visual. Bug achado vira anotação, sem correção
+     junto.
+   - Nenhuma dependência nova.
+   - Nenhum contrato renomeado: as chaves do `localStorage`, a API do canvas, o
+     `/api/cypher` e as consultas da orientadora.
+   - Comentários que explicam o porquê ficam: são material do TCC.
+   - Fora do escopo: o globo da Home, os depoimentos e os algoritmos da física
+     (verificados como idênticos aos do Neo4j Browser, D18).
+4. **Revisão do diff** com o `/simplify` do Claude Code, sob as mesmas regras. O revisor de
+   "altitude" achou três frases do README que o código não sustentava, e elas foram
+   corrigidas.
+5. **Mantidas de propósito:**
+   - A tabela vazia `ESTILO_RELACAO`, ponto de extensão: uma relação nova seria uma linha.
+   - A exportação de `ErroCypher`, contrato do cliente.
+
+   O plano previa mais etapas (reaproveitar componentes, reorganizar arquivos), que o autor
+   cortou na L2.
+
+**Resultado:**
+- Lint 0/0.
+- JS igual: 291,35 kB.
+- CSS de 8,60 para 8,08 kB.
+- O knip passou a apontar só as duas exportações mantidas.
+
+Na N19 (D25), os chips do balão voltaram, e a classe `.eg-materia-chip` voltou junto: a
+regra vale para o estado do código no dia, e trazer algo de volta é simples.
+
+**Alternativas rejeitadas.**
+- **(a) Skills de código morto da comunidade:** todas tinham menos de 130 instalações, e a
+  maioria só embrulha o knip.
+- **(b) O plugin oficial `code-simplifier`:** impõe convenções que conflitam com as do
+  projeto, como `function` no lugar de arrow, tipos do TypeScript e apagar comentários
+  "óbvios".
+- **(c) Apagar o que parece sem uso numa busca simples:** as classes `.eg-forma-*` e as
+  variáveis `--no-*` são montadas em tempo de execução e pareceriam sem uso. Apagá-las
+  quebraria o modo de formas e as cores do grafo.
+- **(d) Seguir com a reorganização de arquivos:** mais risco que benefício antes das
+  funcionalidades novas (decisão do autor).
+
+**Para a banca.** *"Depois da integração, o código passou por uma limpeza com uma regra
+simples: só sai o que tem zero ocorrências, e nada muda na tela. A ferramenta de análise deu
+os candidatos, e a decisão foi item por item, com busca no código, porque parte dos nomes de
+estilo é montada em tempo de execução."*
+
+**Monografia** *(cap. de Metodologia, seção de qualidade e manutenção do código):*
+"Concluída a integração com o banco de grafos, o código-fonte passou por uma etapa de
+limpeza, conduzida com o critério de não alterar o comportamento nem a aparência da
+aplicação. O inventário de artefatos sem uso combinou a análise estática da ferramenta
+knip, que identifica arquivos, exportações e dependências não referenciados, com buscas
+textuais nas folhas de estilo, fora do alcance da ferramenta, e com a análise sintática das
+propriedades dos componentes. Os resultados foram tratados como candidatos, e não como
+veredito: um item só foi removido quando não apresentava nenhuma ocorrência no código,
+inclusive em identificadores construídos dinamicamente. A documentação do repositório foi
+atualizada para refletir a arquitetura vigente. A etapa reduziu a folha de estilos em cerca
+de 6% sem alterar o código JavaScript gerado."
+
+---
+
+## D27 — Como as etapas foram verificadas: o código do site contra o Neo4j real, as telas em HTML e o teste de tela do autor, sem instalar nada
+
+**Quando:** desde a integração (N1–N11); sistematizado nas etapas N12–N19 e P1–P3
+(2026-10-24 a 2026-11-18) · **Onde:** cada etapa do ESTADO_ATUAL.md tem um parágrafo
+"Verificado" e um "Teste do autor"; os scripts ficam fora do repositório, na pasta
+temporária do assistente
+
+**O problema.** O projeto não tem framework de testes. Trazer um (Vitest, Jest, Testing
+Library, Playwright) seria dependência nova (D8), e a regra do autor é não instalar nem
+baixar programas sem pedir, o que inclui o navegador do Playwright. Ao mesmo tempo, o que
+mais pode quebrar são as **consultas**: a busca gera Cypher a partir das escolhas do
+professor (D19), e um erro numa consulta só aparece com os dados reais. Testar contra um
+dublê testaria o dublê (D17).
+
+**A decisão.** Quatro camadas, nenhuma com instalação nova:
+1. **Estática:** `npm run lint` (0 erros, 0 avisos) e `npm run build` em toda etapa, com o
+   tamanho do bundle anotado no ESTADO, para acompanhar o crescimento.
+2. **Dados, contra o Neo4j real:** scripts em Node sobem o próprio Vite do projeto e
+   carregam os módulos do site (`ssrLoadModule`). Assim roda **o mesmo código** que o
+   navegador roda — as funções que montam as consultas e carregam o recorte —, pelo mesmo
+   proxy e contra a base de verdade. Os scripts conferem:
+   - Os números esperados;
+   - Que cada ano só enxerga as suas habilidades, mesmo com nós compartilhados (D22);
+   - Que nenhuma pergunta volta com aviso do Neo4j, como o de produto cartesiano (D28).
+
+   Na N18 foram 46 verificações, repetidas a cada etapa seguinte.
+3. **Telas, em HTML e sem navegador:** os componentes são renderizados com o
+   `react-dom/server` do projeto, e os scripts conferem textos, atributos (ARIA, `href`,
+   `target`, `disabled`) e estrutura. Foi assim que apareceu, no Fórum, um `<span>` filho
+   direto de um `<ol>` (HTML inválido), corrigido antes da entrega.
+4. **Tela, pelo autor:** o que os scripts não veem vai para uma lista de passos do "Teste do
+   autor", feita no navegador: leiaute, cores, física, foco do teclado e tema escuro.
+
+**Limitação assumida:** os scripts não ficam no repositório. Para repetir a verificação, é
+preciso recriá-los a partir do que o ESTADO descreve; isso aconteceu uma vez, quando a pasta
+temporária foi limpa de um dia para o outro. Transformá-los numa suíte `npm test` é trabalho
+futuro e depende de aceitar uma dependência de testes.
+
+**Alternativas rejeitadas.**
+- **(a) Vitest ou Jest com Testing Library:** é o caminho padrão, mas traz dependências
+  novas. Fica como trabalho futuro, se o autor quiser.
+- **(b) Capturas de tela com Playwright:** exige baixar um navegador inteiro, e o teste
+  visual é do autor.
+- **(c) Testar contra dados simulados:** testaria a simulação, não a base (D17).
+- **(d) Só o teste manual:** é lento, e uma consulta errada numa pergunta pouco usada
+  passaria.
+
+**Para a banca.** *"Cada etapa foi verificada em camadas: análise estática; o código do
+próprio site rodando contra a base real, conferindo os números e a ausência de avisos do
+Neo4j; e as telas renderizadas em HTML, para checar texto e acessibilidade. O que só se vê
+na tela, eu testei no navegador, com uma lista de passos por etapa."*
+
+**Monografia** *(cap. de Metodologia, seção de verificação e testes — ou de Resultados):*
+"A verificação de cada etapa combinou quatro níveis, sem a introdução de dependências
+adicionais no projeto. No nível estático, aplicaram-se a análise do ESLint e a compilação de
+produção, com o registro do tamanho dos artefatos gerados. No nível dos dados, scripts
+executados em Node.js carregaram os próprios módulos da aplicação por meio do servidor de
+desenvolvimento do Vite e os executaram contra o banco de grafos real, verificando as
+contagens esperadas, o isolamento entre anos escolares e a ausência de notificações do Neo4j
+nas consultas geradas. No nível da interface, os componentes foram renderizados em HTML no
+servidor (`react-dom/server`), o que permitiu verificar textos, atributos de acessibilidade
+e a validade da estrutura sem um navegador. Por fim, os aspectos visuais e interativos foram
+avaliados manualmente pelo autor, segundo roteiros de teste definidos para cada etapa."
+
+---
+
+## D28 — Ajustes de uso na página de grafos: o A/A na coluna do palco, a Tabela que não abre sozinha, a "Ligação" sem produto cartesiano e "Componente" no lugar de "Matéria"
+
+**Quando:** 2026-10-18 (A/A), 2026-10-24 (Tabela e Ligação) e 2026-11-12 (Componente,
+N18), todos a pedido do autor · **Onde:**
+[src/components/FontSizeWidget.jsx](src/components/FontSizeWidget.jsx),
+[src/pages/Grafos.jsx](src/pages/Grafos.jsx), [src/App.jsx](src/App.jsx),
+[src/data/filtrosDeBusca.js](src/data/filtrosDeBusca.js) (pergunta `ligacao`),
+[src/components/grafo/BuscaProfessor.jsx](src/components/grafo/BuscaProfessor.jsx)
+
+**O problema.** Quatro incômodos pequenos, achados no uso:
+- O widget de tamanho da letra (A/A), fixo no meio da lateral direita do site, caía em cima
+  da coluna de controles do grafo;
+- Quando a consulta não trazia nós, a página trocava sozinha para a aba Tabela (regra da
+  N5);
+- A pergunta "Ligação entre duas habilidades" fazia o Neo4j devolver o aviso de **produto
+  cartesiano**. Era inofensivo (1 nó × 1 nó), mas aparecia no console;
+- A busca chamava de "Matéria" o que o modelo e a BNCC chamam de componente curricular.
+
+**A decisão.**
+1. **O A/A vira parte da coluna do palco.**
+   - Na página de grafos, o widget é uma versão compacta, com botões do tamanho dos outros
+     controles, no fim da coluna, depois da paleta. O App não monta o widget fixo ali.
+   - A coluna existe sempre (sem grafo, só com o A/A) e fica na camada dos overlays de
+     estado (z-index 32), sem nível novo na escala (D11).
+   - Com a paleta aberta, o A/A some, e volta ao fechar.
+   - Na Home e nas telas de conta, nada muda.
+2. **A interface não troca de aba sozinha.** O resultado fica aberto ou fechado como a
+   pessoa deixou. Sem nós, a aba Grafo mostra o palco vazio, e a linha de status diz "grafo:
+   0 nós, 0 relações".
+3. **As pontas da "Ligação" vão para o WHERE do próprio `shortestPath`,** num `MATCH` só.
+   - Quatro variantes foram testadas contra a base real: `MATCH` só, dois `MATCH`, `WITH`
+     entre eles e o `SHORTEST 1` do GQL. Todas tiram o aviso e dão o mesmo caminho.
+   - A escolhida tem o tempo da antiga, de 1 a 3 ms.
+   - O teste de dados (D27) passou a conferir que nenhuma pergunta volta com aviso.
+4. **"Matéria" virou "Componente"** na barra da busca: o termo do modelo (D22) e da BNCC.
+
+**Alternativas rejeitadas.**
+- **(a) Subir o z-index do A/A:** o widget ficaria por cima e esconderia controles do grafo.
+- **(b) Afastar a coluna do A/A:** gastaria espaço do palco.
+- **(c) Manter a troca para a Tabela, com um aviso:** a mudança de tela continuaria sem a
+  pessoa pedir, e a linha de status já diz que não há nós.
+- **(d) Ignorar o aviso de produto cartesiano:** o console mostra os avisos do Neo4j a
+  quem usa, e um aviso que não é problema ensina a ignorar os que são.
+- **(e) Manter "Matéria", mais coloquial:** o professor encontra "componente curricular" na
+  BNCC, e a busca, o grafo e a Home usariam palavras diferentes para a mesma coisa.
+
+**Para a banca.** *"São ajustes que vieram do uso. O controle de tamanho da letra deixou de
+cobrir os controles do grafo. A tela não troca mais de aba sem a pessoa pedir. Uma consulta
+deixou de gerar aviso no Neo4j. E a busca passou a usar o vocabulário da BNCC."*
+
+**Monografia** *(cap. de Implementação, seção da página de grafos — ou de Acessibilidade):*
+"O uso da aplicação motivou ajustes pontuais de interação. O controle de tamanho da fonte
+foi incorporado à coluna de controles da área do grafo, eliminando a sobreposição entre
+ambos. A interface deixou de alternar automaticamente para a visualização tabular quando
+uma consulta não retorna nós, em consonância com o princípio de previsibilidade das WCAG 2.1
+(diretriz 3.2, 'Previsível'). A consulta de caminho mínimo entre duas habilidades foi
+reescrita para eliminar a notificação de produto cartesiano emitida pelo Neo4j, sem perda
+de desempenho. Por fim, a terminologia da busca foi alinhada à da BNCC, com o emprego de
+'componente curricular' em lugar de 'matéria'."
+
+---
+
+*Última atualização: 2026-11-18 (D24–D28: o registro do que faltava — comandos do grafo,
+N19, limpeza L0–L2, método de verificação e ajustes da página de grafos; a D23 foi
+acertada à revisão do Fórum). Novas decisões: adicionar ao fim da lista como D<N+1>,
+seguindo o formato do cabeçalho — **sempre com o parágrafo de monografia**.*

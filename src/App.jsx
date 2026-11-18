@@ -3,6 +3,8 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Grafos from './pages/Grafos'
+import Forum from './pages/Forum'
+import Ontologias from './pages/Ontologias'
 import FontSizeWidget from './components/FontSizeWidget'
 import { useTheme } from './context/useTheme'
 
@@ -11,6 +13,8 @@ import { useTheme } from './context/useTheme'
 // N10: saiu o deep-link do mock (?serie=…&disciplina=… abria a página Grafos
 // com um recorte): a página não lia esses parâmetros desde a N3, e o link para
 // os grafos volta com os filtros novos, sobre o modelo do Neo4j.
+// 2026-11-18 (D23): telas 'forum' e 'ontologias' (só front-end), alcançadas pelo
+// header e pelo rodapé de todas as páginas.
 function App() {
   const [tela, setTela] = useState('home')
   // a busca com que a página de grafos abre (N19: o "Ver o grafo desta turma" da
@@ -28,6 +32,9 @@ function App() {
     window.scrollTo(0, 0)
   }
 
+  // navegação para as telas da D23, igual em todas as páginas (header e rodapé)
+  const nav = { onForum: () => irPara('forum'), onOntologias: () => irPara('ontologias') }
+
   let pagina
   if (tela === 'login') {
     pagina = (
@@ -35,6 +42,7 @@ function App() {
         onHome={() => irPara('home')}
         onSignup={() => irPara('signup')}
         onGrafos={() => irPara('grafos')}
+        {...nav}
       />
     )
   } else if (tela === 'signup') {
@@ -45,6 +53,7 @@ function App() {
         onLogin={() => irPara('login')}
         onSignup={() => irPara('signup')}
         onGrafos={() => irPara('grafos')}
+        {...nav}
       />
     )
   } else if (tela === 'grafos') {
@@ -54,6 +63,18 @@ function App() {
         onSignup={() => irPara('signup')}
         onGrafos={() => irPara('grafos')}
         buscaInicial={buscaGrafos}
+        {...nav}
+      />
+    )
+  } else if (tela === 'forum' || tela === 'ontologias') {
+    const Pagina = tela === 'forum' ? Forum : Ontologias
+    pagina = (
+      <Pagina
+        onHome={() => irPara('home')}
+        onLogin={() => irPara('login')}
+        onSignup={() => irPara('signup')}
+        onGrafos={() => irPara('grafos')}
+        {...nav}
       />
     )
   } else {
@@ -62,6 +83,7 @@ function App() {
         onLogin={() => irPara('login')}
         onSignup={() => irPara('signup')}
         onGrafos={(opcoes) => irPara('grafos', opcoes)}
+        {...nav}
       />
     )
   }

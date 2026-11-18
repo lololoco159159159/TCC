@@ -41,7 +41,14 @@
       "Bash(mkdir -p /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad)",
       "Bash(grep -n \"no-disciplina\\\\|eg-forma-hexagono\\\\|eg-forma-losango {$\\\\|hexágono é\" src/index.css)",
       "Bash(node /tmp/claude-1000/-home-lorenzo-tcc-implementacao-TCC/e1940f0c-059d-47b8-a681-009d439399e5/scratchpad/teste_n18.mjs)",
-      "Bash(grep -n \"\\\\*\\\\*N17\\\\*\\\\*\\\\|\\\\*\\\\*N18\\\\*\\\\*\\\\|^#### N17\\\\|^\\\\*Situação: o comando\\\\|^### 4.6 Limpeza\\\\|Modelo do grafo \\(N16, D21\\)\\\\|Estrutura:\\\\*\\\\* \\\\`\\(:Ano\\)-\\\\[:TEM_DISCIPLINA\\\\|5.ª cor, a da Disciplina\\\\|Matéria nova\\\\*\\\\* carregada\\\\|Cores:\\\\*\\\\* saem do começo\\\\|^Última atualização\" ESTADO_ATUAL.md)"
+      "Bash(grep -n \"\\\\*\\\\*N17\\\\*\\\\*\\\\|\\\\*\\\\*N18\\\\*\\\\*\\\\|^#### N17\\\\|^\\\\*Situação: o comando\\\\|^### 4.6 Limpeza\\\\|Modelo do grafo \\(N16, D21\\)\\\\|Estrutura:\\\\*\\\\* \\\\`\\(:Ano\\)-\\\\[:TEM_DISCIPLINA\\\\|5.ª cor, a da Disciplina\\\\|Matéria nova\\\\*\\\\* carregada\\\\|Cores:\\\\*\\\\* saem do começo\\\\|^Última atualização\" ESTADO_ATUAL.md)",
+      "Bash(sed -n '/^### 4.6 Limpeza do código/,/^### 4.7/p' ESTADO_ATUAL.md | head -140)",
+      "Bash(awk -F: '$1>2700')",
+      "Bash(awk '/^## D[0-9]+/{if\\(t!=\"\"\\)print t\" -> monografia:\"m; t=$0; m=0} /^\\\\*\\\\*Monografia\\\\*\\\\*/{m=1} END{print t\" -> monografia:\"m}' guia/DECISOES.md)",
+      "Bash(awk '/^## D[0-9]+/{if\\(t!=\"\"\\)print substr\\(t,1,8\\)\" m=\"m; t=$0; m=0} /^\\\\*\\\\*Monografia\\\\*\\\\*/{m=1} END{print substr\\(t,1,8\\)\" m=\"m}' guia/DECISOES.md)"
+    ],
+    "additionalDirectories": [
+      "/home/lorenzo/tcc_implementacao/TCC"
     ]
   }
 }

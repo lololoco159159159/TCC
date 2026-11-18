@@ -13,7 +13,7 @@
 > formato do cabeçalho — inclusive o **parágrafo de monografia** (tom acadêmico,
 > com o capítulo onde encaixa).
 
-Última atualização: 2026-11-12.
+Última atualização: 2026-11-18.
 
 ---
 
@@ -2873,7 +2873,7 @@ no canvas só roda no navegador — falta o teste do autor** (a lista "Como test
 incluindo: arrastar um nó e ver que ele fica preso; a escolha do layout sobrevive ao
 recarregar; o medidor da P1 em 0 desenhos/s com o grafo parado nos dois modos.
 
-**Ajuste pedido pelo autor (2026-10-18) — o A/A na coluna de controles do palco.** O
+**Ajuste pedido pelo autor (2026-10-18) — o A/A na coluna de controles do palco (D28).** O
 widget de tamanho da letra era o fixo do site inteiro (montado pelo App, no meio da
 lateral direita, z-index 120) e, na página de grafos, caía em cima da coluna de
 controles. Agora:
@@ -3463,7 +3463,7 @@ Verificado:
 3. O mesmo na "Ligação" (os dois `elementId` escritos) e no "Teste de erro" (a consulta
    com o erro).
 
-##### Ajuste: a "Ligação" sem o aviso de produto cartesiano (2026-10-24)
+##### Ajuste: a "Ligação" sem o aviso de produto cartesiano (2026-10-24) · D28
 
 O autor viu, no resultado da "Ligação entre duas habilidades", o aviso do Neo4j
 `Neo.ClientNotification.Statement.CartesianProduct` ("This query builds a cartesian product
@@ -3490,7 +3490,7 @@ RETURN p
 - O teste de dados (49 verificações) agora também confere que **nenhuma pergunta volta
   com aviso do Neo4j**.
 
-##### Ajuste: resultado sem grafo não abre a Tabela sozinho (2026-10-24)
+##### Ajuste: resultado sem grafo não abre a Tabela sozinho (2026-10-24) · D28
 
 Pedido do autor: quando a consulta não trazia nós, a página abria sozinha o resultado na
 aba **Tabela** (regra da N5: "sem nada para desenhar, a aba Grafo não serve"). A linha saiu
@@ -3621,7 +3621,7 @@ Verificado:
 9. **"Ligação entre duas habilidades"** (EF01CI01 → EF01CI06): o caminho sobe até
    "Ciências". O "Teste de erro" continua dando o card de erro.
 
-#### N17 — Área de conhecimento, ComponenteCurricular, 2º Ano e Ciências do 2º ano · FEITA (2026-11-12)
+#### N17 — Área de conhecimento, ComponenteCurricular, 2º Ano e Ciências do 2º ano · FEITA (2026-11-12) · D22, D24
 
 *Situação: o comando, a conferência e o desfazer foram entregues ao autor em 2026-11-12,
 validados só com `EXPLAIN` pelo proxy. **O autor rodou** e o banco ficou exatamente como
@@ -3819,7 +3819,7 @@ Verificado:
    paleta.
 7. **Console, "Exemplos… → arvore completa":** os dois anos, nenhum nó cinza.
 
-#### N19 — Home: os componentes da turma e a busca já filtrada (2026-11-12)
+#### N19 — Home: os componentes da turma e a busca já filtrada (2026-11-12) · D25
 
 Pedido do autor: "ao selecionar o ano na Home e clicar em ver o grafo dessa turma,
 apareçam os componentes curriculares desse ano como opção, como existia antes; ao clicar,
@@ -3870,7 +3870,7 @@ As **46 da N18** passaram de novo.
 4. Sem escolher chip: a busca abre só com o ano.
 5. Clicar no chip escolhido de novo o solta; Esc ou clicar fora fecha o balão.
 
-### 4.6 Limpeza do código — etapas (L0–L2) · FINALIZADO
+### 4.6 Limpeza do código — etapas (L0–L2) · FINALIZADO · D26
 
 *Planejado em 2026-10-24, a pedido do autor; **finalizado na L2, em 2026-10-24**, por
 decisão do autor — as etapas seguintes que estavam no plano (reaproveitar componentes,
@@ -4002,6 +4002,130 @@ com o botão "Ver o grafo desta turma"), a página de grafos nos dois temas (pop
 com a opção selecionada em verde-claro; hover do "Expandir conexões deste nó") e Entrar/Criar
 conta; e ler o README.
 
+### 4.7 Fórum, Ontologias e o link da BNCC (P1–P3) · FEITO (2026-11-18) · D23
+
+*Pedido da orientadora na reunião de 2026-11-18. Plano aprovado pelo autor, com as
+decisões dele: o Fórum tem capa e conversa, com uma caixa "Responder" que só vale na
+tela; as Ontologias são exemplos ilustrativos; o rodapé muda igual ao header. São telas
+**só de front-end**, "o básico do básico, mas bonito", no modelo do Clube do Hardware.*
+
+- [x] **P1 — Navegação.**
+  - **Header:** a nav virou **Grafos · BNCC · Fórum · Ontologias · Ajuda** ("Para
+    escolas" saiu).
+  - **BNCC:** é um link para
+    https://www.gov.br/mec/pt-br/cne/base-nacional-comum-curricular-bncc, numa aba nova
+    (`LINK_BNCC` em [links.js](src/data/links.js)).
+  - **Item ativo:** o sublinhado verde vale para Grafos, Fórum e Ontologias.
+  - **Rodapé:** "BNCC Computação" (sem link) virou "BNCC" com o mesmo link, e "Para
+    escolas" virou "Fórum", mais "Ontologias".
+  - **Plumbing:** [App.jsx](src/App.jsx) ganhou as telas `forum` e `ontologias`, e as
+    navegações (`onForum`, `onOntologias`) chegam a todas as páginas.
+  - **Reuso:** o par Entrar/Criar conta saiu da Home para
+    [BotoesConta.jsx](src/components/BotoesConta.jsx), usado nas três páginas.
+- [x] **P2 — Fórum** ([Forum.jsx](src/pages/Forum.jsx), dados em
+  [forum.js](src/data/forum.js)).
+  - **Faixa de título** ([CabecalhoPagina.jsx](src/components/CabecalhoPagina.jsx)):
+    migalha, "Fórum dos *professores*.", o aviso "Prévia: as conversas são de exemplo e
+    as respostas ainda não são salvas", e uma busca e "Novo tópico" desligados ("em
+    breve").
+  - **Capa:** caixas com a barra de seção verde.
+    - **Categorias** (4): ícone, título, descrição, contadores e a última mensagem.
+      Clicar numa filtra a lista; "ver todos ×" volta.
+    - **Tópicos** (8): fixo primeiro, depois os mais vistos; autor, categoria,
+      etiquetas, respostas e visitas.
+  - **Coluna lateral:** "Em alta" e "Estatísticas".
+  - **Conversa de um tópico** (componente `Conversa`): o cartão do autor à esquerda
+    (avatar com iniciais, cor fixa por nome), a mensagem à direita, numerada. Embaixo, a
+    caixa **Responder**: desligada enquanto vazia, e a resposta entra como "Você", só na
+    memória da página. "← Voltar ao fórum" no topo.
+  - **Conteúdo:** ilustrativo, com autores fictícios e genéricos (como os depoimentos).
+- [x] **P3 — Ontologias** ([Ontologias.jsx](src/pages/Ontologias.jsx), dados em
+  [ontologias.js](src/data/ontologias.js)).
+  - **Faixa de título:** "Ontologias do *currículo*.", com o aviso "Exemplos
+    ilustrativos: as ontologias reais entram em breve".
+  - **Filtros em chips** (os da N19): Todas · Geral · Matemática · Ciências.
+  - **Lista de arquivos:** ícone com o selo do formato (OWL verde, TTL dourado), título,
+    selo "exemplo", descrição, os metadados (componente · anos · classes · versão ·
+    tamanho · data) e **"Baixar" desligado** ("arquivo em breve").
+  - **Coluna "Sobre as ontologias":** o que é, OWL e TTL, e um link para o grafo.
+  - **Trocar pelas reais:** editar `ontologias.js`. Com `arquivo` preenchido (ex.:
+    `'/ontologias/bncc.owl'` em `public/`), o botão vira um link de download.
+- **CSS** ([index.css](src/index.css)): `.eg-forum-linha`/`.eg-ontologia-linha` (o
+  efeito ao passar o mouse), `.eg-forum-voltar`, `.eg-forum-limpar`,
+  `.eg-forum-resposta`. Tudo com tokens: tema escuro e A/A funcionam.
+
+Verificado:
+- `npm run lint` (0/0), `npm run build` (JS 312,00 → **338,94 kB**; CSS 9,28 → 10,20
+  kB) e `npm run dev` (200 nos módulos novos).
+- **Teste do assistente em HTML — 11 verificações** (Node, Vite e React do projeto, sem
+  instalar nada):
+  - **Navegação:** a nav na ordem; a BNCC com o link do gov.br e `target="_blank"`;
+    "Para escolas" fora do site; o rodapé com Fórum, Ontologias e BNCC.
+  - **Item ativo** certo em cada página (nenhum na Home); Login e Signup com a nav nova.
+  - **Fórum:** as 4 categorias, os 8 tópicos, a lateral, o aviso, a busca e "Novo
+    tópico" desligados, o fixo primeiro. A conversa com as 3 mensagens e "Responder"
+    desligado vazio e ligado com texto; a resposta nova como "Você".
+  - **Ontologias:** os 5 exemplos marcados, com "Baixar" desligado; os chips e o aviso.
+- **Incidente:** um `npx prettier --version` rodado para checar a formatação baixou o
+  Prettier no cache do npm (`~/.npm/_npx`), fora do projeto. Foi apagado em seguida e
+  não foi usado. Fica o registro, pela regra de não baixar nada sem perguntar.
+
+**Revisão de 2026-11-18** (pedido do autor: o Fórum "sem muita coisa, só os tópicos em
+discussão, sem categorias", e uma revisão visual das duas telas com a skill
+frontend-design). Mantém a identidade do site (tokens, Spectral, Figtree, JetBrains
+Mono).
+- **Fórum** ([Forum.jsx](src/pages/Forum.jsx), [forum.js](src/data/forum.js)):
+  - **Saíram** as categorias, a coluna lateral ("Em alta", "Estatísticas"), a busca, o
+    "Novo tópico", o tópico fixo e as visitas.
+  - **A página é a lista das 7 conversas em andamento**, da mais recente para a mais
+    antiga, num cartão cada:
+    - os códigos da BNCC discutidos, com o pontinho da cor de Habilidade do grafo;
+    - "última mensagem há…";
+    - o título em Spectral;
+    - o começo da última mensagem;
+    - os participantes empilhados e o nº de respostas.
+  - **Clicar no cartão abre a conversa.** Ao passar o mouse, o cartão sobe e aparece
+    "Entrar na conversa →".
+  - **Assinatura: a conversa é um caminho no grafo.** Cada mensagem é um nó (o avatar)
+    sobre uma aresta vertical na cor das arestas do canvas; a 1.ª leva "abriu a
+    conversa"; a caixa "Sua resposta" é o próximo nó, tracejado em verde.
+  - **Volta:** "← Todas as conversas", no topo.
+- **Ontologias** ([Ontologias.jsx](src/pages/Ontologias.jsx)):
+  - **Cartões em duas colunas** (uma abaixo de 760px), cada um com:
+    - o formato numa aba de arquivo presa ao topo (OWL verde, TTL dourado);
+    - "exemplo" e o título em Spectral;
+    - a descrição e uma ficha (Componente · Anos · Classes · Versão);
+    - o tamanho, a data e "Baixar OWL/TTL" (desligado).
+  - **Chips e contador:** os chips com o contador de ontologias ao lado.
+  - **Formatos:** a coluna "Sobre" virou uma nota no fim da página.
+- **CSS:**
+  - **Saíram** `.eg-forum-linha`, `.eg-ontologia-linha` e `.eg-forum-limpar`.
+  - **Entraram** `.eg-forum-topico` e `.eg-forum-entrar`, o foco visível pelo teclado
+    (cartões, chips, botões), `.eg-ontologias-grade` (responsiva) e o respeito a
+    "reduzir movimento".
+- **Verificado:**
+  - `npm run lint` (0/0) e `npm run build` (JS 338,94 → **331,33 kB**; CSS 10,20 →
+    10,99 kB).
+  - **Teste em HTML — 11 verificações:** a navegação; o Fórum só com as 7 conversas
+    (nada de categorias, lateral ou busca), códigos com o pontinho, a conversa com os nós
+    sobre a aresta (fora do `<ol>`, HTML válido), o nó tracejado e a resposta virando
+    mais um nó; as Ontologias com os 5 cartões, as abas, a ficha, os chips e a nota.
+
+**Teste do autor:**
+1. Navegar entre Home, Grafos, Fórum e Ontologias pelo header e pelo rodapé; o item da
+   página fica sublinhado.
+2. "BNCC" (header e rodapé) abre o gov.br numa aba nova.
+3. **Fórum:**
+   - A página mostra só as conversas.
+   - Clicar numa abre a conversa (o caminho de nós).
+   - Escrever e "Responder": a mensagem vira mais um nó, como "Você".
+   - "← Todas as conversas" volta.
+4. **Ontologias:**
+   - Os cartões com a aba do formato.
+   - Os chips filtram, e "Baixar" está desligado.
+   - Numa janela estreita, uma coluna.
+5. Tema escuro, A/A e navegação por Tab (o contorno verde de foco) nas duas telas.
+
 ## 5. Como ler o protótipo final (arquivo "bundled")
 
 > **A pasta `design/` foi retirada do repositório em 2026-10-15.** Os protótipos eram
@@ -4114,11 +4238,13 @@ src/
 │   ├── GraphSection.jsx       # seção 2: grafo-globo interativo (Etapa 2); nós ilustrativos no código (nota na D17)
 │   ├── StatsBand.jsx          # seção 3: banda de estatísticas, 3 contadores — dados do Neo4j (Etapa 3; N9)
 │   ├── TestimonialsSection.jsx # seção 4: depoimentos + cortina que revela a grade (um card por Ano do Neo4j);
-│   │                          #   "Ver o grafo desta turma" abre os grafos com a consulta da turma (Etapas 4-6; N9)
-│   ├── MateriaPopover.jsx     # balão do card de série: só o CTA desde a N9 (matérias voltam com o componente)
+│   │                          #   "Ver o grafo desta turma" abre a busca já filtrada (Etapas 4-6; N9; N19)
+│   ├── MateriaPopover.jsx     # balão do card de série: chips dos componentes do ano (Neo4j) + o CTA (N19)
+│   ├── BotoesConta.jsx        # par Entrar / Criar conta do header (Home, Fórum, Ontologias — P1)
+│   ├── CabecalhoPagina.jsx    # faixa de título das páginas de conteúdo: migalha, título, frase, aviso (P2/P3)
 │   ├── Footer.jsx             # footer / fim do site (Etapa 5 — FEITO)
-│   ├── SiteHeader.jsx         # header único (Home + Grafos): nav no centro geométrico, slot de conta
-│   │                          #   de largura fixa (ajuste de UX de 2026-07-12)
+│   ├── SiteHeader.jsx         # header único de todas as páginas: nav Grafos · BNCC (gov.br) · Fórum ·
+│   │                          #   Ontologias · Ajuda no centro geométrico (P1), slot de conta de largura fixa
 │   ├── HeroSection.jsx        # hero "Conhecimento conectado." da Home (R7b)
 │   ├── GradeCard.jsx          # card de série da grade: o nome do Ano ("1º Ano"); abre o MateriaPopover (R7b; N9)
 │   ├── LogosInstitucionais.jsx # par de <a> LabOtim/UFES dos headers (R6; o Footer tem variação própria)
@@ -4150,7 +4276,7 @@ src/
 ├── data/
 │   ├── neo4j.js               # cliente Cypher do Neo4j: executarCypher() via proxy /api/cypher (N2);
 │   │                          #   observarConsultas(): anuncia cada consulta concluída (gaveta Cypher, N10)
-│   ├── estiloGrafo.js         # tabela de estilo: por NÍVEL (Ano, Disciplina, Unidade, Objeto, Habilidade —
+│   ├── estiloGrafo.js         # tabela de estilo: por NÍVEL (Ano, Área, Componente, Unidade, Objeto, Habilidade —
 │   │                          #   cor, raio, forma, legenda, tooltip), tirado do começo do rótulo (N16, D21);
 │   │                          #   por tipo de relação (tracejado); padrão cinza p/ rótulo de fora do modelo
 │   ├── simulacaoForcas.js     # física do "Force-based layout" do Neo4j Browser (forças do d3; idêntica — N11, D18)
@@ -4158,8 +4284,8 @@ src/
 │   ├── resumoGrafo.js         # agregados da Home no Neo4j: habilidades, unidades temáticas, anos (N9;
 │   │                          #   contados pelas relações do modelo desde a N16)
 │   ├── filtrosDeBusca.js      # busca do professor (N12), sem tela: o modelo do grafo (as relações — N16),
-│   │                          #   filtro por texto (sem acento, todas as palavras), opções (anos, matérias do
-│   │                          #   ano — as Disciplinas, do Neo4j —, o recorte: 1 consulta, cache da visita), as
+│   │                          #   filtro por texto (sem acento, todas as palavras), opções (anos, áreas e
+│   │                          #   componentes do ano, do Neo4j — N18 —, o recorte: 1 consulta, cache da visita), as
 │   │                          #   9 perguntas com a consulta de cada uma e a consulta escrita (para o console)
 │   ├── consultasExemplo.js    # consultas Cypher de exemplo (menu do console) + a do "Ver o grafo desta
 │   │                          #   turma" + a do erro (o "Teste de erro" da busca); as de teste da orientadora,
@@ -4169,11 +4295,16 @@ src/
 │   ├── extrairGrafo.js        # resultado → nós + relações (puro) e as consultas extras do Browser:
 │   │                          #   pontas que faltam e limite de 300 nós; sem o "conectar nós" (N4, D20)
 │   ├── depoimentos.js         # 5 depoimentos (conteúdo editorial do protótipo; troca futura por Cypher)
+│   ├── forum.js               # conteúdo ILUSTRATIVO do Fórum: as conversas e as mensagens (P2, D23)
+│   ├── ontologias.js          # ontologias de EXEMPLO (P3, D23): trocar pelas reais = editar este arquivo
+│   ├── links.js               # links externos compartilhados (LINK_BNCC — P1)
 │   └── paletas.js             # paletas de daltonismo por nível, escolhidas por simulação (G9; refeitas na N6 — D15;
 │                              #   5.ª cor na N16 — D21; 6.ª, a da Área, na N18 — D22)
 ├── pages/
 │   ├── Home.jsx               # Header + Hero + GraphSection + StatsBand + Testimonials + Footer (Etapas 1-5 — FEITO)
 │   ├── Grafos.jsx             # página do grafo — console Cypher (N3) + grafo do Neo4j no canvas (N5) + estados + painel + expandir/desfazer + gaveta Cypher + perfil/prefs (§4.5)
+│   ├── Forum.jsx              # Fórum (só front-end): a lista de conversas + a conversa como caminho de nós (P2)
+│   ├── Ontologias.jsx         # Ontologias (só front-end): cartões com a aba do formato e filtros (P3)
 │   ├── Login.jsx              # card de vidro na MolduraConta; form acessível (A1–A5 — FEITO)
 │   └── Signup.jsx             # card de vidro na MolduraConta; form acessível (A1–A5 — FEITO)
 ├── assets/{ufes,labotim}.png  # logos institucionais (header e footer)

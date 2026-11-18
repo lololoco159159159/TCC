@@ -1,6 +1,7 @@
 import Logo from './Logo'
 import ThemeToggle from './ThemeToggle'
 import LogosInstitucionais from './LogosInstitucionais'
+import { LINK_BNCC } from '../data/links'
 
 // Header único do site (ajuste de 2026-07-12, a pedido do autor): Home e
 // página de grafos usam EXATAMENTE o mesmo cabeçalho — base compacta da página
@@ -17,11 +18,36 @@ import LogosInstitucionais from './LogosInstitucionais'
 // conta, botão de perfil do Grafos) fica CENTRALIZADO dentro do slot
 // (ajuste de 2026-07-13; antes era alinhado à direita/esticado).
 
+// 2026-11-18 (reunião com a orientadora — D23): "Para escolas" virou "Fórum",
+// entrou "Ontologias", e "BNCC" leva à página oficial do MEC numa aba nova. O
+// item ativo vale para as três páginas internas (grafos, forum, ontologias).
+
 // largura do espaço reservado ao conteúdo de conta; cada página centraliza
 // seu conteúdo (de largura natural) no meio dele
 const LARGURA_SLOT_CONTA = 180
 
-function SiteHeader({ paginaAtiva, onHome, onGrafos, children }) {
+const ESTILO_ATIVO = {
+  font: "600 14px/1 'Figtree', sans-serif",
+  color: 'var(--green)',
+  borderBottom: '2px solid var(--green)',
+  paddingBottom: 4,
+  cursor: 'default',
+}
+
+// item interno da nav: sublinhado verde na página dele; link nas outras
+function ItemNav({ ativo, ao, children }) {
+  return ativo ? (
+    <span style={ESTILO_ATIVO} aria-current="page">
+      {children}
+    </span>
+  ) : (
+    <span className="eg-link-nav" onClick={ao}>
+      {children}
+    </span>
+  )
+}
+
+function SiteHeader({ paginaAtiva, onHome, onGrafos, onForum, onOntologias, children }) {
   return (
     <header
       style={{
@@ -40,25 +66,18 @@ function SiteHeader({ paginaAtiva, onHome, onGrafos, children }) {
       </div>
 
       <nav style={{ display: 'flex', alignItems: 'center', gap: 20, whiteSpace: 'nowrap', flex: 'none' }}>
-        {paginaAtiva === 'grafos' ? (
-          <span
-            style={{
-              font: "600 14px/1 'Figtree', sans-serif",
-              color: 'var(--green)',
-              borderBottom: '2px solid var(--green)',
-              paddingBottom: 4,
-              cursor: 'default',
-            }}
-          >
-            Grafos
-          </span>
-        ) : (
-          <span className="eg-link-nav" onClick={onGrafos}>
-            Grafos
-          </span>
-        )}
-        <span className="eg-link-nav">BNCC</span>
-        <span className="eg-link-nav">Para escolas</span>
+        <ItemNav ativo={paginaAtiva === 'grafos'} ao={onGrafos}>
+          Grafos
+        </ItemNav>
+        <a className="eg-link-nav" href={LINK_BNCC} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+          BNCC
+        </a>
+        <ItemNav ativo={paginaAtiva === 'forum'} ao={onForum}>
+          Fórum
+        </ItemNav>
+        <ItemNav ativo={paginaAtiva === 'ontologias'} ao={onOntologias}>
+          Ontologias
+        </ItemNav>
         <span className="eg-link-nav">Ajuda</span>
       </nav>
 

@@ -45,7 +45,7 @@ function gravarSemAnim(valor) {
   }
 }
 
-function MolduraConta({ onHome, onGrafos, onSignup, trocaTexto, trocaAcao, onTrocar, children }) {
+function MolduraConta({ onHome, onGrafos, onForum, onOntologias, onSignup, trocaTexto, trocaAcao, onTrocar, children }) {
   const [semAnim, setSemAnim] = useState(lerSemAnim)
 
   function alternarSemAnim() {
@@ -63,7 +63,7 @@ function MolduraConta({ onHome, onGrafos, onSignup, trocaTexto, trocaAcao, onTro
 
       {/* header acima do canvas */}
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <SiteHeader onHome={onHome} onGrafos={onGrafos}>
+        <SiteHeader onHome={onHome} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias}>
           <span
             style={{
               font: "400 14px/1.3 'Figtree', sans-serif",
@@ -99,7 +99,7 @@ function MolduraConta({ onHome, onGrafos, onSignup, trocaTexto, trocaAcao, onTro
       </main>
 
       {/* footer aparece ao rolar; vidro (blur sobre o fundo de vértices) */}
-      <Footer onSignup={onSignup} onGrafos={onGrafos} vidro />
+      <Footer onSignup={onSignup} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias} vidro />
 
       {/* botão de acessibilidade fixo (só o toggle de animação/física) */}
       <BotaoAcessibilidade semAnim={semAnim} aoToggle={alternarSemAnim} />

@@ -1,12 +1,15 @@
 import Logo from './Logo'
 import labotim from '../assets/labotim.png'
 import ufes from '../assets/ufes.png'
+import { LINK_BNCC } from '../data/links'
 
 // Footer do EduGraph — fim do site (fiel ao protótipo final). Três faixas:
 // marca + colunas de links, parceiros institucionais (LabOtim / UFES) e rodapé
 // legal. Reaproveita o <Logo> (grafo de 9 nós + "EduGraph") e os logos já
 // extraídos em src/assets. "Criar conta" leva ao cadastro via onSignup;
 // "Explorar grafos" leva à página de grafos via onGrafos.
+// 2026-11-18 (D23): "BNCC" leva à página oficial do MEC; "Para escolas" virou
+// "Fórum" (onForum) e entrou "Ontologias" (onOntologias), como no header.
 //
 // Prop `vidro` (opt-in, default false — Home/Grafos ficam byte-idênticas):
 // nas telas de conta (A4), o footer flutua sobre o fundo de vértices e vira
@@ -14,7 +17,7 @@ import ufes from '../assets/ufes.png'
 // (`color-mix` 20% de --bg2 + blur 5px). Aplicar globalmente mudaria a cor
 // do footer na Home/Grafos (mix 20% sobre --bg2 ≠ --bg2 sólido) — por isso é
 // opt-in, não um novo padrão do componente.
-function Footer({ onSignup, onGrafos, vidro = false }) {
+function Footer({ onSignup, onGrafos, onForum, onOntologias, vidro = false }) {
   const larguraMax = 1040
 
   return (
@@ -71,8 +74,8 @@ function Footer({ onSignup, onGrafos, vidro = false }) {
             <span className="eg-footer-link" onClick={onGrafos}>
               Explorar grafos
             </span>
-            <a href="#" className="eg-footer-link">
-              BNCC Computação
+            <a href={LINK_BNCC} target="_blank" rel="noopener noreferrer" className="eg-footer-link">
+              BNCC
             </a>
             <span className="eg-footer-link" onClick={onSignup}>
               Criar conta
@@ -93,9 +96,12 @@ function Footer({ onSignup, onGrafos, vidro = false }) {
             <a href="#" className="eg-footer-link">
               Central de ajuda
             </a>
-            <a href="#" className="eg-footer-link">
-              Para escolas
-            </a>
+            <span className="eg-footer-link" onClick={onForum}>
+              Fórum
+            </span>
+            <span className="eg-footer-link" onClick={onOntologias}>
+              Ontologias
+            </span>
             <a href="#" className="eg-footer-link">
               Contato
             </a>

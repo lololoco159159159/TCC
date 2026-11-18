@@ -377,6 +377,112 @@ input::placeholder {
 
 /* ---- Popover de matérias (balão da grade "Explore por série") ---- */
 
+/* ---- Fórum e Ontologias (D23 — só front-end) ---- */
+
+/* cartão de conversa da lista do Fórum (o botão inteiro): ao passar o mouse, a
+   borda acende em verde, o cartão sobe 2px e o "Entrar na conversa →" aparece */
+.eg-forum-topico {
+  display: block;
+  width: 100%;
+  padding: 22px 24px 20px;
+  border: 1px solid var(--pill-border);
+  border-radius: 16px;
+  background: var(--pill-bg);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.eg-forum-topico:hover {
+  border-color: var(--green);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px -24px rgba(0, 0, 0, 0.45);
+}
+
+.eg-forum-entrar {
+  margin-left: auto;
+  font: 600 13px/1 'Figtree', sans-serif;
+  color: var(--green);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.eg-forum-topico:hover .eg-forum-entrar,
+.eg-forum-topico:focus-visible .eg-forum-entrar {
+  opacity: 1;
+  transform: none;
+}
+
+/* foco visível pelo teclado nos elementos clicáveis das duas páginas */
+.eg-forum-topico:focus-visible,
+.eg-forum-voltar:focus-visible,
+.eg-materia-chip:focus-visible,
+.eg-ontologia-card .eg-grafo-filtrar:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+
+/* Ontologias: cartões em duas colunas; uma no celular */
+.eg-ontologias-grade {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+@media (max-width: 760px) {
+  .eg-ontologias-grade {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eg-forum-topico,
+  .eg-forum-entrar {
+    transition: none;
+  }
+
+  .eg-forum-topico:hover {
+    transform: none;
+  }
+}
+
+/* "← Todas as conversas" (pílula com contorno) */
+.eg-forum-voltar {
+  padding: 11px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--pill-border);
+  background: var(--pill-bg);
+  font: 600 13.5px/1 'Figtree', sans-serif;
+  color: var(--body);
+  cursor: pointer;
+}
+
+.eg-forum-voltar:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+/* caixa "Responder" — a mesma linguagem da caixa do console */
+.eg-forum-resposta {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--pill-border);
+  border-radius: 12px;
+  background: var(--bg);
+  font: 400 14.5px/1.55 'Figtree', sans-serif;
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+}
+
+.eg-forum-resposta:focus {
+  border-color: var(--green);
+  background: var(--pill-bg);
+}
+
 /* chips dos componentes curriculares da turma (N19: voltaram, com os dados do
    Neo4j — o visual é o do protótipo, que saíra na limpeza L2) */
 .eg-materia-chip {

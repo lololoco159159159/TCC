@@ -25,7 +25,7 @@ function emailValido(valor) {
 // autocomplete/name, spellCheck off no e-mail, foco no 1.º campo com erro e
 // aria-invalid/role=alert nas mensagens. O cadastro real (back-end) é
 // trabalho futuro (D2); por ora apenas valida os campos e simula o envio.
-function Signup({ onHome, onLogin, onSignup, onGrafos }) {
+function Signup({ onHome, onLogin, onSignup, onGrafos, onForum, onOntologias }) {
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -63,6 +63,8 @@ function Signup({ onHome, onLogin, onSignup, onGrafos }) {
     <MolduraConta
       onHome={onHome}
       onGrafos={onGrafos}
+      onForum={onForum}
+      onOntologias={onOntologias}
       onSignup={onSignup}
       trocaTexto="Já tem conta?"
       trocaAcao="Entrar"
