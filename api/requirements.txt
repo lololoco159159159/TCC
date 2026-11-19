@@ -1,0 +1,5 @@
+# Dependências da API do EduGraph (versões fixas). Instalação: veja o README.
+fastapi==0.165.0      # o framework da API (rotas, validação e a documentação em /api/docs)
+uvicorn==0.54.0       # o servidor que roda a API
+httpx==0.28.1         # o cliente HTTP que fala com o Neo4j
+python-dotenv==1.2.4  # lê a configuração do .env.local

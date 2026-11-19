@@ -1,31 +1,22 @@
-import { Buffer } from 'node:buffer'
 import process from 'node:process'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// Proxy do Neo4j (N1 — ESTADO_ATUAL.md §4.5; decisão D14). O navegador chama
-// POST /api/cypher SEM credencial; o servidor do Vite repassa para a Query API
-// (/db/<banco>/query/v2) acrescentando o Authorization. A senha mora no
-// .env.local (ignorado pelo git) e é lida aqui, no processo Node — como as
-// variáveis NEO4J_* não têm o prefixo VITE_, o Vite não as embute no bundle.
-// Vale para `npm run dev` e `npm run preview`; no site publicado, o mesmo
-// caminho /api/cypher será atendido pelo proxy de produção (etapa futura).
-function proxyNeo4j(env) {
-  const url = env.NEO4J_URL || 'http://localhost:7474'
-  const banco = env.NEO4J_DATABASE || 'neo4j'
-  const usuario = env.NEO4J_USER || 'neo4j'
-  const senha = env.NEO4J_PASSWORD
-  const credencial = senha ? Buffer.from(`${usuario}:${senha}`).toString('base64') : null
+// Em desenvolvimento, o servidor do Vite repassa tudo o que começa com /api/
+// para a API do EduGraph (pasta api/, em Python — `npm run api`). É ela que
+// guarda a senha do Neo4j e impõe o modo somente leitura: o navegador nunca fala
+// direto com o banco, e nenhuma credencial passa por aqui. Vale para
+// `npm run dev` e `npm run preview`. O endereço da API vem de API_URL
+// (.env.local, opcional), com http://localhost:8000 como padrão.
+function proxyApi(env) {
+  const url = env.API_URL || 'http://localhost:8000'
   return {
     target: url,
     changeOrigin: true,
-    rewrite: () => `/db/${banco}/query/v2`,
-    // sobrescreve qualquer Authorization que venha do navegador
-    headers: credencial ? { Authorization: `Basic ${credencial}` } : {},
-    // Neo4j fora do ar: o padrão do Vite responde 500 com corpo vazio. Aqui a
-    // falha sai no MESMO formato de erro da Query API ({ errors: [{ code,
-    // message }] }), para o front tratar tudo de um jeito só. Este listener é
-    // registrado antes do listener do Vite, que então só loga a falha.
+    // API fora do ar: o padrão do Vite responde 500 com corpo vazio. Aqui a
+    // falha sai no MESMO formato de erro da API e do Neo4j ({ errors: [{ code,
+    // message }] }), para o site tratar tudo de um jeito só. Este listener é
+    // registrado antes do listener do Vite, que então só registra a falha.
     configure(proxy) {
       proxy.on('error', (err, _req, res) => {
         if (!res || !('writeHead' in res) || res.headersSent) return
@@ -34,8 +25,8 @@ function proxyNeo4j(env) {
           JSON.stringify({
             errors: [
               {
-                code: 'EduGraph.Proxy.Neo4jIndisponivel',
-                message: `Não foi possível conectar ao Neo4j em ${url} (${err.code || err.message}).`,
+                code: 'EduGraph.Proxy.ApiIndisponivel',
+                message: `Não foi possível conectar à API do EduGraph em ${url} (${err.code || err.message}). Ela está rodando? (npm run api)`,
               },
             ],
           }),
@@ -46,17 +37,19 @@ function proxyNeo4j(env) {
 }
 
 // https://vite.dev/config/
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ mode }) => {
   // prefixo '' = carrega TODAS as variáveis do .env.local, não só as VITE_*;
   // elas ficam neste processo Node e não chegam ao navegador
   const env = loadEnv(mode, process.cwd(), '')
-  if (command === 'serve' && !env.NEO4J_PASSWORD) {
-    console.warn('[neo4j] NEO4J_PASSWORD não definida — copie .env.example para .env.local e preencha a senha.')
-  }
-  const proxy = { '/api/cypher': proxyNeo4j(env) }
+  const proxy = { '/api/': proxyApi(env) }
   return {
     plugins: [react()],
-    server: { proxy },
+    server: {
+      proxy,
+      // o ambiente do Python da API (.venv) tem milhares de arquivos que o Vite
+      // não precisa vigiar
+      watch: { ignored: ['**/.venv/**'] },
+    },
     preview: { proxy },
   }
 })

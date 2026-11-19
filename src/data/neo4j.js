@@ -1,11 +1,12 @@
-// Cliente Cypher do EduGraph (N2 — ESTADO_ATUAL.md §4.5; decisão D14).
-// Única porta de entrada do front para o Neo4j: executarCypher() envia a
-// consulta ao proxy do próprio site (POST /api/cypher, N1), que acrescenta a
-// credencial e repassa à Query API do Neo4j — o navegador nunca vê a senha.
+// Cliente Cypher do EduGraph. Única porta de entrada do front para o Neo4j:
+// executarCypher() envia a consulta à API do próprio site (POST /api/cypher —
+// pasta api/, em Python), que acrescenta a credencial, impõe o modo somente
+// leitura e repassa à Query API do Neo4j — o navegador nunca vê a senha.
 //
-// Contrato com a Query API (conferido no Neo4j local em 2026-10-09 e 10-12):
-//  - corpo { statement, parameters, accessMode: 'READ' }: o modo leitura é
-//    imposto pelo próprio Neo4j (uma escrita falha com
+// Contrato com a Query API (conferido no Neo4j local em 2026-10-09 e 10-12; a
+// API do site repassa o pedido e a resposta sem mudar o formato):
+//  - corpo { statement, parameters, accessMode: 'READ' }: o site pede o modo
+//    leitura, e a API o impõe de qualquer forma (o Neo4j recusa a escrita com
 //    Neo.ClientError.Statement.AccessMode);
 //  - Accept: application/vnd.neo4j.query → JSON TIPADO: cada valor chega como
 //    { $type, _value }. É o que permite reconhecer nós, relações e caminhos em
@@ -17,10 +18,13 @@
 //
 // Toda falha vira um ErroCypher com `origem`:
 //  'rede'      — sem resposta do servidor do site (fora do ar) ou tempo esgotado;
-//  'http'      — infraestrutura/configuração: credencial recusada (401), proxy
-//                sem Neo4j (502, código EduGraph.Proxy.*), rota inexistente (404);
-//  'neo4j'     — o Neo4j recusou ou não conseguiu executar a consulta (sintaxe,
-//                modo leitura, erro de execução);
+//  'http'      — infraestrutura/configuração: credencial recusada (401), API ou
+//                Neo4j fora do ar (502 — EduGraph.Proxy.ApiIndisponivel,
+//                EduGraph.Api.Neo4jIndisponivel), Neo4j sem resposta (504),
+//                rota inexistente (404);
+//  'neo4j'     — a consulta foi recusada ou não pôde ser executada: pelo Neo4j
+//                (sintaxe, modo leitura, erro de execução) ou pela API
+//                (grande demais, ou com um comando bloqueado como LOAD CSV);
 //  'cancelada' — não é falha: outra consulta do mesmo `canal` tomou o lugar, ou
 //                quem chamou abortou pelo `signal`. Quem chama só ignora.
 //
@@ -122,13 +126,18 @@ function decodificar(v) {
 
 // Código do Neo4j = a consulta foi recusada ou falhou no banco ('neo4j'),
 // exceto os de segurança: credencial é problema de configuração, não da
-// consulta. Códigos do proxy (EduGraph.Proxy.*) também são infraestrutura.
+// consulta. A API também recusa consultas (EduGraph.Api.Consulta*: grande
+// demais ou com comando bloqueado) — como num erro de sintaxe, repetir não
+// adianta. Os demais códigos do proxy e da API (EduGraph.*) são infraestrutura.
+const RECUSA_DA_API = /^EduGraph\.Api\.Consulta/
+
 function origemDoCodigo(codigo = '') {
+  if (RECUSA_DA_API.test(codigo)) return 'neo4j'
   return codigo.startsWith('Neo.') && !codigo.startsWith('Neo.ClientError.Security.') ? 'neo4j' : 'http'
 }
 
 function mensagemHttp(status) {
-  if (status === 404) return 'A rota /api/cypher não existe neste servidor — o proxy do Neo4j está configurado? (N1)'
+  if (status === 404) return 'A rota /api/cypher não existe neste servidor — a API do EduGraph está rodando? (npm run api)'
   if (status >= 500) return `O servidor do site respondeu com erro (HTTP ${status}).`
   return `Resposta inesperada do servidor (HTTP ${status}).`
 }
@@ -150,7 +159,7 @@ export function observarConsultas(aoConcluir) {
 }
 
 /**
- * Executa uma consulta Cypher (somente leitura) no Neo4j, via proxy do site.
+ * Executa uma consulta Cypher (somente leitura) no Neo4j, via API do site.
  *
  * @param {string} consulta  texto Cypher
  * @param {object} [parametros]  valores dos $parâmetros — use SEMPRE parâmetros

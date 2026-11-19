@@ -18,16 +18,16 @@ Um professor de Matemática, por exemplo, pode entrar no grafo, selecionar sua d
 
 ## Estado atual
 
-Este repositório contém o **front-end React** do projeto, já integrado ao grafo de conhecimento real: um banco **Neo4j** montado pela orientadora, consultado em **Cypher**. Hoje o grafo traz o 1.º ano de Matemática e de Ciências da BNCC (ano → disciplina → unidades temáticas → objetos de conhecimento → habilidades) e vai crescer com outros anos e matérias — que aparecem no site, já com as cores do seu nível, sem mudar o código. O site não guarda dados do grafo: tudo o que aparece vem do Neo4j, exceto o globo ilustrativo da seção "Cada matéria tem sua rede.", na Home.
-
-O andamento detalhado — o que já foi feito, o que falta e as decisões de projeto — está em [ESTADO_ATUAL.md](ESTADO_ATUAL.md) e [guia/DECISOES.md](guia/DECISOES.md).
+Este repositório contém o **front-end React** e a **API em Python** do projeto, já integrados ao grafo de conhecimento real: um banco **Neo4j** montado pela orientadora, consultado em **Cypher**. Hoje o grafo traz o 1.º ano de Matemática e de Ciências e o 2.º ano de Ciências da BNCC (ano → área de conhecimento → componente curricular → unidades temáticas → objetos de conhecimento → habilidades) e vai crescer com outros anos e componentes — que aparecem no site, já com as cores do seu nível, sem mudar o código. O site não guarda dados do grafo: tudo o que aparece vem do Neo4j, pela API, exceto o globo ilustrativo da seção "Cada matéria tem sua rede.", na Home.
 
 **Telas disponíveis:**
 
 | Tela | Descrição |
 |---|---|
-| Home | Apresentação do projeto; os números e os cards de ano vêm do Neo4j |
-| Grafos | O grafo de conhecimento: consulta em Cypher, desenho interativo (layout de forças e hierárquico, como no Neo4j Browser), painel com os detalhes de cada nó, expandir e desfazer |
+| Home | Apresentação do projeto; os números, os cards de ano e os componentes de cada turma vêm do Neo4j |
+| Grafos | O grafo de conhecimento: busca guiada para o professor, console Cypher, desenho interativo (layout de forças e hierárquico, como no Neo4j Browser), painel com os detalhes de cada nó, expandir e desfazer |
+| Fórum | Conversas entre professores — por enquanto uma prévia, com conversas de exemplo |
+| Ontologias | Ontologias do currículo para baixar — por enquanto uma prévia, com exemplos |
 | Entrar / Criar conta | Formulários apenas visuais — o site não tem sistema de contas |
 
 **Recursos de acessibilidade:**
@@ -49,69 +49,97 @@ Esses dados alimentarão o grafo de conhecimento que esta interface visa exibir 
 - **JavaScript / JSX** — sem TypeScript por ora
 - **CSS Variables** — sistema de temas (claro/escuro) sem biblioteca de UI
 - **Google Fonts** — Spectral (títulos), Figtree (interface) e JetBrains Mono (rótulos e labels)
-- **Neo4j** — o banco de grafos, consultado em Cypher pela Query API HTTP, sempre através de um proxy (`/api/cypher`) que guarda a senha. O site pede modo somente leitura em toda consulta; impor isso também no proxy fica para a publicação
+- **Python** + **FastAPI** — a API do projeto (pasta `api/`), entre o site e o banco: guarda a senha do Neo4j, impõe o modo somente leitura em toda consulta e documenta os próprios endpoints em `/api/docs`
+- **Neo4j** — o banco de grafos, consultado em Cypher pela Query API HTTP; o navegador nunca fala direto com ele, só com a API
 - **Canvas 2D** — motor de visualização próprio, sem biblioteca de grafos: a física reproduz a do Neo4j Browser (as forças do d3-force, reimplementadas) e há um layout hierárquico em camadas
 
-## Como rodar localmente
+## Como rodar o projeto
 
-### 1. Instalar o Node.js e o npm
+O projeto tem duas partes que rodam juntas: o **site** (React, porta 5173) e a **API** (Python, porta 8000). O site repassa para a API tudo o que começa com `/api/`, e a API consulta o Neo4j.
+
+### 1. Instalar o Node.js e o Python
+
+São necessários o **Node.js** (com o npm) e o **Python 3.10 ou mais novo** (o projeto foi testado com o 3.14).
 
 **Ubuntu / Debian:**
 
 ```bash
 sudo apt update
-sudo apt install -y nodejs npm
+sudo apt install -y nodejs npm python3 python3-venv
 ```
 
-### 2. Instalar as dependências do projeto
+**Windows / macOS:** instale o Node.js de https://nodejs.org e o Python de https://www.python.org.
 
-Na pasta do projeto, rode **uma vez**:
+### 2. Instalar as dependências (uma vez)
+
+Na pasta do projeto:
 
 ```bash
 npm install
 ```
 
+Depois, as da API, num ambiente isolado do Python (a pasta `.venv`, que não vai para o git):
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r api/requirements.txt
+```
+
+No **Windows**, use `python` no lugar de `python3` e `.venv\Scripts\pip` no lugar de `.venv/bin/pip`.
+
 ### 3. Configurar o acesso ao Neo4j
 
-É preciso ter um Neo4j rodando com os dados do grafo (o script de carga é material da orientadora e não fica no repositório). Copie o modelo de configuração e preencha a senha do banco:
+É preciso ter um Neo4j rodando com os dados do grafo (o script de carga é material da orientadora e não fica no repositório). Copie o modelo de configuração e preencha a senha do banco (`NEO4J_PASSWORD`):
 
 ```bash
 cp .env.example .env.local
 ```
 
-O `.env.local` não vai para o git, e a senha nunca entra no código enviado ao navegador: quem a usa é o proxy do servidor de desenvolvimento.
+(No Windows: `copy .env.example .env.local`.) O `.env.local` não vai para o git, e a senha nunca chega ao navegador: quem a usa é a API.
 
-### 4. Subir o servidor de desenvolvimento
+### 4. Subir a API e o site
+
+Em **dois terminais**, na pasta do projeto:
 
 ```bash
-npm run dev
+npm run api     # terminal 1: a API, em http://localhost:8000
+npm run dev     # terminal 2: o site, em http://localhost:5173
 ```
 
-Abra http://localhost:5173 no navegador. As alterações em `src/` atualizam a tela automaticamente (hot reload).
+Abra http://localhost:5173 no navegador. As alterações em `src/` e em `api/` são aplicadas sozinhas (hot reload).
+
+No **Windows**, o `npm run api` não funciona (ele usa o caminho do Linux/macOS); rode a API assim: `.venv\Scripts\uvicorn main:app --app-dir api --reload --reload-dir api --port 8000`.
+
+**Para conferir:** http://localhost:8000/api/saude deve responder `{"api": "ok", "neo4j": "ok"}`. A documentação interativa da API, com todos os endpoints, fica em http://localhost:8000/api/docs (ou em http://localhost:5173/api/docs, pelo site). Se a API estiver parada, o site avisa: "Não foi possível conectar à API do EduGraph…".
 
 ---
 
 ### Outros comandos
 
 ```bash
-npm run build    # gera versão otimizada em dist/
-npm run preview  # serve a versão de build localmente
-npm run lint     # verifica qualidade do código
+npm run build       # gera versão otimizada do site em dist/
+npm run preview     # serve a versão de build localmente (também precisa da API)
+npm run lint        # verifica a qualidade do código do site
 ```
 
 ## Estrutura do projeto
 
 ```
-src/
+src/                    # o site (React)
 ├── context/            # tema (claro/escuro) e tamanho de fonte
 ├── components/         # componentes compartilhados e as seções da Home
-│   ├── grafo/          # página de grafos: canvas, painel, console Cypher, overlays
+│   ├── grafo/          # página de grafos: canvas, painel, busca, console Cypher, overlays
 │   └── conta/          # moldura, fundo animado e botão das telas de Entrar / Criar conta
-├── data/               # acesso ao Neo4j, consultas, estilo do grafo, física e layout
-├── pages/              # Home, Grafos, Login, Signup
+├── data/               # acesso à API, consultas, estilo do grafo, física e layout
+├── pages/              # Home, Grafos, Fórum, Ontologias, Login, Signup
 ├── App.jsx             # roteamento por estado
 ├── main.jsx            # ponto de entrada React
 └── index.css           # design system (variáveis de tema, classes .eg-*)
+
+api/                    # a API (Python + FastAPI)
+├── main.py             # a aplicação: as rotas (console Cypher, saúde), os erros e a documentação em /api/docs
+├── banco.py            # a conexão com o Neo4j, sempre em modo somente leitura
+└── requirements.txt    # as dependências da API
 ```
 
 

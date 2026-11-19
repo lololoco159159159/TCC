@@ -5,17 +5,17 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+CLAUDE.md
 node_modules
 dist
 dist-ssr
 *.local
-CLAUDE.md
 implemente.txt
 ESTADO_ATUAL.md
-guia/
-skills-lock.json
-.vscode/*
 !.vscode/extensions.json
+skills-lock.json
+guia/
+.vscode/*
 .idea
 .claude/
 .DS_Store
@@ -24,4 +24,8 @@ skills-lock.json
 *.njsproj
 *.sln
 *.sw?
+
+# API (Python)
+.venv/
+__pycache__/
 
