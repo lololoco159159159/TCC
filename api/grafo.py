@@ -30,8 +30,8 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Path, Query
 from pydantic import BaseModel, Field
 
-import banco
-from banco import ErroDaApi
+import neo4j
+from neo4j import ErroDaApi
 
 router = APIRouter(prefix="/api/grafo", tags=["Grafo"])
 
@@ -47,7 +47,7 @@ async def responder(consulta: str, parametros: dict[str, Any] | None = None) -> 
     parametros = parametros or {}
     junto = {"consulta": consulta, "parametros": parametros}
     try:
-        r = await banco.consultar(consulta, parametros)
+        r = await neo4j.consultar(consulta, parametros)
     except ErroDaApi as e:
         e.extras.update(junto)
         raise

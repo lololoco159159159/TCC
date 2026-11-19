@@ -3,9 +3,12 @@
 Rodar (da raiz do projeto): npm run api → http://localhost:8000
 Documentação interativa dos endpoints: http://localhost:8000/api/docs
 
-  main.py   a aplicação: o console Cypher, a saúde e o tratamento de erros
-  banco.py  a conexão com o Neo4j (sempre em modo somente leitura)
-  grafo.py  as consultas do site, por assunto (anos, áreas, recorte, perguntas…)
+  main.py        a aplicação: o console Cypher, a saúde e o tratamento de erros
+  neo4j.py       a conexão com o Neo4j (sempre em modo somente leitura)
+  grafo.py       as consultas do site, por assunto (anos, áreas, recorte, perguntas…)
+  forum.py       ┐
+  ontologias.py  ├ arquivos base: as rotas previstas, ainda não implementadas (501)
+  ia.py          ┘
 """
 
 import re
@@ -18,16 +21,19 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException
 
-import banco
+import forum
 import grafo
-from banco import ErroDaApi
+import ia
+import neo4j
+import ontologias
+from neo4j import ErroDaApi
 
 
 @asynccontextmanager
 async def ciclo_de_vida(app: FastAPI):
-    banco.abrir()
+    neo4j.abrir()
     yield
-    await banco.fechar()
+    await neo4j.fechar()
 
 
 app = FastAPI(
@@ -35,11 +41,14 @@ app = FastAPI(
     description="Fica entre o site e o banco de grafos (Neo4j): guarda a senha do banco e impõe o modo "
     "**somente leitura** em toda consulta. Os erros saem sempre no formato "
     '`{ "errors": [{ "code", "message" }] }` — códigos `Neo.*` vêm do Neo4j; `EduGraph.Api.*`, da API.',
-    version="0.2.0",
+    version="0.3.0",
     openapi_tags=[
         {"name": "Grafo", "description": "As consultas do site, por assunto. Toda resposta traz a consulta Cypher usada."},
         {"name": "Console Cypher", "description": "A consulta livre do console da página de grafos."},
         {"name": "Saúde", "description": "Se a API está no ar e consegue falar com o Neo4j."},
+        {"name": "Fórum (a implementar)", "description": "Rotas previstas, ainda respondendo 501. Ponto de partida: api/forum.py."},
+        {"name": "Ontologias (a implementar)", "description": "Rotas previstas, ainda respondendo 501. Ponto de partida: api/ontologias.py."},
+        {"name": "Assistente (a implementar)", "description": "Rota prevista, ainda respondendo 501. Ponto de partida: api/ia.py."},
     ],
     docs_url="/api/docs",
     openapi_url="/api/openapi.json",
@@ -117,7 +126,7 @@ async def executar_cypher(pedido: PedidoCypher):
             "O console não aceita LOAD CSV nem procedimentos que leem arquivos ou endereços "
             "(apoc.load, apoc.import, apoc.export) ou que executam um texto como consulta (apoc.cypher).",
         )
-    r = await banco.consultar(pedido.statement, pedido.parameters)
+    r = await neo4j.consultar(pedido.statement, pedido.parameters)
     return Response(content=r.content, status_code=r.status_code, media_type=r.headers.get("content-type"))
 
 
@@ -130,7 +139,7 @@ async def executar_cypher(pedido: PedidoCypher):
 async def saude():
     """200 quando está tudo certo; 503 quando o Neo4j está fora do ar ou recusa a conexão (ex.: senha errada)."""
     try:
-        r = await banco.consultar("RETURN 1")
+        r = await neo4j.consultar("RETURN 1")
     except ErroDaApi as e:
         return JSONResponse({"api": "ok", "neo4j": "fora do ar", "detalhe": e.mensagem}, status_code=503)
     try:
@@ -144,7 +153,11 @@ async def saude():
 
 
 # ---------------------------------------------------------------------------
-# As consultas do site, por assunto — ver grafo.py
+# As consultas do site, por assunto (grafo.py), e os arquivos base do fórum, das
+# ontologias e do assistente
 # ---------------------------------------------------------------------------
 
 app.include_router(grafo.router)
+app.include_router(forum.router)
+app.include_router(ontologias.router)
+app.include_router(ia.router)

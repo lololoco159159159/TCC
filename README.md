@@ -138,8 +138,11 @@ src/                    # o site (React)
 
 api/                    # a API (Python + FastAPI)
 ├── main.py             # a aplicação: o console Cypher, a saúde, os erros e a documentação em /api/docs
-├── banco.py            # a conexão com o Neo4j, sempre em modo somente leitura
+├── neo4j.py            # a conexão com o Neo4j, sempre em modo somente leitura
 ├── grafo.py            # as consultas do site, por assunto: anos, áreas, componentes, recorte, perguntas da busca…
+├── forum.py            # ┐ arquivos base: as rotas previstas do fórum, das ontologias e do
+├── ontologias.py       # │ assistente — já aparecem em /api/docs, mas ainda não foram
+├── ia.py               # ┘ implementadas (respondem 501)
 └── requirements.txt    # as dependências da API
 ```
 
