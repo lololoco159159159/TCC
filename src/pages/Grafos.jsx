@@ -12,14 +12,14 @@ import { GavetaCypher, LegendaTipos, PaletaPopover } from '../components/grafo/G
 import GrafoEstados from '../components/grafo/GrafoEstados'
 import { PALETAS } from '../data/paletas'
 import { executarCypher } from '../data/neo4j'
+import { consultaEscrita, executarPergunta } from '../data/filtrosDeBusca'
 import { completarGrafo, extrairGrafo } from '../data/extrairGrafo'
 import { estiloRelacao, visualDoNo } from '../data/estiloGrafo'
 import { conexoesDoNo, expandirNo, retratoDoNo } from '../data/vizinhanca'
 import { posicaoFilotaxia, posicaoInicial } from '../data/simulacaoForcas'
 
 // Página "Grafos" — a tela que exibe o grafo de conhecimento. Protótipo:
-// design/prototipo_grafo.html. Está em transição para o Neo4j (integração,
-// ESTADO_ATUAL.md §4.5):
+// design/prototipo_grafo.html. Está em transição para o Neo4j (integração):
 //  - N3: a barra de busca/filtros do protótipo saiu de cena (vai ser
 //    redesenhada) e, com ela, o fluxo de filtros do mock (seleção pendente,
 //    busca, ?serie= na URL, legenda que reconsultava, gaveta SPARQL). No lugar,
@@ -50,9 +50,10 @@ import { posicaoFilotaxia, posicaoInicial } from '../data/simulacaoForcas'
 //    seletor da coluna de controles (preferência `layout`, salva).
 //  - N13: a BUSCA DO PROFESSOR (BuscaProfessor) entra acima do console, que
 //    continua visível: Ano → Matéria → Pergunta, tudo vindo do Neo4j. N14: o
-//    "Ver no grafo" dela entrega a consulta pronta (com parâmetros) e o palco a
-//    executa pelo mesmo trajeto do console (executarConsulta); a mesma consulta,
-//    com os valores escritos, aparece na caixa do console.
+//    "Ver no grafo" dela entrega a pergunta e as escolhas; a API monta e
+//    executa a consulta (verBusca), o palco desenha pelo mesmo trajeto do
+//    console (executarNoPalco), e a consulta executada, com os valores escritos,
+//    aparece na caixa do console.
 
 const PAINEL_PADRAO = { x: 12, w: 392, esc: false }
 
@@ -141,9 +142,9 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, buscaInicia
   const histExp = useRef([]) // snapshots pré-expansão (G8; volta a encher com a expansão da N8)
   const selRef = useRef(null) // espelho de selecionadoId para closures assíncronas
   const canvasApi = useRef(null) // API do canvas: { centrarEm, enquadrar, reaquecer, assentar, afastarParaCaber, zoomMais, zoomMenos }
-  // última execução no palco (o "Tentar novamente" do erro): { consulta,
-  // parametros, descricao }
-  const ultimaConsulta = useRef(null)
+  // última execução no palco (o "Tentar novamente" do erro): a função que faz o
+  // pedido — do console ou da busca
+  const ultimaExecucao = useRef(null)
 
   // Seleciona um nó (N7): registra nos "vistos", abre o painel com o retrato do
   // nó (rótulos e TODAS as propriedades, como o inspetor do Neo4j Browser) e
@@ -271,16 +272,18 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, buscaInicia
   // nós); o grafo aparece em texto na aba "Relações" e desenhado no canvas (N5).
   // Sem a chave "Conectar nós do resultado" (D20): o desenho mostra só as
   // relações que a consulta devolveu.
-  // N14: a busca do professor também passa por aqui, com os parâmetros da
-  // pergunta e a descrição que a põe na gaveta Cypher. Console e busca dividem o
-  // palco e o canal 'palco': uma execução nova de qualquer um cancela a anterior.
-  async function executarConsulta(consulta, { parametros = {}, descricao = '' } = {}) {
+  // N14: a busca do professor também passa por aqui (verBusca), com a descrição
+  // que a põe na gaveta Cypher. Console e busca dividem o palco e o canal
+  // 'palco': uma execução nova de qualquer um cancela a anterior. `pedir` faz o
+  // pedido — a consulta livre do console ou a pergunta da busca — e devolve o
+  // resultado.
+  async function executarNoPalco(pedir) {
     const meuSeq = ++seq.current // as consultas extras rodam fora do canal: a guarda descarta resposta velha
-    ultimaConsulta.current = { consulta, parametros, descricao }
+    ultimaExecucao.current = pedir
     setStatus('carregando')
     setErro(null)
     try {
-      const r = await executarCypher(consulta, parametros, { canal: 'palco', descricao })
+      const r = await pedir()
       const grafoDoResultado = await completarGrafo(extrairGrafo(r.linhas))
       if (meuSeq !== seq.current) return
       // N5: o grafo do resultado vai para o canvas (versao nova → N11: começa
@@ -306,18 +309,33 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, buscaInicia
     }
   }
 
-  // N14: o "Ver no grafo" da busca — executa a consulta (com parâmetros) e
-  // escreve no console a mesma consulta com os valores no lugar deles, para o
-  // autor ver o Cypher gerado (e poder mudá-lo e executar de novo)
-  const verBusca = ({ consulta, parametros, descricao, escrita }) => {
-    setTextoConsole((t) => ({ texto: escrita, n: t.n + 1 }))
-    executarConsulta(consulta, { parametros, descricao })
+  // a consulta livre do console
+  const executarConsulta = (consulta, { parametros = {}, descricao = '' } = {}) =>
+    executarNoPalco(() => executarCypher(consulta, parametros, { canal: 'palco', descricao }))
+
+  // N14: o "Ver no grafo" da busca — a API monta e executa a consulta da
+  // pergunta e a devolve junto da resposta (também num erro); a página a escreve
+  // no console com os valores no lugar dos parâmetros, para o autor ver o
+  // Cypher gerado (e poder mudá-lo e executar de novo)
+  const verBusca = ({ pergunta, ano, componente, escolhas, descricao, cabecalho }) => {
+    const escrever = ({ consulta, parametros }) => {
+      if (consulta) setTextoConsole((t) => ({ texto: `${cabecalho}\n${consultaEscrita(consulta, parametros || {})}`, n: t.n + 1 }))
+    }
+    executarNoPalco(async () => {
+      try {
+        const r = await executarPergunta(pergunta, { ano, componente, escolhas }, { canal: 'palco', descricao })
+        escrever(r)
+        return r
+      } catch (e) {
+        escrever(e)
+        throw e
+      }
+    })
   }
 
   // "Tentar novamente" do card de erro: refaz a última execução como ela foi
   function repetirUltima() {
-    const u = ultimaConsulta.current
-    if (u) executarConsulta(u.consulta, u)
+    if (ultimaExecucao.current) executarNoPalco(ultimaExecucao.current)
   }
 
   // "Voltar ao início" (card de erro): limpa o palco — resultado e desenho

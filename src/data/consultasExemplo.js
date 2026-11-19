@@ -20,8 +20,8 @@
 export const CONSULTA_ANO_HABILIDADES = `MATCH p = (:Ano)-[:DESENVOLVE_HABILIDADE]->()
 RETURN p`
 
-// a 7.ª, com o erro de sintaxe original — também é o "Teste de erro" da busca do
-// professor (src/data/filtrosDeBusca.js)
+// a 7.ª, com o erro de sintaxe original — a busca do professor tem a mesma no
+// "Teste de erro" (a cópia dela mora na API, api/grafo.py)
 export const CONSULTA_COM_ERRO = `MATCH p = (:Ano)-[:TEM_UNIDADE]->(:UnidadeTematica-[:TEM_OBJETO]->(:ObjetoConhecimento)-[:DESENVOLVE]->(h:Habilidade)
 WHERE h.codigo IN ["EF01MA06", "EF01MA07", "EF01MA08", "EF01MA19"]
 RETURN p`

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import {
-  PERGUNTAS,
   PLURAIS,
   TITULOS,
   anosDaBusca,
@@ -8,25 +7,26 @@ import {
   camposFaltando,
   carregarRecorte,
   componentesDaArea,
-  consultaDaPergunta,
   opcoesDoCampo,
-  perguntaPorId,
+  perguntasDaBusca,
 } from '../../data/filtrosDeBusca'
 import CampoBusca from './CampoBusca'
 import { MONO_LABEL } from './estilos'
 
-// Barra da busca do professor (N13 — ESTADO_ATUAL.md §4.5, decisões 1–6): o
+// Barra da busca do professor (N13, decisões 1–6): o
 // professor monta a busca só escolhendo opções — Ano → Matéria → Pergunta —, sem
 // ver código. Fica logo acima do console Cypher, que continua visível (o autor o
-// usa; sai bem depois). Tudo vem do Neo4j na hora (src/data/filtrosDeBusca.js):
-// os anos, as matérias que existem no ano escolhido e o recorte do ano na
-// matéria (uma consulta só). A matéria nunca vem escolhida sozinha, mesmo quando
+// usa; sai bem depois). Tudo vem do Neo4j na hora, pela API
+// (src/data/filtrosDeBusca.js): os anos, as matérias que existem no ano
+// escolhido e o recorte do ano na matéria (uma consulta só) — e o cardápio de
+// perguntas vem da API também. A matéria nunca vem escolhida sozinha, mesmo quando
 // há uma só (decisão 4). As escolhas vivem aqui, e não na página: mexer na busca
 // não re-renderiza a página inteira (o mesmo cuidado do console).
 // N14: escolhida a pergunta, aparecem os CAMPOS dela (CampoBusca: o filtro por
-// texto, no navegador) e o "Ver no grafo", que entrega a consulta pronta à
-// página — ela segue pelo mesmo trajeto do console até o canvas, e a consulta
-// escrita (com os valores no lugar dos parâmetros) aparece no console. Cada
+// texto, no navegador) e o "Ver no grafo", que entrega a pergunta e as escolhas
+// à página — ela pede a resposta à API, que monta e executa a consulta; o
+// desenho segue pelo mesmo trajeto do console até o canvas, e a consulta
+// executada (com os valores no lugar dos parâmetros) aparece no console. Cada
 // pergunta mostra só o campo que ela pede (o "Filtrar as listas" da cascata
 // saiu a pedido do autor, 2026-10-24). Trocar o ano ou a matéria limpa os
 // campos (decisão 5); trocar a pergunta mantém o que tiver o mesmo nome (a
@@ -116,8 +116,9 @@ function useCarga(carregar, chave, tentativa) {
   return carga
 }
 
-// `aoVerNoGrafo({ consulta, parametros, descricao, escrita })`: a página executa,
-// desenha e escreve a consulta no console; `ocupado`: o palco está consultando
+// `aoVerNoGrafo({ pergunta, ano, componente, escolhas, descricao, cabecalho })`:
+// a página pede a resposta à API, desenha e escreve no console a consulta
+// executada, abaixo do `cabecalho` (comentário Cypher); `ocupado`: o palco está consultando
 // (o botão espera); `inicial` (N19): { ano, area, componente } já escolhidos ao
 // abrir — o "Ver o grafo desta turma" da Home; o resto o professor escolhe
 function BuscaProfessor({ aoVerNoGrafo, ocupado, inicial }) {
@@ -132,6 +133,7 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado, inicial }) {
   const areas = useCarga(() => areasDoAno(ano), ano, tentativa)
   const componentes = useCarga(() => componentesDaArea(ano, area), ano && area ? `${ano}|${area}` : '', tentativa)
   const recorte = useCarga(() => carregarRecorte(ano, componente), ano && componente ? `${ano}|${componente}` : '', tentativa)
+  const perguntas = useCarga(perguntasDaBusca, 'perguntas', tentativa) // o cardápio, da API
 
   // cada escolha zera as de baixo (elas dependem dela e nunca vêm escolhidas
   // sozinhas); trocar o ano, a área ou o componente limpa os campos (o recorte mudou)
@@ -162,7 +164,8 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado, inicial }) {
   const nomeArea = listaAreas.find((x) => x.codigo === area)?.nome || area
   const listaComponentes = componentes.dados || []
   const nomeComponente = listaComponentes.find((x) => x.codigo === componente)?.nome || componente
-  const p = perguntaPorId(pergunta)
+  const cardapio = perguntas.dados || []
+  const p = cardapio.find((x) => x.id === pergunta) || null
   const r = recorte.estado === 'pronto' && recorte.dados?.habilidades.length ? recorte.dados : null
 
   // a lista de um campo, do recorte; num par que não pode repetir (a ligação),
@@ -180,17 +183,24 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado, inicial }) {
   const mostraCampos = p && (p.fixa || r) // o "Teste de erro" não depende do recorte
   const podeVer = mostraCampos && !faltando.length && !ocupado
 
-  // a consulta vai para a página; a escrita (que aparece no console) ganha um
-  // cabeçalho em comentário Cypher dizendo de que busca ela veio
+  // a pergunta e as escolhas vão para a página, que pede a resposta à API; a
+  // consulta que aparece no console ganha um cabeçalho em comentário Cypher
+  // dizendo de que busca ela veio
   const verNoGrafo = () => {
-    const pronta = consultaDaPergunta(pergunta, { ano, componente, escolhas })
     const cabecalho = p.fixa
       ? [`// Busca: ${p.titulo}`]
       : [
           `// Busca: ${p.titulo} · ${nomeAno} · ${nomeArea} · ${nomeComponente}`,
           ...p.campos.map((c) => `// ${rotuloDe(c)}: ${opcoesDoCampo(r, c.tipo).find((o) => o.id === escolhas[c.nome])?.titulo}`),
         ]
-    aoVerNoGrafo({ ...pronta, escrita: `${cabecalho.join('\n')}\n${pronta.escrita}` })
+    aoVerNoGrafo({
+      pergunta,
+      ano,
+      componente,
+      escolhas,
+      descricao: `busca · ${p.titulo.toLowerCase()}`,
+      cabecalho: cabecalho.join('\n'),
+    })
   }
 
   // a linha de estado: o passo que falta, o que está carregando, a falha ou o recorte
@@ -209,6 +219,7 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado, inicial }) {
   else if (!componente) status = 'Escolha o componente curricular.'
   else if (recorte.estado === 'carregando') status = `Carregando ${nomeAno} em ${nomeComponente}…`
   else if (recorte.estado === 'erro') status = <>Não foi possível carregar o ano neste componente agora.{tentarDeNovo}</>
+  else if (perguntas.estado === 'erro') status = <>Não foi possível carregar as perguntas agora.{tentarDeNovo}</>
   else if (r) {
     let passo = 'escolha o que você quer ver'
     if (p && faltando.length) passo = `falta escolher: ${faltando.map(rotuloDe).join(', ').toLowerCase()}`
@@ -226,6 +237,7 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado, inicial }) {
   const anosProntos = anos.estado === 'pronto' && anos.dados?.length > 0
   const areasProntas = areas.estado === 'pronto' && listaAreas.length > 0
   const componentesProntos = componentes.estado === 'pronto' && listaComponentes.length > 0
+  const perguntasProntas = Boolean(componente) && cardapio.length > 0
 
   return (
     <div style={BARRA}>
@@ -282,14 +294,14 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado, inicial }) {
         <select
           value={pergunta}
           onChange={(e) => setPergunta(e.target.value)}
-          disabled={!componente}
+          disabled={!perguntasProntas}
           aria-label="O que você quer ver"
-          style={componente ? SELECT : SELECT_DESLIGADO}
+          style={perguntasProntas ? SELECT : SELECT_DESLIGADO}
         >
           <option value="" disabled>
             O que você quer ver?
           </option>
-          {PERGUNTAS.map((x) => (
+          {cardapio.map((x) => (
             <option key={x.id} value={x.id}>
               {x.titulo}
             </option>

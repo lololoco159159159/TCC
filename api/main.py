@@ -3,8 +3,9 @@
 Rodar (da raiz do projeto): npm run api → http://localhost:8000
 Documentação interativa dos endpoints: http://localhost:8000/api/docs
 
-  main.py   a aplicação: as rotas e o tratamento de erros
+  main.py   a aplicação: o console Cypher, a saúde e o tratamento de erros
   banco.py  a conexão com o Neo4j (sempre em modo somente leitura)
+  grafo.py  as consultas do site, por assunto (anos, áreas, recorte, perguntas…)
 """
 
 import re
@@ -18,6 +19,7 @@ from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException
 
 import banco
+import grafo
 from banco import ErroDaApi
 
 
@@ -33,7 +35,12 @@ app = FastAPI(
     description="Fica entre o site e o banco de grafos (Neo4j): guarda a senha do banco e impõe o modo "
     "**somente leitura** em toda consulta. Os erros saem sempre no formato "
     '`{ "errors": [{ "code", "message" }] }` — códigos `Neo.*` vêm do Neo4j; `EduGraph.Api.*`, da API.',
-    version="0.1.0",
+    version="0.2.0",
+    openapi_tags=[
+        {"name": "Grafo", "description": "As consultas do site, por assunto. Toda resposta traz a consulta Cypher usada."},
+        {"name": "Console Cypher", "description": "A consulta livre do console da página de grafos."},
+        {"name": "Saúde", "description": "Se a API está no ar e consegue falar com o Neo4j."},
+    ],
     docs_url="/api/docs",
     openapi_url="/api/openapi.json",
     redoc_url=None,
@@ -47,13 +54,13 @@ app = FastAPI(
 # ---------------------------------------------------------------------------
 
 
-def erro(status: int, codigo: str, mensagem: str) -> JSONResponse:
-    return JSONResponse({"errors": [{"code": codigo, "message": mensagem}]}, status_code=status)
+def erro(status: int, codigo: str, mensagem: str, **extras) -> JSONResponse:
+    return JSONResponse({"errors": [{"code": codigo, "message": mensagem}], **extras}, status_code=status)
 
 
 @app.exception_handler(ErroDaApi)
 async def erro_da_api(request: Request, e: ErroDaApi):
-    return erro(e.status, e.codigo, e.mensagem)
+    return erro(e.status, e.codigo, e.mensagem, **e.extras)
 
 
 @app.exception_handler(RequestValidationError)
@@ -134,3 +141,10 @@ async def saude():
         detalhe = erros[0]["message"] if erros else f"HTTP {r.status_code}"
         return JSONResponse({"api": "ok", "neo4j": "erro", "detalhe": detalhe}, status_code=503)
     return {"api": "ok", "neo4j": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# As consultas do site, por assunto — ver grafo.py
+# ---------------------------------------------------------------------------
+
+app.include_router(grafo.router)

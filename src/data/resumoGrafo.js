@@ -1,21 +1,12 @@
-import { executarCypher } from './neo4j'
+import { consultarGrafo } from './neo4j'
 
-// Agregados do grafo para a Home (N9 — ESTADO_ATUAL.md §4.5): a banda de
-// estatísticas e a grade "Encontre as habilidades da sua turma" deixam de vir
-// do mock e passam a ser consultas Cypher no Neo4j — tudo o que a Home mostra
-// sai do que o grafo da orientadora tem (hoje, o 1.º ano de Matemática e de
-// Ciências; quando EF2, EF3… forem carregados, aparecem sozinhos). Só lê o banco.
-// D21 (2026-11-03): no modelo novo cada matéria tem os seus rótulos
-// (HabilidadeMat, HabilidadeCien…), então a contagem anda pelas relações do
+// Agregados do grafo para a Home: a banda de estatísticas e a grade "Encontre
+// as habilidades da sua turma" — tudo o que a Home mostra sai do que o grafo da
+// orientadora tem (quando EF3, EF4… forem carregados, aparecem sozinhos). As
+// consultas moram na API (api/grafo.py): a contagem anda pelas relações do
 // modelo — habilidade é quem um Ano desenvolve; unidade, quem um componente
-// curricular tem (D22; era a Disciplina) — e conta todo componente, inclusive os
-// que ainda vão chegar.
-
-// (COLLECT { } e não [(a:Ano) | …]: a compreensão de padrão exige uma relação)
-const ESTATISTICAS = `RETURN size(COLLECT { MATCH (:Ano)-[:DESENVOLVE_HABILIDADE]->(h) RETURN DISTINCT h }) AS habilidades,
-       size(COLLECT { MATCH (:ComponenteCurricular)-[:TEM_UNIDADE]->(u) RETURN DISTINCT u }) AS unidades,
-       COLLECT { MATCH (a:Ano) RETURN a.codigo } AS anos`
-const ANOS = 'MATCH (a:Ano) RETURN a.codigo AS codigo, a.nome AS nome'
+// curricular tem —, então conta todo componente, inclusive os que ainda vão
+// chegar. Só lê o banco.
 
 // número do ano a partir do código (EF1 → 1): o modelo não guarda o número
 // como propriedade; 0 quando o código não tem dígito
@@ -23,7 +14,7 @@ const numeroDoAno = (codigo) => Number(String(codigo ?? '').replace(/\D/g, '')) 
 
 // banda de estatísticas: { habilidades, unidades, anos: [1, …] (números, em ordem) }
 export async function estatisticasDoGrafo() {
-  const { linhas } = await executarCypher(ESTATISTICAS, {}, { descricao: 'Home · banda de estatísticas' })
+  const { linhas } = await consultarGrafo('/api/grafo/estatisticas', { descricao: 'Home · banda de estatísticas' })
   const { habilidades, unidades, anos } = linhas[0]
   return {
     habilidades,
@@ -38,7 +29,7 @@ export async function estatisticasDoGrafo() {
 // grade da Home: um item por Ano do grafo ({ codigo, nome }), em ordem de ano.
 // N12: a busca do professor usa a mesma consulta, com a própria descrição na gaveta
 export async function anosDoGrafo({ descricao = 'Home · turmas da grade' } = {}) {
-  const { linhas } = await executarCypher(ANOS, {}, { descricao })
+  const { linhas } = await consultarGrafo('/api/grafo/anos', { descricao })
   return linhas.sort(
     (a, b) => numeroDoAno(a.codigo) - numeroDoAno(b.codigo) || String(a.codigo).localeCompare(String(b.codigo)),
   )

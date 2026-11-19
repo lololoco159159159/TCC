@@ -32,13 +32,17 @@ log = logging.getLogger("uvicorn.error")  # as mensagens saem no terminal, junto
 
 
 class ErroDaApi(Exception):
-    """Um erro que a API devolve ao site, no formato do Neo4j (ver main.py)."""
+    """Um erro que a API devolve ao site, no formato do Neo4j (ver main.py).
 
-    def __init__(self, status: int, codigo: str, mensagem: str):
+    `extras` vão juntos no corpo da resposta — ex.: a consulta que falhou, para o
+    site mostrá-la (grafo.py)."""
+
+    def __init__(self, status: int, codigo: str, mensagem: str, **extras):
         super().__init__(mensagem)
         self.status = status
         self.codigo = codigo
         self.mensagem = mensagem
+        self.extras = extras
 
 
 _cliente: httpx.AsyncClient | None = None

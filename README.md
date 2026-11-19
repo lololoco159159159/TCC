@@ -49,7 +49,7 @@ Esses dados alimentarão o grafo de conhecimento que esta interface visa exibir 
 - **JavaScript / JSX** — sem TypeScript por ora
 - **CSS Variables** — sistema de temas (claro/escuro) sem biblioteca de UI
 - **Google Fonts** — Spectral (títulos), Figtree (interface) e JetBrains Mono (rótulos e labels)
-- **Python** + **FastAPI** — a API do projeto (pasta `api/`), entre o site e o banco: guarda a senha do Neo4j, impõe o modo somente leitura em toda consulta e documenta os próprios endpoints em `/api/docs`
+- **Python** + **FastAPI** — a API do projeto (pasta `api/`), entre o site e o banco: guarda a senha do Neo4j, impõe o modo somente leitura em toda consulta, é dona das consultas do site (cada uma numa rota, que devolve o Cypher usado junto da resposta) e documenta os próprios endpoints em `/api/docs`
 - **Neo4j** — o banco de grafos, consultado em Cypher pela Query API HTTP; o navegador nunca fala direto com ele, só com a API
 - **Canvas 2D** — motor de visualização próprio, sem biblioteca de grafos: a física reproduz a do Neo4j Browser (as forças do d3-force, reimplementadas) e há um layout hierárquico em camadas
 
@@ -130,15 +130,16 @@ src/                    # o site (React)
 ├── components/         # componentes compartilhados e as seções da Home
 │   ├── grafo/          # página de grafos: canvas, painel, busca, console Cypher, overlays
 │   └── conta/          # moldura, fundo animado e botão das telas de Entrar / Criar conta
-├── data/               # acesso à API, consultas, estilo do grafo, física e layout
+├── data/               # acesso à API, filtros da busca, estilo do grafo, física e layout
 ├── pages/              # Home, Grafos, Fórum, Ontologias, Login, Signup
 ├── App.jsx             # roteamento por estado
 ├── main.jsx            # ponto de entrada React
 └── index.css           # design system (variáveis de tema, classes .eg-*)
 
 api/                    # a API (Python + FastAPI)
-├── main.py             # a aplicação: as rotas (console Cypher, saúde), os erros e a documentação em /api/docs
+├── main.py             # a aplicação: o console Cypher, a saúde, os erros e a documentação em /api/docs
 ├── banco.py            # a conexão com o Neo4j, sempre em modo somente leitura
+├── grafo.py            # as consultas do site, por assunto: anos, áreas, componentes, recorte, perguntas da busca…
 └── requirements.txt    # as dependências da API
 ```
 

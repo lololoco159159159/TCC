@@ -1,15 +1,16 @@
-import { executarCypher } from './neo4j'
+import { consultarGrafo } from './neo4j'
 import { visualDoNo } from './estiloGrafo'
 
-// Vizinhança de um nó no Neo4j (ESTADO_ATUAL.md §4.5): as conexões que o
-// painel de detalhe mostra, agrupadas por tipo de relação e por sentido (N7),
-// e a EXPANSÃO de um nó no desenho (N8), como no Neo4j Browser.
-// Só lê o banco (executarCypher usa o modo leitura).
+// Vizinhança de um nó no Neo4j: as conexões que o painel de detalhe mostra,
+// agrupadas por tipo de relação e por sentido (N7), e a EXPANSÃO de um nó no
+// desenho (N8), como no Neo4j Browser. A consulta mora na API
+// (POST /api/grafo/conexoes: cada relação `r` do nó com o vizinho `m`). Só lê o
+// banco.
 
 const LIMITE_CONEXOES = 200 // conexões listadas no painel (o resto é avisado como "200+")
 const LIMITE_VIZINHOS = 100 // vizinhos trazidos por expansão (o "Max Neighbours" do Browser clássico)
 
-const CONEXOES = 'MATCH (n)-[r]-(m) WHERE elementId(n) = $id RETURN r, m LIMIT $limite'
+const conexoes = (id, limite, opcoes) => consultarGrafo('/api/grafo/conexoes', { ...opcoes, corpo: { id, limite } })
 
 // "Retrato" de um nó para o painel e para os "vistos por último": identidade,
 // rótulos e propriedades + o visual da tabela de estilo (tipo, cor, forma,
@@ -30,11 +31,7 @@ export const retratoDoNo = (no) => ({ id: no.id, rotulos: no.rotulos, props: no.
  *   mesmo com duas relações para o mesmo vizinho); `mais`: passou do limite.
  */
 export async function conexoesDoNo(id, opcoes = {}) {
-  const resp = await executarCypher(
-    CONEXOES,
-    { id, limite: LIMITE_CONEXOES + 1 },
-    { descricao: 'conexões do nó (painel)', ...opcoes },
-  )
+  const resp = await conexoes(id, LIMITE_CONEXOES + 1, { descricao: 'conexões do nó (painel)', ...opcoes })
   const linhas = resp.linhas.slice(0, LIMITE_CONEXOES)
   const grupos = new Map()
   for (const { r, m } of linhas) {
@@ -63,7 +60,7 @@ export async function conexoesDoNo(id, opcoes = {}) {
  *   (quem funde descarta as que já tem); `consultas`: { tipo, ms } de cada uma
  */
 export async function expandirNo(id, idsNaTela) {
-  const resp = await executarCypher(CONEXOES, { id, limite: LIMITE_VIZINHOS }, { descricao: 'expandir · vizinhos' })
+  const resp = await conexoes(id, LIMITE_VIZINHOS, { descricao: 'expandir · vizinhos' })
   const nos = new Map()
   const relacoes = new Map()
   for (const { r, m } of resp.linhas) {

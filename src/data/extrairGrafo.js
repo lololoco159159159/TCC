@@ -1,6 +1,6 @@
-import { Caminho, No, Relacao, executarCypher } from './neo4j'
+import { Caminho, No, Relacao, consultarGrafo } from './neo4j'
 
-// Do resultado ao grafo (N4 — ESTADO_ATUAL.md §4.5): transforma a resposta de
+// Do resultado ao grafo (N4): transforma a resposta de
 // QUALQUER consulta do console em "nós + relações", do jeito que o Neo4j
 // Browser faz antes de desenhar. Duas partes:
 //  - extrairGrafo(): pura (sem rede) — junta o que veio no resultado;
@@ -39,15 +39,13 @@ export function extrairGrafo(linhas) {
   return { nos, relacoes }
 }
 
-const BUSCAR_PONTAS = 'MATCH (n) WHERE elementId(n) IN $ids RETURN n'
-
 /**
  * Completa o grafo extraído, como o Neo4j Browser:
  *  1) relação cujas pontas não vieram no resultado (ex.: `RETURN r`) → busca
- *     esses nós numa consulta extra;
+ *     esses nós numa consulta extra (a da API: POST /api/grafo/nos);
  *  2) limita a `limite` nós — os do resultado primeiro, depois as pontas, na
  *     ordem em que apareceram; relação com ponta de fora também fica de fora.
- * Só lê o banco (executarCypher usa o modo leitura).
+ * Só lê o banco.
  *
  * @returns {Promise<{ nos: Map, relacoes: Map, total: number, limite: number,
  *   extras: object[] }>}  `total`: nós antes do limite; `extras`: as consultas
@@ -72,9 +70,12 @@ export async function completarGrafo({ nos, relacoes }, { limite = LIMITE_NOS } 
   const achados = new Map()
   const faltando = exibidos.filter((id) => !nos.has(id))
   if (faltando.length) {
-    const resp = await executarCypher(BUSCAR_PONTAS, { ids: faltando }, { descricao: 'pontas das relações do resultado' })
+    const resp = await consultarGrafo('/api/grafo/nos', {
+      corpo: { ids: faltando },
+      descricao: 'pontas das relações do resultado',
+    })
     resp.linhas.forEach(({ n }) => achados.set(n.id, n))
-    extras.push({ tipo: 'pontas', consulta: BUSCAR_PONTAS, adicionados: achados.size, ms: resp.tempos.totalMs })
+    extras.push({ tipo: 'pontas', consulta: resp.consulta, adicionados: achados.size, ms: resp.tempos.totalMs })
   }
 
   // 2) limite: nós exibidos, na ordem; relações só entre eles (uma ponta que
