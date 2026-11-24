@@ -24,8 +24,11 @@ guia/
 *.njsproj
 *.sln
 *.sw?
-
 # API (Python)
+monografia/exemplos_monografia
+monografia/TCC-1Lorenzo.pdf
+monografia/TCC1_latex
+monografia/TCC2-Lorenzo.zip
 .venv/
 __pycache__/
 

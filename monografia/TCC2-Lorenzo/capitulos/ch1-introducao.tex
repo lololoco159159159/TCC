@@ -1,0 +1,89 @@
+% ==============================================================================
+% PG - Lorenzo Rizzi Fiorot
+% Capítulo 1 - Introdução
+% ==============================================================================
+\chapter{Introdução}
+\label{sec-intro}
+
+Com a incorporação da Computação à Base Nacional Comum Curricular (BNCC), o desenvolvimento do Pensamento Computacional (PC) passou a integrar formalmente o currículo da educação básica brasileira, previsto para ocorrer de forma transversal às demais áreas do conhecimento \cite{brasil2022computacao, brasil2022parecer}. Essa transversalidade atribui ao professor a tarefa de articular os conteúdos de seu próprio componente curricular aos conceitos computacionais; tais conexões, contudo, permanecem implícitas nos documentos normativos e dispersas na literatura científica, sem um meio didático que as torne acessíveis ao docente.
+
+% TODO(autor): parágrafo de apresentação do trabalho. O que o repositório relaciona
+% depende de como o trabalho enquadra o Pensamento Computacional: hoje a base de dados
+% traz a estrutura curricular da BNCC (ano, área, componente, unidade temática, objeto de
+% conhecimento e habilidade), sem conceitos do Pensamento Computacional. A aplicação
+% atual é uma interface em React com uma API própria em Python sobre o banco Neo4j.
+Texto.
+
+
+%%% Início de seção. %%%
+\section{Motivação e Justificativa}
+\label{sec-intro-motjus}
+
+A crescente presença das tecnologias digitais na vida cotidiana consolidou o entendimento de que competências relacionadas à Computação tornaram-se tão fundamentais quanto as aprendizagens tradicionalmente associadas à escolarização, como ler, escrever e calcular. No Brasil, a formalização desse entendimento ocorreu com as Normas sobre Computação na Educação Básica, que constituem complemento à BNCC e foram instituídas pela Resolução CNE/CEB nº 1, de 4 de outubro de 2022, da Câmara de Educação Básica (CEB) do Conselho Nacional de Educação (CNE) \cite{brasil2022computacao}. Esse documento normativo estabelece diretrizes para a inserção da Computação nos currículos da Educação Básica, orientando o desenvolvimento de conhecimentos, habilidades e competências relacionados às tecnologias digitais e determinando sua implementação pelos sistemas e pelas instituições de ensino brasileiras. Sua organização curricular estrutura-se em três eixos articulados: o \textbf{Pensamento Computacional}, o \textbf{Mundo Digital} e a \textbf{Cultura Digital} \cite{brasil2022parecer}. Neste trabalho, esse conjunto normativo é referido, por concisão, como BNCC Computação.
+
+O modelo pedagógico adotado pela BNCC Computação não restringe a Computação a um componente curricular isolado. Ao contrário, prevê seu desenvolvimento de forma transversal e integrada às demais áreas do conhecimento. Essa articulação pressupõe que conteúdos já presentes em componentes como Matemática, Ciências e Língua Portuguesa possam servir de contexto para a introdução de conceitos computacionais.
+
+A implementação, prevista para começar em até um ano após a homologação de 2022 \cite{brasil2022computacao} e reforçada por normas posteriores de integração curricular da educação digital \cite{brasil2025cne}, conta ainda com um mecanismo de incentivo financeiro: o alinhamento dos referenciais curriculares à BNCC, que inclui a Computação, integra as condicionalidades da complementação-VAAR do Fundo de Manutenção e Desenvolvimento da Educação Básica e de Valorização dos Profissionais da Educação (Fundeb), complementação de que decorre o valor anual por aluno (VAAR) \cite{brasil2020fundeb}. A Resolução CIF nº 15, de 12 de junho de 2025, da Comissão Intergovernamental de Financiamento para a Educação Básica de Qualidade (CIF), restringe a um único exercício a dispensa dessa exigência:
+
+\begin{citacao}
+Caso os referenciais curriculares não contemplem a Computação na Educação Básica --- Complemento à BNCC, a rede de ensino não será inabilitada em 2025 para fins de recebimento dos recursos da complementação do VAAR em 2026, devendo providenciar a adequação, de forma que tal situação não implique a inabilitação nos anos subsequentes \cite[art.~4º, §~3º]{brasil2025cif}.
+\end{citacao}
+
+\noindent Encerrada essa transição, as redes que não incorporarem a Computação a seus currículos ficam sujeitas à inabilitação e à perda na complementação-VAAR nos exercícios seguintes. Para além da dimensão financeira, a não implementação priva os estudantes de competências que a própria norma reconhece como essenciais ao exercício pleno da cidadania \cite{brasil2022parecer}.
+
+Apesar da obrigatoriedade, a implementação esbarra em uma dificuldade concreta no âmbito da prática docente. Grande parte dos professores da educação básica não teve, em sua formação, contato com programação ou com o PC, o que faz da formação docente uma condição necessária --- e frequentemente ausente --- para a efetivação dessas competências \cite{boeres2024}. Mais especificamente, o modelo transversal exige que o professor reconheça de que maneira o seu próprio componente curricular pode servir de veículo para o ensino do PC; contudo, as conexões entre as habilidades previstas na BNCC e os conceitos computacionais permanecem implícitas e dispersas na documentação oficial, sem um meio didático e acessível que torne evidente o que, dentro de cada disciplina, pode ser aproveitado para ensinar PC de forma integrada --- o que transfere ao docente o ônus de estabelecer, por conta própria, articulações que demandam conhecimento especializado.
+
+A literatura nacional já documenta diversas iniciativas de ensino do PC na educação básica, que vão do emprego da Computação Desplugada, isto é, de atividades que dispensam o uso de computadores \cite{silvamadeira2024}, ao uso de ferramentas e ambientes de programação alinhados à BNCC \cite{osorio2025}, além de mapeamentos sistemáticos que caracterizam o campo e seus instrumentos de avaliação \cite{rege2023}. Esses trabalhos, contudo, concentram-se majoritariamente em relatos de intervenções pontuais --- associadas a ferramentas, séries ou contextos específicos --- ou em sínteses do estado da arte, sem disponibilizar um artefato reutilizável que torne explícitas, de forma navegável, as conexões entre os componentes curriculares da BNCC e os conceitos do PC. Soma-se a isso a escassez e a dispersão de materiais de apoio ao professor voltados a essa articulação, o que evidencia a necessidade de dar continuidade à investigação do tema sob uma perspectiva que não apenas caracterize as práticas existentes, mas também organize e disponibilize esse conhecimento de maneira acessível ao docente.
+
+% TODO(autor): parágrafo que apresenta a contribuição diante da lacuna. No anteprojeto, ele
+% prometia tornar navegáveis as relações entre os componentes curriculares da BNCC e os
+% pilares do Pensamento Computacional; a redação depende do mesmo enquadramento do
+% parágrafo de apresentação, no início do capítulo.
+Texto.
+
+
+%%% Início de seção. %%%
+\section{Objetivos}
+\label{sec-intro-obj}
+
+% TODO(autor): o objetivo geral e os específicos do anteprojeto falavam em relacionar a
+% BNCC ao Pensamento Computacional, em integrar a interface a um endpoint SPARQL e em
+% especificar requisitos e avaliar a usabilidade. Reescrever conforme o enquadramento do
+% trabalho e o que de fato foi entregue.
+\subsection{Objetivo Geral}
+\label{sec-intro-obj-geral}
+
+Texto.
+
+\subsection{Objetivos Específicos}
+\label{sec-intro-obj-especificos}
+
+Texto.
+
+
+%%% Início de seção. %%%
+\section{Escopo e Divisão de Responsabilidades}
+\label{sec-intro-escopo}
+
+% TODO(autor): no anteprojeto, a modelagem do grafo e o servidor de consultas cabiam à
+% orientação, e o armazenamento e a consulta ficavam fora do escopo. Hoje a modelagem do
+% domínio segue com a orientação, mas este trabalho desenvolveu também a API e mantém a
+% base de dados, executando comandos Cypher validados. A redação desta divisão é do autor.
+Texto.
+
+
+%%% Início de seção. %%%
+\section{Método de Desenvolvimento do Trabalho}
+\label{sec-intro-met}
+
+% TODO(autor): o método do anteprojeto (mapeamento, requisitos, prototipação,
+% implementação e integração, testes) é reescrito no passado quando o escopo e os
+% objetivos estiverem definidos.
+Texto.
+
+
+%%% Início de seção. %%%
+\section{Organização da Monografia}
+\label{sec-intro-organizacao}
+
+Texto.

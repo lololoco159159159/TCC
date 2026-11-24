@@ -1,0 +1,80 @@
+% ==============================================================================
+% PG - Lorenzo Rizzi Fiorot
+% Capítulo 2 - Referencial Teórico e Tecnologias Utilizadas
+% ==============================================================================
+\chapter{Referencial Teórico e Tecnologias Utilizadas}
+\label{sec-referencial}
+
+% TODO(autor): abertura do capítulo. No anteprojeto, ela apresentava o repositório como
+% relação entre a BNCC e os pilares do Pensamento Computacional, disponibilizado por um
+% endpoint SPARQL; depende do enquadramento do trabalho e da descrição da aplicação atual.
+Texto.
+
+
+%%% Início de seção. %%%
+\section{A BNCC e a BNCC Computação}
+\label{sec-referencial-bncc}
+
+Texto.
+
+
+%%% Início de seção. %%%
+\section{Pensamento Computacional}
+\label{sec-referencial-pc}
+
+Texto.
+
+
+%%% Início de seção. %%%
+\section{Mapeamento Sistemático da Literatura}
+\label{sec-referencial-msl}
+
+O Mapeamento Sistemático da Literatura (MSL) é uma metodologia de pesquisa secundária que visa identificar, categorizar e sintetizar o conjunto de evidências disponíveis sobre um determinado tema, distinguindo-se da revisão sistemática convencional por priorizar uma visão panorâmica da área em vez de responder a uma questão clínica ou empírica específica \cite{petersen2008systematic}. Enquanto a revisão sistemática tende a focar em perguntas de pesquisa bem delimitadas e a realizar sínteses quantitativas dos resultados, o mapeamento sistemático permite classificar e estruturar o estado da arte de forma mais abrangente, evidenciando lacunas, tendências e distribuição de estudos ao longo do tempo \cite{kitchenham2007guidelines}. No presente trabalho, essa abordagem foi adotada para levantar o estado da arte sobre o ensino do Pensamento Computacional no contexto da educação básica brasileira, com ênfase na integração com os componentes curriculares da BNCC, fornecendo a base empírica necessária para a construção do repositório de conhecimento proposto. O protocolo, a condução e os resultados do mapeamento são apresentados no Capítulo~\ref{sec-msl}.
+
+
+%%% Início de seção. %%%
+\section{Delimitação Conceitual: Repositório de Conhecimento}
+\label{sec-referencial-delimitacao}
+
+A literatura técnica e científica emprega diferentes designações para soluções baseadas na web, cujas distinções conceituais são relevantes para a correta caracterização do artefato desenvolvido neste trabalho. Por \textit{repositório} entende-se, no campo da Ciência da Informação e da Arquivística, uma solução voltada ao armazenamento, ao gerenciamento e à preservação de longo prazo de materiais digitais, constituída por hardware, software, metadados e procedimentos normativos \cite{conarq2015}. Na Engenharia de Software, o termo designa ainda o local em que um sistema de controle de versão registra e mantém o histórico de alterações do código-fonte, como nos repositórios Git \cite{chacon2014}. Em ambas as acepções, a ênfase recai sobre a guarda e a organização de um acervo --- de conteúdo ou de código ---, e não sobre a sua mera apresentação.
+
+Distinguem-se desse conceito outras designações correntes. Um \textit{site} (ou \textit{website}) é um conjunto de páginas web interligadas e hospedadas em um mesmo endereço de rede, acessadas a partir de uma página inicial \cite{w3c1999}, noção centrada na disponibilização de conteúdo e com interatividade tipicamente limitada. Um \textit{portal} designa um ponto único de acesso que agrega, em uma mesma interface, informações, recursos e serviços de fontes diversas, funcionando como porta de entrada para a utilização de serviços na internet \cite{gouveia2007}; sua característica definidora é a agregação, e não a estruturação de um acervo de conhecimento. Já uma \textit{plataforma}, em sua acepção mais ampla, corresponde a uma infraestrutura digital que possibilita a interação entre dois ou mais grupos de usuários \cite{srnicek2017}, conceito associado a ecossistemas extensíveis e de natureza sociotécnica, cuja aplicação exige rigor de definição \cite{dereuver2018}. O termo \textit{ambiente}, por sua vez, remete a um espaço de execução ou de interação e, no domínio educacional, consolidou-se na expressão \textit{ambiente virtual de aprendizagem} (AVA), que designa espaços digitais de mediação do processo de ensino-aprendizagem apoiados em tecnologias de informação e comunicação \cite{almeida2003}.
+
+Cabe, por fim, distinguir os termos \textit{sistema web} e \textit{aplicação web} (\textit{webapp}). O primeiro designa um software hospedado em servidor e acessado por navegador, geralmente restrito a usuários cadastrados, em contraste com o site meramente informativo \cite{sommerville2011}. O segundo, mais preciso para soluções que integram interface de usuário (\textit{front-end}) e lógica de servidor (\textit{back-end}), compreende desde sites completos até funcionalidades especializadas e aplicações de processamento de dados \cite{pressman2011}.
+
+% TODO(autor): as duas descrições em "Texto." abaixo dependem do enquadramento do
+% trabalho. No anteprojeto, o acervo "relaciona os componentes curriculares da BNCC aos
+% pilares do Pensamento Computacional", e a aplicação web era "a interface interativa em
+% React e o endpoint SPARQL apoiado pelo Apache Jena Fuseki". Hoje a aplicação é a
+% interface em React e a API própria em Python que a liga ao banco Neo4j.
+Diante dessas distinções, este trabalho adota o termo \textit{repositório de conhecimento} para designar o artefato central produzido --- Texto. ---, uma vez que nenhuma das demais designações (\textit{site}, \textit{portal}, \textit{plataforma} ou \textit{ambiente}) captura adequadamente a natureza de acervo organizado e semanticamente explícito da solução. Esse repositório materializa-se na forma de um grafo de conhecimento, detalhado na Seção~\ref{sec-referencial-grafos}. O termo \textit{aplicação web} é empregado, de modo complementar e não substitutivo, para designar especificamente a camada de software que disponibiliza o repositório --- Texto. ---, reservando-se o termo \textit{repositório} ao acervo de conhecimento assim disponibilizado.
+
+
+%%% Início de seção. %%%
+\section{Grafos de Conhecimento}
+\label{sec-referencial-grafos}
+
+Um grafo de conhecimento (\textit{Knowledge Graph}) é uma estrutura de representação do conhecimento composta por entidades e relações, organizada na forma de um grafo dirigido e rotulado \cite{hogan2021knowledge}. Nessa estrutura, os \textbf{nós} representam entidades do domínio modelado --- como conceitos, objetos, pessoas ou eventos ---, as \textbf{arestas} representam relações tipadas entre essas entidades, e as \textbf{propriedades} correspondem a atributos que enriquecem tanto os nós quanto as arestas com informações adicionais. Essa combinação permite que o conhecimento seja representado de forma semanticamente expressiva, indo além das estruturas tabulares dos bancos de dados relacionais tradicionais ao capturar explicitamente o significado das conexões entre os dados \cite{hogan2021knowledge}.
+
+A adoção de grafos de conhecimento para o presente trabalho é motivada pela natureza intrinsecamente relacional do domínio educacional abordado. A BNCC organiza o currículo da educação básica em componentes curriculares, unidades temáticas, objetos de conhecimento e habilidades \cite{brasil2018bncc} --- elementos que se relacionam entre si de maneira multidimensional e interdisciplinar. Um grafo de conhecimento permite representar essas conexões de forma direta, navegável e semanticamente explícita.
+
+% TODO(autor): exemplo ilustrativo. O do anteprojeto (a habilidade EF05MA13 ligada a
+% "Algoritmo" e a "ComputacaoDesplugada") usava relações que não existem no grafo atual;
+% entra no lugar dele um caminho real do grafo (ano, área, componente, unidade temática,
+% objeto de conhecimento e habilidade), com o enunciado da habilidade conferido na BNCC.
+Texto.
+
+\subsection{Grafos RDF e Grafos de Propriedades}
+\label{sec-referencial-grafos-modelos}
+
+% TODO(autor): no anteprojeto, esta parte defendia o RDF e citava o Neo4j como
+% contraexemplo. A comparação entre os dois modelos fica, mas a justificativa passa a ser
+% a do banco adotado (Neo4j, consultado em Cypher), cuja redação é do autor.
+Texto.
+
+
+%%% Início de seção. %%%
+\section{Tecnologias Utilizadas}
+\label{sec-referencial-tecnologias}
+
+Texto.

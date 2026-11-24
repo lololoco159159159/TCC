@@ -1,0 +1,150 @@
+% ==============================================================================
+% PG - Lorenzo Rizzi Fiorot
+% Capítulo 3 - Mapeamento Sistemático da Literatura
+% ==============================================================================
+\chapter{Mapeamento Sistemático da Literatura}
+\label{sec-msl}
+
+Este capítulo apresenta o mapeamento sistemático da literatura conduzido neste trabalho: o protocolo (Seção~\ref{sec-msl-protocolo}), a string de busca e as fontes consultadas (Seção~\ref{sec-msl-string}), a condução e a seleção dos estudos (Seção~\ref{sec-msl-conducao}), os resultados por questão de pesquisa (Seção~\ref{sec-msl-resultados}), os trabalhos correlatos (Seção~\ref{sec-msl-correlatos}) e uma síntese (Seção~\ref{sec-msl-sintese}).
+
+
+%%% Início de seção. %%%
+\section{Protocolo}
+\label{sec-msl-protocolo}
+
+O objetivo geral do mapeamento sistemático conduzido neste trabalho foi levantar e caracterizar as iniciativas de ensino do Pensamento Computacional na educação básica brasileira, identificando quais áreas do conhecimento previstas na BNCC têm sido exploradas em conjunto com os pilares da computação, bem como quais abordagens pedagógicas e ferramentas têm sido empregadas nesse contexto.
+
+% TODO(autor): o protocolo cita o período de cobertura, mas o texto não o informa. O
+% README do repositório menciona publicações de 2012 a 2025; confirmar no Parsifal antes
+% de escrevê-lo aqui.
+Antes da execução das buscas, foi elaborado um protocolo de pesquisa formal, registrado e gerenciado com o apoio do Parsifal \cite{parsifal}, ferramenta web de código aberto de apoio à condução de revisões sistemáticas da literatura. O protocolo definiu previamente todos os parâmetros da pesquisa, incluindo as questões de pesquisa, as fontes consultadas, o período temporal de cobertura e os critérios de inclusão e exclusão dos estudos, garantindo a reprodutibilidade e a transparência do processo.
+
+As questões de pesquisa (QP) que orientaram o mapeamento foram derivadas do objetivo geral e organizam-se em torno dos eixos de estratégias, impactos e instrumentos de avaliação do Pensamento Computacional na educação básica, conforme apresentado na Tabela~\ref{tab:questoes-pesquisa}.
+
+\begin{table}[h]
+    \centering
+    \caption{Questões de pesquisa}
+    \label{tab:questoes-pesquisa}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|p{15cm}|}
+        \hline
+        \multicolumn{1}{|c|}{\textbf{Questões de Pesquisa}} \\
+        \hline
+        \textbf{QP1:} Quais são as estratégias pedagógicas e metodologias mais utilizadas para a introdução do Pensamento Computacional na educação básica?\\
+        \textbf{QP2:} De que maneira o ensino transversal do Pensamento Computacional impacta o desenvolvimento das competências e habilidades na educação básica?\\
+        \textbf{QP3:} Como as atividades de Pensamento Computacional podem ser integradas ao currículo escolar para favorecer a interdisciplinaridade?\\
+        \textbf{QP4:} Quais instrumentos e critérios de avaliação são utilizados na literatura para mensurar o efetivo desenvolvimento do Pensamento Computacional em estudantes da educação básica?\\
+        \textbf{QP5:} Como os materiais de apoio ao professor e os recursos de avaliação do Pensamento Computacional têm sido disponibilizados, organizados e acessados na educação básica?\\
+        \hline
+    \end{tabular}
+\end{table}
+
+A partir dessas questões, foram definidos os critérios de inclusão e exclusão que delimitaram o conjunto de estudos submetidos à análise. Enquanto os critérios de inclusão (CI) estabelecem as características que tornam um estudo elegível ao mapeamento --- como a aderência temática ao Pensamento Computacional, o foco na educação básica e o relato de experiências práticas ou revisões ---, os critérios de exclusão (CE) especificam as condições que motivam o descarte de trabalhos, garantindo que somente as publicações alinhadas ao escopo e aos objetivos da pesquisa fossem efetivamente consideradas, conforme apresentado na Tabela~\ref{tab:criterios-selecao}.
+
+\begin{table}[h]
+    \centering
+    \caption{Critérios de seleção}
+    \label{tab:criterios-selecao}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|p{15cm}|}
+        \hline
+        \multicolumn{1}{|c|}{\textbf{Critérios de Inclusão}} \\
+        \hline
+        \textbf{CI1:} Estudos que abordem estratégias ou metodologias de ensino de Pensamento Computacional. \\
+        \textbf{CI2:} Estudos com foco na educação básica. \\
+        \textbf{CI3:} Estudos que apresentem resultados relacionados ao desenvolvimento de habilidades cognitivas, como lógica e resolução de problemas. \\
+        \textbf{CI4:} Estudos que relatem experiências práticas, intervenções ou revisões sistemáticas sobre o tema. \\
+        \textbf{CI5:} Estudos que apresentem, descrevam ou analisem materiais didáticos, recursos de avaliação ou instrumentos de apoio ao professor para o ensino do Pensamento Computacional na educação básica. \\
+        \hline
+        \multicolumn{1}{|c|}{\textbf{Critérios de Exclusão}} \\
+        \hline
+        \textbf{CE1:} Estudos duplicados, sem resumo ou texto completo disponível. \\
+        \textbf{CE2:} Publicações que não configurem artigo científico completo, como slides, tutoriais, pôsteres, palestras ou editoriais. \\
+        \textbf{CE3:} Estudos publicados apenas como resumo expandido ou \textit{short paper} com menos de quatro páginas. \\
+        \textbf{CE4:} Trabalhos não redigidos em inglês ou português, ou versões mais antigas de outras publicações já selecionadas. \\
+        \textbf{CE5:} Pesquisas voltadas exclusivamente ao Ensino Superior. \\
+        \textbf{CE6:} Trabalhos sem aderência completa ao tema investigado. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+
+%%% Início de seção. %%%
+\section{String de Busca e Fontes}
+\label{sec-msl-string}
+
+A string de busca foi construída com base no \textit{framework} PICOC (\textit{Population, Intervention, Comparison, Outcome, Context}), método consolidado para a derivação sistemática de termos \cite{kitchenham2007guidelines}. A população de interesse é composta por estudantes e professores da educação básica; a intervenção corresponde ao ensino do Pensamento Computacional; o resultado esperado refere-se ao desenvolvimento de habilidades computacionais alinhadas à BNCC; e o contexto é o cenário educacional brasileiro. A partir da análise desses elementos, foram derivados os termos centrais da busca, combinados por meio dos operadores booleanos \texttt{AND} e \texttt{OR}, conforme apresentado a seguir:
+
+\begin{verbatim}
+("Pensamento Computacional" OR "Computational Thinking"
+ OR "Computação Desplugada" OR "Unplugged Computing")
+                            AND
+("Educação Básica" OR "Basic Education" OR "Ensino Fundamental"
+ OR "Elementary School" OR "BNCC")
+                            AND
+("Ensino" OR "Teaching" OR "Aprendizagem" OR "Learning"
+ OR "Currículo" OR "Curriculum")
+\end{verbatim}
+
+A escolha priorizou duas fontes nacionais, a SBC OpenLib (SOL), biblioteca digital da Sociedade Brasileira de Computação (SBC), e a Revista Novas Tecnologias na Educação (RENOTE), dado que o foco do mapeamento é o contexto educacional brasileiro. A string foi adaptada à sintaxe específica de cada base, mantendo a equivalência semântica entre as versões.
+
+
+%%% Início de seção. %%%
+\section{Condução e Seleção dos Estudos}
+\label{sec-msl-conducao}
+
+% TODO(autor): faltam os números da seleção, por etapa e por fonte (estudos retornados,
+% duplicados, excluídos por título e resumo, excluídos por leitura completa e
+% selecionados), a exportar do Parsifal, e a lista dos estudos selecionados. Sem esses
+% dados, a seção não traz números.
+Texto.
+
+
+%%% Início de seção. %%%
+\section{Resultados}
+\label{sec-msl-resultados}
+
+Esta seção sintetiza as respostas às questões de pesquisa formuladas no protocolo, a partir da análise integrada dos estudos selecionados nas duas fontes consultadas (SOL e RENOTE). A apresentação organiza-se segundo as cinco questões de pesquisa (QP1 a QP5), reunindo, em cada uma, as evidências mais representativas do conjunto analisado.
+
+\subsection{Estratégias Pedagógicas (QP1)}
+\label{sec-msl-resultados-qp1}
+
+Quanto às estratégias pedagógicas e metodologias (QP1), o conjunto analisado evidencia o predomínio da Computação Desplugada, sobretudo nos anos iniciais e em contextos de baixa infraestrutura tecnológica, frequentemente materializada em jogos não digitais \cite{silvamadeira2024}. Em caráter complementar, observa-se a adoção de metodologias ativas --- como Sala de Aula Invertida, gamificação e narrativas \cite{boeres2024}, o Modelo Instrucional 5E articulado ao \textit{Design Thinking} \cite{danielfilho2025} e a Robótica Educacional sob a abordagem STEAM (\textit{Science, Technology, Engineering, Arts and Mathematics}) \cite{osorio2025}. Entre as ferramentas, o Scratch destaca-se como o recurso mais recorrente \cite{kohler2025}, ao lado da articulação entre atividades plugadas e desplugadas como forma de introduzir os conceitos de modo gradual.
+
+\subsection{Impacto no Desenvolvimento de Competências (QP2)}
+\label{sec-msl-resultados-qp2}
+
+No que se refere ao impacto do ensino transversal sobre o desenvolvimento de competências e habilidades (QP2), os estudos associam o Pensamento Computacional ao aprimoramento do raciocínio lógico e da capacidade de resolução de problemas, apontados como os ganhos mais recorrentes \cite{rege2023}. As intervenções empíricas corroboram esses efeitos: \citeonline{raiol2023} registraram que cerca de 82\% dos estudantes atingiram o nível multiestrutural de compreensão. Observa-se, contudo, um desenvolvimento desigual entre os pilares --- com a decomposição figurando como habilidade de alta dificuldade \cite{joaquim2023} --- e a dependência de fatores estruturais, com destaque para a formação docente como condição necessária à efetivação dessas competências \cite{boeres2024}.
+
+\subsection{Integração ao Currículo (QP3)}
+\label{sec-msl-resultados-qp3}
+
+Relativamente à integração ao currículo e à interdisciplinaridade (QP3), a estratégia recorrente consiste em ancorar o Pensamento Computacional nas habilidades da BNCC, tratando-o como eixo transversal. Essa articulação manifesta-se no mapeamento explícito entre os pilares do PC e as habilidades da BNCC, organizado por disciplina \cite{osorio2025}. A programação é igualmente empregada como linguagem para a modelagem de problemas de outras áreas, mobilizando conceitos de física e matemática \cite{danielfilho2025}. Registra-se, todavia, que a transversalidade prevista nos documentos normativos ainda se concretiza, em parte, de modo disciplinarmente segmentado \cite{boeres2024}.
+
+\subsection{Instrumentos de Avaliação (QP4)}
+\label{sec-msl-resultados-qp4}
+
+Quanto aos instrumentos e critérios de avaliação (QP4), entre as propostas mais estruturadas, destacam-se o Protocolo para Avaliação por Critérios do Pensamento Computacional (PAPC), baseado em avaliação por critérios com pesos atribuídos conforme a complexidade \cite{santos2023papc}, modelos fundamentados nas taxonomias de Bloom e SOLO (\textit{Structure of the Observed Learning Outcome}) operacionalizados por pré e pós-testes \cite{raiol2023} e o recurso a ferramentas automatizadas associadas a rubricas, como o CodeMaster \cite{joaquim2023}. Entretanto, o conjunto revela heterogeneidade de abordagens: \citeonline{kohler2025} apontam a ausência de métodos e de métricas padronizados e identificam a observação, os questionários e a análise qualitativa como os instrumentos mais frequentes.
+
+\subsection{Disponibilização dos Materiais de Apoio (QP5)}
+\label{sec-msl-resultados-qp5}
+
+Por fim, quanto à disponibilização, organização e acesso aos materiais de apoio e aos recursos de avaliação (QP5), observa-se uma tendência crescente à adoção de repositórios e plataformas \textit{online}. As soluções mais aderentes ao escopo deste trabalho organizam repositórios web colaborativos que estruturam os recursos e os vinculam ao currículo: em um caso, projetos de robótica com micro:bit organizados em \textit{cards} e associados, por disciplina, às habilidades da BNCC e aos pilares do PC \cite{osorio2025}; em outro, um repositório de planos de aula organizado por nível de ensino e por eixo da Computação, com filtragem e disponibilização sob licença Creative Commons \cite{monteiro2024}. De modo complementar, registram-se \textit{e-books} e cursos em plataformas institucionais \cite{boeres2024, rafalski2023}.
+
+
+%%% Início de seção. %%%
+\section{Trabalhos Correlatos}
+\label{sec-msl-correlatos}
+
+% TODO(autor): os repositórios apontados na QP5 e outros trabalhos que o autor indicar,
+% comparados ao que este trabalho entrega.
+Texto.
+
+
+%%% Início de seção. %%%
+\section{Síntese}
+\label{sec-msl-sintese}
+
+% TODO(autor): uma síntese que percorra as cinco questões de pesquisa pode ser escrita
+% junto com o fechamento do texto; abaixo fica a constatação do anteprojeto.
+Constata-se, a partir dos resultados da QP5, que o acervo de materiais de apoio ao professor permanece disperso entre fontes heterogêneas, o que dificulta sua localização integrada e evidencia a pertinência de uma solução centralizada e semanticamente estruturada --- necessidade que motiva o repositório de conhecimento proposto neste trabalho.

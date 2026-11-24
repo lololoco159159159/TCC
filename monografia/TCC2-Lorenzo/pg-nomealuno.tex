@@ -1,0 +1,444 @@
+% ==============================================================================
+% Modelo para Anteprojeto de Graduação - Ciência da Computação (em Português)
+% Prof. Vítor E. Silva Souza - NEMO / PPGI | DI / CT / UFES
+% Com adaptações feitas pelo Colegiado de Engenharia de Computação / CT / UFES e pela profª. Monalessa Perini Barcellos (NEMO/UFES).
+%
+% Baseado em abtex2-modelo-trabalho-academico.tex, v-1.9.2 laurocesar
+% Copyright 2012-2014 by abnTeX2 group at http://abntex2.googlecode.com/
+%
+% This work may be distributed and/or modified under the conditions of the LaTeX
+% Project Public License, either version 1.3 of this license or (at your option)
+% any later version. The latest version of this license is in
+% http://www.latex-project.org/lppl.txt.
+% ==============================================================================
+
+% Usa o estilo abntex2, configurando detalhes de formatação e hifenização.
+\documentclass[
+	12pt,				% Tamanho da fonte.
+	openright,			% Capítulos começam em página ímpar (insere página vazia caso preciso).
+	oneside,			% Para impressão em verso e anverso. Oposto a oneside.
+	a4paper,			% Tamanho do papel.
+	english,			% Idioma adicional para hifenização.
+	french,				% Idioma adicional para hifenização.
+	spanish,			% Idioma adicional para hifenização.
+	brazil				% O último idioma é o principal do documento.
+	]{abntex2}
+
+
+
+%%% Importação de pacotes. %%%
+
+% Conserta o erro "No room for a new \count".
+% O comando \reserveinserts deve ser comentado ou não, dependendo da versão do LaTeX.
+\usepackage{etex}
+%\reserveinserts{28}
+
+% Usa a fonte Latin Modern.
+\usepackage{lmodern}
+
+% Seleção de códigos de fonte.
+\usepackage[T1]{fontenc}
+
+% Codificação do documento em Unicode.
+\usepackage[utf8]{inputenc}
+
+% Usado pela ficha catalográfica.
+\usepackage{lastpage}
+
+% Indenta o primeiro parágrafo de cada seção.
+\usepackage{indentfirst}
+
+% Controle das cores.
+\usepackage[usenames,dvipsnames]{xcolor}
+
+% Inclusão de gráficos.
+\usepackage{graphicx}
+
+% Tabularx package: melhor controle de leiaute de tabelas.
+\usepackage{tabularx}
+
+% Inclusão de páginas em PDF diretamente no documento (para uso nos apêndices).
+\usepackage{pdfpages}
+
+% Para melhorias de justificação.
+\usepackage{microtype}
+
+% Citações padrão ABNT.
+\usepackage[brazilian,hyperpageref]{backref}
+\usepackage[alf]{abntex2cite}
+\renewcommand{\backrefpagesname}{Citado na(s) página(s):~}		% Usado sem a opção hyperpageref de backref.
+\renewcommand{\backref}{}										% Texto padrão antes do número das páginas.
+\renewcommand*{\backrefalt}[4]{									% Define os textos da citação.
+	\ifcase #1
+		Nenhuma citação no texto.
+	\or
+		Citado na página #2.
+	\else
+		Citado #1 vezes nas páginas #2.
+	\fi}
+
+% \rm is deprecated and should not be used in a LaTeX2e document
+% http://tex.stackexchange.com/questions/151897/always-textrm-never-rm-a-counterexample
+\renewcommand{\rm}{\textrm}
+
+% Inclusão de símbolos não padrão.
+\usepackage{amssymb}
+\usepackage{eurosym}
+
+% Para utilizar \eqref para referenciar equações.
+\usepackage{amsmath}
+
+% Permite mostrar figuras muito largas em modo paisagem com \begin{sidewaysfigure} ao invés de \begin{figure}.
+\usepackage{rotating}
+
+% Permite customizar listas enumeradas/com marcadores.
+\usepackage{enumitem}
+
+% Permite inserir hiperlinks com \url{}.
+\usepackage{bigfoot}
+\usepackage{hyperref}
+
+% Permite usar o comando \hl{} para evidenciar texto com fundo amarelo. Útil para chamar atenção a itens a fazer.
+\usepackage{soulutf8}
+
+% Colorinlistoftodos package: to insert colored comments so authors can collaborate on the content.
+\usepackage[colorinlistoftodos, textwidth=20mm, textsize=footnotesize]{todonotes}
+\newcommand{\aluno}[1]{\todo[author=\textbf{Aluno},color=green!30,caption={},inline]{#1}}
+\newcommand{\professor}[1]{\todo[author=\textbf{Professor},color=red!30,caption={},inline]{#1}}
+
+% Permite inserir espaço em branco condicional (incluído no texto final só se necessário) em macros.
+\usepackage{xspace}
+
+% Permite incluir listagens de código com o comando \lstinputlisting{}.
+\usepackage{listings}
+\usepackage{caption}
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{\colorbox{gray}{\parbox{\textwidth}{#1#2#3}}}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white}
+\renewcommand{\lstlistingname}{Listagem}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\lstset{
+	basicstyle=\scriptsize,
+	breaklines=true,
+	numbers=left,
+	numbersep=5pt,
+	numberstyle=\tiny\color{mygray},
+	rulecolor=\color{black},
+	showstringspaces=false,
+	tabsize=2,
+    inputencoding=utf8,
+    extendedchars=true,
+    literate=%
+    {é}{{\'{e}}}1
+    {è}{{\`{e}}}1
+    {ê}{{\^{e}}}1
+    {ë}{{\¨{e}}}1
+    {É}{{\'{E}}}1
+    {Ê}{{\^{E}}}1
+    {û}{{\^{u}}}1
+    {ù}{{\`{u}}}1
+    {â}{{\^{a}}}1
+    {à}{{\`{a}}}1
+    {á}{{\'{a}}}1
+    {ã}{{\~{a}}}1
+    {Á}{{\'{A}}}1
+    {Â}{{\^{A}}}1
+    {Ã}{{\~{A}}}1
+    {ç}{{\c{c}}}1
+    {Ç}{{\c{C}}}1
+    {õ}{{\~{o}}}1
+    {ó}{{\'{o}}}1
+    {ô}{{\^{o}}}1
+    {Õ}{{\~{O}}}1
+    {Ó}{{\'{O}}}1
+    {Ô}{{\^{O}}}1
+    {î}{{\^{i}}}1
+    {Î}{{\^{I}}}1
+    {í}{{\'{i}}}1
+    {Í}{{\~{Í}}}1
+}
+
+
+
+%%% Dados do trabalho. %%%
+
+% TODO(autor): título provisório, o mesmo do anteprojeto. O título definitivo depende do
+% enquadramento do trabalho e deve mencionar também a aplicação desenvolvida.
+\titulo{Pensamento Computacional na Educação Básica: Um Mapeamento Sistemático sobre Estratégias, Impactos e Instrumentos de Avaliação para a Construção de um Repositório Educacional}
+\autor{Lorenzo Rizzi Fiorot}
+\local{Vitória, ES}
+\data{2026}
+
+% Rótulos no feminino: a orientação é de duas professoras. Os comandos vêm antes de
+% \orientador e \coorientador, que guardam o rótulo no momento em que são chamados.
+\renewcommand{\orientadorname}{Orientadora:}
+\renewcommand{\coorientadorname}{Coorientadora:}
+\orientador{Profa. Dra. Maria Claudia Silva Boeres}
+\coorientador{Profa. Dra. Rosiane da Silva Sangali}
+
+\instituicao{
+  Universidade Federal do Espírito Santo -- UFES
+  \par
+  Centro Tecnológico
+  \par
+  Colegiado do Curso de Ciência da Computação}
+\tipotrabalho{Monografia (PG)}
+
+% Natureza do trabalho, na fórmula das monografias do curso.
+\preambulo{Monografia apresentada ao Curso de Ciência da Computação do Centro Tecnológico da Universidade Federal do Espírito Santo, como requisito parcial para obtenção do Grau de Bacharel em Ciência da Computação.}
+
+
+
+
+%%% Configurações finais de aparência. %%%
+
+% Altera o aspecto da cor azul.
+\definecolor{blue}{RGB}{41,5,195}
+
+% Informações do PDF.
+\makeatletter
+\hypersetup{
+	pdftitle={\@title},
+	pdfauthor={\@author},
+	pdfsubject={\imprimirpreambulo},
+	pdfcreator={LaTeX with abnTeX2},
+	colorlinks=true,				% Colore os links (ao invés de usar caixas).
+	linkcolor=blue,					% Cor dos links.
+	citecolor=blue,					% Cor dos links na bibliografia.
+	filecolor=magenta,				% Cor dos links de arquivo.
+	urlcolor=blue,					% Cor das URLs.
+	bookmarksdepth=4
+}
+\makeatother
+
+% Espaçamentos entre linhas e parágrafos.
+\setlength{\parindent}{1.3cm}
+\setlength{\parskip}{0.2cm}
+
+
+
+%%% Páginas iniciais do documento: capa, folha de rosto, ficha, resumo, tabelas, etc. %%%
+
+% Inicia o documento.
+\begin{document}
+
+% Brasão da instituição.
+\begin{figure}
+	\centering
+	\includegraphics[width=.20\textwidth]{figuras/brasao.jpg}
+	\label{fig-brasao}
+\end{figure}
+
+\begin{center}
+	\textbf{\textsf{UNIVERSIDADE FEDERAL DO ESPÍRITO SANTO}}
+
+	\textbf{\textsf{CENTRO TECNOLÓGICO}}
+
+	\textbf{\textsf{COLEGIADO DO CURSO DE CIÊNCIA DA COMPUTAÇÃO}}
+
+	\large{\textbf{\textsf{  }}}
+
+	\large{\textbf{\textsf{  }}}
+\end{center}
+
+% Retira espaço extra obsoleto entre as frases.
+\frenchspacing
+
+% Capa do trabalho.
+\imprimircapa
+
+% Folha de rosto (o * indica que haverá a ficha bibliográfica).
+\imprimirfolhaderosto*
+
+
+% Ficha catalográfica, composta no próprio documento.
+% Se a biblioteca fornecer a ficha em PDF, ela substitui a de baixo:
+% \begin{fichacatalografica}
+%     \includepdf{include-fichacatalografica.pdf}
+% \end{fichacatalografica}
+\begin{fichacatalografica}
+	\vspace*{\fill}
+	\hrule
+	\begin{center}
+	\begin{minipage}[c]{12.5cm}
+
+	\imprimirautor
+
+	\hspace{0.5cm} \imprimirtitulo  / \imprimirautor. --
+	\imprimirlocal, \imprimirdata-
+
+	\hspace{0.5cm} \pageref{LastPage} p. : il. (algumas color.) ; 30 cm.\\
+
+	\hspace{0.5cm} \imprimirorientadorRotulo~\imprimirorientador\\
+
+	\hspace{0.5cm} \imprimircoorientadorRotulo~\imprimircoorientador\\
+
+	\hspace{0.5cm}
+	\parbox[t]{\textwidth}{\imprimirtipotrabalho~--~\imprimirinstituicao,
+	\imprimirdata.}\\
+
+	\hspace{0.5cm}
+		% TODO(autor): palavras-chave, as mesmas do resumo.
+		1. Texto.
+		I. Boeres, Maria Claudia Silva.
+		II. Sangali, Rosiane da Silva.
+		III. Universidade Federal do Espírito Santo.
+		IV. \imprimirtitulo \\
+
+	% TODO(autor): o código CDU abaixo é o do modelo; a biblioteca informa o correto.
+	\hspace{8.75cm} CDU 02:141:005.7\\
+
+	\end{minipage}
+	\end{center}
+	\hrule
+\end{fichacatalografica}
+
+
+% Folha de aprovação.
+% Depois da defesa, a cópia digitalizada da folha assinada pode substituir a de baixo:
+% \includepdf{include-folhadeaprovacao.pdf}
+\begin{folhadeaprovacao}
+  \begin{center}
+    {\ABNTEXchapterfont\large\imprimirautor}
+    \vspace*{\fill}\vspace*{\fill}
+    \begin{center}
+      \ABNTEXchapterfont\bfseries\Large\imprimirtitulo
+    \end{center}
+    \vspace*{\fill}
+    \hspace{.45\textwidth}
+    \begin{minipage}{.5\textwidth}
+        \imprimirpreambulo
+    \end{minipage}%
+    \vspace*{\fill}
+   \end{center}
+   % TODO(autor): data da defesa e membros da banca, com a instituição de cada um.
+   Trabalho aprovado. \imprimirlocal, Texto.:
+   \assinatura{\textbf{\imprimirorientador} \\ Orientadora}
+   \assinatura{\textbf{\imprimircoorientador} \\ Coorientadora}
+   \assinatura{\textbf{Texto.} \\ Texto.}
+   \assinatura{\textbf{Texto.} \\ Texto.}
+   \begin{center}
+    \vspace*{0.5cm}
+    {\large\imprimirlocal}
+    \par
+    {\large\imprimirdata}
+    \vspace*{1cm}
+  \end{center}
+\end{folhadeaprovacao}
+
+
+% Dedicatória (opcional).
+% TODO(autor): escrever a dedicatória ou retirar este elemento.
+\begin{dedicatoria}
+   \vspace*{\fill}
+   \centering
+   \noindent
+   \textit{Texto.} \vspace*{\fill}
+\end{dedicatoria}
+
+
+% Agradecimentos (opcional).
+% TODO(autor): escrever os agradecimentos ou retirar este elemento.
+\begin{agradecimentos}
+Texto.
+\end{agradecimentos}
+
+
+% Epígrafe (opcional).
+% TODO(autor): escrever a epígrafe ou retirar este elemento.
+\begin{epigrafe}
+    \vspace*{\fill}
+	\begin{flushright}
+		\textit{Texto.}
+	\end{flushright}
+\end{epigrafe}
+
+
+% Resumo em português.
+% TODO(autor): o resumo e as palavras-chave são escritos por último, com o texto pronto.
+\setlength{\absparsep}{18pt}
+\begin{resumo}
+Texto.
+
+\textbf{Palavras-chave}: Texto.
+\end{resumo}
+
+% Insere lista de ilustrações.
+\pdfbookmark[0]{\listfigurename}{lof}
+\listoffigures*
+\cleardoublepage
+
+% Insere lista de tabelas.
+\pdfbookmark[0]{\listtablename}{lot}
+\listoftables*
+\cleardoublepage
+
+% Lista de abreviaturas e siglas: só as que aparecem no texto, em ordem alfabética.
+\begin{siglas}
+  \item[API] \textit{Application Programming Interface}
+  \item[AVA] Ambiente Virtual de Aprendizagem
+  \item[BNCC] Base Nacional Comum Curricular
+  \item[CE] Critério de Exclusão
+  \item[CEB] Câmara de Educação Básica
+  \item[CI] Critério de Inclusão
+  \item[CIF] Comissão Intergovernamental de Financiamento para a Educação Básica de Qualidade
+  \item[CNE] Conselho Nacional de Educação
+  \item[Fundeb] Fundo de Manutenção e Desenvolvimento da Educação Básica e de Valorização dos Profissionais da Educação
+  \item[MSL] Mapeamento Sistemático da Literatura
+  \item[PAPC] Protocolo para Avaliação por Critérios do Pensamento Computacional
+  \item[PC] Pensamento Computacional
+  \item[PICOC] \textit{Population, Intervention, Comparison, Outcome, Context}
+  \item[QP] Questão de Pesquisa
+  \item[RDF] \textit{Resource Description Framework}
+  \item[RENOTE] Revista Novas Tecnologias na Educação
+  \item[SBC] Sociedade Brasileira de Computação
+  \item[SOL] SBC OpenLib
+  \item[SOLO] \textit{Structure of the Observed Learning Outcome}
+  \item[STEAM] \textit{Science, Technology, Engineering, Arts and Mathematics}
+  \item[VAAR] Valor anual por aluno decorrente da complementação-VAAR do Fundeb
+\end{siglas}
+
+% Insere o sumário.
+\pdfbookmark[0]{\contentsname}{toc}
+\tableofcontents*
+\cleardoublepage
+
+
+
+%%% Início da parte de conteúdo do documento. %%%
+
+% Marca o início dos elementos textuais.
+\textual
+
+% Capítulos, um arquivo por capítulo na pasta capitulos/.
+\include{capitulos/ch1-introducao}
+\include{capitulos/ch2-referencial}
+\include{capitulos/ch3-mapeamento}
+\include{capitulos/ch4-edugraph}
+\include{capitulos/ch5-verificacao}
+\include{capitulos/ch6-conclusoes}
+
+
+
+%%% Páginas finais do documento: bibliografia e anexos. %%%
+
+% Finaliza a parte no bookmark do PDF para que se inicie o bookmark na raiz e adiciona espaço de parte no sumário.
+\phantompart
+
+% Marca o início dos elementos pós-textuais.
+\postextual
+
+% Referências bibliográficas
+\bibliography{bibliografia}
+
+
+% Apêndices: entram quando houver conteúdo (por exemplo, o protocolo completo do
+% mapeamento e a lista dos estudos selecionados). Ambiente vazio não compila bem,
+% por isso fica comentado até lá.
+% \begin{apendicesenv}
+% \partapendices
+% \include{apendices/apA-estudos}
+% \end{apendicesenv}
+
+% Fim do documento.
+\end{document}
