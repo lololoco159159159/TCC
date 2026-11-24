@@ -5,24 +5,81 @@
 \chapter{Referencial Teórico e Tecnologias Utilizadas}
 \label{sec-referencial}
 
-% TODO(autor): abertura do capítulo. No anteprojeto, ela apresentava o repositório como
-% relação entre a BNCC e os pilares do Pensamento Computacional, disponibilizado por um
-% endpoint SPARQL; depende do enquadramento do trabalho e da descrição da aplicação atual.
-Texto.
+% TODO(autor): no anteprojeto, a abertura do capítulo também apresentava o repositório, como
+% relação entre a BNCC e os pilares do Pensamento Computacional; essa apresentação depende
+% do enquadramento do trabalho.
+Este capítulo reúne os fundamentos teóricos do trabalho e as tecnologias empregadas em seu desenvolvimento. A Seção~\ref{sec-referencial-bncc} apresenta a estrutura da BNCC e da BNCC Computação, e a Seção~\ref{sec-referencial-pc}, o Pensamento Computacional. A Seção~\ref{sec-referencial-msl} caracteriza o mapeamento sistemático da literatura como método de pesquisa. A Seção~\ref{sec-referencial-delimitacao} delimita o conceito de repositório de conhecimento adotado, e a Seção~\ref{sec-referencial-grafos} trata dos grafos de conhecimento e dos modelos de dados que os implementam. Por fim, a Seção~\ref{sec-referencial-tecnologias} descreve as tecnologias utilizadas.
 
 
 %%% Início de seção. %%%
 \section{A BNCC e a BNCC Computação}
 \label{sec-referencial-bncc}
 
-Texto.
+A BNCC é um ``documento de caráter normativo que define o conjunto orgânico e progressivo de aprendizagens essenciais que todos os alunos devem desenvolver ao longo das etapas e modalidades da Educação Básica'' \cite[p.~7]{brasil2018bncc}. O documento abrange a Educação Infantil, o Ensino Fundamental e o Ensino Médio e constitui referência nacional para a formulação dos currículos dos sistemas e das redes de ensino e das propostas pedagógicas das escolas \cite[p.~8--9]{brasil2018bncc}. As aprendizagens essenciais devem concorrer para o desenvolvimento de dez competências gerais, entendida a competência como ``a mobilização de conhecimentos (conceitos e procedimentos), habilidades (práticas, cognitivas e socioemocionais), atitudes e valores para resolver demandas complexas da vida cotidiana, do pleno exercício da cidadania e do mundo do trabalho'' \cite[p.~8]{brasil2018bncc}.
+
+No Ensino Fundamental, etapa a que pertencem os dados do grafo apresentado neste trabalho, a BNCC organiza-se em cinco áreas do conhecimento --- Linguagens, Matemática, Ciências da Natureza, Ciências Humanas e Ensino Religioso ---, que reúnem os componentes curriculares \cite[p.~27]{brasil2018bncc}. Cada componente apresenta um conjunto de habilidades, que expressam as aprendizagens essenciais a serem asseguradas aos alunos. As habilidades relacionam-se a objetos de conhecimento, isto é, a conteúdos, conceitos e processos, e estes, por sua vez, organizam-se em unidades temáticas \cite[p.~28--29]{brasil2018bncc}. Uma unidade temática contempla uma gama maior ou menor de objetos de conhecimento, e cada objeto relaciona-se a um número variável de habilidades \cite[p.~29]{brasil2018bncc}. Esse encadeamento --- área do conhecimento, componente curricular, unidade temática, objeto de conhecimento e habilidade --- é a estrutura reproduzida no modelo do grafo (Seção~\ref{sec-edugraph-modelo}).
+
+Cada habilidade é identificada por um código alfanumérico \cite[p.~30]{brasil2018bncc}, cuja composição é apresentada na Tabela~\ref{tab:codigo-habilidade}, tomando-se como exemplo o código \texttt{EF01CI05}. Duas ressalvas do documento são relevantes para este trabalho: a numeração sequencial não representa uma ordem ou hierarquia esperada das aprendizagens, e a organização das habilidades em objetos de conhecimento e unidades temáticas expressa ``um arranjo possível (dentre outros)'', que não deve ser tomado como modelo obrigatório para o desenho dos currículos \cite[p.~31]{brasil2018bncc}. Ambas se estendem ao grafo, que reproduz esse arranjo.
+
+\begin{table}[h]
+    \centering
+    \caption{Composição do código das habilidades do Ensino Fundamental}
+    \label{tab:codigo-habilidade}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|p{4.2cm}|p{6cm}|p{4.2cm}|}
+        \hline
+        \textbf{Parte do código} & \textbf{O que indica} & \textbf{No código \texttt{EF01CI05}} \\
+        \hline
+        Primeiro par de letras & Etapa de ensino & \texttt{EF}: Ensino Fundamental \\
+        \hline
+        Primeiro par de números & Ano ou bloco de anos & \texttt{01}: 1º ano \\
+        \hline
+        Segundo par de letras & Componente curricular & \texttt{CI}: Ciências \\
+        \hline
+        Último par de números & Posição na numeração sequencial do ano ou do bloco de anos & \texttt{05}: quinta habilidade \\
+        \hline
+    \end{tabular}
+\end{table}
+
+A Computação já era tratada na BNCC de 2018, que tematiza três dimensões da computação e das tecnologias digitais \cite[p.~473--474]{brasil2018bncc}: o pensamento computacional, discutido na Seção~\ref{sec-referencial-pc}; o mundo digital, que envolve as formas de processar, transmitir e distribuir a informação de maneira segura e confiável; e a cultura digital, voltada a uma participação mais consciente e democrática por meio das tecnologias digitais. No Ensino Fundamental, contudo, essas dimensões foram contempladas nas competências e habilidades dos diferentes componentes \cite[p.~474]{brasil2018bncc}, sem habilidades próprias, uma vez que a Computação não figura entre os componentes curriculares da etapa \cite[p.~27]{brasil2018bncc}.
+
+O conjunto próprio de habilidades veio com a Resolução CNE/CEB nº 1, de 4 de outubro de 2022, que define normas sobre Computação na Educação Básica, em complemento à BNCC (art.~1º). A Resolução determina que o desenvolvimento e a formulação dos currículos considerem as tabelas de competências e habilidades anexas (art.~1º, §~2º), atribui aos Estados, aos Municípios e ao Distrito Federal a definição dos parâmetros e das abordagens pedagógicas de implementação (art.~2º) e prevê que o Ministério da Educação (MEC), em conjunto com esses entes, defina política para a formação docente, o apoio ao desenvolvimento de currículos e o apoio ao desenvolvimento de recursos didáticos compatíveis com as tabelas (art.~4º) \cite{brasil2022computacao}.
+
+As tabelas constam do documento anexo ao Parecer CNE/CEB nº 2/2022 \cite{brasil2022complemento} e cobrem as três etapas da Educação Básica. No Ensino Fundamental, há sete competências e um conjunto de habilidades para cada ano, além de habilidades por etapa (do 1º ao 5º e do 6º ao 9º ano). Cada habilidade vincula-se a um objeto de conhecimento e a um dos três eixos --- Pensamento Computacional, Mundo Digital e Cultura Digital --- e vem acompanhada de explicação e de exemplos. Os códigos seguem a composição da Tabela~\ref{tab:codigo-habilidade}, com o par \texttt{CO} na posição do componente curricular: \texttt{EF01CO01}, por exemplo, identifica a primeira habilidade de Computação do 1º ano, ``Organizar objetos físicos ou digitais considerando diferentes características para esta organização, explicitando semelhanças (padrões) e diferenças'' \cite[p.~12]{brasil2022complemento}. A organização das tabelas é, portanto, análoga à dos demais componentes, com o eixo no lugar da unidade temática.
+
+% TODO(autor): se o enquadramento do trabalho incluir a BNCC Computação no modelo do grafo,
+% acrescentar aqui a relação entre as tabelas do complemento e o modelo.
 
 
 %%% Início de seção. %%%
 \section{Pensamento Computacional}
 \label{sec-referencial-pc}
 
-Texto.
+A popularização do termo Pensamento Computacional é atribuída ao artigo de \citeonline{wing2006}, como registram \citeonline[p.~562]{boeres2024}. Para a autora, trata-se de uma habilidade fundamental para todos, e não apenas para cientistas da computação, a ser acrescentada à leitura, à escrita e à aritmética na formação de toda criança; envolve a resolução de problemas, o projeto de sistemas e a compreensão do comportamento humano com base nos conceitos fundamentais da ciência da computação \cite[p.~33]{wing2006}. Nessa acepção, pensar computacionalmente significa conceituar, e não programar, e constitui um modo pelo qual as pessoas, e não os computadores, resolvem problemas \cite[p.~35]{wing2006}.
+
+No contexto brasileiro, \citeonline{brackmann2017} propõe, a partir da fusão de diversas fontes, a seguinte definição:
+
+\begin{citacao}
+O Pensamento Computacional é uma distinta capacidade criativa, crítica e estratégica humana de saber utilizar os fundamentos da Computação, nas mais diversas áreas do conhecimento, com a finalidade de identificar e resolver problemas, de maneira individual ou colaborativa, através de passos claros, de tal forma que uma pessoa ou uma máquina possam executá-los eficazmente \cite[p.~29]{brackmann2017}.
+\end{citacao}
+
+\noindent A BNCC, por sua vez, afirma que o pensamento computacional ``envolve as capacidades de compreender, analisar, definir, modelar, resolver, comparar e automatizar problemas e suas soluções, de forma metódica e sistemática, por meio do desenvolvimento de algoritmos'' \cite[p.~474]{brasil2018bncc}. As três formulações tratam o PC como um modo de resolver problemas fundamentado na Computação, e as de \citeonline{wing2006} e \citeonline{brackmann2017} ressaltam que os processos envolvidos podem ser executados por uma pessoa ou por uma máquina. Por essa razão, o PC pode ser desenvolvido também por meio da Computação Desplugada, que dispensa o uso de computadores e recorre, por exemplo, a movimentos, cartões, desenhos e enigmas \cite[p.~50]{brackmann2017}.
+
+Segundo \citeonline[p.~33]{brackmann2017}, o PC apoia-se em quatro pilares, interdependentes e voltados à resolução de problemas:
+
+\begin{itemize}
+    \item \textbf{decomposição}: identificar um problema complexo e dividi-lo em partes menores e mais fáceis de gerenciar;
+    \item \textbf{reconhecimento de padrões}: analisar cada uma dessas partes em busca de problemas parecidos, já solucionados anteriormente;
+    \item \textbf{abstração}: concentrar-se apenas nos detalhes importantes, ignorando as informações irrelevantes;
+    \item \textbf{algoritmos}: criar passos ou regras simples para resolver cada um dos subproblemas encontrados.
+\end{itemize}
+
+\noindent Os mesmos pilares são adotados por \citeonline[p.~565]{boeres2024}, na análise da formação docente, e por \citeonline[p.~1752]{osorio2025}, no mapeamento entre o PC e as habilidades da BNCC.
+
+Nos documentos curriculares, o PC aparece de duas formas. Na BNCC de 2018, as menções no Ensino Fundamental concentram-se na área de Matemática: os processos de resolução de problemas, de investigação, de desenvolvimento de projetos e de modelagem são considerados potencialmente ricos para o seu desenvolvimento \cite[p.~266]{brasil2018bncc}, e ressaltam-se a importância dos algoritmos e de seus fluxogramas e a identificação de padrões para estabelecer generalizações \cite[p.~271]{brasil2018bncc}. Na BNCC Computação, o PC constitui um eixo próprio, e os pilares manifestam-se nas habilidades desde os anos iniciais: no 1º ano, a identificação de semelhanças, ou padrões, na organização de objetos (\texttt{EF01CO01}) e a criação de sequências de passos, associadas à palavra ``Algoritmos'' (\texttt{EF01CO03}); no 2º ano, a identificação de atributos essenciais, própria da abstração, na modelagem de objetos (\texttt{EF02CO01}); no 3º ano, a decomposição de problemas complexos (\texttt{EF03CO03}) \cite[p.~12, 16, 18]{brasil2022complemento}.
+
+% TODO(autor): parágrafo de fechamento, que liga o Pensamento Computacional ao repositório
+% de conhecimento; depende do enquadramento do trabalho.
 
 
 %%% Início de seção. %%%
@@ -58,19 +115,39 @@ Um grafo de conhecimento (\textit{Knowledge Graph}) é uma estrutura de represen
 
 A adoção de grafos de conhecimento para o presente trabalho é motivada pela natureza intrinsecamente relacional do domínio educacional abordado. A BNCC organiza o currículo da educação básica em componentes curriculares, unidades temáticas, objetos de conhecimento e habilidades \cite{brasil2018bncc} --- elementos que se relacionam entre si de maneira multidimensional e interdisciplinar. Um grafo de conhecimento permite representar essas conexões de forma direta, navegável e semanticamente explícita.
 
-% TODO(autor): exemplo ilustrativo. O do anteprojeto (a habilidade EF05MA13 ligada a
-% "Algoritmo" e a "ComputacaoDesplugada") usava relações que não existem no grafo atual;
-% entra no lugar dele um caminho real do grafo (ano, área, componente, unidade temática,
-% objeto de conhecimento e habilidade), com o enunciado da habilidade conferido na BNCC.
-Texto.
+Para ilustrar, considere a habilidade \texttt{EF01CI05}, de Ciências do 1º ano: ``Identificar e nomear diferentes escalas de tempo: os períodos diários (manhã, tarde, noite) e a sucessão de dias, semanas, meses e anos'' \cite[p.~333]{brasil2018bncc}. No quadro da BNCC, ela se relaciona ao objeto de conhecimento Escalas de tempo, da unidade temática Terra e Universo \cite[p.~332]{brasil2018bncc}. Em um modelo relacional tradicional, reconstituir o encadeamento do ano até a habilidade exigiria, a cada consulta, operações de junção (\textit{joins}) entre as tabelas de cada nível, além de tabelas intermediárias nas relações de muitos para muitos, como a que existe entre anos e áreas do conhecimento. Em um grafo de conhecimento, o mesmo encadeamento é expresso por arestas diretas e rotuladas, como no caminho a seguir, lido no grafo deste trabalho e escrito na notação da linguagem Cypher, em que os parênteses delimitam os nós e os colchetes, as relações:
+
+\begin{verbatim}
+(:Ano {nome: "1º Ano"})
+  -[:TEM_AREA]->
+(:AreaConhecimento {nome: "Ciências da Natureza"})
+  -[:TEM_COMPONENTE]->
+(:ComponenteCurricular {nome: "Ciências"})
+  -[:TEM_UNIDADE]->
+(:UnidadeTematicaCien {nome: "Terra e Universo"})
+  -[:TEM_OBJETO]->
+(:ObjetoConhecimentoCien {descricao: "Escalas de tempo"})
+  -[:DESENVOLVE]->
+(:HabilidadeCien {codigo: "EF01CI05"})
+\end{verbatim}
+
+Essa representação não apenas simplifica a consulta --- basta percorrer as arestas a partir do nó da habilidade ---, como também torna o significado da relação explícito e facilmente interpretável, tanto por pessoas quanto por máquinas. Os grafos oferecem uma abstração concisa e intuitiva das relações entre as entidades de um domínio, e suas linguagens de consulta dispõem de operadores de navegação para percorrer caminhos de tamanho arbitrário \cite{hogan2021knowledge}. O exemplo evidencia, ainda, o compartilhamento de nós: a unidade temática Terra e Universo, que consta dos quadros do 1º e do 2º ano \cite[p.~332, 334]{brasil2018bncc}, é um único nó do grafo, a que se ligam os objetos de conhecimento dos dois anos.
 
 \subsection{Grafos RDF e Grafos de Propriedades}
 \label{sec-referencial-grafos-modelos}
 
-% TODO(autor): no anteprojeto, esta parte defendia o RDF e citava o Neo4j como
-% contraexemplo. A comparação entre os dois modelos fica, mas a justificativa passa a ser
-% a do banco adotado (Neo4j, consultado em Cypher), cuja redação é do autor.
-Texto.
+\citeonline{angles2008survey} definem os modelos de bancos de dados em grafo como aqueles em que as estruturas de dados são modeladas como grafos, ou generalizações deles, e a manipulação dos dados é expressa por operações orientadas a grafos. Esses modelos aplicam-se a domínios em que a interconexão dos dados é tão ou mais importante do que os próprios dados \cite[p.~1:5]{angles2008survey}, como ocorre com o currículo representado neste trabalho. Entre eles, dois são hoje particularmente difundidos: os grafos de arestas rotuladas, base do RDF (\textit{Resource Description Framework}), e os grafos de propriedades (\textit{property graphs}) \cite{angles2017foundations}.
+
+Os \textbf{grafos RDF} representam o conhecimento como conjuntos de triplas \texttt{<sujeito, predicado, objeto>}. O predicado é sempre um IRI (\textit{Internationalized Resource Identifier}), generalização do URI (\textit{Uniform Resource Identifier}) com escopo global, o que permite nomear entidades e relações de forma inequívoca; o sujeito pode ser um IRI ou um nó em branco, e o objeto, um IRI, um nó em branco ou um literal \cite{cyganiak2014rdf}. O RDF é uma recomendação do \textit{World Wide Web Consortium} (W3C), o consórcio internacional responsável por definir os padrões abertos da Web, e é o modelo de dados de que se valem os Dados Ligados (\textit{Linked Data}) \cite{cyganiak2014rdf}. A linguagem de consulta padronizada para grafos RDF é a SPARQL (\textit{SPARQL Protocol and RDF Query Language}) \cite{angles2017foundations}.
+
+Nos \textbf{grafos de propriedades}, nós e arestas recebem rótulos e podem carregar conjuntos de pares chave-valor \cite{hogan2021knowledge}. O modelo é uma extensão dos grafos de arestas rotuladas, adotada por bancos de dados como o Neo4j, cuja linguagem declarativa de consulta é a Cypher \cite{angles2017foundations}.
+
+A escolha entre os dois modelos envolve um compromisso. Nos grafos de arestas rotuladas, o tipo de um nó e as informações sobre uma aresta precisam ser expressos por novos nós e arestas, o que pode exigir mudanças na estrutura do grafo; nos grafos de propriedades, rótulos e atributos fazem parte do modelo, o que pode oferecer uma abstração mais direta, mais fácil de consultar e de compreender \cite{angles2017foundations}. \citeonline{hogan2021knowledge} resumem a diferença ao considerar o primeiro modelo mais enxuto e o segundo mais flexível; observam, ainda, que um pode ser convertido no outro sem perda de informação, de modo que a escolha costuma ser secundária diante de fatores práticos, como as implementações disponíveis.
+
+% TODO(autor): conferir a redação deste parágrafo, que apresenta os motivos da adoção do
+% Neo4j: os dados são produzidos nesse banco pelo grupo de pesquisa das orientadoras, que
+% adota essa tecnologia, e o modelo ajusta-se ao domínio.
+Neste trabalho, adota-se o modelo de grafos de propriedades, implementado no Neo4j. A escolha decorre, em primeiro lugar, de um fator prático: a base de dados é produzida nesse banco, em Cypher, pelo grupo de pesquisa das orientadoras, que adota essa tecnologia, e é consultada pela interface de programação de aplicações (API, do inglês \textit{Application Programming Interface}) do próprio banco, a Query API. Em segundo lugar, o modelo ajusta-se ao domínio: os níveis do currículo correspondem a rótulos de nós, os dados de cada nível --- código, nome ou descrição --- são propriedades dos nós, e o encadeamento entre os níveis é expresso por relações nomeadas, como no caminho apresentado nesta seção. Em contrapartida, abre-se mão da integração direta com bases publicadas como Dados Ligados, própria do RDF; como os dois modelos são conversíveis entre si, a publicação do grafo em RDF permanece possível.
 
 
 %%% Início de seção. %%%

@@ -136,9 +136,40 @@ Por fim, quanto à disponibilização, organização e acesso aos materiais de a
 \section{Trabalhos Correlatos}
 \label{sec-msl-correlatos}
 
-% TODO(autor): os repositórios apontados na QP5 e outros trabalhos que o autor indicar,
-% comparados ao que este trabalho entrega.
-Texto.
+Entre os estudos analisados, dois propõem repositórios voltados ao professor que organizam recursos didáticos e os vinculam à BNCC, conforme as respostas à QP5 (Seção~\ref{sec-msl-resultados-qp5}): o de \citeonline{osorio2025} e o de \citeonline{monteiro2024}. São, por isso, os que mais se aproximam do sistema desenvolvido neste trabalho, o EduGraph, apresentado no Capítulo~\ref{sec-edugraph}. Esta seção descreve os dois repositórios e os compara ao EduGraph.
+
+\citeonline{osorio2025} dão continuidade a um mapeamento entre os quatro pilares do PC e as habilidades da BNCC, estendendo-o ao 8º e ao 9º ano e completando, assim, os Anos Finais do Ensino Fundamental. O mapeamento, registrado em planilha, abrange oito disciplinas e baseia-se na análise dos verbos de ação de cada habilidade; as correlações preliminares, obtidas com o apoio de uma ferramenta de inteligência artificial generativa, foram revisadas e validadas manualmente \cite[p.~1753--1754]{osorio2025}. A planilha serviu de referência a um \textit{workshop} de formação continuada de cinco semanas, com a participação efetiva de seis profissionais da educação \cite[p.~1755]{osorio2025}, do qual surgiu a proposta de um repositório web de projetos com a placa micro:bit. A versão inicial do repositório, ainda em construção quando da publicação, organiza os projetos em \textit{cards} filtráveis por disciplina; cada \textit{card} reúne uma explicação do projeto, o código da habilidade da BNCC a ele vinculada, os pilares do PC trabalhados e um \textit{link} para o código no editor MakeCode \cite[p.~1757]{osorio2025}. A validação do repositório com professores é indicada como trabalho futuro \cite[p.~1757--1758]{osorio2025}.
+
+\citeonline{monteiro2024} relatam a HackEduComp, maratona em que professores e licenciandos, reunidos em equipes e apoiados por mentores, planejam aulas interdisciplinares com o PC \cite[p.~170]{monteiro2024}. Nas duas edições relatadas, com 27 e 26 participantes \cite[p.~172]{monteiro2024}, as equipes elaboraram planos de aula que registram, entre outros elementos, a habilidade de Computação, conforme a BNCC Computação, e a habilidade do componente curricular, conforme a BNCC \cite[p.~171]{monteiro2024}. Os planos foram publicados, sob licença Creative Commons, em um repositório cuja interface permite filtrá-los por nível de ensino e identificar, na listagem, o eixo da Computação, o título, o resumo e as disciplinas relacionadas, além de baixar o plano \cite[p.~171, 173]{monteiro2024}. Entre os participantes que responderam ao questionário final, 84\% concordaram que aplicariam com seus alunos o plano produzido pelo próprio grupo \cite[p.~174]{monteiro2024}.
+
+A Tabela~\ref{tab:trabalhos-correlatos} compara os dois repositórios ao EduGraph. Ambos reúnem recursos prontos --- projetos, em um caso, e planos de aula, no outro ---, aos quais a BNCC se associa como informação de cada item, e são consultados por meio de um filtro: a disciplina, em \citeonline{osorio2025}, e o nível de ensino, em \citeonline{monteiro2024}. O EduGraph segue o caminho inverso: representa a própria estrutura curricular da BNCC na forma de um grafo, em que cada habilidade é um nó alcançável a partir do ano, da área, do componente, da unidade temática e do objeto de conhecimento a que pertence, e oferece a exploração visual dessas relações, uma busca guiada e a consulta direta em Cypher. Em contrapartida, o EduGraph não reúne materiais prontos para uso em sala de aula, como os que os outros dois trabalhos disponibilizam.
+
+% TODO(autor): o vínculo do EduGraph com o Pensamento Computacional, na tabela abaixo,
+% depende do enquadramento do trabalho: a base de dados atual traz só a estrutura
+% curricular da BNCC.
+\begin{table}[h]
+    \centering
+    \caption{Comparação entre os trabalhos correlatos e o EduGraph}
+    \label{tab:trabalhos-correlatos}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{2.3cm}|>{\raggedright\arraybackslash}p{3.8cm}|>{\raggedright\arraybackslash}p{3.8cm}|>{\raggedright\arraybackslash}p{3.9cm}|}
+        \hline
+        \textbf{Aspecto} & \citeonline{osorio2025} & \citeonline{monteiro2024} & \textbf{EduGraph} \\
+        \hline
+        Conteúdo & Projetos com a placa micro:bit & Planos de aula interdisciplinares & Estrutura curricular da BNCC, representada como grafo \\
+        \hline
+        Vínculo com a BNCC & Código da habilidade em cada \textit{card} & Habilidades da BNCC e da BNCC Computação em cada plano & Habilidades, objetos, unidades, componentes, áreas e anos como nós ligados entre si \\
+        \hline
+        Vínculo com o PC & Pilares do PC em cada \textit{card} & Eixo da Computação em cada plano & Texto. \\
+        \hline
+        Etapa & Anos Finais do Ensino Fundamental & Ensino Fundamental e Ensino Médio & 1º e 2º ano do Ensino Fundamental, nos dados atuais \\
+        \hline
+        Forma de consulta & Filtro por disciplina & Filtro por nível de ensino & Exploração visual do grafo, busca guiada e consultas em Cypher \\
+        \hline
+    \end{tabular}
+\end{table}
+
+% TODO(autor): incluir outros trabalhos correlatos que o autor ou as orientadoras indicarem.
 
 
 %%% Início de seção. %%%
