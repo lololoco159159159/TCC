@@ -86,7 +86,7 @@ Nos documentos curriculares, o PC aparece de duas formas. Na BNCC de 2018, as me
 \section{Mapeamento Sistemático da Literatura}
 \label{sec-referencial-msl}
 
-O Mapeamento Sistemático da Literatura (MSL) é uma metodologia de pesquisa secundária que visa identificar, categorizar e sintetizar o conjunto de evidências disponíveis sobre um determinado tema, distinguindo-se da revisão sistemática convencional por priorizar uma visão panorâmica da área em vez de responder a uma questão clínica ou empírica específica \cite{petersen2008systematic}. Enquanto a revisão sistemática tende a focar em perguntas de pesquisa bem delimitadas e a realizar sínteses quantitativas dos resultados, o mapeamento sistemático permite classificar e estruturar o estado da arte de forma mais abrangente, evidenciando lacunas, tendências e distribuição de estudos ao longo do tempo \cite{kitchenham2007guidelines}. No presente trabalho, essa abordagem foi adotada para levantar o estado da arte sobre o ensino do Pensamento Computacional no contexto da educação básica brasileira, com ênfase na integração com os componentes curriculares da BNCC, fornecendo a base empírica necessária para a construção do repositório de conhecimento proposto. O protocolo, a condução e os resultados do mapeamento são apresentados no Capítulo~\ref{sec-msl}.
+O Mapeamento Sistemático da Literatura (MSL) é uma metodologia de pesquisa secundária que visa identificar, categorizar e sintetizar o conjunto de evidências disponíveis sobre um determinado tema, distinguindo-se da revisão sistemática convencional por priorizar uma visão panorâmica da área em vez de responder a uma questão clínica ou empírica específica \cite{petersen2008systematic}. Enquanto a revisão sistemática tende a focar em perguntas de pesquisa bem delimitadas e a realizar sínteses quantitativas dos resultados, o mapeamento sistemático permite classificar e estruturar o estado da arte de forma mais abrangente, evidenciando lacunas, tendências e distribuição de estudos ao longo do tempo \cite{kitchenham2007guidelines, petersen2008systematic}. No presente trabalho, essa abordagem foi adotada para levantar o estado da arte sobre o ensino do Pensamento Computacional no contexto da educação básica brasileira, com ênfase na integração com os componentes curriculares da BNCC, fornecendo a base empírica necessária para a construção do repositório de conhecimento proposto. O protocolo, a condução e os resultados do mapeamento são apresentados no Capítulo~\ref{sec-msl}.
 
 
 %%% Início de seção. %%%
@@ -99,12 +99,7 @@ Distinguem-se desse conceito outras designações correntes. Um \textit{site} (o
 
 Cabe, por fim, distinguir os termos \textit{sistema web} e \textit{aplicação web} (\textit{webapp}). O primeiro designa um software hospedado em servidor e acessado por navegador, geralmente restrito a usuários cadastrados, em contraste com o site meramente informativo \cite{sommerville2011}. O segundo, mais preciso para soluções que integram interface de usuário (\textit{front-end}) e lógica de servidor (\textit{back-end}), compreende desde sites completos até funcionalidades especializadas e aplicações de processamento de dados \cite{pressman2011}.
 
-% TODO(autor): as duas descrições em "Texto." abaixo dependem do enquadramento do
-% trabalho. No anteprojeto, o acervo "relaciona os componentes curriculares da BNCC aos
-% pilares do Pensamento Computacional", e a aplicação web era "a interface interativa em
-% React e o endpoint SPARQL apoiado pelo Apache Jena Fuseki". Hoje a aplicação é a
-% interface em React e a API própria em Python que a liga ao banco Neo4j.
-Diante dessas distinções, este trabalho adota o termo \textit{repositório de conhecimento} para designar o artefato central produzido --- Texto. ---, uma vez que nenhuma das demais designações (\textit{site}, \textit{portal}, \textit{plataforma} ou \textit{ambiente}) captura adequadamente a natureza de acervo organizado e semanticamente explícito da solução. Esse repositório materializa-se na forma de um grafo de conhecimento, detalhado na Seção~\ref{sec-referencial-grafos}. O termo \textit{aplicação web} é empregado, de modo complementar e não substitutivo, para designar especificamente a camada de software que disponibiliza o repositório --- Texto. ---, reservando-se o termo \textit{repositório} ao acervo de conhecimento assim disponibilizado.
+Diante dessas distinções, este trabalho adota o termo \textit{repositório de conhecimento} para designar o artefato central produzido, uma vez que nenhuma das demais designações (\textit{site}, \textit{portal}, \textit{plataforma} ou \textit{ambiente}) captura adequadamente a natureza de acervo organizado e semanticamente explícito da solução. Esse repositório materializa-se na forma de um grafo de conhecimento, detalhado na Seção~\ref{sec-referencial-grafos}. O termo \textit{aplicação web} é empregado, de modo complementar e não substitutivo, para designar especificamente a camada de software que disponibiliza o repositório, reservando-se o termo \textit{repositório} ao acervo de conhecimento assim disponibilizado.
 
 
 %%% Início de seção. %%%
@@ -154,4 +149,44 @@ Neste trabalho, adota-se o modelo de grafos de propriedades, implementado no Neo
 \section{Tecnologias Utilizadas}
 \label{sec-referencial-tecnologias}
 
-Texto.
+Esta seção apresenta as tecnologias adotadas no desenvolvimento do EduGraph e as razões de cada escolha; a Tabela~\ref{tab:tecnologias} resume-as, com as versões utilizadas, e a forma como se articulam é descrita na Seção~\ref{sec-edugraph-arquitetura}.
+
+No \textit{front-end}, adotou-se o React, biblioteca JavaScript de código aberto voltada à construção de interfaces de usuário a partir de componentes declarativos e reutilizáveis. O modelo de componentes ajusta-se à decomposição natural da interface projetada, a barra de busca e filtros, o palco de visualização do grafo, o painel de detalhe das entidades e as sobreposições de estado, permitindo que cada unidade encapsule estrutura, aparência e comportamento próprios, o que favorece o desenvolvimento incremental e a manutenção isolada de cada parte. A renderização declarativa complementa esse modelo: a interface é descrita como função do estado da aplicação, de modo que transições como consulta em andamento, resultado disponível, resultado vazio e falha da consulta refletem-se automaticamente na tela, sem manipulação manual da árvore do documento. Pesou ainda o caráter de biblioteca e não de \textit{framework} do React, que não impõe arquitetura de aplicação, solução de roteamento ou camada de estilos, preservando as demais decisões do projeto.
+
+Em torno do React organizam-se as demais escolhas da camada de apresentação. O Vite atua como empacotador, respondendo pelo servidor de desenvolvimento e pela geração dos artefatos de produção. A estilização emprega CSS (\textit{Cascading Style Sheets}) puro, organizado em variáveis de tema que centralizam a paleta nos modos claro e escuro de exibição, sem o recurso a \textit{frameworks} de componentes prontos --- o que assegura controle integral sobre a identidade visual construída na etapa de prototipação, descrita na Seção~\ref{sec-edugraph-prototipacao}, e sobre os recursos de acessibilidade da ferramenta. Os estilos combinam declarações em linha nos componentes, para a estrutura e para as propriedades calculadas em função do estado da aplicação, e uma folha central com as variáveis de tema e as classes responsáveis pelos estados de interação e pelas animações. A navegação entre as telas também é controlada pelo estado do React, sem biblioteca de roteamento, de modo que as únicas dependências de execução da interface são os pacotes \texttt{react} e \texttt{react-dom}. A visualização do grafo, por sua vez, é desenhada em um elemento \textit{canvas} do HTML (\textit{HyperText Markup Language}), por meio de sua interface de desenho bidimensional (Canvas 2D), com um motor próprio de simulação e de interação, sem bibliotecas de visualização de grafos, descrito na Seção~\ref{sec-edugraph-grafos}.
+
+A integração entre as camadas reforça essas escolhas. A interface consulta a API do próprio sistema por meio de requisições HTTP (\textit{Hypertext Transfer Protocol}), com respostas em JSON (\textit{JavaScript Object Notation}), recursos nativos do navegador utilizados a partir dos componentes React, sem bibliotecas de acesso específicas. O acoplamento entre a interface e o servidor restringe-se, assim, ao contrato das consultas e das respostas, o que permitiu, nas fases iniciais do desenvolvimento, substituir o servidor por um simulador que reproduzia o contrato então previsto, viabilizando a evolução da interface antes da disponibilização dos dados.
+
+No armazenamento, adotou-se o Neo4j, que implementa o modelo de grafos de propriedades discutido na Seção~\ref{sec-referencial-grafos-modelos} e é consultado na linguagem declarativa Cypher \cite{angles2017foundations}. O acesso ao banco se dá pela Query API, interface que executa instruções Cypher recebidas em requisições HTTP e devolve o resultado em JSON \cite{neo4j2026queryapi}. A opção por essa interface, em detrimento dos \textit{drivers} oficiais do banco, permitiu adotar em todo o sistema um único formato de resposta, o JSON tipado, no qual cada valor é acompanhado da indicação do próprio tipo, como nó, relação, caminho, inteiro, entre outros, que a API repassa sem conversão e a partir do qual a interface reconstrói o grafo de qualquer resultado de consulta.
+
+Entre a interface e o banco, adotou-se uma API própria, escrita em Python com o \textit{framework} FastAPI e executada pelo servidor Uvicorn; a comunicação com o Neo4j usa a biblioteca httpx, e a configuração de acesso ao banco é lida de um arquivo local pela biblioteca python-dotenv. A escolha do FastAPI considerou a validação dos dados recebidos por meio de tipos, a geração automática da documentação interativa das rotas, que favorece a continuidade do projeto por outros pesquisadores, e o suporte a rotas assíncronas, adequado a serviços que respondam de forma incremental. A mesma API deverá receber os serviços previstos para o sistema --- o fórum, o repositório de ontologias e o assistente baseado em modelos de linguagem ---, cujos módulos-base já constam dela (Seção~\ref{sec-edugraph-arquitetura}).
+
+\begin{table}[h]
+    \centering
+    \caption{Tecnologias utilizadas e respectivas versões}
+    \label{tab:tecnologias}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{4.2cm}|>{\raggedright\arraybackslash}p{2.4cm}|>{\raggedright\arraybackslash}p{7.6cm}|}
+        \hline
+        \textbf{Tecnologia} & \textbf{Versão} & \textbf{Uso no projeto} \\
+        \hline
+        React (\texttt{react} e \texttt{react-dom}) & 18.3.1 & Construção da interface web \\
+        \hline
+        Vite & 5.4.21 & Servidor de desenvolvimento e geração da versão de produção da interface \\
+        \hline
+        Node.js & 22.22.1 & Execução das ferramentas de desenvolvimento da interface \\
+        \hline
+        Python & 3.14.4 & Linguagem da API \\
+        \hline
+        FastAPI & 0.165.0 & \textit{Framework} da API: rotas, validação dos dados e documentação \\
+        \hline
+        Uvicorn & 0.54.0 & Servidor que executa a API \\
+        \hline
+        httpx & 0.28.1 & Cliente HTTP da API para o Neo4j \\
+        \hline
+        python-dotenv & 1.2.4 & Leitura da configuração de acesso ao banco \\
+        \hline
+        Neo4j, edição Community & 2026.09.0 & Banco de dados em grafo \\
+        \hline
+    \end{tabular}
+\end{table}

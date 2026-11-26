@@ -28,9 +28,12 @@
 
 %%% Importação de pacotes. %%%
 
-% Conserta o erro "No room for a new \count".
-% O comando \reserveinserts deve ser comentado ou não, dependendo da versão do LaTeX.
-\usepackage{etex}
+% Pacotes marcados com "%(desativado)" não são usados no texto e foram desligados para a
+% compilação ficar mais rápida. Para usar um deles, basta tirar o "%" da linha.
+
+% Conserta o erro "No room for a new \count" em versões antigas do LaTeX; nas atuais, já
+% vem embutido.
+%(desativado) \usepackage{etex}
 %\reserveinserts{28}
 
 % Usa a fonte Latin Modern.
@@ -49,7 +52,7 @@
 \usepackage{indentfirst}
 
 % Controle das cores.
-\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage[dvipsnames]{xcolor}
 
 % Inclusão de gráficos.
 \usepackage{graphicx}
@@ -58,7 +61,7 @@
 \usepackage{tabularx}
 
 % Inclusão de páginas em PDF diretamente no documento (para uso nos apêndices).
-\usepackage{pdfpages}
+%(desativado) \usepackage{pdfpages}
 
 % Para melhorias de justificação.
 \usepackage{microtype}
@@ -83,13 +86,13 @@
 
 % Inclusão de símbolos não padrão.
 \usepackage{amssymb}
-\usepackage{eurosym}
+%(desativado) \usepackage{eurosym}
 
 % Para utilizar \eqref para referenciar equações.
 \usepackage{amsmath}
 
 % Permite mostrar figuras muito largas em modo paisagem com \begin{sidewaysfigure} ao invés de \begin{figure}.
-\usepackage{rotating}
+%(desativado) \usepackage{rotating}
 
 % Permite customizar listas enumeradas/com marcadores.
 \usepackage{enumitem}
@@ -99,15 +102,16 @@
 \usepackage{hyperref}
 
 % Permite usar o comando \hl{} para evidenciar texto com fundo amarelo. Útil para chamar atenção a itens a fazer.
-\usepackage{soulutf8}
+%(desativado) \usepackage{soulutf8}
 
 % Colorinlistoftodos package: to insert colored comments so authors can collaborate on the content.
-\usepackage[colorinlistoftodos, textwidth=20mm, textsize=footnotesize]{todonotes}
-\newcommand{\aluno}[1]{\todo[author=\textbf{Aluno},color=green!30,caption={},inline]{#1}}
-\newcommand{\professor}[1]{\todo[author=\textbf{Professor},color=red!30,caption={},inline]{#1}}
+% É o pacote mais pesado da lista, porque carrega o TikZ; os três comandos andam juntos.
+%(desativado) \usepackage[colorinlistoftodos, textwidth=20mm, textsize=footnotesize]{todonotes}
+%(desativado) \newcommand{\aluno}[1]{\todo[author=\textbf{Aluno},color=green!30,caption={},inline]{#1}}
+%(desativado) \newcommand{\professor}[1]{\todo[author=\textbf{Professor},color=red!30,caption={},inline]{#1}}
 
 % Permite inserir espaço em branco condicional (incluído no texto final só se necessário) em macros.
-\usepackage{xspace}
+%(desativado) \usepackage{xspace}
 
 % Permite incluir listagens de código com o comando \lstinputlisting{}.
 \usepackage{listings}
@@ -383,8 +387,12 @@ Texto.
   \item[CI] Critério de Inclusão
   \item[CIF] Comissão Intergovernamental de Financiamento para a Educação Básica de Qualidade
   \item[CNE] Conselho Nacional de Educação
+  \item[CSS] \textit{Cascading Style Sheets}
   \item[Fundeb] Fundo de Manutenção e Desenvolvimento da Educação Básica e de Valorização dos Profissionais da Educação
+  \item[HTML] \textit{HyperText Markup Language}
+  \item[HTTP] \textit{Hypertext Transfer Protocol}
   \item[IRI] \textit{Internationalized Resource Identifier}
+  \item[JSON] \textit{JavaScript Object Notation}
   \item[MEC] Ministério da Educação
   \item[MSL] Mapeamento Sistemático da Literatura
   \item[PAPC] Protocolo para Avaliação por Critérios do Pensamento Computacional
