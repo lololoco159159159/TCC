@@ -23,6 +23,9 @@ import { LINK_BNCC } from '../data/links'
 // item ativo vale para as três páginas internas (grafos, forum, ontologias).
 // 2026-11-18 (pedido do autor): "Ajuda" saiu e entrou "Home", no meio da nav —
 // Grafos · BNCC · Home · Fórum · Ontologias —, ativo na própria Home.
+// 2026-11-26 (pedido do autor): entrou "Arquiteturas pedagógicas", no fim.
+// Em seguida, Home e Fórum trocaram de lugar, para a Home ficar perto do centro:
+// Grafos · BNCC · Fórum · Home · Ontologias · Arquiteturas pedagógicas.
 
 // largura do espaço reservado ao conteúdo de conta; cada página centraliza
 // seu conteúdo (de largura natural) no meio dele
@@ -49,7 +52,7 @@ function ItemNav({ ativo, ao, children }) {
   )
 }
 
-function SiteHeader({ paginaAtiva, onHome, onGrafos, onForum, onOntologias, children }) {
+function SiteHeader({ paginaAtiva, onHome, onGrafos, onForum, onOntologias, onArquiteturas, children }) {
   return (
     <header
       style={{
@@ -74,14 +77,17 @@ function SiteHeader({ paginaAtiva, onHome, onGrafos, onForum, onOntologias, chil
         <a className="eg-link-nav" href={LINK_BNCC} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
           BNCC
         </a>
-        <ItemNav ativo={paginaAtiva === 'home'} ao={onHome}>
-          Home
-        </ItemNav>
         <ItemNav ativo={paginaAtiva === 'forum'} ao={onForum}>
           Fórum
         </ItemNav>
+        <ItemNav ativo={paginaAtiva === 'home'} ao={onHome}>
+          Home
+        </ItemNav>
         <ItemNav ativo={paginaAtiva === 'ontologias'} ao={onOntologias}>
           Ontologias
+        </ItemNav>
+        <ItemNav ativo={paginaAtiva === 'arquiteturas'} ao={onArquiteturas}>
+          Arquiteturas pedagógicas
         </ItemNav>
       </nav>
 

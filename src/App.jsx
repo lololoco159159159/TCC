@@ -5,6 +5,7 @@ import Signup from './pages/Signup'
 import Grafos from './pages/Grafos'
 import Forum from './pages/Forum'
 import Ontologias from './pages/Ontologias'
+import Arquiteturas from './pages/Arquiteturas'
 import FontSizeWidget from './components/FontSizeWidget'
 import { useTheme } from './context/useTheme'
 
@@ -15,6 +16,8 @@ import { useTheme } from './context/useTheme'
 // os grafos volta com os filtros novos, sobre o modelo do Neo4j.
 // 2026-11-18 (D23): telas 'forum' e 'ontologias' (só front-end), alcançadas pelo
 // header e pelo rodapé de todas as páginas.
+// 2026-11-26: tela 'arquiteturas' (Arquiteturas pedagógicas, só front-end), do
+// mesmo jeito.
 function App() {
   const [tela, setTela] = useState('home')
   // a busca com que a página de grafos abre (N19: o "Ver o grafo desta turma" da
@@ -32,8 +35,12 @@ function App() {
     window.scrollTo(0, 0)
   }
 
-  // navegação para as telas da D23, igual em todas as páginas (header e rodapé)
-  const nav = { onForum: () => irPara('forum'), onOntologias: () => irPara('ontologias') }
+  // navegação para as telas de conteúdo, igual em todas as páginas (header e rodapé)
+  const nav = {
+    onForum: () => irPara('forum'),
+    onOntologias: () => irPara('ontologias'),
+    onArquiteturas: () => irPara('arquiteturas'),
+  }
 
   let pagina
   if (tela === 'login') {
@@ -66,8 +73,8 @@ function App() {
         {...nav}
       />
     )
-  } else if (tela === 'forum' || tela === 'ontologias') {
-    const Pagina = tela === 'forum' ? Forum : Ontologias
+  } else if (tela === 'forum' || tela === 'ontologias' || tela === 'arquiteturas') {
+    const Pagina = { forum: Forum, ontologias: Ontologias, arquiteturas: Arquiteturas }[tela]
     pagina = (
       <Pagina
         onHome={() => irPara('home')}

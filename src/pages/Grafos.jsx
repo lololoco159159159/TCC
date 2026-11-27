@@ -111,7 +111,7 @@ const arestaDoCanvas = (r) => ({ id: r.id, a: r.inicio, b: r.fim, rel: r.rel, pr
 
 // `buscaInicial` (N19): { ano, area, componente } com que a busca do professor
 // abre — o "Ver o grafo desta turma" da Home
-function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, buscaInicial }) {
+function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquiteturas, buscaInicial }) {
   const [status, setStatus] = useState('inicio') // inicio | carregando | pronto | erro
   const [resultado, setResultado] = useState(null) // última resposta do console Cypher (N3) + `grafo` (N4)
   // o texto da caixa do console: a última consulta da busca, escrita com os
@@ -484,7 +484,7 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, buscaInicia
           o footer fica abaixo da dobra e aparece ao rolar, como no protótipo */}
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
         {/* ============ HEADER (compartilhado com a Home) ============ */}
-        <SiteHeader paginaAtiva="grafos" onHome={onHome} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias}>
+        <SiteHeader paginaAtiva="grafos" onHome={onHome} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias} onArquiteturas={onArquiteturas}>
           {/* perfil mock (G10) — substitui o Entrar/Criar conta do protótipo */}
           <GrafoPerfil
             aberto={perfilAberto}
@@ -752,7 +752,7 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, buscaInicia
       </div>
 
       {/* footer abaixo da dobra (aparece ao rolar) */}
-      <Footer onSignup={onSignup} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias} />
+      <Footer onSignup={onSignup} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias} onArquiteturas={onArquiteturas} />
     </>
   )
 }

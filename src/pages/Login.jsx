@@ -23,7 +23,7 @@ function emailValido(valor) {
 // inputmode, spellCheck off no e-mail, foco no 1.º campo com erro e
 // aria-invalid/role=alert nas mensagens. A autenticação real (back-end) é
 // trabalho futuro (D2); por ora apenas valida os campos e simula o envio.
-function Login({ onHome, onSignup, onGrafos, onForum, onOntologias }) {
+function Login({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquiteturas }) {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erroEmail, setErroEmail] = useState('')
@@ -56,6 +56,7 @@ function Login({ onHome, onSignup, onGrafos, onForum, onOntologias }) {
       onGrafos={onGrafos}
       onForum={onForum}
       onOntologias={onOntologias}
+      onArquiteturas={onArquiteturas}
       onSignup={onSignup}
       trocaTexto="Novo por aqui?"
       trocaAcao="Criar conta"

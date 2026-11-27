@@ -10,6 +10,8 @@ import { LINK_BNCC } from '../data/links'
 // "Explorar grafos" leva à página de grafos via onGrafos.
 // 2026-11-18 (D23): "BNCC" leva à página oficial do MEC; "Para escolas" virou
 // "Fórum" (onForum) e entrou "Ontologias" (onOntologias), como no header.
+// 2026-11-26: entrou "Arquiteturas pedagógicas" (onArquiteturas), como no header.
+// Na coluna "Apoio", também "Grafos" (pedido do autor), na ordem do header.
 //
 // Prop `vidro` (opt-in, default false — Home/Grafos ficam byte-idênticas):
 // nas telas de conta (A4), o footer flutua sobre o fundo de vértices e vira
@@ -17,7 +19,7 @@ import { LINK_BNCC } from '../data/links'
 // (`color-mix` 20% de --bg2 + blur 5px). Aplicar globalmente mudaria a cor
 // do footer na Home/Grafos (mix 20% sobre --bg2 ≠ --bg2 sólido) — por isso é
 // opt-in, não um novo padrão do componente.
-function Footer({ onSignup, onGrafos, onForum, onOntologias, vidro = false }) {
+function Footer({ onSignup, onGrafos, onForum, onOntologias, onArquiteturas, vidro = false }) {
   const larguraMax = 1040
 
   return (
@@ -93,11 +95,17 @@ function Footer({ onSignup, onGrafos, onForum, onOntologias, vidro = false }) {
             >
               Apoio
             </span>
+            <span className="eg-footer-link" onClick={onGrafos}>
+              Grafos
+            </span>
             <span className="eg-footer-link" onClick={onForum}>
               Fórum
             </span>
             <span className="eg-footer-link" onClick={onOntologias}>
               Ontologias
+            </span>
+            <span className="eg-footer-link" onClick={onArquiteturas}>
+              Arquiteturas pedagógicas
             </span>
           </nav>
         </div>

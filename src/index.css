@@ -483,6 +483,92 @@ input::placeholder {
   background: var(--pill-bg);
 }
 
+/* ---- Arquiteturas pedagógicas (só front-end) ---- */
+
+/* as 3 caixas e o campo de escrever de cada eixo, lado a lado; quebram de linha
+   em tela estreita */
+.eg-arq-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+/* caixas, campo de escrever e espaço livre: a borda acende em verde no foco,
+   como no console */
+.eg-arq-campo {
+  display: block;
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--pill-border);
+  border-radius: 10px;
+  background: var(--bg);
+  font: 600 13px/1.3 'Figtree', sans-serif;
+  color: var(--body);
+  outline: none;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+select.eg-arq-campo {
+  padding-right: 26px;
+  cursor: pointer;
+}
+
+.eg-arq-campo:hover {
+  border-color: var(--gold);
+}
+
+.eg-arq-campo:focus {
+  border-color: var(--green);
+  background: var(--pill-bg);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 22%, transparent);
+}
+
+.eg-arq-campo::placeholder {
+  color: var(--faint);
+  font-weight: 400;
+}
+
+/* o espaço de escrita livre cresce com o texto (onde o navegador permite) */
+.eg-arq-texto {
+  min-height: 7.2em;
+  font: 400 14.5px/1.55 'Figtree', sans-serif;
+  color: var(--text);
+  resize: vertical;
+  field-sizing: content;
+}
+
+/* "Limpar tudo": pílula com contorno, desligada quando não há nada preenchido */
+.eg-arq-limpar {
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--pill-border);
+  background: var(--pill-bg);
+  font: 600 13.5px/1 'Figtree', sans-serif;
+  color: var(--body);
+  cursor: pointer;
+}
+
+.eg-arq-limpar:hover:not(:disabled) {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.eg-arq-limpar:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.eg-arq-acoes button:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eg-arq-campo {
+    transition: none;
+  }
+}
+
 /* chips dos componentes curriculares da turma (N19: voltaram, com os dados do
    Neo4j — o visual é o do protótipo, que saíra na limpeza L2) */
 .eg-materia-chip {

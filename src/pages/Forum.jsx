@@ -216,7 +216,7 @@ export function Conversa({ topico, mensagens, texto, aoMudarTexto, aoResponder }
   )
 }
 
-function Forum({ onHome, onLogin, onSignup, onGrafos, onForum, onOntologias }) {
+function Forum({ onHome, onLogin, onSignup, onGrafos, onForum, onOntologias, onArquiteturas }) {
   const [aberto, setAberto] = useState(null) // id da conversa aberta, ou null = a lista
   const [respostas, setRespostas] = useState({}) // { [idTopico]: mensagens novas desta visita }
   const [texto, setTexto] = useState('')
@@ -242,7 +242,7 @@ function Forum({ onHome, onLogin, onSignup, onGrafos, onForum, onOntologias }) {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      <SiteHeader paginaAtiva="forum" onHome={onHome} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias}>
+      <SiteHeader paginaAtiva="forum" onHome={onHome} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias} onArquiteturas={onArquiteturas}>
         <BotoesConta onLogin={onLogin} onSignup={onSignup} />
       </SiteHeader>
 
@@ -320,7 +320,7 @@ function Forum({ onHome, onLogin, onSignup, onGrafos, onForum, onOntologias }) {
         )}
       </main>
 
-      <Footer onSignup={onSignup} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias} />
+      <Footer onSignup={onSignup} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias} onArquiteturas={onArquiteturas} />
     </div>
   )
 }

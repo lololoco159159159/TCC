@@ -9,11 +9,11 @@ import BotoesConta from '../components/BotoesConta'
 // Home — landing de scroll longo (protótipo final): header + hero "Conhecimento
 // conectado" + grafo-globo interativo + banda de estatísticas + depoimentos (que
 // revelam a grade "Encontre as habilidades da sua turma.") + footer.
-function Home({ onLogin, onSignup, onGrafos, onForum, onOntologias }) {
+function Home({ onLogin, onSignup, onGrafos, onForum, onOntologias, onArquiteturas }) {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {/* ============ HEADER (compartilhado com a página de grafos) ============ */}
-      <SiteHeader paginaAtiva="home" onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias}>
+      <SiteHeader paginaAtiva="home" onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias} onArquiteturas={onArquiteturas}>
         <BotoesConta onLogin={onLogin} onSignup={onSignup} />
       </SiteHeader>
 
@@ -31,7 +31,7 @@ function Home({ onLogin, onSignup, onGrafos, onForum, onOntologias }) {
       <TestimonialsSection onGrafos={onGrafos} />
 
       {/* Footer: fim do site */}
-      <Footer onSignup={onSignup} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias} />
+      <Footer onSignup={onSignup} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias} onArquiteturas={onArquiteturas} />
     </div>
   )
 }

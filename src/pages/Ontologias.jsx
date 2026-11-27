@@ -63,14 +63,14 @@ const BOTAO = {
   textDecoration: 'none',
 }
 
-function Ontologias({ onHome, onLogin, onSignup, onGrafos, onForum, onOntologias }) {
+function Ontologias({ onHome, onLogin, onSignup, onGrafos, onForum, onOntologias, onArquiteturas }) {
   const [filtro, setFiltro] = useState('Todas')
   const componentes = ['Todas', ...new Set(ONTOLOGIAS.map((o) => o.componente))]
   const lista = ONTOLOGIAS.filter((o) => filtro === 'Todas' || o.componente === filtro)
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      <SiteHeader paginaAtiva="ontologias" onHome={onHome} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias}>
+      <SiteHeader paginaAtiva="ontologias" onHome={onHome} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias} onArquiteturas={onArquiteturas}>
         <BotoesConta onLogin={onLogin} onSignup={onSignup} />
       </SiteHeader>
 
@@ -164,7 +164,7 @@ function Ontologias({ onHome, onLogin, onSignup, onGrafos, onForum, onOntologias
         </p>
       </main>
 
-      <Footer onSignup={onSignup} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias} />
+      <Footer onSignup={onSignup} onGrafos={onGrafos} onForum={onForum} onOntologias={onOntologias} onArquiteturas={onArquiteturas} />
     </div>
   )
 }
