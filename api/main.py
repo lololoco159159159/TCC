@@ -3,12 +3,13 @@
 Rodar (da raiz do projeto): npm run api → http://localhost:8000
 Documentação interativa dos endpoints: http://localhost:8000/api/docs
 
-  main.py        a aplicação: a saúde e o tratamento de erros
-  neo4j.py       a conexão com o Neo4j (sempre em modo somente leitura)
-  grafo.py       as consultas do site, por assunto (anos, áreas, recorte, perguntas…)
-  forum.py       ┐
-  ontologias.py  ├ arquivos base: as rotas previstas, ainda não implementadas (501)
-  ia.py          ┘
+  main.py          a aplicação: a saúde e o tratamento de erros
+  neo4j.py         a conexão com o Neo4j (sempre em modo somente leitura)
+  grafo.py         as consultas do site, por assunto (anos, áreas, recorte, perguntas…)
+  forum.py         ┐
+  ontologias.py    │ arquivos base: as rotas previstas, ainda não implementadas (501)
+  arquiteturas.py  │
+  ia.py            ┘
 """
 
 from contextlib import asynccontextmanager
@@ -18,6 +19,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException
 
+import arquiteturas
 import forum
 import grafo
 import ia
@@ -44,6 +46,7 @@ app = FastAPI(
         {"name": "Saúde", "description": "Se a API está no ar e consegue falar com o Neo4j."},
         {"name": "Fórum (a implementar)", "description": "Rotas previstas, ainda respondendo 501. Ponto de partida: api/forum.py."},
         {"name": "Ontologias (a implementar)", "description": "Rotas previstas, ainda respondendo 501. Ponto de partida: api/ontologias.py."},
+        {"name": "Arquiteturas pedagógicas (a implementar)", "description": "Rotas previstas, ainda respondendo 501. Ponto de partida: api/arquiteturas.py."},
         {"name": "Assistente (a implementar)", "description": "Rota prevista, ainda respondendo 501. Ponto de partida: api/ia.py."},
     ],
     docs_url="/api/docs",
@@ -109,10 +112,11 @@ async def saude():
 
 # ---------------------------------------------------------------------------
 # As consultas do site, por assunto (grafo.py), e os arquivos base do fórum, das
-# ontologias e do assistente
+# ontologias, das arquiteturas pedagógicas e do assistente
 # ---------------------------------------------------------------------------
 
 app.include_router(grafo.router)
 app.include_router(forum.router)
 app.include_router(ontologias.router)
+app.include_router(arquiteturas.router)
 app.include_router(ia.router)

@@ -8,7 +8,7 @@
 % TODO(autor): no anteprojeto, a abertura do capítulo também apresentava o repositório, como
 % relação entre a BNCC e os pilares do Pensamento Computacional; essa apresentação depende
 % do enquadramento do trabalho.
-Este capítulo reúne os fundamentos teóricos do trabalho e as tecnologias empregadas em seu desenvolvimento. A Seção~\ref{sec-referencial-bncc} apresenta a estrutura da BNCC e da BNCC Computação, e a Seção~\ref{sec-referencial-pc}, o Pensamento Computacional. A Seção~\ref{sec-referencial-msl} caracteriza o mapeamento sistemático da literatura como método de pesquisa. A Seção~\ref{sec-referencial-delimitacao} delimita o conceito de repositório de conhecimento adotado, e a Seção~\ref{sec-referencial-grafos} trata dos grafos de conhecimento e dos modelos de dados que os implementam. Por fim, a Seção~\ref{sec-referencial-tecnologias} descreve as tecnologias utilizadas.
+Este capítulo reúne os fundamentos teóricos do trabalho e as tecnologias empregadas em seu desenvolvimento. A Seção~\ref{sec-referencial-bncc} apresenta a estrutura da BNCC e da BNCC Computação, e a Seção~\ref{sec-referencial-pc}, o Pensamento Computacional. A Seção~\ref{sec-referencial-msl} caracteriza o mapeamento sistemático da literatura como método de pesquisa. A Seção~\ref{sec-referencial-delimitacao} delimita o conceito de repositório de conhecimento adotado. A Seção~\ref{sec-referencial-visualizacao} trata da visualização de grafos, e a Seção~\ref{sec-referencial-acessibilidade}, da acessibilidade na web. Por fim, a Seção~\ref{sec-referencial-tecnologias} descreve as tecnologias utilizadas.
 
 
 %%% Início de seção. %%%
@@ -17,7 +17,7 @@ Este capítulo reúne os fundamentos teóricos do trabalho e as tecnologias empr
 
 A BNCC é um ``documento de caráter normativo que define o conjunto orgânico e progressivo de aprendizagens essenciais que todos os alunos devem desenvolver ao longo das etapas e modalidades da Educação Básica'' \cite[p.~7]{brasil2018bncc}. O documento abrange a Educação Infantil, o Ensino Fundamental e o Ensino Médio e constitui referência nacional para a formulação dos currículos dos sistemas e das redes de ensino e das propostas pedagógicas das escolas \cite[p.~8--9]{brasil2018bncc}. As aprendizagens essenciais devem concorrer para o desenvolvimento de dez competências gerais, entendida a competência como ``a mobilização de conhecimentos (conceitos e procedimentos), habilidades (práticas, cognitivas e socioemocionais), atitudes e valores para resolver demandas complexas da vida cotidiana, do pleno exercício da cidadania e do mundo do trabalho'' \cite[p.~8]{brasil2018bncc}.
 
-No Ensino Fundamental, etapa a que pertencem os dados do grafo apresentado neste trabalho, a BNCC organiza-se em cinco áreas do conhecimento --- Linguagens, Matemática, Ciências da Natureza, Ciências Humanas e Ensino Religioso ---, que reúnem os componentes curriculares \cite[p.~27]{brasil2018bncc}. Cada componente apresenta um conjunto de habilidades, que expressam as aprendizagens essenciais a serem asseguradas aos alunos. As habilidades relacionam-se a objetos de conhecimento, isto é, a conteúdos, conceitos e processos, e estes, por sua vez, organizam-se em unidades temáticas \cite[p.~28--29]{brasil2018bncc}. Uma unidade temática contempla uma gama maior ou menor de objetos de conhecimento, e cada objeto relaciona-se a um número variável de habilidades \cite[p.~29]{brasil2018bncc}. Esse encadeamento --- área do conhecimento, componente curricular, unidade temática, objeto de conhecimento e habilidade --- é a estrutura reproduzida no modelo do grafo (Seção~\ref{sec-edugraph-modelo}).
+No Ensino Fundamental, etapa a que pertencem os dados do grafo apresentado neste trabalho, a BNCC organiza-se em cinco áreas do conhecimento --- Linguagens, Matemática, Ciências da Natureza, Ciências Humanas e Ensino Religioso ---, que reúnem os componentes curriculares \cite[p.~27]{brasil2018bncc}. Cada componente apresenta um conjunto de habilidades, que expressam as aprendizagens essenciais a serem asseguradas aos alunos. As habilidades relacionam-se a objetos de conhecimento, isto é, a conteúdos, conceitos e processos, e estes, por sua vez, organizam-se em unidades temáticas \cite[p.~28--29]{brasil2018bncc}. Uma unidade temática contempla uma gama maior ou menor de objetos de conhecimento, e cada objeto relaciona-se a um número variável de habilidades \cite[p.~29]{brasil2018bncc}. Esse encadeamento --- área do conhecimento, componente curricular, unidade temática, objeto de conhecimento e habilidade --- é a estrutura reproduzida no modelo do grafo.
 
 Cada habilidade é identificada por um código alfanumérico \cite[p.~30]{brasil2018bncc}, cuja composição é apresentada na Tabela~\ref{tab:codigo-habilidade}, tomando-se como exemplo o código \texttt{EF01CI05}. Duas ressalvas do documento são relevantes para este trabalho: a numeração sequencial não representa uma ordem ou hierarquia esperada das aprendizagens, e a organização das habilidades em objetos de conhecimento e unidades temáticas expressa ``um arranjo possível (dentre outros)'', que não deve ser tomado como modelo obrigatório para o desenho dos currículos \cite[p.~31]{brasil2018bncc}. Ambas se estendem ao grafo, que reproduz esse arranjo.
 
@@ -99,50 +99,92 @@ Distinguem-se desse conceito outras designações correntes. Um \textit{site} (o
 
 Cabe, por fim, distinguir os termos \textit{sistema web} e \textit{aplicação web} (\textit{webapp}). O primeiro designa um software hospedado em servidor e acessado por navegador, geralmente restrito a usuários cadastrados, em contraste com o site meramente informativo \cite{sommerville2011}. O segundo, mais preciso para soluções que integram interface de usuário (\textit{front-end}) e lógica de servidor (\textit{back-end}), compreende desde sites completos até funcionalidades especializadas e aplicações de processamento de dados \cite{pressman2011}.
 
-Diante dessas distinções, este trabalho adota o termo \textit{repositório de conhecimento} para designar o artefato central produzido, uma vez que nenhuma das demais designações (\textit{site}, \textit{portal}, \textit{plataforma} ou \textit{ambiente}) captura adequadamente a natureza de acervo organizado e semanticamente explícito da solução. Esse repositório materializa-se na forma de um grafo de conhecimento, detalhado na Seção~\ref{sec-referencial-grafos}. O termo \textit{aplicação web} é empregado, de modo complementar e não substitutivo, para designar especificamente a camada de software que disponibiliza o repositório, reservando-se o termo \textit{repositório} ao acervo de conhecimento assim disponibilizado.
+Diante dessas distinções, este trabalho adota o termo \textit{repositório de conhecimento} para designar o artefato central produzido, uma vez que nenhuma das demais designações (\textit{site}, \textit{portal}, \textit{plataforma} ou \textit{ambiente}) captura adequadamente a natureza de acervo organizado e semanticamente explícito da solução. Esse repositório materializa-se na forma de um grafo de conhecimento. O termo \textit{aplicação web} é empregado, de modo complementar e não substitutivo, para designar especificamente a camada de software que disponibiliza o repositório, reservando-se o termo \textit{repositório} ao acervo de conhecimento assim disponibilizado.
 
 
 %%% Início de seção. %%%
-\section{Grafos de Conhecimento}
-\label{sec-referencial-grafos}
+\section{Visualização de Grafos}
+\label{sec-referencial-visualizacao}
 
-Um grafo de conhecimento (\textit{Knowledge Graph}) é uma estrutura de representação do conhecimento composta por entidades e relações, organizada na forma de um grafo dirigido e rotulado \cite{hogan2021knowledge}. Nessa estrutura, os \textbf{nós} representam entidades do domínio modelado --- como conceitos, objetos, pessoas ou eventos ---, as \textbf{arestas} representam relações tipadas entre essas entidades, e as \textbf{propriedades} correspondem a atributos que enriquecem tanto os nós quanto as arestas com informações adicionais. Essa combinação permite que o conhecimento seja representado de forma semanticamente expressiva, indo além das estruturas tabulares dos bancos de dados relacionais tradicionais ao capturar explicitamente o significado das conexões entre os dados \cite{hogan2021knowledge}.
+Texto.
 
-A adoção de grafos de conhecimento para o presente trabalho é motivada pela natureza intrinsecamente relacional do domínio educacional abordado. A BNCC organiza o currículo da educação básica em componentes curriculares, unidades temáticas, objetos de conhecimento e habilidades \cite{brasil2018bncc} --- elementos que se relacionam entre si de maneira multidimensional e interdisciplinar. Um grafo de conhecimento permite representar essas conexões de forma direta, navegável e semanticamente explícita.
 
-Para ilustrar, considere a habilidade \texttt{EF01CI05}, de Ciências do 1º ano: ``Identificar e nomear diferentes escalas de tempo: os períodos diários (manhã, tarde, noite) e a sucessão de dias, semanas, meses e anos'' \cite[p.~333]{brasil2018bncc}. No quadro da BNCC, ela se relaciona ao objeto de conhecimento Escalas de tempo, da unidade temática Terra e Universo \cite[p.~332]{brasil2018bncc}. Em um modelo relacional tradicional, reconstituir o encadeamento do ano até a habilidade exigiria, a cada consulta, operações de junção (\textit{joins}) entre as tabelas de cada nível, além de tabelas intermediárias nas relações de muitos para muitos, como a que existe entre anos e áreas do conhecimento. Em um grafo de conhecimento, o mesmo encadeamento é expresso por arestas diretas e rotuladas, como no caminho a seguir, lido no grafo deste trabalho e escrito na notação da linguagem Cypher, em que os parênteses delimitam os nós e os colchetes, as relações:
+\subsection{Grafos e o Seu Desenho}
+\label{sec-referencial-visualizacao-desenho}
 
-\begin{verbatim}
-(:Ano {nome: "1º Ano"})
-  -[:TEM_AREA]->
-(:AreaConhecimento {nome: "Ciências da Natureza"})
-  -[:TEM_COMPONENTE]->
-(:ComponenteCurricular {nome: "Ciências"})
-  -[:TEM_UNIDADE]->
-(:UnidadeTematicaCien {nome: "Terra e Universo"})
-  -[:TEM_OBJETO]->
-(:ObjetoConhecimentoCien {descricao: "Escalas de tempo"})
-  -[:DESENVOLVE]->
-(:HabilidadeCien {codigo: "EF01CI05"})
-\end{verbatim}
+Texto.
 
-Essa representação não apenas simplifica a consulta --- basta percorrer as arestas a partir do nó da habilidade ---, como também torna o significado da relação explícito e facilmente interpretável, tanto por pessoas quanto por máquinas. Os grafos oferecem uma abstração concisa e intuitiva das relações entre as entidades de um domínio, e suas linguagens de consulta dispõem de operadores de navegação para percorrer caminhos de tamanho arbitrário \cite{hogan2021knowledge}. O exemplo evidencia, ainda, o compartilhamento de nós: a unidade temática Terra e Universo, que consta dos quadros do 1º e do 2º ano \cite[p.~332, 334]{brasil2018bncc}, é um único nó do grafo, a que se ligam os objetos de conhecimento dos dois anos.
+\begin{figure}[H]
+    \centering
+    \caption{O mesmo recorte do grafo desenhado pelo layout por forças e pelo layout hierárquico}
+    \label{fig-vis-layouts}
+    \captura{figuras/fig-vis-layouts.jpg}
+    \notafigura{print já feito: o mesmo grafo (1º ano, ciências, ``o ano inteiro nesta matéria'') no layout de forças, na esquerda, e no hierárquico, na direita. recortei só o desenho, sem o painel e sem a legenda.}
+\end{figure}
 
-\subsection{Grafos RDF e Grafos de Propriedades}
-\label{sec-referencial-grafos-modelos}
 
-\citeonline{angles2008survey} definem os modelos de bancos de dados em grafo como aqueles em que as estruturas de dados são modeladas como grafos, ou generalizações deles, e a manipulação dos dados é expressa por operações orientadas a grafos. Esses modelos aplicam-se a domínios em que a interconexão dos dados é tão ou mais importante do que os próprios dados \cite[p.~1:5]{angles2008survey}, como ocorre com o currículo representado neste trabalho. Entre eles, dois são hoje particularmente difundidos: os grafos de arestas rotuladas, base do RDF (\textit{Resource Description Framework}), e os grafos de propriedades (\textit{property graphs}) \cite{angles2017foundations}.
+\subsection{Layout por Forças}
+\label{sec-referencial-visualizacao-forcas}
 
-Os \textbf{grafos RDF} representam o conhecimento como conjuntos de triplas \texttt{<sujeito, predicado, objeto>}. O predicado é sempre um IRI (\textit{Internationalized Resource Identifier}), generalização do URI (\textit{Uniform Resource Identifier}) com escopo global, o que permite nomear entidades e relações de forma inequívoca; o sujeito pode ser um IRI ou um nó em branco, e o objeto, um IRI, um nó em branco ou um literal \cite{cyganiak2014rdf}. O RDF é uma recomendação do \textit{World Wide Web Consortium} (W3C), o consórcio internacional responsável por definir os padrões abertos da Web, e é o modelo de dados de que se valem os Dados Ligados (\textit{Linked Data}) \cite{cyganiak2014rdf}. A linguagem de consulta padronizada para grafos RDF é a SPARQL (\textit{SPARQL Protocol and RDF Query Language}) \cite{angles2017foundations}.
+Texto.
 
-Nos \textbf{grafos de propriedades}, nós e arestas recebem rótulos e podem carregar conjuntos de pares chave-valor \cite{hogan2021knowledge}. O modelo é uma extensão dos grafos de arestas rotuladas, adotada por bancos de dados como o Neo4j, cuja linguagem declarativa de consulta é a Cypher \cite{angles2017foundations}.
 
-A escolha entre os dois modelos envolve um compromisso. Nos grafos de arestas rotuladas, o tipo de um nó e as informações sobre uma aresta precisam ser expressos por novos nós e arestas, o que pode exigir mudanças na estrutura do grafo; nos grafos de propriedades, rótulos e atributos fazem parte do modelo, o que pode oferecer uma abstração mais direta, mais fácil de consultar e de compreender \cite{angles2017foundations}. \citeonline{hogan2021knowledge} resumem a diferença ao considerar o primeiro modelo mais enxuto e o segundo mais flexível; observam, ainda, que um pode ser convertido no outro sem perda de informação, de modo que a escolha costuma ser secundária diante de fatores práticos, como as implementações disponíveis.
+\subsection{Layout Hierárquico}
+\label{sec-referencial-visualizacao-hierarquico}
 
-% TODO(autor): conferir a redação deste parágrafo, que apresenta os motivos da adoção do
-% Neo4j: os dados são produzidos nesse banco pelo grupo de pesquisa das orientadoras, que
-% adota essa tecnologia, e o modelo ajusta-se ao domínio.
-Neste trabalho, adota-se o modelo de grafos de propriedades, implementado no Neo4j. A escolha decorre, em primeiro lugar, de um fator prático: a base de dados é produzida nesse banco, em Cypher, pelo grupo de pesquisa das orientadoras, que adota essa tecnologia, e é consultada pela interface de programação de aplicações (API, do inglês \textit{Application Programming Interface}) do próprio banco, a Query API. Em segundo lugar, o modelo ajusta-se ao domínio: os níveis do currículo correspondem a rótulos de nós, os dados de cada nível --- código, nome ou descrição --- são propriedades dos nós, e o encadeamento entre os níveis é expresso por relações nomeadas, como no caminho apresentado nesta seção. Em contrapartida, abre-se mão da integração direta com bases publicadas como Dados Ligados, própria do RDF; como os dois modelos são conversíveis entre si, a publicação do grafo em RDF permanece possível.
+Texto.
+
+\begin{figure}[H]
+    \centering
+    \caption{Etapas do layout hierárquico}
+    \label{fig-vis-etapas-hierarquico}
+    \marcadorbrasao
+    \notafigura{aqui vai um esquema simples, feito no próprio latex, com as etapas do hierárquico: separar os nós em camadas, ordenar cada camada pra cruzar menos arestas e depois calcular a posição de cada nó. podem ser três caixinhas com setas.}
+\end{figure}
+
+
+
+%%% Início de seção. %%%
+\section{Acessibilidade na Web}
+\label{sec-referencial-acessibilidade}
+
+Texto.
+
+
+\subsection{Diretrizes de Acessibilidade para Conteúdo Web}
+\label{sec-referencial-acessibilidade-wcag}
+
+Texto.
+
+\begin{table}[H]
+    \centering
+    \caption{Critérios das WCAG atendidos pelo EduGraph}
+    \label{tab:wcag}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Critério} & \textbf{O que pede} & \textbf{Como o site atende} \\
+        \hline
+        Texto. & Texto. & Texto. \\
+        \hline
+    \end{tabular}
+    \notafigura{aqui vai uma tabela com os critérios das wcag que o site atende: contraste, não depender só da cor, aumentar o texto, usar pelo teclado, foco visível e animação que dá pra desligar. cada linha com o número do critério, o que ele pede e onde isso aparece no site.}
+\end{table}
+
+
+\subsection{Deficiências na Percepção de Cores}
+\label{sec-referencial-acessibilidade-cores}
+
+Texto.
+
+\begin{figure}[H]
+    \centering
+    \caption{Cores dos níveis do grafo na visão típica e nas simulações de daltonismo}
+    \label{fig-acess-simulacao}
+    \marcadorbrasao
+    \notafigura{aqui vai uma tabela de cores, feita no latex mesmo, com a cor de cada nível do grafo (ano, área, componente, unidade, objeto e habilidade) na visão normal e simulando protanopia, deuteranopia e tritanopia. a ideia é mostrar que dá pra diferenciar as cores em todas.}
+\end{figure}
+
 
 
 %%% Início de seção. %%%
@@ -157,7 +199,7 @@ Em torno do React organizam-se as demais escolhas da camada de apresentação. O
 
 A integração entre as camadas reforça essas escolhas. A interface consulta a API do próprio sistema por meio de requisições HTTP (\textit{Hypertext Transfer Protocol}), com respostas em JSON (\textit{JavaScript Object Notation}), recursos nativos do navegador utilizados a partir dos componentes React, sem bibliotecas de acesso específicas. O acoplamento entre a interface e o servidor restringe-se, assim, ao contrato das consultas e das respostas, o que permitiu, nas fases iniciais do desenvolvimento, substituir o servidor por um simulador que reproduzia o contrato então previsto, viabilizando a evolução da interface antes da disponibilização dos dados.
 
-No armazenamento, adotou-se o Neo4j, que implementa o modelo de grafos de propriedades discutido na Seção~\ref{sec-referencial-grafos-modelos} e é consultado na linguagem declarativa Cypher \cite{angles2017foundations}. O acesso ao banco se dá pela Query API, interface que executa instruções Cypher recebidas em requisições HTTP e devolve o resultado em JSON \cite{neo4j2026queryapi}. A opção por essa interface, em detrimento dos \textit{drivers} oficiais do banco, permitiu adotar em todo o sistema um único formato de resposta, o JSON tipado, no qual cada valor é acompanhado da indicação do próprio tipo, como nó, relação, caminho, inteiro, entre outros, que a API repassa sem conversão e a partir do qual a interface reconstrói o grafo de qualquer resultado de consulta.
+No armazenamento, adotou-se o Neo4j, banco de dados em grafo cuja linguagem declarativa de consulta é a Cypher \cite{angles2017foundations}. O acesso ao banco se dá pela Query API, interface que executa instruções Cypher recebidas em requisições HTTP e devolve o resultado em JSON \cite{neo4j2026queryapi}. A opção por essa interface, em detrimento dos \textit{drivers} oficiais do banco, permitiu adotar em todo o sistema um único formato de resposta, o JSON tipado, no qual cada valor é acompanhado da indicação do próprio tipo, como nó, relação, caminho, inteiro, entre outros, que a API repassa sem conversão e a partir do qual a interface reconstrói o grafo de qualquer resultado de consulta.
 
 Entre a interface e o banco, adotou-se uma API própria, escrita em Python com o \textit{framework} FastAPI e executada pelo servidor Uvicorn; a comunicação com o Neo4j usa a biblioteca httpx, e a configuração de acesso ao banco é lida de um arquivo local pela biblioteca python-dotenv. A escolha do FastAPI considerou a validação dos dados recebidos por meio de tipos, a geração automática da documentação interativa das rotas, que favorece a continuidade do projeto por outros pesquisadores, e o suporte a rotas assíncronas, adequado a serviços que respondam de forma incremental. A mesma API deverá receber os serviços previstos para o sistema --- o fórum, o repositório de ontologias e o assistente baseado em modelos de linguagem ---, cujos módulos-base já constam dela (Seção~\ref{sec-edugraph-arquitetura}).
 

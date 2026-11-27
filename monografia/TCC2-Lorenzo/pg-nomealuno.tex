@@ -63,8 +63,9 @@
 % Inclusão de páginas em PDF diretamente no documento (para uso nos apêndices).
 %(desativado) \usepackage{pdfpages}
 
-% Para melhorias de justificação.
-\usepackage{microtype}
+% Para melhorias de justificação. A expansão de fontes fica desligada: é a parte mais lenta do
+% pacote e pesa no limite de tempo de compilação do Overleaf gratuito; a margem óptica continua.
+\usepackage[expansion=false]{microtype}
 
 % Citações padrão ABNT.
 \usepackage[brazilian,hyperpageref]{backref}
@@ -97,8 +98,10 @@
 % Permite customizar listas enumeradas/com marcadores.
 \usepackage{enumitem}
 
+% Notas de rodapé avançadas: sem uso no texto (as notas comuns não precisam dele).
+%(desativado) \usepackage{bigfoot}
+
 % Permite inserir hiperlinks com \url{}.
-\usepackage{bigfoot}
 \usepackage{hyperref}
 
 % Permite usar o comando \hl{} para evidenciar texto com fundo amarelo. Útil para chamar atenção a itens a fazer.
@@ -161,6 +164,31 @@
     {í}{{\'{i}}}1
     {Í}{{\~{Í}}}1
 }
+
+% Posição exata das figuras com [H]: os marcadores de figura ficam onde estão no texto,
+% sem se acumular na fila de figuras flutuantes.
+\usepackage{float}
+
+% Nota provisória embaixo de cada figura: o que a imagem deve mostrar. Sai antes da entrega.
+% Para sumir com todas de uma vez, deixar o comando vazio: \newcommand{\notafigura}[1]{}
+\newcommand{\notafigura}[1]{\par\smallskip{\footnotesize\itshape\color{red!75!black}[#1]\par}}
+
+% Marcador das figuras que ainda não têm imagem: o brasão, guardado uma vez só (o PDF não repete o
+% arquivo a cada figura). Ao entrar a imagem real, a linha vira um \includegraphics.
+\newsavebox{\caixabrasao}
+\AtBeginDocument{\sbox{\caixabrasao}{\includegraphics[width=0.16\textwidth]{figuras/brasao.jpg}}}
+\newcommand{\marcadorbrasao}{\usebox{\caixabrasao}}
+
+% Captura de tela com um filete em volta: o fundo claro do site se perderia no papel branco.
+% Uso: \captura{figuras/arquivo.jpg} ou \captura[0.6\textwidth]{figuras/arquivo.jpg}.
+\newcommand{\captura}[2][\textwidth]{{\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}\fbox{\includegraphics[width=\dimexpr#1-0.8pt\relax]{#2}}}}
+
+
+
+% Compilar só um capítulo, para caber no tempo do Overleaf enquanto se escreve: tire o "%" da
+% linha abaixo e deixe nela só o capítulo em edição. Os outros mantêm a numeração da última
+% compilação completa. Volte a comentar a linha para compilar o documento inteiro.
+% \includeonly{capitulos/ch4-edugraph}
 
 
 
@@ -381,6 +409,8 @@ Texto.
 \begin{siglas}
   % As siglas comentadas eram usadas só no mapeamento (capítulo 3), que voltou a ser
   % esqueleto; voltam junto com o texto dele.
+  % As de modelos de grafo (IRI, RDF, SPARQL, URI) saíram com a antiga seção de grafos de
+  % conhecimento; a do W3C volta com a seção de acessibilidade.
   \item[API] \textit{Application Programming Interface}
   \item[AVA] Ambiente Virtual de Aprendizagem
   \item[BNCC] Base Nacional Comum Curricular
@@ -393,7 +423,7 @@ Texto.
   \item[Fundeb] Fundo de Manutenção e Desenvolvimento da Educação Básica e de Valorização dos Profissionais da Educação
   \item[HTML] \textit{HyperText Markup Language}
   \item[HTTP] \textit{Hypertext Transfer Protocol}
-  \item[IRI] \textit{Internationalized Resource Identifier}
+  %\item[IRI] \textit{Internationalized Resource Identifier}
   \item[JSON] \textit{JavaScript Object Notation}
   \item[MEC] Ministério da Educação
   \item[MSL] Mapeamento Sistemático da Literatura
@@ -401,16 +431,17 @@ Texto.
   \item[PC] Pensamento Computacional
   %\item[PICOC] \textit{Population, Intervention, Comparison, Outcome, Context}
   %\item[QP] Questão de Pesquisa
-  \item[RDF] \textit{Resource Description Framework}
+  %\item[RDF] \textit{Resource Description Framework}
   %\item[RENOTE] Revista Novas Tecnologias na Educação
   %\item[SBC] Sociedade Brasileira de Computação
   %\item[SOL] SBC OpenLib
   %\item[SOLO] \textit{Structure of the Observed Learning Outcome}
-  \item[SPARQL] \textit{SPARQL Protocol and RDF Query Language}
+  %\item[SPARQL] \textit{SPARQL Protocol and RDF Query Language}
   %\item[STEAM] \textit{Science, Technology, Engineering, Arts and Mathematics}
-  \item[URI] \textit{Uniform Resource Identifier}
+  %\item[URI] \textit{Uniform Resource Identifier}
   \item[VAAR] Valor anual por aluno decorrente da complementação-VAAR do Fundeb
-  \item[W3C] \textit{World Wide Web Consortium}
+  \item[WCAG] \textit{Web Content Accessibility Guidelines}
+  %\item[W3C] \textit{World Wide Web Consortium}
 \end{siglas}
 
 % Insere o sumário.

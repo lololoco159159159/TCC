@@ -11,118 +11,35 @@ Texto.
 
 
 %%% Início de seção. %%%
-\section{Requisitos}
-\label{sec-edugraph-requisitos}
+\section{Visão Geral}
+\label{sec-edugraph-visao}
 
-% TODO(autor): os requisitos funcionais e não funcionais foram registrados em algum
-% documento? Sem esse registro, a seção não descreve requisitos que não existam.
+% TODO(autor): se houver requisitos registrados, eles entram nesta seção; senão, ela apresenta
+% as funcionalidades tiradas do código.
 Texto.
 
-
-%%% Início de seção. %%%
-\section{Arquitetura}
-\label{sec-edugraph-arquitetura}
-
-O EduGraph organiza-se em três camadas, ilustradas na Figura~\ref{fig-arquitetura}: a interface web, executada no navegador; a API, que concentra o acesso aos dados; e o banco de grafos Neo4j, que armazena o repositório de conhecimento. Para obter os dados, o navegador comunica-se apenas com o endereço do próprio sistema: em desenvolvimento, o servidor do Vite entrega a interface e repassa à API os pedidos cujo caminho começa com \texttt{/api/}, de modo que a interface não conhece o endereço do banco nem as credenciais de acesso. Na versão atual, todos esses serviços são executados localmente; a publicação do sistema depende da definição da hospedagem.
-
-% Diagrama feito só com caixas e setas do próprio LaTeX, sem pacotes de desenho, para não
-% aumentar o tempo de compilação.
-\begin{figure}[htb]
+\begin{figure}[H]
     \centering
-    \caption{Arquitetura do EduGraph}
-    \label{fig-arquitetura}
-    \setlength{\fboxsep}{7pt}
-    \renewcommand{\arraystretch}{1.2}
-    \begin{tabular}{c}
-        \fbox{\parbox{12cm}{\centering\textbf{Navegador}\\[2pt]
-            Interface web em React: páginas, busca guiada\\
-            e visualização do grafo em Canvas 2D}} \\
-        $\Big\updownarrow$\ {\small HTTP: a interface e as rotas \texttt{/api/}, com respostas em JSON} \\
-        \fbox{\parbox{12cm}{\centering\textbf{Servidor do Vite} (em desenvolvimento)\\[2pt]
-            Entrega a interface e repassa à API os pedidos que começam com \texttt{/api/}}} \\
-        $\Big\updownarrow$\ {\small HTTP: rotas da API, com respostas em JSON} \\
-        \fbox{\parbox{12cm}{\centering\textbf{API em Python (FastAPI)}\\[2pt]
-            Consultas da aplicação por assunto e verificação do serviço;\\
-            guarda a credencial do banco e impõe o modo somente leitura;\\
-            módulos-base do fórum, das ontologias e do assistente}} \\
-        $\Big\updownarrow$\ {\small Query API (HTTP): Cypher em modo de leitura, resposta em JSON tipado} \\
-        \fbox{\parbox{12cm}{\centering\textbf{Banco de grafos Neo4j} (edição Community)\\[2pt]
-            Repositório de conhecimento: o grafo da BNCC (Seção~\ref{sec-edugraph-modelo})}} \\
-    \end{tabular}
+    \caption{Mapa de navegação entre as telas do EduGraph}
+    \label{fig-mapa-telas}
+    \marcadorbrasao
+    \notafigura{aqui vai um mapa das telas, tipo um fluxograma: a home e as setas pra grafos, fórum, ontologias, arquiteturas pedagógicas, entrar e criar conta, mostrando que o header e o rodapé levam pra todas. dá pra fazer com caixinhas no latex.}
 \end{figure}
 
-O contrato entre a interface e a API baseia-se em requisições HTTP e respostas em JSON. Cada consulta da aplicação --- os números da página inicial, os anos, as áreas do conhecimento e os componentes de um ano, o recorte de um ano em um componente, as perguntas da busca guiada e as conexões de um nó --- é exposta por uma rota da API que executa uma única instrução Cypher, sempre com parâmetros, de modo que os valores informados nunca são inseridos no texto da consulta. A resposta reúne a instrução executada, os parâmetros e o resultado devolvido pelo Neo4j, sem alteração, no formato JSON tipado; com isso, a interface reconstrói os nós, as relações e os caminhos de qualquer resultado e exibe ao usuário a consulta realizada (Seção~\ref{sec-edugraph-grafos}). Os erros do banco, da API e do servidor de desenvolvimento seguem um formato único, com um código e uma mensagem, o que permite à interface tratá-los de forma uniforme.
-
-A credencial de acesso ao banco fica apenas na configuração da API, em um arquivo local excluído do controle de versão, e nunca é enviada ao navegador. Toda consulta é encaminhada ao Neo4j em modo de leitura, independentemente do que a interface solicite, e o próprio servidor recusa instruções de escrita nesse modo, comportamento verificado durante o desenvolvimento. A medida é necessária porque o controle de acesso por papéis é recurso da edição Enterprise do Neo4j \cite{neo4j2026autorizacao}: na edição Community, adotada no projeto, não há como restringir um usuário à leitura. Por fim, a API valida os parâmetros recebidos, como os códigos de ano, de área e de componente e os limites de resultados, e limita a 12 segundos a espera por uma resposta do banco.
-
-A API reúne, ainda, uma rota que informa se o serviço e a conexão com o banco estão disponíveis e os módulos-base de três serviços previstos --- o fórum, o repositório de ontologias e o assistente ---, cujas rotas já constam da documentação interativa gerada pelo FastAPI e respondem como ainda não implementadas (Seção~\ref{sec-edugraph-api}).
-
-
-%%% Início de seção. %%%
-\section{Modelo do Grafo}
-\label{sec-edugraph-modelo}
-
-% TODO(autor): dizer aqui quem definiu o modelo do grafo e quem mantém a base; a redação
-% depende da divisão de responsabilidades descrita na Introdução.
-O repositório de conhecimento é um grafo de propriedades armazenado no Neo4j, cujo modelo reproduz o encadeamento da BNCC descrito na Seção~\ref{sec-referencial-bncc}: ano, área do conhecimento, componente curricular, unidade temática, objeto de conhecimento e habilidade. Cada nível corresponde a nós com rótulo próprio e liga-se ao nível seguinte por uma relação nomeada, conforme a Tabela~\ref{tab:modelo-grafo}; as relações não têm propriedades. Nos três últimos níveis, o rótulo leva o sufixo do componente curricular --- \texttt{Mat}, para Matemática, e \texttt{Cien}, para Ciências ---, como em \texttt{HabilidadeMat}. Além do encadeamento, cada ano liga-se diretamente às suas habilidades pela relação \texttt{DESENVOLVE\_HABILIDADE}.
-
-% TODO(autor): na base atual, as descrições das habilidades de Ciências coincidem com o
-% texto da BNCC, e as de Matemática estão resumidas. Se continuarem assim, dizer isso aqui.
-\begin{table}[h]
+\begin{table}[H]
     \centering
-    \caption{Níveis do modelo do grafo}
-    \label{tab:modelo-grafo}
+    \caption{Telas do EduGraph e o que o usuário faz em cada uma}
+    \label{tab:funcionalidades}
     \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{|>{\raggedright\arraybackslash}p{4.2cm}|>{\raggedright\arraybackslash}p{5.6cm}|>{\raggedright\arraybackslash}p{4.6cm}|}
+    \begin{tabular}{|l|l|}
         \hline
-        \textbf{Nível} & \textbf{Rótulo dos nós} & \textbf{Relação com o nível seguinte} \\
+        \textbf{Tela} & \textbf{O que o usuário faz} \\
         \hline
-        Ano & \texttt{Ano} & \texttt{TEM\_AREA} \\
-        \hline
-        Área do conhecimento & \texttt{AreaConhecimento} & \texttt{TEM\_COMPONENTE} \\
-        \hline
-        Componente curricular & \texttt{ComponenteCurricular} & \texttt{TEM\_UNIDADE} \\
-        \hline
-        Unidade temática & \texttt{UnidadeTematica} + sufixo & \texttt{TEM\_OBJETO} \\
-        \hline
-        Objeto de conhecimento & \texttt{ObjetoConhecimento} + sufixo & \texttt{DESENVOLVE} \\
-        \hline
-        Habilidade & \texttt{Habilidade} + sufixo & --- \\
+        Texto. & Texto. \\
         \hline
     \end{tabular}
+    \notafigura{aqui vai uma tabela com cada tela e o que dá pra fazer nela, tipo um resumo de tudo antes de entrar nos detalhes.}
 \end{table}
-
-Os nós de área, de componente, de unidade temática e de objeto de conhecimento não se repetem por ano: um nó é compartilhado por todos os anos em que aparece, como a unidade temática Terra e Universo, presente nos quadros do 1º e do 2º ano, à qual se ligam os objetos de conhecimento dos dois anos. O que associa cada habilidade a um ano é a relação direta \texttt{DESENVOLVE\_HABILIDADE}; as consultas da aplicação partem dela para restringir os resultados ao ano escolhido, o que impede que conteúdos de anos distintos se misturem nos subgrafos exibidos. Cada ano, por sua vez, liga-se apenas às áreas do conhecimento em que tem conteúdo.
-
-Embora os rótulos variem conforme o componente, as consultas com que a aplicação obtém os dados percorrem o grafo pelas relações, comuns a todos os componentes, e só mencionam os rótulos \texttt{Ano}, \texttt{AreaConhecimento} e \texttt{ComponenteCurricular}. Assim, um componente carregado com a mesma estrutura passa a ser consultado sem alteração do código.
-
-Em 26 de novembro de 2026, a base continha 75 nós e 108 relações, distribuídos conforme a Tabela~\ref{tab:cobertura-grafo}. Dos quatro nós de área do conhecimento, dois --- Ciências da Natureza e Matemática --- ligam-se a componentes curriculares; Linguagens e Ciências Humanas ainda não têm componentes carregados.
-
-\begin{table}[h]
-    \centering
-    \caption{Conteúdo da base de dados em 26 de novembro de 2026}
-    \label{tab:cobertura-grafo}
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{|l|l|c|c|c|}
-        \hline
-        \textbf{Ano} & \textbf{Componente} & \textbf{Unidades temáticas} & \textbf{Objetos} & \textbf{Habilidades} \\
-        \hline
-        1º ano & Matemática & 5 & 17 & 22 \\
-        \hline
-        1º ano & Ciências & 3 & 3 & 6 \\
-        \hline
-        2º ano & Ciências & 3 & 3 & 8 \\
-        \hline
-        \multicolumn{2}{|l|}{Nós distintos} & 8 & 23 & 36 \\
-        \hline
-    \end{tabular}
-\end{table}
-
-\noindent As três unidades temáticas de Ciências são as mesmas nos dois anos, o que explica o total de oito unidades distintas. Somam-se aos nós da tabela os 2 nós de ano, os 4 de área do conhecimento e os 2 de componente curricular. Das 108 relações, 36 são do tipo \texttt{DESENVOLVE\_HABILIDADE}, uma para cada habilidade.
-
-% TODO(autor): a base não tem nós de conceitos do Pensamento Computacional nem habilidades
-% da BNCC Computação; dizer aqui como o trabalho trata isso, conforme o enquadramento
-% definido na Introdução.
 
 
 %%% Início de seção. %%%
@@ -131,12 +48,131 @@ Em 26 de novembro de 2026, a base continha 75 nós e 108 relações, distribuíd
 
 Texto.
 
+\begin{figure}[H]
+    \centering
+    \caption{Protótipo inicial}
+    \label{fig-prototipo-inicial}
+    \includegraphics[width=\textwidth]{figuras/fig-prototipo-inicial.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Protótipo intermediário}
+    \label{fig-prototipo-intermediario}
+    \includegraphics[width=\textwidth]{figuras/fig-prototipo-intermediario.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Protótipo final}
+    \label{fig-prototipo-final}
+    \includegraphics[width=\textwidth]{figuras/fig-prototipo-final.png}
+\end{figure}
+
 
 %%% Início de seção. %%%
-\section{Interface e Identidade Visual}
-\label{sec-edugraph-interface}
+\section{Arquitetura do Front-end}
+\label{sec-edugraph-arquitetura}
 
 Texto.
+
+\begin{figure}[H]
+    \centering
+    \caption{Organização da aplicação web do EduGraph}
+    \label{fig-arquitetura-front}
+    \marcadorbrasao
+    \notafigura{aqui vai um diagrama da organização do site: o app.jsx trocando as telas, as páginas, os componentes de cada página, os arquivos de dados e o tema (claro/escuro e tamanho da letra) valendo pra todo o site. a api e o banco aparecem só numa caixa pequena embaixo, porque não são o foco.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Componentes da página de grafos}
+    \label{fig-arvore-grafos}
+    \marcadorbrasao
+    \notafigura{aqui vai a árvore de componentes da página de grafos: a página em cima e embaixo a busca do professor, o canvas, o painel, a legenda, os controles e os estados (carregando e erro). pode ser uma árvore simples de caixinhas.}
+\end{figure}
+
+\begin{lstlisting}[caption={Trecho de um componente React do EduGraph},label={lst-componente}]
+// trecho a definir
+\end{lstlisting}
+\notafigura{aqui vai um pedaço curto de código de verdade de um componente, tipo o item da navegação do header, pra mostrar como é um componente em react. curtinho, umas 15 linhas.}
+
+
+%%% Início de seção. %%%
+\section{Identidade Visual}
+\label{sec-edugraph-identidade}
+
+Texto.
+
+\begin{table}[H]
+    \centering
+    \caption{Paleta de cores do EduGraph nos temas claro e escuro}
+    \label{tab:paleta}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Uso} & \textbf{Tema claro} & \textbf{Tema escuro} \\
+        \hline
+        Texto. & Texto. & Texto. \\
+        \hline
+    \end{tabular}
+    \notafigura{aqui vai uma tabela com as cores do site: fundo, texto, verde, dourado e as outras, cada uma com um quadradinho da cor no tema claro e no escuro. as cores saem do index.css.}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \caption{As três fontes do EduGraph em uso}
+    \label{fig-tipografia}
+    \captura[0.7\textwidth]{figuras/fig-tipografia.jpg}
+    \notafigura{print já feito: o começo da home recortado, com as três fontes: a jetbrains mono no rótulo de cima, a spectral no título e a figtree no texto.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{A mesma tela nos temas claro e escuro}
+    \label{fig-claro-escuro}
+    \captura{figuras/fig-claro-escuro.jpg}
+    \notafigura{print já feito: a home no tema claro, na esquerda, e no escuro, na direita, com a janela de 1600 por 1000.}
+\end{figure}
+
+
+%%% Início de seção. %%%
+\section{Navegação e Elementos Comuns}
+\label{sec-edugraph-navegacao}
+
+Texto.
+
+\begin{figure}[H]
+    \centering
+    \caption{Cabeçalho do site, com a navegação}
+    \label{fig-header}
+    \captura{figuras/fig-header.jpg}
+    \notafigura{print já feito: o header saiu em duas linhas pra dar pra ler na página. em cima, o logo e a navegação; embaixo, os logos do labotim e da ufes, o botão de tema e o entrar/criar conta.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Botão de troca de tema nos estados claro e escuro}
+    \label{fig-tema-botao}
+    \captura[0.45\textwidth]{figuras/fig-tema-botao.jpg}
+    \notafigura{print já feito: o botão de tema bem de perto, com o sol no claro e a lua no escuro.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Controle do tamanho da letra}
+    \label{fig-fonte-widget}
+    \captura[0.12\textwidth]{figuras/fig-fonte-widget.jpg}
+    \notafigura{print já feito: o botãozinho do A/A na lateral, em 100\%.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Rodapé do site}
+    \label{fig-rodape}
+    \captura{figuras/fig-rodape.jpg}
+    \notafigura{print já feito: o rodapé inteiro, com as colunas plataforma e apoio e os logos embaixo.}
+\end{figure}
 
 
 %%% Início de seção. %%%
@@ -144,6 +180,46 @@ Texto.
 \label{sec-edugraph-inicial}
 
 Texto.
+
+\begin{figure}[H]
+    \centering
+    \caption{Início da página inicial}
+    \label{fig-home-hero}
+    \captura{figuras/fig-home-hero.jpg}
+    \notafigura{print já feito: a home logo no começo, tema claro, janela de 1600 por 1000.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Seção ``Cada matéria tem sua rede'', com o globo de nós}
+    \label{fig-home-globo}
+    \captura{figuras/fig-home-globo.jpg}
+    \notafigura{print já feito, em duas partes: na esquerda, o globo no começo da rolagem, com o mouse em cima de matemática e as conexões dela acesas; na direita, o globo depois de rolar, já de lado, com o texto da seção aparecendo.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Faixa de números da página inicial}
+    \label{fig-home-numeros}
+    \captura{figuras/fig-home-numeros.jpg}
+    \notafigura{print já feito: a faixa dos números já contados (36 habilidades, 8 unidades temáticas e o 1º e o 2º ano). esses números vêm do banco.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Seção de depoimentos de professores}
+    \label{fig-home-depoimentos}
+    \captura{figuras/fig-home-depoimentos.jpg}
+    \notafigura{print já feito: o desfile de depoimentos parado no segundo cartão.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Grade das turmas, com o balão de componentes aberto}
+    \label{fig-home-turmas}
+    \captura{figuras/fig-home-turmas.jpg}
+    \notafigura{print já feito: a grade das turmas com o balão do 1º ano aberto, mostrando ciências e matemática e o botão que leva pra busca já filtrada.}
+\end{figure}
 
 
 %%% Início de seção. %%%
@@ -153,24 +229,271 @@ Texto.
 Texto.
 
 
-%%% Início de seção. %%%
-\section{Acessibilidade}
-\label{sec-edugraph-acessibilidade}
+\subsection{Busca Guiada}
+\label{sec-edugraph-grafos-busca}
 
 Texto.
 
+\begin{figure}[H]
+    \centering
+    \caption{Página de grafos antes da primeira busca}
+    \label{fig-grafos-convite}
+    \captura{figuras/fig-grafos-convite.jpg}
+    \notafigura{print já feito: a página de grafos quando abre, com a busca em cima, o painel de contexto na esquerda e o cartão de boas-vindas no meio.}
+\end{figure}
 
-%%% Início de seção. %%%
-\section{API e Base de Dados}
-\label{sec-edugraph-api}
+\begin{figure}[H]
+    \centering
+    \caption{Busca guiada, com a lista de um campo aberta}
+    \label{fig-grafos-busca}
+    \captura{figuras/fig-grafos-busca.jpg}
+    \notafigura{print já feito: a busca com 1º ano, ciências da natureza, ciências e ``caminho até uma habilidade'', com a lista do campo filtrando pela palavra tempo.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Estados de carregamento e de erro da página de grafos}
+    \label{fig-grafos-estados}
+    \captura{figuras/fig-grafos-estados.jpg}
+    \notafigura{print já feito, em duas partes, só o palco: na esquerda, carregando; na direita, o cartão de erro de quando o servidor demora demais pra responder (tempo esgotado), com o tentar novamente.}
+\end{figure}
+
+
+\subsection{O Motor de Visualização em Canvas 2D}
+\label{sec-edugraph-grafos-canvas}
 
 Texto.
+
+\begin{figure}[H]
+    \centering
+    \caption{Grafo desenhado no canvas pelo layout por forças}
+    \label{fig-grafos-forcas}
+    \captura{figuras/fig-grafos-forcas.jpg}
+    \notafigura{print já feito: o ano inteiro de ciências do 1º ano no layout de forças, com o painel escondido.}
+\end{figure}
+
+
+\subsection{Layout por Forças e Layout Hierárquico}
+\label{sec-edugraph-grafos-layouts}
+
+Texto.
+
+\begin{figure}[H]
+    \centering
+    \caption{O mesmo grafo no layout hierárquico}
+    \label{fig-grafos-hierarquico}
+    \captura{figuras/fig-grafos-hierarquico.jpg}
+    \notafigura{print já feito: o mesmo grafo no layout hierárquico, com o ano em cima e as habilidades embaixo.}
+\end{figure}
+
+
+\subsection{Interações, Painel e Legenda}
+\label{sec-edugraph-grafos-interacoes}
+
+Texto.
+
+\begin{figure}[H]
+    \centering
+    \caption{Painel de detalhe de uma habilidade}
+    \label{fig-grafos-painel}
+    \captura{figuras/fig-grafos-painel.jpg}
+    \notafigura{print já feito: o EF01CI05 clicado, com o painel mostrando o texto da habilidade, as propriedades e as conexões. embaixo aparecem os vistos por último.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Um nó antes e depois de expandido}
+    \label{fig-grafos-expandir}
+    \captura{figuras/fig-grafos-expandir.jpg}
+    \notafigura{print já feito, em duas partes, só o palco: terra e universo selecionado, antes e depois dos dois cliques. depois chega um objeto do 2º ano e aparece o desfazer expansão.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Legenda dos tipos de nó, com um tipo oculto}
+    \label{fig-grafos-legenda}
+    \captura{figuras/fig-grafos-legenda.jpg}
+    \notafigura{print já feito: a legenda com objeto de conhecimento desligado e o desenho sem esses nós (12 nós, 3 ocultos).}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Menu do perfil, com as preferências de acessibilidade}
+    \label{fig-grafos-perfil}
+    \captura{figuras/fig-grafos-perfil.jpg}
+    \notafigura{print já feito: o menu do perfil aberto, com as paletas pra daltonismo, as formas e o desligar animações.}
+\end{figure}
+
+
+\subsection{Do JSON ao Desenho}
+\label{sec-edugraph-grafos-json}
+
+Texto.
+
+\begin{lstlisting}[caption={Trecho da resposta em JSON tipado recebida pelo site},label={lst-json}]
+{ "$type": "Relationship",
+  "_value": {
+    "_element_id": "5:62285f86-914c-413d-8497-21f65e3bc508:87",
+    "_start_node_element_id": "4:62285f86-914c-413d-8497-21f65e3bc508:52",
+    "_end_node_element_id": "4:62285f86-914c-413d-8497-21f65e3bc508:57",
+    "_type": "DESENVOLVE",
+    "_properties": {} } },
+{ "$type": "Node",
+  "_value": {
+    "_element_id": "4:62285f86-914c-413d-8497-21f65e3bc508:57",
+    "_labels": ["HabilidadeCien"],
+    "_properties": {
+      "codigo": { "$type": "String", "_value": "EF01CI05" },
+      "descricao": { "$type": "String",
+        "_value": "Identificar e nomear diferentes escalas de tempo: os períodos diários (manhã, tarde, noite) e a sucessão de dias, semanas, meses e anos." } } } }
+\end{lstlisting}
+\notafigura{trecho de verdade da resposta da api pra busca ``caminho até uma habilidade'' com o EF01CI05: a última relação do caminho (DESENVOLVE) e o nó da habilidade, com o tipo de cada valor. só tirei a parte de antes do caminho.}
+
+\begin{figure}[H]
+    \centering
+    \caption{Do JSON recebido ao grafo desenhado}
+    \label{fig-pipeline-canvas}
+    \marcadorbrasao
+    \notafigura{aqui vai um esquema com as etapas: chega o json, o site acha os nós e as relações, completa as pontas que faltam, monta o grafo com a cor de cada nível, calcula o layout e desenha no canvas. caixinhas com setas no latex.}
+\end{figure}
 
 
 %%% Início de seção. %%%
 \section{Telas Complementares}
 \label{sec-edugraph-complementares}
 
-% TODO(autor): as telas de conta, o Fórum e as Ontologias entram aqui como telas
-% implementadas só no front-end, com conteúdo ilustrativo, ou só como trabalho futuro?
 Texto.
+
+
+\subsection{Fórum}
+\label{sec-edugraph-forum}
+
+Texto.
+
+\begin{figure}[H]
+    \centering
+    \caption{Lista de conversas do fórum}
+    \label{fig-forum-lista}
+    \captura{figuras/fig-forum-lista.jpg}
+    \notafigura{print já feito: a lista de conversas do fórum, com o aviso de prévia.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Uma conversa do fórum}
+    \label{fig-forum-conversa}
+    \captura{figuras/fig-forum-conversa.jpg}
+    \notafigura{print já feito: a primeira conversa aberta, com as mensagens ligadas pela linha e a caixa de resposta no fim.}
+\end{figure}
+
+
+\subsection{Ontologias}
+\label{sec-edugraph-ontologias}
+
+Texto.
+
+\begin{figure}[H]
+    \centering
+    \caption{Página de ontologias}
+    \label{fig-ontologias}
+    \captura{figuras/fig-ontologias.jpg}
+    \notafigura{print já feito: a página de ontologias com os cartões, a aba do formato e o baixar desligado.}
+\end{figure}
+
+
+\subsection{Arquiteturas Pedagógicas}
+\label{sec-edugraph-arquiteturas}
+
+Texto.
+
+\begin{figure}[H]
+    \centering
+    \caption{Cards dos eixos das arquiteturas pedagógicas}
+    \label{fig-arquiteturas}
+    \captura{figuras/fig-arquiteturas.jpg}
+    \notafigura{print já feito: o card do eixo metodológico preenchido com uma aula de exemplo (escalas de tempo, 1º ano), com 6 de 7 escolhas.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Faixa final, com o botão de baixar o documento}
+    \label{fig-arquiteturas-baixar}
+    \captura{figuras/fig-arquiteturas-baixar.jpg}
+    \notafigura{print já feito: a faixa do fim da página, com os quatro eixos, o limpar tudo e o baixar documento.}
+\end{figure}
+
+
+\subsection{Entrar e Criar Conta}
+\label{sec-edugraph-contas}
+
+Texto.
+
+\begin{figure}[H]
+    \centering
+    \caption{Tela de entrar}
+    \label{fig-entrar}
+    \captura{figuras/fig-entrar.jpg}
+    \notafigura{print já feito: a tela de entrar, com o cartão de vidro e o fundo de pontinhos.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Tela de criar conta}
+    \label{fig-criar-conta}
+    \captura{figuras/fig-criar-conta.jpg}
+    \notafigura{print já feito: a tela de criar conta, com o mesmo fundo.}
+\end{figure}
+
+
+%%% Início de seção. %%%
+\section{Acessibilidade}
+\label{sec-edugraph-acessibilidade}
+
+Texto.
+
+\begin{figure}[H]
+    \centering
+    \caption{O mesmo grafo nas quatro paletas de cores}
+    \label{fig-grafos-paletas}
+    \captura{figuras/fig-grafos-paletas.jpg}
+    \notafigura{print já feito: o mesmo grafo nas quatro paletas: padrão e protanopia em cima, deuteranopia e tritanopia embaixo.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Nós com formas diferentes por tipo}
+    \label{fig-grafos-formas}
+    \captura{figuras/fig-grafos-formas.jpg}
+    \notafigura{print já feito: o grafo com as formas ligadas, cada tipo de nó com uma forma.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{A mesma tela com o tamanho de letra padrão e o maior}
+    \label{fig-acess-fonte}
+    \captura{figuras/fig-acess-fonte.jpg}
+    \notafigura{print já feito: o começo da home em 100\% e em 160\%, o maior tamanho do A/A. recortei só o texto, porque o header não cabe inteiro nesse tamanho.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \caption{Contorno de foco na navegação pelo teclado}
+    \label{fig-acess-foco}
+    \captura[0.6\textwidth]{figuras/fig-acess-foco.jpg}
+    \notafigura{print já feito: os filtros da página de ontologias com o contorno verde no ciências, depois de navegar pelo tab.}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \caption{Recursos de acessibilidade do EduGraph}
+    \label{tab:acessibilidade}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Recurso} & \textbf{Critério das WCAG} & \textbf{Onde fica no site} \\
+        \hline
+        Texto. & Texto. & Texto. \\
+        \hline
+    \end{tabular}
+    \notafigura{aqui vai uma tabela com cada recurso de acessibilidade do site, o critério das wcag que ele atende e onde fica: tema escuro, tamanho da letra, paletas pra daltonismo, formas, sem animação, teclado e foco.}
+\end{table}
