@@ -24,14 +24,14 @@ export const retratoDoNo = (no) => ({ id: no.id, rotulos: no.rotulos, props: no.
  * em ordem de legenda (EF01MA01 antes de EF01MA02).
  *
  * @param {string} id  elementId do nó
- * @param {object} [opcoes]  repassadas ao executarCypher (ex.: { canal })
+ * @param {object} [opcoes]  repassadas ao consultarGrafo (ex.: { canal })
  * @returns {Promise<{ grupos: { chave, rel, sentido: 'saida'|'entrada',
  *   itens: object[] }[], total: number, mais: boolean }>}  cada item é o
  *   retrato do nó vizinho + `relId` (a relação que o liga — chave estável
  *   mesmo com duas relações para o mesmo vizinho); `mais`: passou do limite.
  */
 export async function conexoesDoNo(id, opcoes = {}) {
-  const resp = await conexoes(id, LIMITE_CONEXOES + 1, { descricao: 'conexões do nó (painel)', ...opcoes })
+  const resp = await conexoes(id, LIMITE_CONEXOES + 1, opcoes)
   const linhas = resp.linhas.slice(0, LIMITE_CONEXOES)
   const grupos = new Map()
   for (const { r, m } of linhas) {
@@ -60,7 +60,7 @@ export async function conexoesDoNo(id, opcoes = {}) {
  *   (quem funde descarta as que já tem); `consultas`: { tipo, ms } de cada uma
  */
 export async function expandirNo(id, idsNaTela) {
-  const resp = await conexoes(id, LIMITE_VIZINHOS, { descricao: 'expandir · vizinhos' })
+  const resp = await conexoes(id, LIMITE_VIZINHOS)
   const nos = new Map()
   const relacoes = new Map()
   for (const { r, m } of resp.linhas) {

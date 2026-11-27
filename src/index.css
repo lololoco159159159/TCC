@@ -9,19 +9,18 @@
      4. Keyframes (egFadeUp · egPulsar · egGirar · egSurgir)
      5. Classes .eg-* por área: formulários (Login/Signup) → botões → widget
         A/A → navegação/footer → popover de matérias (Home) → página de
-        grafos (botão principal, zoom, painel, console Cypher/resultado,
-        overlays, perfil/formas)
+        grafos (botão principal, zoom, painel, busca, overlays,
+        perfil/formas)
 
    ESCALA DE Z-INDEX do app (valores em uso; não criar intermediários novos):
       1–8  camadas internas da landing (linhas/cards/legenda das seções)
        20  GradeCard com popover aberto (Home)
-       30  painel de contexto, resultado do console e popovers do palco
-           (grafos) + balão de matérias
+       30  painel de contexto e popovers do palco (grafos) + balão de matérias
        32  overlays de estado do palco (carregando/erro) + a coluna de controles
            do palco (vem depois deles no DOM e fica por cima: o A/A dela segue
            clicável em qualquer estado)
        40  barra da busca do professor (grafos): a lista dos campos abre por cima
-           do console Cypher (sem z-index desde a N14) e do palco
+           do palco
       120  widget A/A fixo (Home e telas de conta — definido neste arquivo; na
            página de grafos ele fica na coluna de controles do palco)
   190/200  backdrop / dropdown do perfil (grafos)
@@ -465,7 +464,7 @@ input::placeholder {
   color: var(--green);
 }
 
-/* caixa "Responder" — a mesma linguagem da caixa do console */
+/* caixa "Responder": a borda acende em verde no foco */
 .eg-forum-resposta {
   width: 100%;
   padding: 11px 14px;
@@ -493,8 +492,7 @@ input::placeholder {
   gap: 14px;
 }
 
-/* caixas, campo de escrever e espaço livre: a borda acende em verde no foco,
-   como no console */
+/* caixas, campo de escrever e espaço livre: a borda acende em verde no foco */
 .eg-arq-campo {
   display: block;
   width: 100%;
@@ -608,7 +606,7 @@ select.eg-arq-campo {
 
 /* ---- Página de grafos: botão principal ---- */
 
-/* "Executar" do console Cypher (era o "Filtrar" da barra de filtros do mock) */
+/* botão principal verde (ex.: "Ver no grafo"; era o "Filtrar" da barra de filtros do mock) */
 .eg-grafo-filtrar:hover {
   background: var(--green-deep) !important;
 }
@@ -694,29 +692,10 @@ select.eg-arq-campo {
   color: var(--gold) !important;
 }
 
-/* ---- Página de grafos: console Cypher e resultado (N3) ---- */
+/* ---- Página de grafos: botões e campos da busca ---- */
 
-/* caixa de texto da consulta (mesma linguagem da busca antiga, em fonte mono) */
-.eg-console-cypher {
-  width: 100%;
-  min-height: 40px;
-  padding: 9px 13px;
-  border: 1px solid var(--pill-border);
-  border-radius: 12px;
-  background: var(--bg);
-  font: 400 13px/1.55 'JetBrains Mono', monospace;
-  color: var(--text);
-  outline: none;
-  resize: vertical;
-}
-
-.eg-console-cypher:focus {
-  border-color: var(--green);
-  background: var(--pill-bg);
-}
-
-/* Executar desabilitado (sem texto ou consulta em andamento): sem o hover
-   escuro do .eg-grafo-filtrar */
+/* botão principal desligado (ex.: "Ver no grafo" sem tudo escolhido): sem o
+   hover escuro do .eg-grafo-filtrar */
 .eg-grafo-filtrar:disabled {
   opacity: 0.45;
   cursor: default !important;
@@ -726,7 +705,7 @@ select.eg-arq-campo {
   background: var(--green) !important;
 }
 
-/* campo da busca do professor (N14): a caixa acende como a do console; com algo
+/* campo da busca do professor (N14): a caixa acende em verde no foco; com algo
    escolhido, o placeholder (que mostra o escolhido enquanto se digita) fica com a
    cor do texto, não a de dica */
 .eg-campo-busca:focus-within {
@@ -742,85 +721,6 @@ select.eg-arq-campo {
   color: var(--body);
 }
 
-/* painel do resultado: abre descendo a partir da barra e fecha subindo para
-   ela (aba "Grafo"); sem animação no modo "Desativar animações" (D6) e quando o
-   sistema pede menos movimento */
-.eg-resultado-caixa {
-  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.eg-resultado-caixa--sem-anim {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .eg-resultado-caixa {
-    transition: none;
-  }
-}
-
-/* abas Grafo / Tabela / Relações / JSON do resultado */
-.eg-resultado-aba {
-  padding: 13px 2px 11px;
-  margin-right: 18px;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  font: 600 13px/1 'Figtree', system-ui, sans-serif;
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.eg-resultado-aba:hover {
-  color: var(--text);
-}
-
-.eg-resultado-aba[aria-selected='true'] {
-  color: var(--green);
-  border-bottom-color: var(--green);
-}
-
-/* tabela do resultado: cabeçalho fixo no topo da rolagem; células longas
-   quebram em qualquer ponto (as colunas se ajustam à largura do palco) */
-.eg-resultado-tabela {
-  width: 100%;
-  border-collapse: collapse;
-  font: 400 12px/1.55 'JetBrains Mono', monospace;
-  color: var(--text);
-}
-
-.eg-resultado-tabela th {
-  position: sticky;
-  top: 0;
-  padding: 9px 14px;
-  background: var(--pill-bg);
-  border-bottom: 1px solid var(--pill-border);
-  text-align: left;
-  font-weight: 600;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.eg-resultado-tabela td {
-  padding: 7px 14px;
-  border-bottom: 1px solid color-mix(in srgb, var(--pill-border) 55%, transparent);
-  vertical-align: top;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.eg-resultado-tabela tbody tr:hover {
-  background: color-mix(in srgb, var(--green) 7%, transparent);
-}
-
-/* coluna "#" (nº da linha, para conferir a contagem com o Neo4j Browser) */
-.eg-resultado-tabela .eg-resultado-num {
-  width: 1%;
-  color: var(--faint);
-  text-align: right;
-  white-space: nowrap;
-}
-
 /* ---- Página de grafos: overlays finais (G9) ---- */
 
 /* linha da legenda "Tipos de nó" */
@@ -830,12 +730,6 @@ select.eg-arq-campo {
 
 .eg-legenda-item:hover {
   background: var(--grafo-bg) !important;
-}
-
-/* botão que abre a gaveta Cypher (N10; era a gaveta SPARQL) */
-.eg-grafo-cypher:hover {
-  border-color: var(--green) !important;
-  color: var(--green) !important;
 }
 
 /* opção do popover de paleta */

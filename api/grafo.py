@@ -5,9 +5,9 @@ são colados no texto da consulta), e responde:
 
     { "consulta": "<o Cypher>", "parametros": {...}, "resposta": <a resposta do Neo4j> }
 
-A `resposta` vem como o Neo4j mandou (JSON tipado), e a consulta vem junto para o
-site mostrar o que foi perguntado ao banco (a gaveta Cypher e o console). Os
-erros saem no formato de sempre — { "errors": [...] } —, também com a consulta.
+A `resposta` vem como o Neo4j mandou (JSON tipado), e a consulta vem junto, para
+quem usa a API saber o que foi perguntado ao banco. Os erros saem no formato de
+sempre — { "errors": [...] } —, também com a consulta.
 
 O modelo do grafo (o da orientadora):
     (:Ano)-[:TEM_AREA]->(:AreaConhecimento {codigo, nome})
@@ -176,13 +176,6 @@ MATCH p = (a)-[:TEM_AREA]->(:AreaConhecimento)-[:TEM_COMPONENTE]->(:ComponenteCu
 RETURN p"""
 )
 
-# a consulta de teste original da orientadora, com o erro de sintaxe (falta um
-# parêntese depois de :UnidadeTematica) — é também a 7.ª consulta de exemplo do
-# console do site
-CONSULTA_COM_ERRO = """MATCH p = (:Ano)-[:TEM_UNIDADE]->(:UnidadeTematica-[:TEM_OBJETO]->(:ObjetoConhecimento)-[:DESENVOLVE]->(h:Habilidade)
-WHERE h.codigo IN ["EF01MA06", "EF01MA07", "EF01MA08", "EF01MA19"]
-RETURN p"""
-
 PERGUNTAS = [
     {
         "id": "caminho",
@@ -266,14 +259,6 @@ RETURN p""",
         "campos": [],
         "consulta": ARVORE_DO_ANO,
     },
-    {
-        "id": "erro",
-        "titulo": "Teste de erro",
-        "explicacao": "A consulta de teste da orientadora que tem um erro de sintaxe — serve para ver o aviso de erro",
-        "campos": [],
-        "fixa": True,  # não usa o ano nem o componente
-        "consulta": CONSULTA_COM_ERRO,
-    },
 ]
 POR_ID = {p["id"]: p for p in PERGUNTAS}
 
@@ -300,8 +285,6 @@ async def executar_pergunta(pergunta: str, pedido: PedidoPergunta):
     p = POR_ID.get(pergunta)
     if not p:
         raise ErroDaApi(404, "EduGraph.Api.PerguntaDesconhecida", f"Não existe a pergunta '{pergunta}'.")
-    if p.get("fixa"):
-        return await responder(p["consulta"])
     faltando = [nome for nome in ("ano", "componente") if not getattr(pedido, nome)]
     faltando += [c["nome"] for c in p["campos"] if not pedido.escolhas.get(c["nome"])]
     if faltando:

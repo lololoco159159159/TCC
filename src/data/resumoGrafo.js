@@ -14,7 +14,7 @@ const numeroDoAno = (codigo) => Number(String(codigo ?? '').replace(/\D/g, '')) 
 
 // banda de estatísticas: { habilidades, unidades, anos: [1, …] (números, em ordem) }
 export async function estatisticasDoGrafo() {
-  const { linhas } = await consultarGrafo('/api/grafo/estatisticas', { descricao: 'Home · banda de estatísticas' })
+  const { linhas } = await consultarGrafo('/api/grafo/estatisticas')
   const { habilidades, unidades, anos } = linhas[0]
   return {
     habilidades,
@@ -27,9 +27,9 @@ export async function estatisticasDoGrafo() {
 }
 
 // grade da Home: um item por Ano do grafo ({ codigo, nome }), em ordem de ano.
-// N12: a busca do professor usa a mesma consulta, com a própria descrição na gaveta
-export async function anosDoGrafo({ descricao = 'Home · turmas da grade' } = {}) {
-  const { linhas } = await consultarGrafo('/api/grafo/anos', { descricao })
+// N12: a busca do professor usa a mesma consulta
+export async function anosDoGrafo() {
+  const { linhas } = await consultarGrafo('/api/grafo/anos')
   return linhas.sort(
     (a, b) => numeroDoAno(a.codigo) - numeroDoAno(b.codigo) || String(a.codigo).localeCompare(String(b.codigo)),
   )

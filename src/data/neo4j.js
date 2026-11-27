@@ -1,17 +1,13 @@
-// Cliente Cypher do EduGraph. Única porta de entrada do front para o Neo4j,
-// sempre pela API do próprio site (pasta api/, em Python), que guarda a
-// credencial e impõe o modo somente leitura — o navegador nunca vê a senha:
-//  - executarCypher() — a consulta LIVRE do console (POST /api/cypher);
-//  - consultarGrafo() — as consultas do PRÓPRIO SITE (anos, áreas, recorte,
-//    perguntas da busca, conexões…), que moram na API (api/grafo.py): o site
-//    chama a rota de cada uma, e a API devolve a consulta junto da resposta.
+// Cliente do EduGraph para os dados do grafo. Única porta de entrada do front
+// para o Neo4j, sempre pela API do próprio site (pasta api/, em Python), que
+// guarda a credencial e impõe o modo somente leitura — o navegador nunca vê a
+// senha. As consultas (anos, áreas, recorte, perguntas da busca, conexões…)
+// moram na API (api/grafo.py): o site chama a rota de cada uma com
+// consultarGrafo(), e a API devolve a resposta do Neo4j.
 //
-// Contrato com a Query API (conferido no Neo4j local em 2026-10-09 e 10-12; a
-// API do site repassa a resposta sem mudar o formato):
-//  - corpo { statement, parameters, accessMode: 'READ' }: o site pede o modo
-//    leitura, e a API o impõe de qualquer forma (o Neo4j recusa a escrita com
-//    Neo.ClientError.Statement.AccessMode);
-//  - Accept: application/vnd.neo4j.query → JSON TIPADO: cada valor chega como
+// A resposta é a da Query API do Neo4j (conferida no Neo4j local em 2026-10-09
+// e 10-12), que a API do site repassa sem mudar o formato:
+//  - JSON TIPADO (Accept: application/vnd.neo4j.query): cada valor chega como
 //    { $type, _value }. É o que permite reconhecer nós, relações e caminhos em
 //    qualquer lugar do resultado (no JSON simples, um nó é indistinguível de
 //    um mapa comum). Inteiros e decimais vêm como texto e são convertidos aqui;
@@ -25,19 +21,11 @@
 //                Neo4j fora do ar (502 — EduGraph.Proxy.ApiIndisponivel,
 //                EduGraph.Api.Neo4jIndisponivel), Neo4j sem resposta (504),
 //                rota inexistente (404);
-//  'neo4j'     — a consulta foi recusada ou não pôde ser executada: pelo Neo4j
-//                (sintaxe, modo leitura, erro de execução) ou pela API
-//                (grande demais, ou com um comando bloqueado como LOAD CSV);
+//  'neo4j'     — a consulta foi recusada ou não pôde ser executada pelo Neo4j
+//                (sintaxe, modo leitura, erro de execução);
 //  'cancelada' — não é falha: outra consulta do mesmo `canal` tomou o lugar, ou
 //                quem chamou abortou pelo `signal`. Quem chama só ignora.
-//
-// N10: toda consulta concluída (com resposta ou com erro; as canceladas não) é
-// anunciada a quem se inscreveu em observarConsultas() — é assim que a gaveta
-// Cypher da página de grafos mostra o que o site mandou ao Neo4j por conta
-// própria. A `descricao` (opção do executarCypher e do consultarGrafo) diz para
-// que a consulta serve; a do console não tem, porque quem a escreveu foi a pessoa.
 
-const ROTA_CONSOLE = '/api/cypher'
 const TEMPO_LIMITE_MS = 15000 // sem resposta nesse prazo, a consulta vira erro 'rede'
 
 // Valores estruturais do grafo. São classes (e não objetos simples) para que
@@ -71,16 +59,12 @@ export class Caminho {
 }
 
 export class ErroCypher extends Error {
-  constructor({ origem, codigo, mensagem, status = 0, consulta, parametros }) {
+  constructor({ origem, codigo, mensagem, status = 0 }) {
     super(mensagem)
     this.name = 'ErroCypher'
     this.origem = origem
     this.codigo = codigo
     this.status = status // status HTTP; 0 quando não houve resposta
-    // a consulta que a API executou, quando o erro a traz (as consultas do site,
-    // de consultarGrafo; a do console, quem chamou já conhece)
-    this.consulta = consulta
-    this.parametros = parametros
   }
 }
 
@@ -133,13 +117,8 @@ function decodificar(v) {
 
 // Código do Neo4j = a consulta foi recusada ou falhou no banco ('neo4j'),
 // exceto os de segurança: credencial é problema de configuração, não da
-// consulta. A API também recusa consultas (EduGraph.Api.Consulta*: grande
-// demais ou com comando bloqueado) — como num erro de sintaxe, repetir não
-// adianta. Os demais códigos do proxy e da API (EduGraph.*) são infraestrutura.
-const RECUSA_DA_API = /^EduGraph\.Api\.Consulta/
-
+// consulta. Os códigos do proxy e da API (EduGraph.*) são infraestrutura.
 function origemDoCodigo(codigo = '') {
-  if (RECUSA_DA_API.test(codigo)) return 'neo4j'
   return codigo.startsWith('Neo.') && !codigo.startsWith('Neo.ClientError.Security.') ? 'neo4j' : 'http'
 }
 
@@ -150,85 +129,28 @@ function mensagemHttp(status, caminho) {
 }
 
 const canais = new Map() // canal → função que cancela a consulta em andamento nele
-const observadores = new Set() // quem acompanha as consultas concluídas (N10)
 
 /**
- * Inscreve `aoConcluir` para receber cada consulta concluída:
- * { descricao, consulta, parametros, ms, linhas, erro } — `descricao` vazia na
- * do console; `linhas`: quantas voltaram; `erro`: o código, ou null.
- * @returns {() => void}  cancela a inscrição
- */
-export function observarConsultas(aoConcluir) {
-  observadores.add(aoConcluir)
-  return () => {
-    observadores.delete(aoConcluir)
-  }
-}
-
-/**
- * Executa uma consulta Cypher (somente leitura) no Neo4j, via API do site.
- *
- * @param {string} consulta  texto Cypher
- * @param {object} [parametros]  valores dos $parâmetros — use SEMPRE parâmetros
- *   em vez de concatenar texto na consulta
- * @param {object} [opcoes]
- * @param {string} [opcoes.canal]  consultas do mesmo canal são exclusivas: uma
- *   nova cancela a anterior (ex.: 'palco' — console e busca do professor: só a
- *   última execução importa).
- *   Sem canal, a consulta nunca é cancelada por outra.
- * @param {string} [opcoes.descricao]  para que o site fez a consulta (aparece
- *   na gaveta Cypher; ex.: 'pontas das relações do resultado')
- * @param {AbortSignal} [opcoes.signal]  cancelamento externo
- * @param {number} [opcoes.tempoLimiteMs]  padrão 15000
- * @returns {Promise<{ campos: string[], linhas: object[], tempos: { disponivelApos:
- *   number, consumidoApos: number, totalMs: number }, tipoConsulta: string,
- *   avisos: object[], bruto: object }>}  `linhas`: um objeto por linha, com os
- *   valores já convertidos e chaveados pelos `campos` (na ordem do RETURN);
- *   `avisos`: as notificações do Neo4j (ex.: rótulo inexistente no banco);
- *   `bruto`: a resposta exatamente como chegou.
- * @throws {ErroCypher}
- */
-export async function executarCypher(consulta, parametros = {}, opcoes = {}) {
-  const t0 = performance.now()
-  const aviso = { descricao: opcoes.descricao || '', consulta, parametros }
-  try {
-    const corpo = { statement: consulta, parameters: parametros, accessMode: 'READ' }
-    const { json, status, totalMs } = await pedir(ROTA_CONSOLE, { ...opcoes, corpo })
-    const r = resultado(json, totalMs, ROTA_CONSOLE, status)
-    anunciar({ ...aviso, ms: totalMs, linhas: r.linhas.length, erro: null })
-    return r
-  } catch (e) {
-    if (e?.origem !== 'cancelada') anunciar({ ...aviso, ms: Math.round(performance.now() - t0), linhas: 0, erro: e?.codigo || String(e) })
-    throw e
-  }
-}
-
-/**
- * Uma consulta do PRÓPRIO SITE, pela rota da API que a executa (ex.:
- * '/api/grafo/anos'): as consultas moram na API (api/grafo.py). Ela devolve
- * { consulta, parametros, resposta }, e o resultado é o mesmo do executarCypher
- * mais a `consulta` e os `parametros` que ela executou — que vão também para a
- * gaveta Cypher, como antes.
+ * Uma consulta do site, pela rota da API que a executa (ex.: '/api/grafo/anos'):
+ * as consultas moram na API (api/grafo.py). Ela devolve { consulta, parametros,
+ * resposta }; a `resposta` é a do Neo4j, em JSON tipado.
  *
  * @param {string} caminho  a rota da API
- * @param {object} [opcoes]  as do executarCypher (canal, descricao, signal,
- *   tempoLimiteMs), mais `corpo`: com ele o pedido é um POST em JSON; sem, um GET
- * @returns {Promise<object>}  { ...o do executarCypher, consulta, parametros }
- * @throws {ErroCypher}  com `consulta` e `parametros` quando a API os mandou
+ * @param {object} [opcoes]
+ * @param {object} [opcoes.corpo]  com ele o pedido é um POST em JSON; sem, um GET
+ * @param {string} [opcoes.canal]  consultas do mesmo canal são exclusivas: uma
+ *   nova cancela a anterior (ex.: 'palco' — só a última busca importa; 'painel'
+ *   — só o último nó clicado). Sem canal, a consulta nunca é cancelada por outra.
+ * @param {AbortSignal} [opcoes.signal]  cancelamento externo
+ * @param {number} [opcoes.tempoLimiteMs]  padrão 15000
+ * @returns {Promise<{ linhas: object[], tempos: { totalMs: number } }>}
+ *   `linhas`: um objeto por linha, com os valores já convertidos e chaveados
+ *   pelos campos do RETURN; `totalMs`: o tempo do pedido no navegador.
+ * @throws {ErroCypher}
  */
 export async function consultarGrafo(caminho, opcoes = {}) {
-  const t0 = performance.now()
-  const avisar = (consulta, parametros, ms, linhas, erro) =>
-    anunciar({ descricao: opcoes.descricao || '', consulta: consulta || caminho, parametros: parametros || {}, ms, linhas, erro })
-  try {
-    const { json, status, totalMs } = await pedir(caminho, opcoes)
-    const r = { ...resultado(json.resposta, totalMs, caminho, status), consulta: json.consulta, parametros: json.parametros }
-    avisar(r.consulta, r.parametros, totalMs, r.linhas.length, null)
-    return r
-  } catch (e) {
-    if (e?.origem !== 'cancelada') avisar(e?.consulta, e?.parametros, Math.round(performance.now() - t0), 0, e?.codigo || String(e))
-    throw e
-  }
+  const { json, status, totalMs } = await pedir(caminho, opcoes)
+  return resultado(json.resposta, totalMs, caminho, status)
 }
 
 /**
@@ -240,20 +162,14 @@ export async function pedirApi(caminho, opcoes = {}) {
   return (await pedir(caminho, opcoes)).json
 }
 
-const anunciar = (aviso) => observadores.forEach((f) => f(aviso))
-
 // a resposta do Neo4j (JSON tipado) → o resultado que o site usa
 function resultado(neo4j, totalMs, caminho, status) {
   if (!neo4j?.data)
     throw new ErroCypher({ origem: 'http', codigo: `HTTP ${status}`, mensagem: mensagemHttp(status, caminho), status })
   const { fields: campos, values } = neo4j.data
   return {
-    campos,
     linhas: values.map((valores) => Object.fromEntries(campos.map((c, i) => [c, decodificar(valores[i])]))),
-    tempos: { disponivelApos: neo4j.resultAvailableAfter, consumidoApos: neo4j.resultConsumedAfter, totalMs },
-    tipoConsulta: neo4j.queryType, // 'r' leitura · 'w' escrita · 'rw' · 's' esquema
-    avisos: neo4j.notifications || [],
-    bruto: neo4j,
+    tempos: { totalMs },
   }
 }
 
@@ -329,8 +245,6 @@ async function pedir(caminho, { corpo, canal, signal, tempoLimiteMs = TEMPO_LIMI
       codigo: erro.code,
       mensagem: erro.message,
       status: resp.status,
-      consulta: json.consulta,
-      parametros: json.parametros,
     })
   if (!resp.ok || json === null)
     throw new ErroCypher({ origem: 'http', codigo: `HTTP ${resp.status}`, mensagem: mensagemHttp(resp.status, caminho), status: resp.status })

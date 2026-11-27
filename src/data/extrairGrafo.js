@@ -1,13 +1,12 @@
 import { Caminho, No, Relacao, consultarGrafo } from './neo4j'
 
-// Do resultado ao grafo (N4): transforma a resposta de
-// QUALQUER consulta do console em "nós + relações", do jeito que o Neo4j
-// Browser faz antes de desenhar. Duas partes:
+// Do resultado ao grafo (N4): transforma a resposta de QUALQUER consulta em
+// "nós + relações", do jeito que o Neo4j Browser faz antes de desenhar. Duas
+// partes:
 //  - extrairGrafo(): pura (sem rede) — junta o que veio no resultado;
-//  - completarGrafo(): as consultas extras do Browser — busca as pontas que
-//    faltam e aplica o limite de nós.
-// O grafo aparece em texto na aba "Relações" do resultado (para conferir os
-// números) e é o que o canvas desenha (N5).
+//  - completarGrafo(): a consulta extra do Browser — busca as pontas que
+//    faltam — e o limite de nós.
+// É o que o canvas desenha (N5).
 // Sem o "Connect result nodes" do Browser (decisão do autor, 2026-10-24 — D20):
 // o desenho mostra só as relações que a consulta devolveu. Ligado, ele trazia as
 // relações que existem ENTRE os nós exibidos — na árvore, o Ano ligado direto a
@@ -47,9 +46,8 @@ export function extrairGrafo(linhas) {
  *     ordem em que apareceram; relação com ponta de fora também fica de fora.
  * Só lê o banco.
  *
- * @returns {Promise<{ nos: Map, relacoes: Map, total: number, limite: number,
- *   extras: object[] }>}  `total`: nós antes do limite; `extras`: as consultas
- *   extras feitas ({ tipo, consulta, adicionados, ms }).
+ * @returns {Promise<{ nos: Map, relacoes: Map, total: number, limite: number }>}
+ *   `total`: nós antes do limite.
  */
 export async function completarGrafo({ nos, relacoes }, { limite = LIMITE_NOS } = {}) {
   // ordem final: os nós do resultado, depois as pontas que faltam
@@ -64,18 +62,13 @@ export async function completarGrafo({ nos, relacoes }, { limite = LIMITE_NOS } 
     }
   }
   const exibidos = ordem.slice(0, limite)
-  const extras = []
 
   // 1) pontas que faltam — só as que vão ser exibidas
   const achados = new Map()
   const faltando = exibidos.filter((id) => !nos.has(id))
   if (faltando.length) {
-    const resp = await consultarGrafo('/api/grafo/nos', {
-      corpo: { ids: faltando },
-      descricao: 'pontas das relações do resultado',
-    })
+    const resp = await consultarGrafo('/api/grafo/nos', { corpo: { ids: faltando } })
     resp.linhas.forEach(({ n }) => achados.set(n.id, n))
-    extras.push({ tipo: 'pontas', consulta: resp.consulta, adicionados: achados.size, ms: resp.tempos.totalMs })
   }
 
   // 2) limite: nós exibidos, na ordem; relações só entre eles (uma ponta que
@@ -90,5 +83,5 @@ export async function completarGrafo({ nos, relacoes }, { limite = LIMITE_NOS } 
     if (nosFinais.has(rel.inicio) && nosFinais.has(rel.fim)) relacoesFinais.set(id, rel)
   }
 
-  return { nos: nosFinais, relacoes: relacoesFinais, total: ordem.length, limite, extras }
+  return { nos: nosFinais, relacoes: relacoesFinais, total: ordem.length, limite }
 }

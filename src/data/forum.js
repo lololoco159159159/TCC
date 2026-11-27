@@ -104,12 +104,12 @@ export const TOPICOS = [
       {
         autor: JULIA,
         quando: 'há 1 dia',
-        texto: 'A consulta que aparece no console também ajuda a entender como o grafo está organizado.',
+        texto: 'Clicar num nó também ajuda: o painel mostra as conexões dele, e dá para entender como o grafo está organizado.',
       },
       {
         autor: MARCOS,
         quando: 'há 1 dia',
-        texto: 'E dá para mudar a consulta ali e executar de novo — ótimo para explorar com os alunos maiores.',
+        texto: 'E com dois cliques num nó ele traz os vizinhos para o desenho — ótimo para explorar com os alunos maiores.',
       },
     ],
   },

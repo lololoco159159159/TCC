@@ -11,6 +11,8 @@
 // nenhum estado o aciona mais (consulta sem nós aparece nas abas do resultado;
 // desde 2026-10-24 a página não as abre sozinha). N14: o convite fala primeiro
 // da busca do professor e depois do console.
+// 2026-11-27: o console saiu (pedido do autor) — o convite fala só da busca, e
+// o erro de uma consulta recusada pelo Neo4j sugere outra busca.
 
 // pontos do skeleton de carregamento (verbatim do protótipo)
 const SKELETON = [
@@ -91,12 +93,9 @@ function GrafoEstados({ status, erro, aoTentarNovamente, aoLimpar }) {
               Explore o grafo.
             </h1>
             <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.65, color: 'var(--muted)' }}>
-              Na <strong style={{ color: 'var(--text)' }}>Busca</strong>, acima, escolha o ano, a matéria e o
-              que você quer ver, e clique em <strong style={{ color: 'var(--text)' }}>Ver no grafo</strong>. Ou
-              escreva uma consulta no console <strong style={{ color: 'var(--text)' }}>Cypher</strong> — ou
-              escolha um dos <strong style={{ color: 'var(--text)' }}>Exemplos</strong> — e clique em{' '}
-              <strong style={{ color: 'var(--text)' }}>Executar</strong> (ou Ctrl+Enter). Os nós e as relações
-              da resposta aparecem desenhados aqui, como no Neo4j Browser.
+              Na <strong style={{ color: 'var(--text)' }}>Busca</strong>, acima, escolha o ano, a área, o componente
+              e o que você quer ver, e clique em <strong style={{ color: 'var(--text)' }}>Ver no grafo</strong>. Os
+              nós e as relações da resposta aparecem desenhados aqui, como no Neo4j Browser.
             </p>
           </div>
         </div>
@@ -234,7 +233,7 @@ function GrafoEstados({ status, erro, aoTentarNovamente, aoLimpar }) {
             </div>
             {erroDaConsulta ? (
               <p style={{ margin: '-8px 0 18px', fontSize: 13.5, lineHeight: 1.5, color: 'var(--muted)' }}>
-                Corrija a consulta na barra acima e execute de novo.
+                Escolha outra busca acima ou volte ao início.
               </p>
             ) : null}
             <div style={{ display: 'flex', gap: 10 }}>

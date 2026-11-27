@@ -15,19 +15,16 @@ import { MONO_LABEL } from './estilos'
 
 // Barra da busca do professor (N13, decisões 1–6): o
 // professor monta a busca só escolhendo opções — Ano → Matéria → Pergunta —, sem
-// ver código. Fica logo acima do console Cypher, que continua visível (o autor o
-// usa; sai bem depois). Tudo vem do Neo4j na hora, pela API
+// ver código. Fica logo acima do palco. Tudo vem do Neo4j na hora, pela API
 // (src/data/filtrosDeBusca.js): os anos, as matérias que existem no ano
 // escolhido e o recorte do ano na matéria (uma consulta só) — e o cardápio de
 // perguntas vem da API também. A matéria nunca vem escolhida sozinha, mesmo quando
 // há uma só (decisão 4). As escolhas vivem aqui, e não na página: mexer na busca
-// não re-renderiza a página inteira (o mesmo cuidado do console).
+// não re-renderiza a página inteira.
 // N14: escolhida a pergunta, aparecem os CAMPOS dela (CampoBusca: o filtro por
 // texto, no navegador) e o "Ver no grafo", que entrega a pergunta e as escolhas
-// à página — ela pede a resposta à API, que monta e executa a consulta; o
-// desenho segue pelo mesmo trajeto do console até o canvas, e a consulta
-// executada (com os valores no lugar dos parâmetros) aparece no console. Cada
-// pergunta mostra só o campo que ela pede (o "Filtrar as listas" da cascata
+// à página — ela pede a resposta à API, que monta e executa a consulta, e a
+// desenha no canvas. Cada pergunta mostra só o campo que ela pede (o "Filtrar as listas" da cascata
 // saiu a pedido do autor, 2026-10-24). Trocar o ano ou a matéria limpa os
 // campos (decisão 5); trocar a pergunta mantém o que tiver o mesmo nome (a
 // habilidade do "caminho" continua escolhida nas "irmãs").
@@ -36,6 +33,8 @@ import { MONO_LABEL } from './estilos'
 // tem um componente só (decisão do autor, 2026-11-11), e como a Matéria (decisão
 // 4) nunca vem escolhida sozinha. "Matéria" passou a se chamar "Componente", como
 // no modelo (ComponenteCurricular) e na BNCC.
+// 2026-11-27 (pedido do autor): saíram o console Cypher, que ficava logo abaixo,
+// e a pergunta "Teste de erro".
 
 const BARRA = {
   flex: 'none',
@@ -43,7 +42,7 @@ const BARRA = {
   background: 'var(--pill-bg)',
   borderBottom: '1px solid var(--pill-border)',
   position: 'relative',
-  // acima do console e do palco: a lista dos campos abre por cima deles
+  // acima do palco: a lista dos campos abre por cima dele
   zIndex: 40,
 }
 const ROTULO = { ...MONO_LABEL, color: 'var(--green)', flex: 'none' }
@@ -116,9 +115,8 @@ function useCarga(carregar, chave, tentativa) {
   return carga
 }
 
-// `aoVerNoGrafo({ pergunta, ano, componente, escolhas, descricao, cabecalho })`:
-// a página pede a resposta à API, desenha e escreve no console a consulta
-// executada, abaixo do `cabecalho` (comentário Cypher); `ocupado`: o palco está consultando
+// `aoVerNoGrafo({ pergunta, ano, componente, escolhas })`: a página pede a
+// resposta à API e a desenha; `ocupado`: o palco está consultando
 // (o botão espera); `inicial` (N19): { ano, area, componente } já escolhidos ao
 // abrir — o "Ver o grafo desta turma" da Home; o resto o professor escolhe
 function BuscaProfessor({ aoVerNoGrafo, ocupado, inicial }) {
@@ -161,7 +159,6 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado, inicial }) {
   const nomeAno = anos.dados?.find((a) => a.codigo === ano)?.nome || ano
   // as áreas do ano e os componentes da área vêm do Neo4j: { codigo, nome }
   const listaAreas = areas.dados || []
-  const nomeArea = listaAreas.find((x) => x.codigo === area)?.nome || area
   const listaComponentes = componentes.dados || []
   const nomeComponente = listaComponentes.find((x) => x.codigo === componente)?.nome || componente
   const cardapio = perguntas.dados || []
@@ -180,28 +177,11 @@ function BuscaProfessor({ aoVerNoGrafo, ocupado, inicial }) {
   const escolher = (nome) => (valor) => setEscolhas((e) => ({ ...e, [nome]: valor }))
 
   const faltando = p ? camposFaltando(p, escolhas) : []
-  const mostraCampos = p && (p.fixa || r) // o "Teste de erro" não depende do recorte
+  const mostraCampos = p && r
   const podeVer = mostraCampos && !faltando.length && !ocupado
 
-  // a pergunta e as escolhas vão para a página, que pede a resposta à API; a
-  // consulta que aparece no console ganha um cabeçalho em comentário Cypher
-  // dizendo de que busca ela veio
-  const verNoGrafo = () => {
-    const cabecalho = p.fixa
-      ? [`// Busca: ${p.titulo}`]
-      : [
-          `// Busca: ${p.titulo} · ${nomeAno} · ${nomeArea} · ${nomeComponente}`,
-          ...p.campos.map((c) => `// ${rotuloDe(c)}: ${opcoesDoCampo(r, c.tipo).find((o) => o.id === escolhas[c.nome])?.titulo}`),
-        ]
-    aoVerNoGrafo({
-      pergunta,
-      ano,
-      componente,
-      escolhas,
-      descricao: `busca · ${p.titulo.toLowerCase()}`,
-      cabecalho: cabecalho.join('\n'),
-    })
-  }
+  // a pergunta e as escolhas vão para a página, que pede a resposta à API
+  const verNoGrafo = () => aoVerNoGrafo({ pergunta, ano, componente, escolhas })
 
   // a linha de estado: o passo que falta, o que está carregando, a falha ou o recorte
   let status

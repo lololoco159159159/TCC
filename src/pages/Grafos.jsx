@@ -3,16 +3,13 @@ import SiteHeader from '../components/SiteHeader'
 import Footer from '../components/Footer'
 import FontSizeWidget from '../components/FontSizeWidget'
 import BuscaProfessor from '../components/grafo/BuscaProfessor'
-import ConsoleCypher from '../components/grafo/ConsoleCypher'
-import ResultadoCypher from '../components/grafo/ResultadoCypher'
 import GrafoCanvas from '../components/grafo/GrafoCanvas'
 import GrafoPainel from '../components/grafo/GrafoPainel'
 import GrafoPerfil from '../components/grafo/GrafoPerfil'
-import { GavetaCypher, LegendaTipos, PaletaPopover } from '../components/grafo/GrafoOverlays'
+import { LegendaTipos, PaletaPopover } from '../components/grafo/GrafoOverlays'
 import GrafoEstados from '../components/grafo/GrafoEstados'
 import { PALETAS } from '../data/paletas'
-import { executarCypher } from '../data/neo4j'
-import { consultaEscrita, executarPergunta } from '../data/filtrosDeBusca'
+import { executarPergunta } from '../data/filtrosDeBusca'
 import { completarGrafo, extrairGrafo } from '../data/extrairGrafo'
 import { estiloRelacao, visualDoNo } from '../data/estiloGrafo'
 import { conexoesDoNo, expandirNo, retratoDoNo } from '../data/vizinhanca'
@@ -54,6 +51,9 @@ import { posicaoFilotaxia, posicaoInicial } from '../data/simulacaoForcas'
 //    executa a consulta (verBusca), o palco desenha pelo mesmo trajeto do
 //    console (executarNoPalco), e a consulta executada, com os valores escritos,
 //    aparece na caixa do console.
+//  - 2026-11-27 (pedido do autor): saíram o console Cypher, as abas do
+//    resultado (Tabela/Relações/JSON) e a gaveta Cypher — eram ferramentas de
+//    teste. O palco desenha só o que a busca do professor pede.
 
 const PAINEL_PADRAO = { x: 12, w: 392, esc: false }
 
@@ -64,7 +64,7 @@ const DEBOUNCE_PREFS_MS = 150 // o arrasto do painel muda o estado a cada pointe
 const VISTOS_MAX = 5 // chips "Vistos por último" no painel
 const HISTORICO_EXPANSAO_MAX = 10 // snapshots do Desfazer
 const ATRASO_CAMERA_EXPANSAO = 100 // Browser: 100 ms depois da expansão, afasta a câmera para caberem os nós novos
-const DIREITA_GAVETA_COM_LEGENDA = 14 + 228 + 10 // legenda: right 14 + largura 228; mais 10 de folga
+const TOPO_OVERLAYS = 14 // zoom, resumo e "Desfazer" no topo do palco
 const LAYOUTS = ['forca', 'hierarquico'] // os dois layouts do Neo4j Browser (N11)
 
 // Lê localStorage['edugraphPrefs'] com validação campo a campo (prefs
@@ -113,14 +113,7 @@ const arestaDoCanvas = (r) => ({ id: r.id, a: r.inicio, b: r.fim, rel: r.rel, pr
 // abre — o "Ver o grafo desta turma" da Home
 function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquiteturas, buscaInicial }) {
   const [status, setStatus] = useState('inicio') // inicio | carregando | pronto | erro
-  const [resultado, setResultado] = useState(null) // última resposta do console Cypher (N3) + `grafo` (N4)
-  // o texto da caixa do console: a última consulta da busca, escrita com os
-  // valores; `n` muda → o console é remontado com o texto novo (o que estava
-  // digitado lá dá lugar a ele). (Até a N19 começava com a consulta da Home.)
-  const [textoConsole, setTextoConsole] = useState({ texto: '', n: 0 })
   const [erro, setErro] = useState(null) // falha da última consulta: { origem, codigo, mensagem }
-  const [abaResultado, setAbaResultado] = useState('tabela') // última aba de conteúdo: tabela | relacoes | json
-  const [resultadoAberto, setResultadoAberto] = useState(false) // fechado = aba "Grafo" (o desenho); sobrevive às execuções
   const [ocultos, setOcultos] = useState(() => new Set()) // rótulos ocultos no desenho pela legenda (N6; só na sessão)
   const [grafo, setGrafo] = useState({ nos: new Map(), arestas: [], versao: 0 })
   const [tempoMs, setTempoMs] = useState(0)
@@ -143,7 +136,7 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquitetu
   const selRef = useRef(null) // espelho de selecionadoId para closures assíncronas
   const canvasApi = useRef(null) // API do canvas: { centrarEm, enquadrar, reaquecer, assentar, afastarParaCaber, zoomMais, zoomMenos }
   // última execução no palco (o "Tentar novamente" do erro): a função que faz o
-  // pedido — do console ou da busca
+  // pedido da busca
   const ultimaExecucao = useRef(null)
 
   // Seleciona um nó (N7): registra nos "vistos", abre o painel com o retrato do
@@ -187,7 +180,7 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquitetu
   async function expandir(id, aposExpandir) {
     const origem = nosRef.current.get(id)
     if (!origem || expandindo) return
-    const meuSeq = ++seq.current // consulta nova no console invalida a expansão em voo
+    const meuSeq = ++seq.current // uma busca nova invalida a expansão em voo
     setExpandindo(true)
     setErroExpansao(null)
     try {
@@ -264,19 +257,14 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquitetu
     }
   }
 
-  // Console Cypher (N3): executa a consulta no Neo4j e mostra a resposta no
-  // palco (Tabela/JSON). Canal 'console': uma execução nova cancela a anterior
-  // ainda em voo — o cancelamento chega como origem 'cancelada' e é ignorado.
-  // N4: a resposta vira "nós + relações" (extrairGrafo) e é completada com as
-  // consultas extras do Browser (completarGrafo: pontas que faltam e limite de
-  // nós); o grafo aparece em texto na aba "Relações" e desenhado no canvas (N5).
-  // Sem a chave "Conectar nós do resultado" (D20): o desenho mostra só as
-  // relações que a consulta devolveu.
-  // N14: a busca do professor também passa por aqui (verBusca), com a descrição
-  // que a põe na gaveta Cypher. Console e busca dividem o palco e o canal
-  // 'palco': uma execução nova de qualquer um cancela a anterior. `pedir` faz o
-  // pedido — a consulta livre do console ou a pergunta da busca — e devolve o
-  // resultado.
+  // Executa um pedido no palco e desenha a resposta. Canal 'palco': uma busca
+  // nova cancela a anterior ainda em voo — o cancelamento chega como origem
+  // 'cancelada' e é ignorado. N4: a resposta vira "nós + relações"
+  // (extrairGrafo) e é completada como no Browser (completarGrafo: as pontas que
+  // faltam e o limite de nós); N5: o grafo vai para o canvas. Sem a chave
+  // "Conectar nós do resultado" (D20): o desenho mostra só as relações que a
+  // consulta devolveu. `pedir` faz o pedido (a pergunta da busca, verBusca) e
+  // devolve o resultado.
   async function executarNoPalco(pedir) {
     const meuSeq = ++seq.current // as consultas extras rodam fora do canal: a guarda descarta resposta velha
     ultimaExecucao.current = pedir
@@ -295,43 +283,20 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquitetu
       setDesfaziveis(0)
       setExpandindo(false)
       if (!(selRef.current && montado.nos.has(selRef.current))) desselecionar()
-      setGrafo((g) => ({ ...montado, versao: g.versao + 1 }))
-      // sem nós, a página não troca de aba sozinha (pedido do autor, 2026-10-24):
-      // o resultado fica aberto ou fechado como a pessoa deixou
-      setResultado({ ...r, grafo: grafoDoResultado })
+      // `fora`: nós do resultado que passaram do limite (aparece no resumo)
+      setGrafo((g) => ({ ...montado, versao: g.versao + 1, fora: Math.max(0, grafoDoResultado.total - grafoDoResultado.limite) }))
       setTempoMs(r.tempos.totalMs)
       setStatus('pronto')
     } catch (e) {
       if (meuSeq !== seq.current || e?.origem === 'cancelada') return
-      setResultado(null)
       setErro({ origem: e?.origem, codigo: e?.codigo, mensagem: String(e?.message || e) })
       setStatus('erro')
     }
   }
 
-  // a consulta livre do console
-  const executarConsulta = (consulta, { parametros = {}, descricao = '' } = {}) =>
-    executarNoPalco(() => executarCypher(consulta, parametros, { canal: 'palco', descricao }))
-
-  // N14: o "Ver no grafo" da busca — a API monta e executa a consulta da
-  // pergunta e a devolve junto da resposta (também num erro); a página a escreve
-  // no console com os valores no lugar dos parâmetros, para o autor ver o
-  // Cypher gerado (e poder mudá-lo e executar de novo)
-  const verBusca = ({ pergunta, ano, componente, escolhas, descricao, cabecalho }) => {
-    const escrever = ({ consulta, parametros }) => {
-      if (consulta) setTextoConsole((t) => ({ texto: `${cabecalho}\n${consultaEscrita(consulta, parametros || {})}`, n: t.n + 1 }))
-    }
-    executarNoPalco(async () => {
-      try {
-        const r = await executarPergunta(pergunta, { ano, componente, escolhas }, { canal: 'palco', descricao })
-        escrever(r)
-        return r
-      } catch (e) {
-        escrever(e)
-        throw e
-      }
-    })
-  }
+  // N14: o "Ver no grafo" da busca — a API monta e executa a consulta da pergunta
+  const verBusca = ({ pergunta, ano, componente, escolhas }) =>
+    executarNoPalco(() => executarPergunta(pergunta, { ano, componente, escolhas }, { canal: 'palco' }))
 
   // "Tentar novamente" do card de erro: refaz a última execução como ela foi
   function repetirUltima() {
@@ -346,7 +311,6 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquitetu
     setDesfaziveis(0)
     desselecionar()
     setGrafo((g) => ({ nos: new Map(), arestas: [], versao: g.versao + 1 }))
-    setResultado(null)
     setErro(null)
     setStatus('inicio')
   }
@@ -470,17 +434,15 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquitetu
   const nOcultos = grafo.nos.size - grafoVisivel.nos.size
   const resumoRecorte =
     `${grafoVisivel.nos.size} nós · ${grafoVisivel.arestas.length} relações · ${tempoMs} ms` +
-    (nOcultos ? ` · ${nOcultos} ocultos` : '')
-  // a barra do resultado (Tabela/Relações/JSON) ocupa o topo do palco: zoom,
-  // resumo e "Desfazer" descem para baixo dela (barra: top 12 + ~42px de altura)
-  const topoOverlays = status === 'pronto' && resultado ? 66 : 14
-  // zoom/layout/paleta: só com o desenho à vista (o resultado aberto o cobre)
-  const mostrarControlesGrafo = status === 'pronto' && temGrafo && !(resultado && resultadoAberto)
+    (nOcultos ? ` · ${nOcultos} ocultos` : '') +
+    (grafo.fora > 0 ? ` · ${grafo.fora} além do limite` : '')
+  // zoom/layout/paleta: só com o desenho à vista
+  const mostrarControlesGrafo = status === 'pronto' && temGrafo
   const offsetPainel = painel.esc ? 0 : painel.x + painel.w // largura ocupada pelo painel no palco
 
   return (
     <>
-      {/* quadro de exatamente 1 viewport: header + console + área de trabalho;
+      {/* quadro de exatamente 1 viewport: header + busca + área de trabalho;
           o footer fica abaixo da dobra e aparece ao rolar, como no protótipo */}
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
         {/* ============ HEADER (compartilhado com a Home) ============ */}
@@ -496,16 +458,6 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquitetu
 
         {/* ============ BUSCA DO PROFESSOR (N13/N14): Ano → Matéria → Pergunta → campos ============ */}
         <BuscaProfessor aoVerNoGrafo={verBusca} ocupado={status === 'carregando'} inicial={buscaInicial} />
-
-        {/* ============ CONSOLE CYPHER (N3; no lugar da barra de filtros) ============ */}
-        <ConsoleCypher
-          key={textoConsole.n}
-          status={status}
-          resultado={resultado}
-          erro={erro}
-          aoExecutar={executarConsulta}
-          consultaInicial={textoConsole.texto}
-        />
 
         {/* ============ ÁREA DE TRABALHO: canvas + overlays de estado ============ */}
         <main style={{ flex: 1, position: 'relative', background: 'var(--grafo-bg)', overflow: 'hidden', minHeight: 0 }}>
@@ -533,14 +485,6 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquitetu
             <LegendaTipos rotulos={rotulosLegenda} tiposTracejados={tiposTracejados} aoAlternar={alternarOculto} />
           ) : null}
 
-          {/* gaveta Cypher (N10): as consultas que o site fez sozinho. Sempre
-              montada (guarda as que rodam enquanto o palco carrega); aparece
-              com o resultado, à esquerda da legenda quando ela está na tela */}
-          <GavetaCypher
-            visivel={status === 'pronto'}
-            direita={temGrafo ? DIREITA_GAVETA_COM_LEGENDA : 14}
-          />
-
           {/* desfazer expansão (pill abaixo do resumo, G8) */}
           {status === 'pronto' && desfaziveis > 0 && (
             <button
@@ -550,7 +494,7 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquitetu
               onClick={desfazerExpansao}
               style={{
                 position: 'absolute',
-                top: topoOverlays + 38,
+                top: TOPO_OVERLAYS + 38,
                 left: '50%',
                 transform: 'translateX(-50%)',
                 display: 'inline-flex',
@@ -585,7 +529,7 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquitetu
             <div
               style={{
                 position: 'absolute',
-                top: topoOverlays,
+                top: TOPO_OVERLAYS,
                 left: '50%',
                 transform: 'translateX(-50%)',
                 display: 'flex',
@@ -609,22 +553,6 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquitetu
             </div>
           )}
 
-          {/* resposta do console Cypher (N3): Tabela/JSON à direita do painel */}
-          {status === 'pronto' && resultado ? (
-            <ResultadoCypher
-              resultado={resultado}
-              offsetEsquerda={offsetPainel}
-              aba={abaResultado}
-              aberto={resultadoAberto}
-              aoAbrirAba={(id) => {
-                setAbaResultado(id)
-                setResultadoAberto(true)
-              }}
-              aoFechar={() => setResultadoAberto(false)}
-              semAnim={semAnim}
-            />
-          ) : null}
-
           {/* overlays de estado do palco (início/carregando/erro — R7b) */}
           <GrafoEstados
             status={status}
@@ -637,13 +565,12 @@ function Grafos({ onHome, onSignup, onGrafos, onForum, onOntologias, onArquitetu
               layout (N11), paleta e o A/A. Vem DEPOIS dos overlays de estado e
               com o mesmo zIndex deles (32): o A/A segue clicável no convite, no
               carregando e no erro, como o widget fixo do resto do site. Os
-              controles do grafo só aparecem com o desenho à vista (antes ficavam
-              escondidos sob o resultado aberto, que é zIndex 30); o A/A some
+              controles do grafo só aparecem com o desenho à vista; o A/A some
               enquanto o popover de paleta está aberto (ocupa o lugar dele). */}
           <div
             style={{
               position: 'absolute',
-              top: topoOverlays,
+              top: TOPO_OVERLAYS,
               right: 14,
               zIndex: 32,
               display: 'flex',

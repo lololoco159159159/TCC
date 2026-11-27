@@ -2,12 +2,11 @@ import { consultarGrafo, pedirApi } from './neo4j'
 import { anosDoGrafo } from './resumoGrafo'
 
 // Filtros de busca do professor. Tudo o que a busca guiada precisa, sem tela,
-// num arquivo só (pedido do autor). Cinco partes:
+// num arquivo só (pedido do autor). Quatro partes:
 //  1. o MODELO — como o grafo da orientadora se organiza;
 //  2. o FILTRO POR TEXTO — o que o professor digita, filtrado no navegador;
 //  3. as OPÇÕES — anos, áreas, componentes e o recorte, vindos do Neo4j;
-//  4. as PERGUNTAS — o cardápio e a resposta de cada uma;
-//  5. a CONSULTA ESCRITA — a consulta executada com os valores, para o console.
+//  4. as PERGUNTAS — o cardápio e a resposta de cada uma.
 // Nada aqui é dado do grafo: anos, áreas, componentes, unidades, objetos e
 // habilidades vêm sempre do Neo4j. E nada aqui é consulta: as consultas Cypher
 // moram na API (api/grafo.py), que as executa e as devolve junto da resposta;
@@ -146,7 +145,7 @@ const comparar = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base'
 // (ex.: /api/grafo/anos/EF1/areas)
 const rota = (...partes) => `/api/grafo/${partes.map(encodeURIComponent).join('/')}`
 
-export const anosDaBusca = () => anosDoGrafo({ descricao: 'busca · anos' })
+export const anosDaBusca = anosDoGrafo
 
 const emOrdem = (linhas) =>
   linhas
@@ -159,7 +158,7 @@ const emOrdem = (linhas) =>
  *   (`codigo`: o da área, ex.: 'CN')
  */
 export async function areasDoAno(ano) {
-  const { linhas } = await consultarGrafo(rota('anos', ano, 'areas'), { descricao: 'busca · áreas do ano' })
+  const { linhas } = await consultarGrafo(rota('anos', ano, 'areas'))
   return emOrdem(linhas)
 }
 
@@ -170,9 +169,7 @@ export async function areasDoAno(ano) {
  *   (`codigo`: o do componente, ex.: 'CI')
  */
 export async function componentesDaArea(ano, area) {
-  const { linhas } = await consultarGrafo(rota('anos', ano, 'areas', area, 'componentes'), {
-    descricao: 'busca · componentes da área',
-  })
+  const { linhas } = await consultarGrafo(rota('anos', ano, 'areas', area, 'componentes'))
   return emOrdem(linhas)
 }
 
@@ -185,7 +182,7 @@ export async function componentesDaArea(ano, area) {
  *   ordem alfabética (`area`: o código da área do componente, ex.: 'CN')
  */
 export async function componentesDoAno(ano) {
-  const { linhas } = await consultarGrafo(rota('anos', ano, 'componentes'), { descricao: 'Home · componentes da turma' })
+  const { linhas } = await consultarGrafo(rota('anos', ano, 'componentes'))
   const area = new Map(linhas.map((l) => [String(l.codigo ?? ''), String(l.area ?? '')]))
   return emOrdem(linhas).map((c) => ({ ...c, area: area.get(c.codigo) }))
 }
@@ -219,9 +216,7 @@ export function carregarRecorte(ano, componente) {
 }
 
 async function consultarRecorte(ano, componente) {
-  const { linhas } = await consultarGrafo(`${rota('anos', ano, 'componentes', componente, 'recorte')}?limite=${TETO_RECORTE + 1}`, {
-    descricao: 'busca · recorte do ano e componente',
-  })
+  const { linhas } = await consultarGrafo(`${rota('anos', ano, 'componentes', componente, 'recorte')}?limite=${TETO_RECORTE + 1}`)
   const cortado = linhas.length > TETO_RECORTE
   const unidades = new Map()
   const objetos = new Map()
@@ -283,10 +278,9 @@ export function opcoesDoCampo(recorte, campo) {
 // pergunta tem o título em linguagem de professor, uma explicação de uma linha,
 // os CAMPOS que ele preenche (escolhidos no recorte, parte 3) e a consulta
 // Cypher. O "Ver no grafo" pede à API a resposta da pergunta (executarPergunta):
-// ela monta os parâmetros, executa e devolve a consulta junto — que o console
-// mostra (parte 5). O resultado são caminhos (`RETURN p`), que seguem pelo
-// mesmo trajeto do console: extrairGrafo → completarGrafo → canvas. Pergunta
-// nova = uma entrada nova no cardápio da API; a barra a mostra sozinha.
+// ela monta os parâmetros e executa. O resultado são caminhos (`RETURN p`), que
+// seguem para o desenho: extrairGrafo → completarGrafo → canvas. Pergunta nova =
+// uma entrada nova no cardápio da API; a barra a mostra sozinha.
 //
 // Campo: { nome (o parâmetro), tipo (unidade | objeto | habilidade — de que
 // lista do recorte ele escolhe), rotulo? (quando o título de TITULOS não serve) }.
@@ -299,7 +293,7 @@ let cardapio = null
 /**
  * O cardápio da busca, vindo da API.
  * @returns {Promise<{ id: string, titulo: string, explicacao: string, campos: object[],
- *   distintos?: string[], fixa?: boolean, consulta: string }[]>}
+ *   distintos?: string[], consulta: string }[]>}
  */
 export function perguntasDaBusca() {
   if (!cardapio) {
@@ -322,38 +316,9 @@ export const camposFaltando = (pergunta, escolhas = {}) => pergunta.campos.filte
  * @param {{ ano: string, componente: string, escolhas?: object }} busca
  *   `componente`: o código do ComponenteCurricular (ex.: 'MA'); `escolhas`:
  *   { [nome do campo]: id do recorte (elementId) }
- * @param {object} [opcoes]  as do consultarGrafo (canal, descricao…)
- * @returns o resultado do consultarGrafo — com a `consulta` e os `parametros`
- *   que a API executou
+ * @param {object} [opcoes]  as do consultarGrafo (ex.: canal)
+ * @returns o resultado do consultarGrafo
  */
-export function executarPergunta(idPergunta, { ano, componente, escolhas = {} }, opcoes = {}) {
-  // vazio não vai: a API recusa um código vazio (a pergunta fixa não usa os dois)
-  const corpo = { ano: ano || undefined, componente: componente || undefined, escolhas }
-  return consultarGrafo(rota('perguntas', idPergunta), { ...opcoes, corpo })
-}
-
-// ===========================================================================
-// 5. A consulta escrita, para o console (pedido do autor, 2026-10-24)
-// O "Ver no grafo" também escreve no console Cypher a consulta que a API
-// executou para o desenho (ela a devolve junto da resposta), para quem quiser
-// ler — ou mudar e executar de novo. O Neo4j recebe a consulta com parâmetros
-// (decisões 29–30); esta é a MESMA consulta com o valor de cada $parâmetro
-// escrito no lugar dele, entre aspas. Executada no console, dá o mesmo
-// resultado. Os valores vêm da barra (o ano e o componente) e do recorte (ids
-// do Neo4j) — nunca do que o professor digitou.
-// ===========================================================================
-
-const valorCypher = (v) => {
-  if (Array.isArray(v)) return `[${v.map(valorCypher).join(', ')}]`
-  if (typeof v === 'number' || typeof v === 'boolean') return String(v)
-  return `'${String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
-}
-
-/**
- * A consulta com os valores dos parâmetros escritos no lugar deles.
- * @param {string} consulta  com $parâmetros
- * @param {object} parametros
- */
-export function consultaEscrita(consulta, parametros) {
-  return consulta.replace(/\$(\w+)/g, (t, k) => (k in parametros ? valorCypher(parametros[k]) : t))
+export function executarPergunta(idPergunta, { ano, componente, escolhas }, opcoes = {}) {
+  return consultarGrafo(rota('perguntas', idPergunta), { ...opcoes, corpo: { ano, componente, escolhas } })
 }

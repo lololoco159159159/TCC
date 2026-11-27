@@ -25,7 +25,7 @@ Este repositório contém o **front-end React** e a **API em Python** do projeto
 | Tela | Descrição |
 |---|---|
 | Home | Apresentação do projeto; os números, os cards de ano e os componentes de cada turma vêm do Neo4j |
-| Grafos | O grafo de conhecimento: busca guiada para o professor, console Cypher, desenho interativo (layout de forças e hierárquico, como no Neo4j Browser), painel com os detalhes de cada nó, expandir e desfazer |
+| Grafos | O grafo de conhecimento: busca guiada para o professor, desenho interativo (layout de forças e hierárquico, como no Neo4j Browser), painel com os detalhes de cada nó, expandir e desfazer |
 | Fórum | Conversas entre professores — por enquanto uma prévia, com conversas de exemplo |
 | Ontologias | Ontologias do currículo para baixar — por enquanto uma prévia, com exemplos |
 | Arquiteturas pedagógicas | O professor monta a arquitetura da aula em quatro eixos (metodológico, organizacional, conteúdo e tecnológico) e baixa um documento — por enquanto uma prévia, com opções de exemplo, que guarda as escolhas só no navegador |
@@ -129,7 +129,7 @@ npm run lint        # verifica a qualidade do código do site
 src/                    # o site (React)
 ├── context/            # tema (claro/escuro) e tamanho de fonte
 ├── components/         # componentes compartilhados e as seções da Home
-│   ├── grafo/          # página de grafos: canvas, painel, busca, console Cypher, overlays
+│   ├── grafo/          # página de grafos: canvas, painel, busca, overlays
 │   └── conta/          # moldura, fundo animado e botão das telas de Entrar / Criar conta
 ├── data/               # acesso à API, filtros da busca, estilo do grafo, física e layout
 ├── pages/              # Home, Grafos, Fórum, Ontologias, Arquiteturas, Login, Signup
@@ -138,7 +138,7 @@ src/                    # o site (React)
 └── index.css           # design system (variáveis de tema, classes .eg-*)
 
 api/                    # a API (Python + FastAPI)
-├── main.py             # a aplicação: o console Cypher, a saúde, os erros e a documentação em /api/docs
+├── main.py             # a aplicação: a saúde, os erros e a documentação em /api/docs
 ├── neo4j.py            # a conexão com o Neo4j, sempre em modo somente leitura
 ├── grafo.py            # as consultas do site, por assunto: anos, áreas, componentes, recorte, perguntas da busca…
 ├── forum.py            # ┐ arquivos base: as rotas previstas do fórum, das ontologias e do
