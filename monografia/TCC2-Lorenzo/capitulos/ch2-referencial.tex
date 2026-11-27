@@ -8,7 +8,7 @@
 % TODO(autor): no anteprojeto, a abertura do capítulo também apresentava o repositório, como
 % relação entre a BNCC e os pilares do Pensamento Computacional; essa apresentação depende
 % do enquadramento do trabalho.
-Este capítulo reúne os fundamentos teóricos do trabalho e as tecnologias empregadas em seu desenvolvimento. A Seção~\ref{sec-referencial-bncc} apresenta a estrutura da BNCC e da BNCC Computação, e a Seção~\ref{sec-referencial-pc}, o Pensamento Computacional. A Seção~\ref{sec-referencial-msl} caracteriza o mapeamento sistemático da literatura como método de pesquisa. A Seção~\ref{sec-referencial-delimitacao} delimita o conceito de repositório de conhecimento adotado. A Seção~\ref{sec-referencial-visualizacao} trata da visualização de grafos, e a Seção~\ref{sec-referencial-acessibilidade}, da acessibilidade na web. Por fim, a Seção~\ref{sec-referencial-tecnologias} descreve as tecnologias utilizadas.
+Este capítulo reúne os fundamentos teóricos do trabalho e as tecnologias empregadas em seu desenvolvimento. A Seção~\ref{sec-referencial-bncc} apresenta a estrutura da BNCC e da BNCC Computação, e a Seção~\ref{sec-referencial-pc}, o Pensamento Computacional. A Seção~\ref{sec-referencial-delimitacao} delimita o conceito de repositório de conhecimento adotado. A Seção~\ref{sec-referencial-visualizacao} trata da visualização de grafos, e a Seção~\ref{sec-referencial-acessibilidade}, da acessibilidade na web. A Seção~\ref{sec-referencial-softwares} apresenta softwares já existentes relacionados ao tema, comparados na Seção~\ref{sec-referencial-comparacao}. Por fim, a Seção~\ref{sec-referencial-tecnologias} descreve as tecnologias utilizadas.
 
 
 %%% Início de seção. %%%
@@ -80,13 +80,6 @@ Nos documentos curriculares, o PC aparece de duas formas. Na BNCC de 2018, as me
 
 % TODO(autor): parágrafo de fechamento, que liga o Pensamento Computacional ao repositório
 % de conhecimento; depende do enquadramento do trabalho.
-
-
-%%% Início de seção. %%%
-\section{Mapeamento Sistemático da Literatura}
-\label{sec-referencial-msl}
-
-O Mapeamento Sistemático da Literatura (MSL) é uma metodologia de pesquisa secundária que visa identificar, categorizar e sintetizar o conjunto de evidências disponíveis sobre um determinado tema, distinguindo-se da revisão sistemática convencional por priorizar uma visão panorâmica da área em vez de responder a uma questão clínica ou empírica específica \cite{petersen2008systematic}. Enquanto a revisão sistemática tende a focar em perguntas de pesquisa bem delimitadas e a realizar sínteses quantitativas dos resultados, o mapeamento sistemático permite classificar e estruturar o estado da arte de forma mais abrangente, evidenciando lacunas, tendências e distribuição de estudos ao longo do tempo \cite{kitchenham2007guidelines, petersen2008systematic}. No presente trabalho, essa abordagem foi adotada para levantar o estado da arte sobre o ensino do Pensamento Computacional no contexto da educação básica brasileira, com ênfase na integração com os componentes curriculares da BNCC, fornecendo a base empírica necessária para a construção do repositório de conhecimento proposto. O protocolo, a condução e os resultados do mapeamento são apresentados no Capítulo~\ref{sec-msl}.
 
 
 %%% Início de seção. %%%
@@ -185,6 +178,141 @@ Texto.
     \notafigura{aqui vai uma tabela de cores, feita no latex mesmo, com a cor de cada nível do grafo (ano, área, componente, unidade, objeto e habilidade) na visão normal e simulando protanopia, deuteranopia e tritanopia. a ideia é mostrar que dá pra diferenciar as cores em todas.}
 \end{figure}
 
+
+
+%%% Início de seção. %%%
+\section{Softwares Existentes na Literatura}
+\label{sec-referencial-softwares}
+
+Foram estudados seis softwares relacionados à consulta da BNCC, ao ensino de Computação alinhado a ela e à representação de currículos na forma de grafos, entre portais e aplicações web e um aplicativo para dispositivos móveis. A busca considerou a biblioteca digital da Sociedade Brasileira de Computação, repositórios institucionais de trabalhos acadêmicos e as ferramentas disponíveis na web. A fim de facilitar a análise, os softwares foram divididos em três grupos: Consulta à BNCC, Ensino de Computação Alinhado à BNCC e Currículos Representados como Grafos. As informações e observações feitas sobre os softwares analisados encontram-se a seguir; as figuras das ferramentas sem acesso público foram reproduzidas das publicações que as descrevem.
+
+
+\subsection{Consulta à BNCC}
+\label{sec-referencial-softwares-consulta}
+
+% TODO(autor): o portal recusa o acesso automatizado usado no levantamento. Conferir no navegador o
+% que ele oferece além do documento (consulta por etapa, componente e ano; busca pelo código da
+% habilidade; recursos de acessibilidade) e completar o parágrafo.
+O Ministério da Educação mantém um portal dedicado à BNCC (\url{https://basenacionalcomum.mec.gov.br}), no qual se publica a versão integral do documento \cite{brasil2018bncc}. Texto. A Figura~\ref{fig-sw-bncc} mostra o portal.
+
+\begin{figure}[H]
+    \centering
+    \caption{Captura de tela do portal da BNCC}
+    \label{fig-sw-bncc}
+    \marcadorbrasao
+    \notafigura{aqui vai um print do site da BNCC (basenacionalcomum.mec.gov.br) tirado por mim no navegador, porque o site bloqueia o acesso automático. de preferência a tela que mostra as habilidades de ciências do 1º ano, ou a busca por código, se tiver. janela de 1600 por 1000, como os outros prints.}
+\end{figure}
+
+% TODO(autor): abrir o menu de acessibilidade da Nova Escola (ícone no canto inferior direito da
+% página) e acrescentar o que ele oferece.
+Os planos de aula da Nova Escola reúnem, segundo o próprio portal, mais de seis mil planos gratuitos e alinhados à BNCC \cite{novaescola2026planos}. Os planos podem ser filtrados por ano, da creche ao 9º ano, e por disciplina, e cada habilidade da BNCC tem uma página própria, que apresenta o seu texto e os planos que a desenvolvem, como ilustra a Figura~\ref{fig-sw-novaescola}. Os cartões dos planos indicam o ano, o componente e os códigos das habilidades trabalhadas, e cada código leva à página da respectiva habilidade. O portal oferece ainda atalhos para saltar ao cabeçalho, ao menu, ao conteúdo principal e ao rodapé, além de um menu de acessibilidade. A relação entre as habilidades, contudo, limita-se a essas listas de códigos, sem representação visual da estrutura do currículo.
+
+\begin{figure}[H]
+    \centering
+    \caption{Captura de tela da página da habilidade EF01CI05 nos planos de aula da Nova Escola}
+    \label{fig-sw-novaescola}
+    \captura{figuras/fig-sw-novaescola.jpg}
+    \notafigura{print já feito por mim no firefox (27/11), na página da EF01CI05, de ciências do 1º ano. a faixa vazia embaixo do cabeçalho é do próprio site.}
+\end{figure}
+
+
+\subsection{Ensino de Computação Alinhado à BNCC}
+\label{sec-referencial-softwares-computacao}
+
+O Currículo de Referência em Tecnologia e Computação, do Centro de Inovação para a Educação Brasileira (CIEB), organiza habilidades de Computação, da Educação Infantil ao Ensino Médio, em três eixos --- Cultura Digital, Tecnologia Digital e Pensamento Computacional --- e em conceitos como letramento digital, abstração e algoritmos, com códigos próprios que indicam o eixo, a etapa ou o ano e o conceito de cada habilidade \cite{cieb2026curriculo}. O portal do currículo permite selecionar a etapa, o ano, o eixo e o conceito, buscar por texto e fazer buscas avançadas pelas habilidades da BNCC, pelos materiais de referência e por palavras-chave. Para cada habilidade, apresentam-se a prática sugerida para desenvolvê-la, o que observar na avaliação, os níveis de adoção de tecnologia esperados da escola e do docente, palavras-chave, materiais de referência e as habilidades e competências gerais da BNCC a que ela se relaciona, como mostra a Figura~\ref{fig-sw-cieb}. A página inicial do portal solicita um breve cadastro antes de liberar o acesso ao currículo.
+
+\begin{figure}[H]
+    \centering
+    \caption[Capturas de tela do Currículo de Referência em Tecnologia e Computação]{Capturas de tela do Currículo de Referência em Tecnologia e Computação: a seleção da etapa, do eixo e do conceito, à esquerda, e uma habilidade com as habilidades e competências da BNCC relacionadas, à direita}
+    \label{fig-sw-cieb}
+    \captura[0.49\textwidth]{figuras/fig-sw-cieb-1.jpg}\hfill
+    \captura[0.49\textwidth]{figuras/fig-sw-cieb-2.jpg}
+    \notafigura{prints já feitos por mim no firefox (27/11), na página do currículo. fechei só o tutorial de boas-vindas do site, que escurecia a tela.}
+\end{figure}
+
+\citeonline{monteiro2024} relatam a HackEduComp, maratona em que professores e licenciandos, reunidos em equipes, planejam aulas interdisciplinares com o Pensamento Computacional. Cada plano produzido registra, entre outros elementos, a habilidade de Computação, conforme a BNCC Computação, e a habilidade do componente curricular, conforme a BNCC \cite[p.~171]{monteiro2024}. Os planos foram publicados em um repositório web, cuja interface permite filtrá-los por nível de ensino --- Fundamental I, Fundamental II e Ensino Médio --- e apresenta, na listagem, o eixo da Computação, o título, o resumo e as disciplinas relacionadas de cada plano, além de um botão para baixá-lo \cite[p.~173]{monteiro2024}, como mostra a Figura~\ref{fig-sw-hackeducomp}.
+
+\begin{figure}[H]
+    \centering
+    \caption[Repositório de planos de aula da HackEduComp]{Repositório de planos de aula da HackEduComp \protect\cite{monteiro2024}}
+    \label{fig-sw-hackeducomp}
+    \captura[0.75\textwidth]{figuras/fig-sw-hackeducomp.jpg}
+    \notafigura{essa é a figura 3 do artigo da monteiro (p. 174), recortada do pdf. o site do repositório não respondeu daqui; se abrir no meu navegador, dá pra trocar por um print.}
+\end{figure}
+
+O BNCC+ é um aplicativo para dispositivos Android, desenvolvido com o \textit{framework} Flutter e a linguagem Dart, que reúne recursos de apoio ao ensino dos eixos da BNCC Computação --- Pensamento Computacional, Mundo Digital e Cultura Digital \cite{costa2026bnccmais}. Ao abrir o aplicativo, o usuário escolhe o perfil de estudante ou de professor: o primeiro apresenta conteúdos organizados pelos eixos e pelas habilidades da BNCC Computação, e o segundo reúne o documento oficial da BNCC Computação, a consulta aos eixos, exemplos práticos de aplicação em sala de aula e materiais didáticos, como ilustra a Figura~\ref{fig-sw-bnccmais}. A versão avaliada foi disponibilizada como arquivo de instalação, e a avaliação relatada envolveu um professor de Matemática, que respondeu a um questionário de usabilidade adaptado da \textit{System Usability Scale} e indicou percepção positiva quanto à facilidade de uso e à organização visual.
+
+\begin{figure}[H]
+    \centering
+    \caption[Telas do BNCC+]{Telas do BNCC+: a escolha do perfil e os perfis do estudante e do professor \protect\cite{costa2026bnccmais}}
+    \label{fig-sw-bnccmais}
+    {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.4pt}%
+    \fbox{\includegraphics[height=7.5cm]{figuras/fig-sw-bnccmais-1.jpg}}\hspace{0.6cm}%
+    \fbox{\includegraphics[height=7.5cm]{figuras/fig-sw-bnccmais-2.jpg}}\hspace{0.6cm}%
+    \fbox{\includegraphics[height=7.5cm]{figuras/fig-sw-bnccmais-3.jpg}}}
+    \notafigura{são as figuras 1, 2 e 3 do tcc do bncc+ (p. 12 e 13 do pdf), tiradas do pdf do jeito que estavam. o app é só um apk no google drive, não tem na loja.}
+\end{figure}
+
+
+\subsection{Currículos Representados como Grafos}
+\label{sec-referencial-softwares-grafos}
+
+A ferramenta de autoria de currículo de \citeonline{silva2025autoria} permite ao professor modelar o currículo de uma disciplina como um grafo de conhecimento. Desenvolvida para a web, com HTML, CSS e JavaScript e com a biblioteca Cytoscape.js, ela representa os conceitos por quadrados e as relações de pré-requisito por setas: os conceitos são adicionados pelo menu lateral, e cada relação é criada ao selecionar o conceito de origem e o de destino, com operações de arrastar e soltar. A ferramenta oferece a organização automática do grafo, a busca por um conceito, que reposiciona a visualização para centralizá-lo, e a exportação do currículo como imagem, nos formatos PNG e JPEG, ou como dados, nos formatos JSON e SQL. A cor de cada conceito varia do amarelo ao vermelho-escuro conforme o número de pré-requisitos que recebe, como se observa na Figura~\ref{fig-sw-autoria}. A ferramenta é independente de domínio, sem vínculo com a BNCC, e foi avaliada de forma preliminar por um professor, que a classificou como muito fácil de usar.
+
+\begin{figure}[H]
+    \centering
+    \caption[Currículo modelado na ferramenta de autoria baseada em grafos de conhecimento]{Currículo modelado na ferramenta de autoria baseada em grafos de conhecimento \protect\cite{silva2025autoria}}
+    \label{fig-sw-autoria}
+    \captura[0.85\textwidth]{figuras/fig-sw-autoria.jpg}
+    \notafigura{essa é a figura 4 do artigo do ifal (p. 7 do pdf): a tela final do currículo que o professor montou na avaliação. a ferramenta não tem endereço público.}
+\end{figure}
+
+
+%%% Início de seção. %%%
+\section{Comparação entre as Ferramentas}
+\label{sec-referencial-comparacao}
+
+Considerando o domínio do problema, o estudo dos softwares existentes buscou identificar como as soluções disponíveis apresentam a BNCC, e os currículos de modo geral, ao professor, que funcionalidades oferecem e que lacunas deixam, de modo a orientar o desenvolvimento do EduGraph. As características observadas podem ser divididas nas seguintes categorias:
+
+\begin{itemize}
+    \item \textbf{Conteúdo:} o que a ferramenta reúne ou apresenta;
+    \item \textbf{Vínculo com a BNCC:} se a ferramenta apresenta a própria estrutura da BNCC, isto é, os anos, as áreas, os componentes, as unidades temáticas, os objetos de conhecimento e as habilidades, se apenas associa códigos de habilidades a materiais, ou se não se vincula a ela;
+    \item \textbf{Plataforma e acesso:} onde a ferramenta é executada e em que condições está disponível.
+\end{itemize}
+
+A Tabela~\ref{tab:comparacao-ferramentas} apresenta essas características para os softwares estudados e para o EduGraph. O portal da BNCC, que publica o próprio documento de referência, fica fora da comparação.
+
+\begin{table}[H]
+    \centering
+    \caption{Comparação entre os softwares estudados e o EduGraph}
+    \label{tab:comparacao-ferramentas}
+    \footnotesize
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{3.2cm}|>{\raggedright\arraybackslash}p{4.0cm}|>{\raggedright\arraybackslash}p{4.6cm}|>{\raggedright\arraybackslash}p{3.6cm}|}
+        \hline
+        \textbf{Software} & \textbf{Conteúdo} & \textbf{Vínculo com a BNCC} & \textbf{Plataforma e acesso} \\
+        \hline
+        Planos de aula da Nova Escola & Planos de aula & Códigos das habilidades em cada plano; uma página por habilidade & Web, gratuito \\
+        \hline
+        Currículo de Referência do CIEB & Habilidades de Computação, com práticas, avaliação e materiais & Habilidades e competências gerais da BNCC relacionadas a cada habilidade & Web, com cadastro na página inicial \\
+        \hline
+        Repositório da HackEduComp & Planos de aula interdisciplinares & Habilidades da BNCC e da BNCC Computação em cada plano & Web \\
+        \hline
+        BNCC+ & Materiais de apoio ao ensino de Computação & Eixos e habilidades da BNCC Computação & Android, por arquivo de instalação \\
+        \hline
+        Ferramenta de autoria de currículo & Currículo criado pelo professor, representado como grafo & Nenhum & Web, sem endereço público \\
+        \hline
+        \textbf{EduGraph} & Estrutura curricular da BNCC, representada como grafo (1º e 2º ano, nos dados atuais) & Anos, áreas, componentes, unidades temáticas, objetos de conhecimento e habilidades, como nós ligados entre si & Web, em endereço público no servidor da UFES (em implantação) \\
+        \hline
+    \end{tabular}
+\end{table}
+
+% TODO(autor): confirmar as duas afirmações do parágrafo abaixo sobre o portal da BNCC e o
+% currículo do CIEB (representação visual e recursos de acessibilidade) depois de conferi-los no
+% navegador, e a da Nova Escola depois de abrir o seu menu de acessibilidade.
+Pode-se observar, pelas descrições da Seção~\ref{sec-referencial-softwares} e pela Tabela~\ref{tab:comparacao-ferramentas}, que as ferramentas voltadas à BNCC organizam o acesso ao conteúdo por meio de listas, filtros e menus, e que a BNCC aparece nelas, sobretudo, como atributo dos materiais, na forma de códigos de habilidades, ou como critério de organização, como os eixos da BNCC Computação; em nenhuma delas as relações entre os elementos do currículo são apresentadas de forma visual. A representação do currículo como grafo aparece apenas na ferramenta de autoria, voltada a currículos criados pelo próprio professor e sem vínculo com a BNCC. Quanto à acessibilidade, a Nova Escola é a única das ferramentas examinadas a apresentar recursos ao usuário de forma visível --- atalhos de navegação e um menu de acessibilidade ---, e nenhuma oferece paletas voltadas a pessoas com deficiências na percepção de cores.
+
+Logo, torna-se interessante desenvolver uma aplicação web que una a apresentação da própria estrutura da BNCC na forma de um grafo interativo, como na ferramenta de autoria, a uma busca guiada pelo ano, pela área e pelo componente curricular e a recursos de acessibilidade, disponibilizando-a em endereço público na web. Esse é o propósito do EduGraph, apresentado no Capítulo~\ref{sec-edugraph}. Em contrapartida, o EduGraph não reúne materiais prontos para a sala de aula, como os planos de aula e os materiais didáticos de parte das ferramentas estudadas, e os seus dados abrangem, no momento, o 1º e o 2º ano do Ensino Fundamental.
 
 
 %%% Início de seção. %%%

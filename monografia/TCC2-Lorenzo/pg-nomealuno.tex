@@ -188,7 +188,7 @@
 % Compilar só um capítulo, para caber no tempo do Overleaf enquanto se escreve: tire o "%" da
 % linha abaixo e deixe nela só o capítulo em edição. Os outros mantêm a numeração da última
 % compilação completa. Volte a comentar a linha para compilar o documento inteiro.
-% \includeonly{capitulos/ch4-edugraph}
+% \includeonly{capitulos/ch3-edugraph}
 
 
 
@@ -407,38 +407,25 @@ Texto.
 
 % Lista de abreviaturas e siglas: só as que aparecem no texto, em ordem alfabética.
 \begin{siglas}
-  % As siglas comentadas eram usadas só no mapeamento (capítulo 3), que voltou a ser
-  % esqueleto; voltam junto com o texto dele.
-  % As de modelos de grafo (IRI, RDF, SPARQL, URI) saíram com a antiga seção de grafos de
-  % conhecimento; a do W3C volta com a seção de acessibilidade.
+  % A sigla do W3C volta com a seção de acessibilidade.
   \item[API] \textit{Application Programming Interface}
   \item[AVA] Ambiente Virtual de Aprendizagem
   \item[BNCC] Base Nacional Comum Curricular
-  %\item[CE] Critério de Exclusão
   \item[CEB] Câmara de Educação Básica
-  %\item[CI] Critério de Inclusão
+  \item[CIEB] Centro de Inovação para a Educação Brasileira
   \item[CIF] Comissão Intergovernamental de Financiamento para a Educação Básica de Qualidade
   \item[CNE] Conselho Nacional de Educação
   \item[CSS] \textit{Cascading Style Sheets}
   \item[Fundeb] Fundo de Manutenção e Desenvolvimento da Educação Básica e de Valorização dos Profissionais da Educação
   \item[HTML] \textit{HyperText Markup Language}
   \item[HTTP] \textit{Hypertext Transfer Protocol}
-  %\item[IRI] \textit{Internationalized Resource Identifier}
+  \item[JPEG] \textit{Joint Photographic Experts Group}
   \item[JSON] \textit{JavaScript Object Notation}
   \item[MEC] Ministério da Educação
-  \item[MSL] Mapeamento Sistemático da Literatura
-  %\item[PAPC] Protocolo para Avaliação por Critérios do Pensamento Computacional
   \item[PC] Pensamento Computacional
-  %\item[PICOC] \textit{Population, Intervention, Comparison, Outcome, Context}
-  %\item[QP] Questão de Pesquisa
-  %\item[RDF] \textit{Resource Description Framework}
-  %\item[RENOTE] Revista Novas Tecnologias na Educação
-  %\item[SBC] Sociedade Brasileira de Computação
-  %\item[SOL] SBC OpenLib
-  %\item[SOLO] \textit{Structure of the Observed Learning Outcome}
-  %\item[SPARQL] \textit{SPARQL Protocol and RDF Query Language}
-  %\item[STEAM] \textit{Science, Technology, Engineering, Arts and Mathematics}
-  %\item[URI] \textit{Uniform Resource Identifier}
+  \item[PNG] \textit{Portable Network Graphics}
+  \item[SQL] \textit{Structured Query Language}
+  \item[UFES] Universidade Federal do Espírito Santo
   \item[VAAR] Valor anual por aluno decorrente da complementação-VAAR do Fundeb
   \item[WCAG] \textit{Web Content Accessibility Guidelines}
   %\item[W3C] \textit{World Wide Web Consortium}
@@ -459,10 +446,8 @@ Texto.
 % Capítulos, um arquivo por capítulo na pasta capitulos/.
 \include{capitulos/ch1-introducao}
 \include{capitulos/ch2-referencial}
-\include{capitulos/ch3-mapeamento}
-\include{capitulos/ch4-edugraph}
-\include{capitulos/ch5-verificacao}
-\include{capitulos/ch6-conclusoes}
+\include{capitulos/ch3-edugraph}
+\include{capitulos/ch4-conclusoes}
 
 
 
@@ -478,12 +463,11 @@ Texto.
 \bibliography{bibliografia}
 
 
-% Apêndices: entram quando houver conteúdo (por exemplo, o protocolo completo do
-% mapeamento e a lista dos estudos selecionados). Ambiente vazio não compila bem,
-% por isso fica comentado até lá.
+% Apêndices: entram quando houver conteúdo. Ambiente vazio não compila bem, por isso
+% fica comentado até lá.
 % \begin{apendicesenv}
 % \partapendices
-% \include{apendices/apA-estudos}
+% \include{apendices/apA}
 % \end{apendicesenv}
 
 % Fim do documento.
