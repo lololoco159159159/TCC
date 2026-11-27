@@ -17,7 +17,7 @@ Este capítulo reúne os fundamentos teóricos do trabalho e as tecnologias empr
 
 A BNCC é um ``documento de caráter normativo que define o conjunto orgânico e progressivo de aprendizagens essenciais que todos os alunos devem desenvolver ao longo das etapas e modalidades da Educação Básica'' \cite[p.~7]{brasil2018bncc}. O documento abrange a Educação Infantil, o Ensino Fundamental e o Ensino Médio e constitui referência nacional para a formulação dos currículos dos sistemas e das redes de ensino e das propostas pedagógicas das escolas \cite[p.~8--9]{brasil2018bncc}. As aprendizagens essenciais devem concorrer para o desenvolvimento de dez competências gerais, entendida a competência como ``a mobilização de conhecimentos (conceitos e procedimentos), habilidades (práticas, cognitivas e socioemocionais), atitudes e valores para resolver demandas complexas da vida cotidiana, do pleno exercício da cidadania e do mundo do trabalho'' \cite[p.~8]{brasil2018bncc}.
 
-No Ensino Fundamental, etapa a que pertencem os dados do grafo apresentado neste trabalho, a BNCC organiza-se em cinco áreas do conhecimento --- Linguagens, Matemática, Ciências da Natureza, Ciências Humanas e Ensino Religioso ---, que reúnem os componentes curriculares \cite[p.~27]{brasil2018bncc}. Cada componente apresenta um conjunto de habilidades, que expressam as aprendizagens essenciais a serem asseguradas aos alunos. As habilidades relacionam-se a objetos de conhecimento, isto é, a conteúdos, conceitos e processos, e estes, por sua vez, organizam-se em unidades temáticas \cite[p.~28--29]{brasil2018bncc}. Uma unidade temática contempla uma gama maior ou menor de objetos de conhecimento, e cada objeto relaciona-se a um número variável de habilidades \cite[p.~29]{brasil2018bncc}. Esse encadeamento --- área do conhecimento, componente curricular, unidade temática, objeto de conhecimento e habilidade --- é a estrutura reproduzida no modelo do grafo.
+No Ensino Fundamental, a BNCC organiza-se em cinco áreas do conhecimento --- Linguagens, Matemática, Ciências da Natureza, Ciências Humanas e Ensino Religioso ---, que reúnem os componentes curriculares \cite[p.~27]{brasil2018bncc}. Cada componente apresenta um conjunto de habilidades, que expressam as aprendizagens essenciais a serem asseguradas aos alunos. As habilidades relacionam-se a objetos de conhecimento, isto é, a conteúdos, conceitos e processos, e estes, por sua vez, organizam-se em unidades temáticas \cite[p.~28--29]{brasil2018bncc}. Uma unidade temática contempla uma gama maior ou menor de objetos de conhecimento, e cada objeto relaciona-se a um número variável de habilidades \cite[p.~29]{brasil2018bncc}. Esse encadeamento --- área do conhecimento, componente curricular, unidade temática, objeto de conhecimento e habilidade --- é a estrutura reproduzida no modelo do grafo.
 
 Cada habilidade é identificada por um código alfanumérico \cite[p.~30]{brasil2018bncc}, cuja composição é apresentada na Tabela~\ref{tab:codigo-habilidade}, tomando-se como exemplo o código \texttt{EF01CI05}. Duas ressalvas do documento são relevantes para este trabalho: a numeração sequencial não representa uma ordem ou hierarquia esperada das aprendizagens, e a organização das habilidades em objetos de conhecimento e unidades temáticas expressa ``um arranjo possível (dentre outros)'', que não deve ser tomado como modelo obrigatório para o desenho dos currículos \cite[p.~31]{brasil2018bncc}. Ambas se estendem ao grafo, que reproduz esse arranjo.
 
@@ -190,22 +190,19 @@ Foram estudados seis softwares relacionados à consulta da BNCC, ao ensino de Co
 \subsection{Consulta à BNCC}
 \label{sec-referencial-softwares-consulta}
 
-% TODO(autor): o portal recusa o acesso automatizado usado no levantamento. Conferir no navegador o
-% que ele oferece além do documento (consulta por etapa, componente e ano; busca pelo código da
-% habilidade; recursos de acessibilidade) e completar o parágrafo.
-O Ministério da Educação mantém um portal dedicado à BNCC (\url{https://basenacionalcomum.mec.gov.br}), no qual se publica a versão integral do documento \cite{brasil2018bncc}. Texto. A Figura~\ref{fig-sw-bncc} mostra o portal.
+O Ministério da Educação mantém um portal dedicado à BNCC (\url{https://basenacionalcomum.mec.gov.br}), que oferece, essencialmente, a versão integral do documento em formato PDF \cite{brasil2018bncc}. A consulta às habilidades se faz, assim, pela leitura do próprio documento, sem recursos de consulta no portal, como filtros ou busca pelo código da habilidade. A Figura~\ref{fig-sw-bncc} mostra o portal.
 
 \begin{figure}[H]
     \centering
     \caption{Captura de tela do portal da BNCC}
     \label{fig-sw-bncc}
     \marcadorbrasao
-    \notafigura{aqui vai um print do site da BNCC (basenacionalcomum.mec.gov.br) tirado por mim no navegador, porque o site bloqueia o acesso automático. de preferência a tela que mostra as habilidades de ciências do 1º ano, ou a busca por código, se tiver. janela de 1600 por 1000, como os outros prints.}
+    \notafigura{aqui vai um print do site da BNCC (basenacionalcomum.mec.gov.br) tirado por mim no navegador, porque o site bloqueia o acesso automático. como o portal basicamente só oferece o pdf, o print é da página inicial, com o acesso ao documento. janela de 1600 por 1000, como os outros prints.}
 \end{figure}
 
-% TODO(autor): abrir o menu de acessibilidade da Nova Escola (ícone no canto inferior direito da
-% página) e acrescentar o que ele oferece.
-Os planos de aula da Nova Escola reúnem, segundo o próprio portal, mais de seis mil planos gratuitos e alinhados à BNCC \cite{novaescola2026planos}. Os planos podem ser filtrados por ano, da creche ao 9º ano, e por disciplina, e cada habilidade da BNCC tem uma página própria, que apresenta o seu texto e os planos que a desenvolvem, como ilustra a Figura~\ref{fig-sw-novaescola}. Os cartões dos planos indicam o ano, o componente e os códigos das habilidades trabalhadas, e cada código leva à página da respectiva habilidade. O portal oferece ainda atalhos para saltar ao cabeçalho, ao menu, ao conteúdo principal e ao rodapé, além de um menu de acessibilidade. A relação entre as habilidades, contudo, limita-se a essas listas de códigos, sem representação visual da estrutura do currículo.
+Os planos de aula da Nova Escola reúnem, segundo o próprio portal, mais de seis mil planos gratuitos e alinhados à BNCC \cite{novaescola2026planos}. Os planos podem ser filtrados por ano, da creche ao 9º ano, e por disciplina, e cada habilidade da BNCC tem uma página própria, que apresenta o seu texto e os planos que a desenvolvem, como ilustra a Figura~\ref{fig-sw-novaescola}. Os cartões dos planos indicam o ano, o componente e os códigos das habilidades trabalhadas, e cada código leva à página da respectiva habilidade. A relação entre as habilidades, contudo, limita-se a essas listas de códigos, sem representação visual da estrutura do currículo.
+
+Em acessibilidade, o portal da Nova Escola oferece atalhos para saltar ao cabeçalho, ao menu, ao conteúdo principal e ao rodapé, além de um menu de acessibilidade, fornecido pela plataforma Audima, mostrado na Figura~\ref{fig-sw-novaescola-acess}. O menu reúne a leitura do texto em voz alta, a descrição de imagens e a tradução para a Língua Brasileira de Sinais (Libras), pelo VLibras; o aumento e a redução da fonte, o ajuste do espaçamento das letras e das linhas e uma fonte para dislexia; a alteração das cores de fundo e do texto e os modos monocromático, de baixa e de alta saturação e de cores invertidas; e o destaque do foco e dos \textit{links}, a ampliação do cursor, a pausa das animações e a barra, a máscara e o modo de leitura.
 
 \begin{figure}[H]
     \centering
@@ -215,11 +212,20 @@ Os planos de aula da Nova Escola reúnem, segundo o próprio portal, mais de sei
     \notafigura{print já feito por mim no firefox (27/11), na página da EF01CI05, de ciências do 1º ano. a faixa vazia embaixo do cabeçalho é do próprio site.}
 \end{figure}
 
+\begin{figure}[H]
+    \centering
+    \caption[Captura de tela do menu de acessibilidade da Nova Escola]{Captura de tela do menu de acessibilidade da Nova Escola, nas duas partes da lista de recursos}
+    \label{fig-sw-novaescola-acess}
+    \captura[0.36\textwidth]{figuras/fig-sw-novaescola-acess-1.jpg}\hspace{0.8cm}%
+    \captura[0.36\textwidth]{figuras/fig-sw-novaescola-acess-2.jpg}
+    \notafigura{prints que eu tirei do menu de acessibilidade (o ícone no canto da página), o começo e o fim da lista.}
+\end{figure}
+
 
 \subsection{Ensino de Computação Alinhado à BNCC}
 \label{sec-referencial-softwares-computacao}
 
-O Currículo de Referência em Tecnologia e Computação, do Centro de Inovação para a Educação Brasileira (CIEB), organiza habilidades de Computação, da Educação Infantil ao Ensino Médio, em três eixos --- Cultura Digital, Tecnologia Digital e Pensamento Computacional --- e em conceitos como letramento digital, abstração e algoritmos, com códigos próprios que indicam o eixo, a etapa ou o ano e o conceito de cada habilidade \cite{cieb2026curriculo}. O portal do currículo permite selecionar a etapa, o ano, o eixo e o conceito, buscar por texto e fazer buscas avançadas pelas habilidades da BNCC, pelos materiais de referência e por palavras-chave. Para cada habilidade, apresentam-se a prática sugerida para desenvolvê-la, o que observar na avaliação, os níveis de adoção de tecnologia esperados da escola e do docente, palavras-chave, materiais de referência e as habilidades e competências gerais da BNCC a que ela se relaciona, como mostra a Figura~\ref{fig-sw-cieb}. A página inicial do portal solicita um breve cadastro antes de liberar o acesso ao currículo.
+O Currículo de Referência em Tecnologia e Computação, do Centro de Inovação para a Educação Brasileira (CIEB), organiza habilidades de Computação, da Educação Infantil ao Ensino Médio, em três eixos --- Cultura Digital, Tecnologia Digital e Pensamento Computacional --- e em conceitos como letramento digital, abstração e algoritmos, com códigos próprios que indicam o eixo, a etapa ou o ano e o conceito de cada habilidade \cite{cieb2026curriculo}. O portal do currículo permite selecionar a etapa, o ano, o eixo e o conceito, buscar por texto e fazer buscas avançadas pelas habilidades da BNCC, pelos materiais de referência e por palavras-chave. Para cada habilidade, apresentam-se a prática sugerida para desenvolvê-la, o que observar na avaliação, os níveis de adoção de tecnologia esperados da escola e do docente, palavras-chave, materiais de referência e as habilidades e competências gerais da BNCC a que ela se relaciona, como mostra a Figura~\ref{fig-sw-cieb}. O acesso ao currículo é livre, sem cadastro.
 
 \begin{figure}[H]
     \centering
@@ -230,14 +236,14 @@ O Currículo de Referência em Tecnologia e Computação, do Centro de Inovaçã
     \notafigura{prints já feitos por mim no firefox (27/11), na página do currículo. fechei só o tutorial de boas-vindas do site, que escurecia a tela.}
 \end{figure}
 
-\citeonline{monteiro2024} relatam a HackEduComp, maratona em que professores e licenciandos, reunidos em equipes, planejam aulas interdisciplinares com o Pensamento Computacional. Cada plano produzido registra, entre outros elementos, a habilidade de Computação, conforme a BNCC Computação, e a habilidade do componente curricular, conforme a BNCC \cite[p.~171]{monteiro2024}. Os planos foram publicados em um repositório web, cuja interface permite filtrá-los por nível de ensino --- Fundamental I, Fundamental II e Ensino Médio --- e apresenta, na listagem, o eixo da Computação, o título, o resumo e as disciplinas relacionadas de cada plano, além de um botão para baixá-lo \cite[p.~173]{monteiro2024}, como mostra a Figura~\ref{fig-sw-hackeducomp}.
+\citeonline{monteiro2024} relatam a HackEduComp, maratona em que professores e licenciandos, reunidos em equipes, planejam aulas interdisciplinares com o Pensamento Computacional. Cada plano produzido registra, entre outros elementos, a habilidade de Computação, conforme a BNCC Computação, e a habilidade do componente curricular, conforme a BNCC \cite[p.~171]{monteiro2024}. Os planos foram publicados em um repositório web, cuja interface permite filtrá-los por nível de ensino --- Fundamental I, Fundamental II e Ensino Médio --- e apresenta, na listagem, o eixo da Computação, o título, o resumo e as disciplinas relacionadas de cada plano, além de um botão para baixá-lo \cite[p.~173]{monteiro2024}, como mostra a Figura~\ref{fig-sw-hackeducomp}. O endereço do repositório indicado no artigo, no entanto, não estava acessível na data desta consulta.
 
 \begin{figure}[H]
     \centering
     \caption[Repositório de planos de aula da HackEduComp]{Repositório de planos de aula da HackEduComp \protect\cite{monteiro2024}}
     \label{fig-sw-hackeducomp}
     \captura[0.75\textwidth]{figuras/fig-sw-hackeducomp.jpg}
-    \notafigura{essa é a figura 3 do artigo da monteiro (p. 174), recortada do pdf. o site do repositório não respondeu daqui; se abrir no meu navegador, dá pra trocar por um print.}
+    \notafigura{essa é a figura 3 do artigo da monteiro (p. 174), recortada do pdf. o site do repositório não abre (testei no meu navegador também), então fica a figura do artigo.}
 \end{figure}
 
 O BNCC+ é um aplicativo para dispositivos Android, desenvolvido com o \textit{framework} Flutter e a linguagem Dart, que reúne recursos de apoio ao ensino dos eixos da BNCC Computação --- Pensamento Computacional, Mundo Digital e Cultura Digital \cite{costa2026bnccmais}. Ao abrir o aplicativo, o usuário escolhe o perfil de estudante ou de professor: o primeiro apresenta conteúdos organizados pelos eixos e pelas habilidades da BNCC Computação, e o segundo reúne o documento oficial da BNCC Computação, a consulta aos eixos, exemplos práticos de aplicação em sala de aula e materiais didáticos, como ilustra a Figura~\ref{fig-sw-bnccmais}. A versão avaliada foi disponibilizada como arquivo de instalação, e a avaliação relatada envolveu um professor de Matemática, que respondeu a um questionário de usabilidade adaptado da \textit{System Usability Scale} e indicou percepção positiva quanto à facilidade de uso e à organização visual.
@@ -250,7 +256,7 @@ O BNCC+ é um aplicativo para dispositivos Android, desenvolvido com o \textit{f
     \fbox{\includegraphics[height=7.5cm]{figuras/fig-sw-bnccmais-1.jpg}}\hspace{0.6cm}%
     \fbox{\includegraphics[height=7.5cm]{figuras/fig-sw-bnccmais-2.jpg}}\hspace{0.6cm}%
     \fbox{\includegraphics[height=7.5cm]{figuras/fig-sw-bnccmais-3.jpg}}}
-    \notafigura{são as figuras 1, 2 e 3 do tcc do bncc+ (p. 12 e 13 do pdf), tiradas do pdf do jeito que estavam. o app é só um apk no google drive, não tem na loja.}
+    \notafigura{são as figuras 1, 2 e 3 do tcc do bncc+ (p. 12 e 13 do pdf), tiradas do pdf do jeito que estavam. o app é um apk no google drive (o link abre).}
 \end{figure}
 
 
@@ -294,25 +300,22 @@ A Tabela~\ref{tab:comparacao-ferramentas} apresenta essas características para 
         \hline
         Planos de aula da Nova Escola & Planos de aula & Códigos das habilidades em cada plano; uma página por habilidade & Web, gratuito \\
         \hline
-        Currículo de Referência do CIEB & Habilidades de Computação, com práticas, avaliação e materiais & Habilidades e competências gerais da BNCC relacionadas a cada habilidade & Web, com cadastro na página inicial \\
+        Currículo de Referência do CIEB & Habilidades de Computação, com práticas, avaliação e materiais & Habilidades e competências gerais da BNCC relacionadas a cada habilidade & Web, sem cadastro \\
         \hline
-        Repositório da HackEduComp & Planos de aula interdisciplinares & Habilidades da BNCC e da BNCC Computação em cada plano & Web \\
+        Repositório da HackEduComp & Planos de aula interdisciplinares & Habilidades da BNCC e da BNCC Computação em cada plano & Web, endereço fora do ar na data da consulta \\
         \hline
         BNCC+ & Materiais de apoio ao ensino de Computação & Eixos e habilidades da BNCC Computação & Android, por arquivo de instalação \\
         \hline
         Ferramenta de autoria de currículo & Currículo criado pelo professor, representado como grafo & Nenhum & Web, sem endereço público \\
         \hline
-        \textbf{EduGraph} & Estrutura curricular da BNCC, representada como grafo (1º e 2º ano, nos dados atuais) & Anos, áreas, componentes, unidades temáticas, objetos de conhecimento e habilidades, como nós ligados entre si & Web, em endereço público no servidor da UFES (em implantação) \\
+        \textbf{EduGraph} & Estrutura curricular da BNCC, representada como grafo & Anos, áreas, componentes, unidades temáticas, objetos de conhecimento e habilidades, como nós ligados entre si & Web, em endereço público no servidor da UFES (em implantação) \\
         \hline
     \end{tabular}
 \end{table}
 
-% TODO(autor): confirmar as duas afirmações do parágrafo abaixo sobre o portal da BNCC e o
-% currículo do CIEB (representação visual e recursos de acessibilidade) depois de conferi-los no
-% navegador, e a da Nova Escola depois de abrir o seu menu de acessibilidade.
-Pode-se observar, pelas descrições da Seção~\ref{sec-referencial-softwares} e pela Tabela~\ref{tab:comparacao-ferramentas}, que as ferramentas voltadas à BNCC organizam o acesso ao conteúdo por meio de listas, filtros e menus, e que a BNCC aparece nelas, sobretudo, como atributo dos materiais, na forma de códigos de habilidades, ou como critério de organização, como os eixos da BNCC Computação; em nenhuma delas as relações entre os elementos do currículo são apresentadas de forma visual. A representação do currículo como grafo aparece apenas na ferramenta de autoria, voltada a currículos criados pelo próprio professor e sem vínculo com a BNCC. Quanto à acessibilidade, a Nova Escola é a única das ferramentas examinadas a apresentar recursos ao usuário de forma visível --- atalhos de navegação e um menu de acessibilidade ---, e nenhuma oferece paletas voltadas a pessoas com deficiências na percepção de cores.
+Pode-se observar, pelas descrições da Seção~\ref{sec-referencial-softwares} e pela Tabela~\ref{tab:comparacao-ferramentas}, que as ferramentas voltadas à BNCC se limitam ao documento em PDF, como o portal oficial, ou organizam o acesso ao conteúdo por meio de listas, filtros e menus, e que a BNCC aparece nelas, sobretudo, como atributo dos materiais, na forma de códigos de habilidades, ou como critério de organização, como os eixos da BNCC Computação; em nenhuma delas o professor pode explorar visualmente as relações entre os elementos do currículo. A representação do currículo como grafo aparece apenas na ferramenta de autoria, voltada a currículos criados pelo próprio professor e sem vínculo com a BNCC. Quanto à acessibilidade, a Nova Escola se destaca pelo menu de acessibilidade, com recursos variados, entre eles ajustes gerais de cor, como os modos monocromático, de saturação e de cores invertidas; nas demais ferramentas, não foram observados recursos dessa natureza. Nenhuma delas, porém, oferece paletas específicas para os tipos de daltonismo, nem formas que substituam as cores na identificação dos elementos.
 
-Logo, torna-se interessante desenvolver uma aplicação web que una a apresentação da própria estrutura da BNCC na forma de um grafo interativo, como na ferramenta de autoria, a uma busca guiada pelo ano, pela área e pelo componente curricular e a recursos de acessibilidade, disponibilizando-a em endereço público na web. Esse é o propósito do EduGraph, apresentado no Capítulo~\ref{sec-edugraph}. Em contrapartida, o EduGraph não reúne materiais prontos para a sala de aula, como os planos de aula e os materiais didáticos de parte das ferramentas estudadas, e os seus dados abrangem, no momento, o 1º e o 2º ano do Ensino Fundamental.
+Logo, torna-se interessante desenvolver uma aplicação web que una a apresentação da própria estrutura da BNCC na forma de um grafo interativo, como na ferramenta de autoria, a uma busca guiada pelo ano, pela área e pelo componente curricular e a recursos de acessibilidade voltados também à própria visualização, como paletas para os tipos de daltonismo, disponibilizando-a em endereço público na web. Esse é o propósito do EduGraph, apresentado no Capítulo~\ref{sec-edugraph}. Em contrapartida, o EduGraph não reúne materiais prontos para a sala de aula, como os planos de aula e os materiais didáticos de parte das ferramentas estudadas.
 
 
 %%% Início de seção. %%%
