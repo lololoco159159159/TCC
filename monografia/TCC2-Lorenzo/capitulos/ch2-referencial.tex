@@ -99,13 +99,15 @@ Diante dessas distinções, este trabalho adota o termo \textit{repositório de 
 \section{Visualização de Grafos}
 \label{sec-referencial-visualizacao}
 
-Texto.
+Esta seção apresenta os conceitos de visualização de grafos em que se apoia a página de grafos do EduGraph: o que é um grafo e o que torna o seu desenho legível (Seção~\ref{sec-referencial-visualizacao-desenho}) e as duas famílias de algoritmos de desenho que o site oferece ao professor, o layout por forças (Seção~\ref{sec-referencial-visualizacao-forcas}) e o layout hierárquico (Seção~\ref{sec-referencial-visualizacao-hierarquico}).
 
 
 \subsection{Grafos e o Seu Desenho}
 \label{sec-referencial-visualizacao-desenho}
 
-Texto.
+Um grafo é composto por nós, também chamados de vértices, que representam entidades, e por arestas, que representam relações entre elas \cite{healy2013hierarquico}. Quando as relações têm sentido, como a que vai de um componente curricular a cada uma das suas unidades temáticas, as arestas são orientadas, e o grafo é chamado de grafo orientado, ou dígrafo. No EduGraph, cada nó traz ainda o tipo do elemento da BNCC que representa --- ano, área do conhecimento, componente curricular, unidade temática, objeto de conhecimento ou habilidade ---, e cada aresta, o tipo da relação.
+
+Desenhar um grafo consiste em atribuir uma posição a cada nó e traçar as arestas entre eles, em geral como segmentos de reta. Um mesmo grafo admite muitos desenhos diferentes, e a qualidade de cada um costuma ser avaliada por critérios estéticos associados à sua legibilidade. Para grafos em geral, buscam-se arestas de comprimentos semelhantes, simetria e uma distribuição uniforme dos nós \cite{kobourov2013forca}; para grafos orientados que representam hierarquias, acrescenta-se que as arestas apontem em uma mesma direção, sejam curtas e retas e se cruzem o mínimo possível, já que os cruzamentos dificultam a compreensão do desenho \cite{healy2013hierarquico}. Os algoritmos de desenho, ou de layout, calculam as posições dos nós buscando atender a esses critérios, e duas famílias se destacam: a dos algoritmos baseados em forças e a dos algoritmos hierárquicos, ou em camadas. A Figura~\ref{fig-vis-layouts} mostra o mesmo recorte do grafo da BNCC desenhado pelas duas abordagens no EduGraph.
 
 \begin{figure}[H]
     \centering
@@ -119,20 +121,50 @@ Texto.
 \subsection{Layout por Forças}
 \label{sec-referencial-visualizacao-forcas}
 
-Texto.
+No layout por forças, o grafo é tratado como um sistema físico: os nós se repelem, como cargas elétricas, as arestas funcionam como molas que aproximam os nós ligados entre si, e uma simulação move os nós, passo a passo, até que o sistema se estabilize em um desenho equilibrado \cite{kobourov2013forca}. O EduGraph segue o modelo de simulação da biblioteca D3.js, que organiza o cálculo em forças independentes, aplicadas a cada passo \cite{bostock2026d3force}:
+
+\begin{itemize}
+    \item \textbf{Repulsão:} todos os nós se repelem uns aos outros, o que espalha o desenho e evita que os nós se amontoem;
+    \item \textbf{Molas:} cada aresta puxa ou empurra os dois nós que liga, conforme a distância entre eles esteja acima ou abaixo de uma distância desejada;
+    \item \textbf{Colisão:} impede que dois nós fiquem um sobre o outro;
+    \item \textbf{Centralização:} uma força fraca puxa os nós para o centro, mantendo o grafo à vista.
+\end{itemize}
+
+Calcular a repulsão entre todos os pares de nós seria caro, porque o número de pares cresce com o quadrado do número de nós. Para evitar esse custo, a simulação usa a aproximação de Barnes--Hut: as posições dos nós são guardadas em uma \textit{quadtree}, estrutura que divide o plano em quadrantes cada vez menores, e um grupo de nós distante é tratado como se fosse um único nó, situado no seu centro de massa \cite{bostock2026d3force}.
+
+A cada passo, as forças alteram a velocidade de cada nó, um atrito reduz essa velocidade, e a velocidade, por sua vez, desloca o nó. A intensidade das forças é multiplicada por um parâmetro chamado $\alpha$, uma espécie de temperatura da simulação, que começa alta e diminui um pouco a cada passo; quando fica abaixo de um valor mínimo, a simulação para, e o desenho fica parado \cite{bostock2026d3force}. No EduGraph, a temperatura volta a subir quando o professor arrasta um nó ou quando um novo trecho do grafo entra na tela, e o desenho se reacomoda. A Seção~\ref{sec-edugraph-grafos-layouts} mostra como esse modelo foi implementado no motor de visualização do site.
 
 
 \subsection{Layout Hierárquico}
 \label{sec-referencial-visualizacao-hierarquico}
 
-Texto.
+O layout hierárquico organiza o grafo em camadas horizontais, como um organograma: cada nó fica em um nível, e as arestas descem de um nível para o seguinte, de cima para baixo. Esse arranjo combina com a estrutura da BNCC, em que o ano fica acima das áreas do conhecimento, as áreas acima dos componentes curriculares, e assim por diante, até as habilidades. O EduGraph monta esse desenho com base no esquema proposto por Sugiyama, Tagawa e Toda \apud{sugiyama1981methods}{healy2013hierarquico}, em cinco etapas, resumidas na Figura~\ref{fig-vis-etapas-hierarquico}:
+
+\begin{enumerate}
+    \item \textbf{Quebra de ciclos.} Para que todas as arestas possam apontar para baixo, o grafo não pode ter ciclos, isto é, caminhos que voltam ao ponto de partida. Uma busca em profundidade percorre o grafo e, quando encontra uma aresta que fecharia um ciclo, inverte o seu sentido, apenas para o cálculo do desenho \cite{healy2013hierarquico}.
+    \item \textbf{Escolha dos níveis.} Cada nó recebe um nível. Primeiro, pelo caminho mais longo: os nós dos quais não sai nenhuma aresta ficam no nível mais baixo, e cada nó fica acima de todos aqueles para os quais aponta. Depois, sempre que há folga, os nós são aproximados dos seus vizinhos, para encurtar as arestas; esse ajuste corresponde à construção da árvore inicial do método de \citeonline{gansner1993technique}.
+    \item \textbf{Nós fictícios.} Uma aresta que atravessa mais de um nível é dividida por nós invisíveis, um em cada nível intermediário, de modo que toda aresta passe a ligar níveis vizinhos. São esses nós que permitem desenhar as arestas longas com dobras \cite{healy2013hierarquico}.
+    \item \textbf{Ordem em cada nível.} Os nós de cada nível são reordenados para que as arestas se cruzem menos. Pela heurística do baricentro, cada nó é colocado na média das posições dos seus vizinhos no nível de cima ou no de baixo \cite{healy2013hierarquico}. O processo varre os níveis para baixo e para cima, conta os cruzamentos depois de cada varredura, guarda a melhor ordem encontrada e para depois de quatro varreduras seguidas sem melhora.
+    \item \textbf{Posições.} A altura de cada nó decorre do seu nível. A posição horizontal é calculada pelo método de Brandes e Köpf, que alinha cada nó com os vizinhos do nível de cima ou do de baixo, em quatro variações, e combina os resultados, deixando as arestas curtas e as arestas longas o mais retas possível \apud{brandes2002fast}{healy2013hierarquico}.
+\end{enumerate}
+
+Quando o grafo tem partes desconectadas, cada parte é arranjada separadamente, e as partes são depois acomodadas lado a lado. A implementação dessas etapas no EduGraph, sem bibliotecas externas, é descrita na Seção~\ref{sec-edugraph-grafos-layouts}.
 
 \begin{figure}[H]
     \centering
-    \caption{Etapas do layout hierárquico}
+    \caption{Etapas do layout hierárquico no EduGraph}
     \label{fig-vis-etapas-hierarquico}
-    \marcadorbrasao
-    \notafigura{aqui vai um esquema simples, feito no próprio latex, com as etapas do hierárquico: separar os nós em camadas, ordenar cada camada pra cruzar menos arestas e depois calcular a posição de cada nó. podem ser três caixinhas com setas.}
+    {\small
+    \fbox{\parbox[c][2.3cm][c]{2.3cm}{\centering\textbf{1. Ciclos}\\[4pt]\scriptsize inverter as arestas que fecham ciclos}}%
+    \hfill$\rightarrow$\hfill
+    \fbox{\parbox[c][2.3cm][c]{2.3cm}{\centering\textbf{2. Níveis}\\[4pt]\scriptsize um nível para cada nó, com as arestas curtas}}%
+    \hfill$\rightarrow$\hfill
+    \fbox{\parbox[c][2.3cm][c]{2.3cm}{\centering\textbf{3. Nós fictícios}\\[4pt]\scriptsize arestas longas divididas nível a nível}}%
+    \hfill$\rightarrow$\hfill
+    \fbox{\parbox[c][2.3cm][c]{2.3cm}{\centering\textbf{4. Ordem}\\[4pt]\scriptsize menos cruzamentos, pelo baricentro}}%
+    \hfill$\rightarrow$\hfill
+    \fbox{\parbox[c][2.3cm][c]{2.3cm}{\centering\textbf{5. Posições}\\[4pt]\scriptsize altura pelo nível; horizontal por Brandes e Köpf}}}
+    \notafigura{esquema feito no próprio latex, com as cinco etapas do jeito que estão no código (layoutHierarquico.js).}
 \end{figure}
 
 
@@ -141,41 +173,38 @@ Texto.
 \section{Acessibilidade na Web}
 \label{sec-referencial-acessibilidade}
 
-Texto.
+A acessibilidade na web consiste em tornar páginas e aplicações web utilizáveis por todas as pessoas, inclusive as que têm alguma deficiência. A principal referência na área são as Diretrizes de Acessibilidade para Conteúdo Web (\textit{Web Content Accessibility Guidelines}, WCAG), do World Wide Web Consortium (W3C), que reúnem recomendações voltadas a pessoas com cegueira e baixa visão, surdez, mobilidade reduzida, fotossensibilidade e limitações cognitivas, entre outras condições, organizadas em quatro princípios: o conteúdo deve ser perceptível, operável, compreensível e robusto \cite{w3c2024wcag22}.
 
+Os recursos de acessibilidade do EduGraph foram pensados a partir dessas diretrizes:
 
-\subsection{Diretrizes de Acessibilidade para Conteúdo Web}
-\label{sec-referencial-acessibilidade-wcag}
+\begin{itemize}
+    \item \textbf{Tamanho das letras:} dois botões, com a letra ``A'' em tamanho grande e pequeno, ampliam ou reduzem o texto do site inteiro, de 60\% a 160\% do tamanho padrão;
+    \item \textbf{Zoom no grafo:} o professor pode aproximar e afastar apenas o grafo, pela roda do \textit{mouse} ou pelos botões ao lado do desenho, sem alterar o resto da página, o que ajuda a ver os nós e os seus rótulos de perto;
+    \item \textbf{Formas em vez de cores:} os tipos de nó podem ser identificados também por formas --- losango, estrela, hexágono, quadrado, triângulo e círculo ---, já que as WCAG recomendam que a cor não seja o único meio de transmitir uma informação \cite{w3c2024wcag22};
+    \item \textbf{Paletas para daltonismo:} além das cores padrão, o grafo pode ser exibido em paletas próprias para protanopia, deuteranopia e tritanopia;
+    \item \textbf{Desligar animações e física:} o movimento da simulação pode ser desligado, e o grafo aparece já assentado, o que alivia computadores com menos recursos e ajuda quem se incomoda com movimento na tela;
+    \item \textbf{Tema claro e escuro:} o site pode ser usado com fundo claro ou escuro.
+\end{itemize}
 
-Texto.
+As escolhas do usuário ficam guardadas no navegador e valem nas visitas seguintes. Esses recursos são apresentados em detalhe na Seção~\ref{sec-edugraph-acessibilidade}.
 
-\begin{table}[H]
-    \centering
-    \caption{Critérios das WCAG atendidos pelo EduGraph}
-    \label{tab:wcag}
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{|l|l|l|}
-        \hline
-        \textbf{Critério} & \textbf{O que pede} & \textbf{Como o site atende} \\
-        \hline
-        Texto. & Texto. & Texto. \\
-        \hline
-    \end{tabular}
-    \notafigura{aqui vai uma tabela com os critérios das wcag que o site atende: contraste, não depender só da cor, aumentar o texto, usar pelo teclado, foco visível e animação que dá pra desligar. cada linha com o número do critério, o que ele pede e onde isso aparece no site.}
-\end{table}
-
-
-\subsection{Deficiências na Percepção de Cores}
-\label{sec-referencial-acessibilidade-cores}
-
-Texto.
+Quanto às cores, cerca de 8\% dos homens de origem caucasiana têm daltonismo vermelho-verde, condição em que se confundem cores vermelhas e verdes de brilho parecido, enquanto a tritanopia, que afeta a percepção do azul, é bem mais rara \cite{machado2009cvd,okabe2008cud}. As paletas do EduGraph usam cores do Design Universal de Cores (\textit{Color Universal Design}, CUD), proposto por \citeonline{okabe2008cud} para ser distinguível por pessoas com todos os tipos de visão de cores, e foram escolhidas comparando as cores simuladas para cada tipo de daltonismo pelo modelo de \citeonline{machado2009cvd}. A Figura~\ref{fig-acess-paletas} mostra o mesmo grafo em cada uma das opções.
 
 \begin{figure}[H]
     \centering
-    \caption{Cores dos níveis do grafo na visão típica e nas simulações de daltonismo}
-    \label{fig-acess-simulacao}
-    \marcadorbrasao
-    \notafigura{aqui vai uma tabela de cores, feita no latex mesmo, com a cor de cada nível do grafo (ano, área, componente, unidade, objeto e habilidade) na visão normal e simulando protanopia, deuteranopia e tritanopia. a ideia é mostrar que dá pra diferenciar as cores em todas.}
+    \caption[O mesmo grafo nas opções de cor do EduGraph]{O mesmo grafo nas cores padrão, nas paletas para protanopia, deuteranopia e tritanopia e com formas em vez de cores}
+    \label{fig-acess-paletas}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{ccc}
+        \captura[0.31\textwidth]{figuras/fig-acess-paletas-padrao.jpg} &
+        \captura[0.31\textwidth]{figuras/fig-acess-paletas-protanopia.jpg} &
+        \captura[0.31\textwidth]{figuras/fig-acess-paletas-deuteranopia.jpg} \\
+        {\footnotesize Padrão} & {\footnotesize Protanopia} & {\footnotesize Deuteranopia} \\[8pt]
+        \captura[0.31\textwidth]{figuras/fig-acess-paletas-tritanopia.jpg} &
+        \captura[0.31\textwidth]{figuras/fig-acess-paletas-formas.jpg} & \\
+        {\footnotesize Tritanopia} & {\footnotesize Formas em vez de cores} & \\
+    \end{tabular}
+    \notafigura{prints já feitos por mim no firefox: o centro do grafo do ano inteiro de ciências do 1º ano, no layout de forças, recortado de perto para os seis tipos de nó aparecerem grandes, em cada opção do menu ``cores do grafo''.}
 \end{figure}
 
 
@@ -190,14 +219,14 @@ Foram estudados seis softwares relacionados à consulta da BNCC, ao ensino de Co
 \subsection{Consulta à BNCC}
 \label{sec-referencial-softwares-consulta}
 
-O Ministério da Educação mantém um portal dedicado à BNCC (\url{https://basenacionalcomum.mec.gov.br}), que oferece, essencialmente, a versão integral do documento em formato PDF \cite{brasil2018bncc}. A consulta às habilidades se faz, assim, pela leitura do próprio documento, sem recursos de consulta no portal, como filtros ou busca pelo código da habilidade. A Figura~\ref{fig-sw-bncc} mostra o portal.
+O Ministério da Educação mantém um portal dedicado à BNCC (\url{https://basenacionalcomum.mec.gov.br}), que oferece, essencialmente, a versão integral do documento em formato PDF \cite{brasil2018bncc}. A consulta às habilidades se faz, assim, pela leitura do próprio documento, sem recursos de consulta no portal, como filtros ou busca pelo código da habilidade. Como outros portais do governo federal, o site oferece a tradução para Libras pelo VLibras. A Figura~\ref{fig-sw-bncc} mostra a página inicial do portal.
 
 \begin{figure}[H]
     \centering
-    \caption{Captura de tela do portal da BNCC}
+    \caption{Captura de tela da página inicial do portal da BNCC}
     \label{fig-sw-bncc}
-    \marcadorbrasao
-    \notafigura{aqui vai um print do site da BNCC (basenacionalcomum.mec.gov.br) tirado por mim no navegador, porque o site bloqueia o acesso automático. como o portal basicamente só oferece o pdf, o print é da página inicial, com o acesso ao documento. janela de 1600 por 1000, como os outros prints.}
+    \captura{figuras/fig-sw-bncc.jpg}
+    \notafigura{print que eu tirei no meu navegador da página inicial do portal da bncc (o site bloqueia o acesso automático). o botão azul na direita é o vlibras.}
 \end{figure}
 
 Os planos de aula da Nova Escola reúnem, segundo o próprio portal, mais de seis mil planos gratuitos e alinhados à BNCC \cite{novaescola2026planos}. Os planos podem ser filtrados por ano, da creche ao 9º ano, e por disciplina, e cada habilidade da BNCC tem uma página própria, que apresenta o seu texto e os planos que a desenvolvem, como ilustra a Figura~\ref{fig-sw-novaescola}. Os cartões dos planos indicam o ano, o componente e os códigos das habilidades trabalhadas, e cada código leva à página da respectiva habilidade. A relação entre as habilidades, contudo, limita-se a essas listas de códigos, sem representação visual da estrutura do currículo.
@@ -313,7 +342,7 @@ A Tabela~\ref{tab:comparacao-ferramentas} apresenta essas características para 
     \end{tabular}
 \end{table}
 
-Pode-se observar, pelas descrições da Seção~\ref{sec-referencial-softwares} e pela Tabela~\ref{tab:comparacao-ferramentas}, que as ferramentas voltadas à BNCC se limitam ao documento em PDF, como o portal oficial, ou organizam o acesso ao conteúdo por meio de listas, filtros e menus, e que a BNCC aparece nelas, sobretudo, como atributo dos materiais, na forma de códigos de habilidades, ou como critério de organização, como os eixos da BNCC Computação; em nenhuma delas o professor pode explorar visualmente as relações entre os elementos do currículo. A representação do currículo como grafo aparece apenas na ferramenta de autoria, voltada a currículos criados pelo próprio professor e sem vínculo com a BNCC. Quanto à acessibilidade, a Nova Escola se destaca pelo menu de acessibilidade, com recursos variados, entre eles ajustes gerais de cor, como os modos monocromático, de saturação e de cores invertidas; nas demais ferramentas, não foram observados recursos dessa natureza. Nenhuma delas, porém, oferece paletas específicas para os tipos de daltonismo, nem formas que substituam as cores na identificação dos elementos.
+Pode-se observar, pelas descrições da Seção~\ref{sec-referencial-softwares} e pela Tabela~\ref{tab:comparacao-ferramentas}, que as ferramentas voltadas à BNCC se limitam ao documento em PDF, como o portal oficial, ou organizam o acesso ao conteúdo por meio de listas, filtros e menus, e que a BNCC aparece nelas, sobretudo, como atributo dos materiais, na forma de códigos de habilidades, ou como critério de organização, como os eixos da BNCC Computação; em nenhuma delas o professor pode explorar visualmente as relações entre os elementos do currículo. A representação do currículo como grafo aparece apenas na ferramenta de autoria, voltada a currículos criados pelo próprio professor e sem vínculo com a BNCC. Quanto à acessibilidade, a Nova Escola se destaca pelo menu de acessibilidade, com recursos variados, entre eles ajustes gerais de cor, como os modos monocromático, de saturação e de cores invertidas, e o portal da BNCC oferece a tradução para Libras; nas demais ferramentas, não foram observados recursos dessa natureza. Nenhuma delas, porém, oferece paletas específicas para os tipos de daltonismo, nem formas que substituam as cores na identificação dos elementos.
 
 Logo, torna-se interessante desenvolver uma aplicação web que una a apresentação da própria estrutura da BNCC na forma de um grafo interativo, como na ferramenta de autoria, a uma busca guiada pelo ano, pela área e pelo componente curricular e a recursos de acessibilidade voltados também à própria visualização, como paletas para os tipos de daltonismo, disponibilizando-a em endereço público na web. Esse é o propósito do EduGraph, apresentado no Capítulo~\ref{sec-edugraph}. Em contrapartida, o EduGraph não reúne materiais prontos para a sala de aula, como os planos de aula e os materiais didáticos de parte das ferramentas estudadas.
 
